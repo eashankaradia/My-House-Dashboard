@@ -10,22 +10,27 @@ export type AmortPoint = {
 
 /**
  * Simulate a repayment mortgage month by month until it is paid off (or a hard
- * cap of 60 years is hit). `extraMonthly` models a regular overpayment.
+ * cap of 60 years is hit). `extraMonthly` models a regular overpayment and
+ * `lumpSum` models a single one-off overpayment applied at the start.
  */
 export function amortise(
   balance: number,
   annualRatePct: number,
   monthlyPayment: number,
   extraMonthly = 0,
+  lumpSum = 0,
 ): AmortPoint[] {
   const points: AmortPoint[] = [];
   const monthlyRate = annualRatePct / 100 / 12;
-  let remaining = balance;
+  let remaining = Math.max(0, balance - Math.max(0, lumpSum));
   let cumulativeInterest = 0;
-  let cumulativePrincipal = 0;
+  let cumulativePrincipal = Math.max(0, Math.min(lumpSum, balance));
   const payment = monthlyPayment + extraMonthly;
 
   if (payment <= 0) return points;
+  if (remaining <= 0) {
+    return [{ month: 0, year: 0, balance: 0, interestPaid: 0, principalPaid: cumulativePrincipal }];
+  }
 
   for (let month = 1; month <= 720 && remaining > 0; month++) {
     const interest = remaining * monthlyRate;
@@ -66,7 +71,8 @@ export function payoffMonths(
   annualRatePct: number,
   monthlyPayment: number,
   extraMonthly = 0,
+  lumpSum = 0,
 ): number {
-  const sim = amortise(balance, annualRatePct, monthlyPayment, extraMonthly);
+  const sim = amortise(balance, annualRatePct, monthlyPayment, extraMonthly, lumpSum);
   return sim.length ? sim[sim.length - 1].month : 0;
 }

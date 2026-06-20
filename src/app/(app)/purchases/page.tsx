@@ -4,28 +4,41 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
 import { formatCurrency } from "@/lib/utils";
-import type { Purchase } from "@/lib/database.types";
+import type { Purchase, PurchaseOption, PurchaseWithOptions } from "@/lib/database.types";
 import { PurchaseForm } from "./purchase-form";
 import { PurchasesGrid } from "./purchases-grid";
 
 export const metadata = { title: "Future Purchases" };
 
+/** Best-estimate price for an item: chosen option → cheapest option → item price. */
+function effectivePrice(p: PurchaseWithOptions): number {
+  const chosen = p.options.find((o) => o.is_chosen);
+  if (chosen) return Number(chosen.price);
+  if (p.options.length) return Math.min(...p.options.map((o) => Number(o.price)));
+  return Number(p.price);
+}
+
 export default async function PurchasesPage() {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("purchases")
-    .select("*")
-    .order("created_at", { ascending: false });
-  const purchases = (data ?? []) as Purchase[];
+  const [{ data: purchaseData }, { data: optionData }] = await Promise.all([
+    supabase.from("purchases").select("*").order("created_at", { ascending: false }),
+    supabase.from("purchase_options").select("*").order("price", { ascending: true }),
+  ]);
+
+  const options = (optionData ?? []) as PurchaseOption[];
+  const purchases: PurchaseWithOptions[] = ((purchaseData ?? []) as Purchase[]).map((p) => ({
+    ...p,
+    options: options.filter((o) => o.purchase_id === p.id),
+  }));
 
   const wishlist = purchases.filter((p) => p.status !== "Purchased");
-  const wishlistValue = wishlist.reduce((s, p) => s + Number(p.price), 0);
+  const wishlistValue = wishlist.reduce((s, p) => s + effectivePrice(p), 0);
   const purchased = purchases.filter((p) => p.status === "Purchased");
-  const purchasedValue = purchased.reduce((s, p) => s + Number(p.price), 0);
+  const purchasedValue = purchased.reduce((s, p) => s + effectivePrice(p), 0);
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Future Purchases" description="A wishlist for everything your home needs." info="Add items you're considering. Pick a category, then a sub-category like Sofa, Bed or Wardrobe (or type your own), with a price and priority. Move each item from Considering → Shortlisted → Ready To Buy → Purchased, and use the filter/sort controls to plan room by room.">
+      <PageHeader title="Future Purchases" description="A wishlist for everything your home needs." info="Add the thing you want (e.g. a Sofa), then add several Options under it — specific products from different shops with their own prices, links and photos — to compare them side by side. Tap the star to pick your favourite. Use categories, sub-categories and the filter/sort controls to stay organised, and move each item from Considering → Purchased.">
         <PurchaseForm />
       </PageHeader>
 

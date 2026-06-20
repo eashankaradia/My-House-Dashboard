@@ -114,6 +114,22 @@ export type Purchase = Timestamps & {
   source_inspiration_id: string | null;
 };
 
+export type PurchaseOption = Timestamps & {
+  id: string;
+  user_id: string;
+  purchase_id: string;
+  name: string;
+  store: string | null;
+  url: string | null;
+  price: number;
+  image_url: string | null;
+  notes: string | null;
+  is_chosen: boolean;
+};
+
+/** A purchase with its compared options attached (used in list views). */
+export type PurchaseWithOptions = Purchase & { options: PurchaseOption[] };
+
 export type MaintenanceTask = Timestamps & {
   id: string;
   user_id: string;
@@ -226,6 +242,7 @@ export type Database = {
       inspiration: Row<Inspiration>;
       projects: Row<Project>;
       purchases: Row<Purchase>;
+      purchase_options: Row<PurchaseOption>;
       maintenance_tasks: Row<MaintenanceTask>;
       documents: Row<Document>;
     };

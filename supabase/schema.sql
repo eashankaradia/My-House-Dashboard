@@ -227,6 +227,25 @@ create table if not exists public.purchases (
 );
 
 -- ---------------------------------------------------------------------------
+-- purchase_options — competing products/options for a wishlist item, so you
+-- can compare prices and pick a favourite (e.g. three sofas for one "Sofa").
+-- ---------------------------------------------------------------------------
+create table if not exists public.purchase_options (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references auth.users (id) on delete cascade,
+  purchase_id uuid not null references public.purchases (id) on delete cascade,
+  name        text not null,
+  store       text,
+  url         text,
+  price       numeric(12,2) not null default 0,
+  image_url   text,
+  notes       text,
+  is_chosen   boolean not null default false,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
 -- maintenance_tasks — recurring home maintenance + reminders.
 -- ---------------------------------------------------------------------------
 create table if not exists public.maintenance_tasks (
@@ -325,7 +344,7 @@ declare
 begin
   foreach t in array array[
     'profiles','bills','mortgages','savings_pots','collections','inspiration',
-    'projects','purchases','maintenance_tasks','documents','ai_conversations'
+    'projects','purchases','purchase_options','maintenance_tasks','documents','ai_conversations'
   ]
   loop
     execute format('drop trigger if exists set_updated_at on public.%I;', t);
@@ -345,7 +364,7 @@ declare
 begin
   foreach t in array array[
     'bills','mortgages','savings_pots','collections','inspiration','projects',
-    'purchases','maintenance_tasks','documents','ai_conversations','ai_messages',
+    'purchases','purchase_options','maintenance_tasks','documents','ai_conversations','ai_messages',
     'ai_cost_estimates','ai_categorizations'
   ]
   loop
@@ -377,6 +396,7 @@ create index if not exists bills_user_idx on public.bills (user_id);
 create index if not exists savings_pots_user_idx on public.savings_pots (user_id);
 create index if not exists projects_user_status_idx on public.projects (user_id, status);
 create index if not exists purchases_user_status_idx on public.purchases (user_id, status);
+create index if not exists purchase_options_purchase_idx on public.purchase_options (purchase_id);
 create index if not exists inspiration_user_idx on public.inspiration (user_id);
 create index if not exists inspiration_collection_idx on public.inspiration (collection_id);
 create index if not exists maintenance_user_due_idx on public.maintenance_tasks (user_id, next_due_date);

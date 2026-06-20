@@ -26,15 +26,16 @@ type Props = {
 
 export function OverpaymentCalculator({ balance, rate, monthlyPayment }: Props) {
   const [extra, setExtra] = React.useState(100);
+  const [lump, setLump] = React.useState(0);
 
-  const base = React.useMemo(() => amortise(balance, rate, monthlyPayment, 0), [balance, rate, monthlyPayment]);
+  const base = React.useMemo(() => amortise(balance, rate, monthlyPayment, 0, 0), [balance, rate, monthlyPayment]);
   const withExtra = React.useMemo(
-    () => amortise(balance, rate, monthlyPayment, extra),
-    [balance, rate, monthlyPayment, extra],
+    () => amortise(balance, rate, monthlyPayment, extra, lump),
+    [balance, rate, monthlyPayment, extra, lump],
   );
 
-  const baseMonths = payoffMonths(balance, rate, monthlyPayment, 0);
-  const newMonths = payoffMonths(balance, rate, monthlyPayment, extra);
+  const baseMonths = payoffMonths(balance, rate, monthlyPayment, 0, 0);
+  const newMonths = payoffMonths(balance, rate, monthlyPayment, extra, lump);
   const monthsSaved = Math.max(0, baseMonths - newMonths);
 
   const baseInterest = base.length ? base[base.length - 1].interestPaid : 0;
@@ -60,7 +61,7 @@ export function OverpaymentCalculator({ balance, rate, monthlyPayment }: Props) 
         <CardTitle>Overpayment calculator</CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5">
             <Label htmlFor="extra">Extra per month (£)</Label>
             <Input
@@ -70,6 +71,17 @@ export function OverpaymentCalculator({ balance, rate, monthlyPayment }: Props) 
               step={25}
               value={extra}
               onChange={(e) => setExtra(Math.max(0, Number(e.target.value)))}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="lump">One-off payment (£)</Label>
+            <Input
+              id="lump"
+              type="number"
+              min={0}
+              step={500}
+              value={lump}
+              onChange={(e) => setLump(Math.max(0, Number(e.target.value)))}
             />
           </div>
           <div className="rounded-lg border bg-card p-3">
