@@ -213,6 +213,7 @@ create table if not exists public.purchases (
   category              text not null default 'Other'
                           check (category in ('Furniture','Appliances','Technology',
                             'Garden','Decor','Tools','Storage','Other')),
+  sub_category          text,
   room                  text,
   priority              text not null default 'Medium' check (priority in ('Low','Medium','High')),
   notes                 text,
@@ -309,6 +310,11 @@ create table if not exists public.ai_categorizations (
   model              text,
   created_at         timestamptz not null default now()
 );
+
+-- ===========================================================================
+-- Idempotent migrations for existing databases (safe to re-run).
+-- ===========================================================================
+alter table public.purchases add column if not exists sub_category text;
 
 -- ===========================================================================
 -- updated_at triggers for every mutable table.

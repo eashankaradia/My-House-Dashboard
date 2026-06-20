@@ -20,6 +20,7 @@ const SORTS = {
   price: "Price (high → low)",
   room: "Room",
   category: "Category",
+  sub_category: "Sub-category",
 } as const;
 
 export function PurchasesGrid({ purchases }: { purchases: Purchase[] }) {
@@ -38,6 +39,8 @@ export function PurchasesGrid({ purchases }: { purchases: Purchase[] }) {
           return (a.room ?? "~").localeCompare(b.room ?? "~");
         case "category":
           return a.category.localeCompare(b.category);
+        case "sub_category":
+          return (a.sub_category ?? "~").localeCompare(b.sub_category ?? "~");
         default:
           return rank[a.priority] - rank[b.priority];
       }
@@ -99,7 +102,7 @@ function PurchaseCard({ purchase }: { purchase: Purchase }) {
           <div className="min-w-0">
             <p className="truncate font-medium">{purchase.name}</p>
             <p className="text-xs text-muted-foreground">
-              {purchase.category}
+              {purchase.sub_category ? `${purchase.category} · ${purchase.sub_category}` : purchase.category}
               {purchase.room ? ` · ${purchase.room}` : ""}
               {purchase.store ? ` · ${purchase.store}` : ""}
             </p>

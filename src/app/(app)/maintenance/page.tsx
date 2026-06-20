@@ -31,7 +31,7 @@ export default async function MaintenancePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Maintenance" description="Keep your home in great shape, on schedule.">
+      <PageHeader title="Maintenance" description="Keep your home in great shape, on schedule." info="Add recurring jobs like boiler servicing or gutter cleaning and set how often they're due — we work out the next date. Tap Done when you complete one and it rolls forward automatically. Overdue and due-soon tasks are highlighted.">
         <MaintenanceForm />
       </PageHeader>
 

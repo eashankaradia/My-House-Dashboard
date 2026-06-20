@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/shared/stat-card";
+import { InfoHint } from "@/components/shared/info-hint";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -120,12 +121,19 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          {greeting}, {firstName}
-        </h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            {greeting}, {firstName}
+          </h1>
+          <InfoHint text="Your home at a glance. The cards summarise your finances, savings, projects, reminders and recent activity — they update automatically as you add things. Use the buttons below to add anything quickly, or the sidebar to open a section." />
+        </div>
         <p className="text-muted-foreground">Here&apos;s how your home is doing today.</p>
       </div>
 
+      <div className="flex items-center gap-1.5">
+        <h2 className="text-sm font-medium text-muted-foreground">Quick add</h2>
+        <InfoHint text="One-tap shortcuts to add a bill, project, purchase, idea, maintenance task or document from anywhere." />
+      </div>
       <QuickActions collections={collections} />
 
       {/* Financial summary */}

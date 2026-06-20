@@ -12,6 +12,7 @@ function toRow(values: PurchaseInput) {
     store: values.store ?? null,
     price: values.price,
     category: values.category,
+    sub_category: values.sub_category ?? null,
     room: values.room ?? null,
     priority: values.priority,
     status: values.status,

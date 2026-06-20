@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { InfoHint } from "@/components/shared/info-hint";
 
 type FieldProps = {
   label: string;
@@ -9,17 +10,22 @@ type FieldProps = {
   required?: boolean;
   className?: string;
   hint?: string;
+  /** Optional instruction shown in an info tooltip next to the label. */
+  tooltip?: string;
   children: React.ReactNode;
 };
 
 /** Label + control + inline validation error, used throughout the forms. */
-export function Field({ label, htmlFor, error, required, className, hint, children }: FieldProps) {
+export function Field({ label, htmlFor, error, required, className, hint, tooltip, children }: FieldProps) {
   return (
     <div className={cn("space-y-1.5", className)}>
-      <Label htmlFor={htmlFor}>
-        {label}
-        {required ? <span className="ml-0.5 text-destructive">*</span> : null}
-      </Label>
+      <div className="flex items-center gap-1.5">
+        <Label htmlFor={htmlFor}>
+          {label}
+          {required ? <span className="ml-0.5 text-destructive">*</span> : null}
+        </Label>
+        {tooltip ? <InfoHint text={tooltip} /> : null}
+      </div>
       {children}
       {hint && !error ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
       {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}

@@ -46,7 +46,7 @@ export default async function BillsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Bills & Expenses" description="Every recurring household cost in one place.">
+      <PageHeader title="Bills & Expenses" description="Every recurring household cost in one place." info="Add each bill with its amount and how often it's paid (weekly, monthly, etc.). We convert everything to true monthly and annual totals, chart it by category, and flag bills that are due soon or overdue. Add a due date to power those reminders.">
         <BillForm />
       </PageHeader>
 

@@ -25,7 +25,7 @@ export default async function PurchasesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Future Purchases" description="A wishlist for everything your home needs.">
+      <PageHeader title="Future Purchases" description="A wishlist for everything your home needs." info="Add items you're considering. Pick a category, then a sub-category like Sofa, Bed or Wardrobe (or type your own), with a price and priority. Move each item from Considering → Shortlisted → Ready To Buy → Purchased, and use the filter/sort controls to plan room by room.">
         <PurchaseForm />
       </PageHeader>
 

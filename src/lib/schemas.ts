@@ -74,6 +74,7 @@ export const purchaseSchema = z.object({
   store: optionalString,
   price: money,
   category: z.enum(PURCHASE_CATEGORIES),
+  sub_category: optionalString,
   room: optionalString,
   priority: z.enum(PRIORITIES),
   status: z.enum(PURCHASE_STATUSES),

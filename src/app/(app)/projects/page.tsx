@@ -24,7 +24,7 @@ export default async function ProjectsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Projects" description="Plan and track every home project.">
+      <PageHeader title="Projects" description="Plan and track every home project." info="Add a project, then drag it through stages from Idea to Completed. Record estimated vs actual cost. Use the Board, List and Costs tabs to view it different ways. Change a card's status with the dropdown on it.">
         <ProjectForm />
       </PageHeader>
 
