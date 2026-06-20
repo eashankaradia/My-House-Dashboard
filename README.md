@@ -9,6 +9,41 @@ Built with **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS**,
 **React Hook Form + Zod**, **TanStack Table** and **Lucide** icons. Ships as a
 **PWA** and is optimised for **Vercel**.
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Feashankaradia%2FMy-House-Dashboard&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,NEXT_PUBLIC_SITE_URL&envDescription=Supabase%20Project%20URL%2C%20anon%20key%2C%20and%20your%20deployed%20site%20URL&envLink=https%3A%2F%2Fgithub.com%2Feashankaradia%2FMy-House-Dashboard%2Fblob%2Fmain%2F.env.example)
+
+---
+
+## ⚡ Deploy in ~5 minutes
+
+> The one-click button above deploys the repo's **default branch** to Vercel and
+> prompts for the three env vars. Before clicking, do steps 1–2 so you have the
+> values ready. (If this code is still on a feature branch, merge it into `main`
+> first so the button picks it up.)
+
+**1. Create the database (Supabase) — ~2 min**
+   1. Make a free project at <https://supabase.com>.
+   2. **SQL Editor → New query** → paste all of [`supabase/schema.sql`](supabase/schema.sql) → **Run**. ✅ Creates every table, RLS policy, trigger and storage bucket.
+   3. **Settings → API** → copy the **Project URL** and **anon public** key.
+
+**2. Turn on Google login — ~2 min**
+   1. In **Google Cloud Console → Credentials**, create an **OAuth 2.0 Client ID** (Web app).
+   2. Add **Authorized redirect URI**: `https://<your-project-ref>.supabase.co/auth/v1/callback`.
+   3. In **Supabase → Authentication → Providers → Google**, enable it and paste the Client ID + Secret.
+
+**3. Deploy — ~1 min**
+   1. Click **Deploy with Vercel** above (or import the repo at <https://vercel.com/new>).
+   2. When prompted, paste the env vars:
+      - `NEXT_PUBLIC_SUPABASE_URL` = your Project URL
+      - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = your anon key
+      - `NEXT_PUBLIC_SITE_URL` = your Vercel URL (e.g. `https://my-house.vercel.app`) — you can set this after the first deploy gives you the URL, then redeploy.
+   3. **Deploy.**
+
+**4. Point auth at your live URL — ~30 sec**
+   - In **Supabase → Authentication → URL Configuration**, set **Site URL** to your Vercel URL and add it to **Redirect URLs**. Sign in with Google — done. 🎉
+
+> Detailed walkthrough (local dev, service-role key, security model) is in the
+> sections below.
+
 ---
 
 ## ✨ Features
