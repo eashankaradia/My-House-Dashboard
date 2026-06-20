@@ -7,27 +7,37 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { usernameToEmail } from "@/lib/auth-username";
 
 /**
- * Email + password sign-in. The most reliable option for a small shared
- * household account: no email delivery involved, works on every device, and
- * sidesteps magic-link scanners and the built-in email rate limit. The shared
- * account is created once in the Supabase dashboard (Authentication → Users).
+ * Username + password sign-in.
+ *
+ * Supabase Auth is email-based, so a username is transparently mapped to a
+ * fixed internal email (e.g. "eashan" -> "eashan@myhouse.local") before calling
+ * Supabase. No email is ever sent — the shared account is created once in the
+ * Supabase dashboard with the matching internal email. This is the most
+ * reliable option for a small shared household: works on every device, with no
+ * magic links, codes, or email rate limits.
  */
 export function PasswordSignIn() {
   const supabase = createClient();
   const { toast } = useToast();
-  const [email, setEmail] = React.useState("");
+  const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    const email = usernameToEmail(username);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setLoading(false);
-      toast({ variant: "destructive", title: "Sign-in failed", description: error.message });
+      toast({
+        variant: "destructive",
+        title: "Sign-in failed",
+        description: "Check your username and password and try again.",
+      });
       return;
     }
     // Full navigation so the server middleware picks up the new session cookie.
@@ -37,15 +47,15 @@ export function PasswordSignIn() {
   return (
     <form onSubmit={signIn} className="space-y-3">
       <div className="space-y-1.5">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="username">Username</Label>
         <Input
-          id="email"
-          type="email"
-          inputMode="email"
+          id="username"
+          autoCapitalize="none"
+          autoCorrect="off"
           autoComplete="username"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          placeholder="e.g. eashan"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           required
         />
       </div>
