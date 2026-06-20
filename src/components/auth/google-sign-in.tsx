@@ -12,9 +12,13 @@ export function GoogleSignIn() {
 
   async function signIn() {
     setLoading(true);
+    // Prefer the actual browser origin so the OAuth redirect always matches the
+    // deployed URL — no NEXT_PUBLIC_SITE_URL needed. Falls back to the env var
+    // only for non-browser contexts.
     const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ??
-      (typeof window !== "undefined" ? window.location.origin : "");
+      (typeof window !== "undefined" ? window.location.origin : "") ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      "";
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
