@@ -1,7 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { purchaseSchema, type PurchaseInput } from "@/lib/schemas";
+import {
+  purchaseSchema,
+  purchaseOptionSchema,
+  type PurchaseInput,
+  type PurchaseOptionInput,
+} from "@/lib/schemas";
 import { PURCHASE_STATUSES } from "@/lib/constants";
 import { getActionContext, type ActionResult } from "@/lib/action-utils";
 
@@ -64,6 +69,75 @@ export async function updatePurchaseStatus(id: string, status: string): Promise<
 export async function deletePurchase(id: string): Promise<ActionResult> {
   const { supabase } = await getActionContext();
   const { error } = await supabase.from("purchases").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/purchases");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+// --- Purchase options (competing products to compare) ----------------------
+
+export async function addOption(purchaseId: string, raw: PurchaseOptionInput): Promise<ActionResult> {
+  const parsed = purchaseOptionSchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.errors[0]?.message ?? "Invalid input" };
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase.from("purchase_options").insert({
+    user_id: user.id,
+    purchase_id: purchaseId,
+    name: parsed.data.name,
+    store: parsed.data.store ?? null,
+    url: parsed.data.url ?? null,
+    price: parsed.data.price,
+    image_url: parsed.data.image_url ?? null,
+    notes: parsed.data.notes ?? null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/purchases");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+export async function updateOption(id: string, raw: PurchaseOptionInput): Promise<ActionResult> {
+  const parsed = purchaseOptionSchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.errors[0]?.message ?? "Invalid input" };
+  const { supabase } = await getActionContext();
+  const { error } = await supabase
+    .from("purchase_options")
+    .update({
+      name: parsed.data.name,
+      store: parsed.data.store ?? null,
+      url: parsed.data.url ?? null,
+      price: parsed.data.price,
+      image_url: parsed.data.image_url ?? null,
+      notes: parsed.data.notes ?? null,
+    })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/purchases");
+  return {};
+}
+
+export async function deleteOption(id: string): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("purchase_options").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/purchases");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+/** Mark one option as the chosen one (and clear the others on the same item). */
+export async function chooseOption(purchaseId: string, optionId: string): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const clear = await supabase
+    .from("purchase_options")
+    .update({ is_chosen: false })
+    .eq("purchase_id", purchaseId);
+  if (clear.error) return { error: clear.error.message };
+  const { error } = await supabase
+    .from("purchase_options")
+    .update({ is_chosen: true })
+    .eq("id", optionId);
   if (error) return { error: error.message };
   revalidatePath("/purchases");
   revalidatePath("/dashboard");

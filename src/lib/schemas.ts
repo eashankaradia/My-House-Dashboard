@@ -82,6 +82,16 @@ export const purchaseSchema = z.object({
 });
 export type PurchaseInput = z.infer<typeof purchaseSchema>;
 
+export const purchaseOptionSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(160),
+  store: optionalString,
+  url: optionalString,
+  price: money,
+  image_url: optionalString,
+  notes: optionalString,
+});
+export type PurchaseOptionInput = z.infer<typeof purchaseOptionSchema>;
+
 export const inspirationSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(160),
   link: optionalString,
