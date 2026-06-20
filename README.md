@@ -25,7 +25,10 @@ Built with **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS**,
    2. **SQL Editor → New query** → paste all of [`supabase/schema.sql`](supabase/schema.sql) → **Run**. ✅ Creates every table, RLS policy, trigger and storage bucket.
    3. **Settings → API** → copy the **Project URL** and **anon public** key.
 
-**2. Turn on Google login — ~2 min**
+**2. (Optional) Turn on Google login — ~2 min**
+   The app also supports **passwordless email sign-in out of the box** (no setup
+   needed — Supabase's built-in email sender handles it), so you can skip this and
+   come back later. To add Google:
    1. In **Google Cloud Console → Credentials**, create an **OAuth 2.0 Client ID** (Web app).
    2. Add **Authorized redirect URI**: `https://<your-project-ref>.supabase.co/auth/v1/callback`.
    3. In **Supabase → Authentication → Providers → Google**, enable it and paste the Client ID + Secret.
