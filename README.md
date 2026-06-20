@@ -32,10 +32,10 @@ Built with **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS**,
 
 **3. Deploy — ~1 min**
    1. Click **Deploy with Vercel** above (or import the repo at <https://vercel.com/new>).
-   2. When prompted, paste the env vars:
+   2. When prompted, paste **two** env vars:
       - `NEXT_PUBLIC_SUPABASE_URL` = your Project URL
       - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = your anon key
-      - `NEXT_PUBLIC_SITE_URL` = your Vercel URL (e.g. `https://my-house.vercel.app`) — you can set this after the first deploy gives you the URL, then redeploy.
+      - `NEXT_PUBLIC_SITE_URL` is **optional** — the app uses the browser origin automatically, so you can skip it.
    3. **Deploy.**
 
 **4. Point auth at your live URL — ~30 sec**
