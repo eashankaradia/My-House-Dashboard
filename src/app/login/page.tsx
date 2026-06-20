@@ -1,6 +1,6 @@
 import { Home } from "lucide-react";
 import { GoogleSignIn } from "@/components/auth/google-sign-in";
-import { EmailSignIn } from "@/components/auth/email-sign-in";
+import { PasswordSignIn } from "@/components/auth/password-sign-in";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata = {
@@ -23,13 +23,13 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <GoogleSignIn />
+          <PasswordSignIn />
           <div className="flex items-center gap-3">
             <span className="h-px flex-1 bg-border" />
             <span className="text-xs text-muted-foreground">or</span>
             <span className="h-px flex-1 bg-border" />
           </div>
-          <EmailSignIn />
+          <GoogleSignIn />
           <p className="text-center text-xs text-muted-foreground">
             Your household data is stored securely in your own Supabase project.
           </p>
