@@ -19,7 +19,13 @@ import {
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
 import { useToast } from "@/hooks/use-toast";
-import { PRIORITIES, PURCHASE_CATEGORIES, PURCHASE_STATUSES, ROOMS } from "@/lib/constants";
+import {
+  PRIORITIES,
+  PURCHASE_CATEGORIES,
+  PURCHASE_STATUSES,
+  PURCHASE_SUBCATEGORIES,
+  ROOMS,
+} from "@/lib/constants";
 import { purchaseSchema, type PurchaseInput } from "@/lib/schemas";
 import type { Purchase } from "@/lib/database.types";
 import { createPurchase, updatePurchase } from "./actions";
@@ -40,6 +46,7 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<PurchaseInput>({
     resolver: zodResolver(purchaseSchema),
@@ -49,12 +56,17 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
       store: purchase?.store ?? "",
       price: purchase?.price ?? 0,
       category: purchase?.category ?? defaults?.category ?? "Furniture",
+      sub_category: purchase?.sub_category ?? defaults?.sub_category ?? "",
       room: purchase?.room ?? defaults?.room ?? "",
       priority: purchase?.priority ?? defaults?.priority ?? "Medium",
       status: purchase?.status ?? "Considering",
       notes: purchase?.notes ?? "",
     },
   });
+
+  // Suggestions update to match the currently-selected category.
+  const selectedCategory = watch("category");
+  const subSuggestions = PURCHASE_SUBCATEGORIES[selectedCategory] ?? [];
 
   function onSubmit(values: PurchaseInput) {
     startTransition(async () => {
@@ -99,22 +111,39 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
             </Field>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Category">
+            <Field label="Category" tooltip="The broad type of item. Choosing a category updates the sub-category suggestions below.">
               <NativeSelect {...register("category")}>
                 {PURCHASE_CATEGORIES.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </NativeSelect>
             </Field>
-            <Field label="Room">
-              <NativeSelect {...register("room")}>
-                <option value="">—</option>
-                {ROOMS.map((r) => (
-                  <option key={r} value={r}>{r}</option>
+            <Field
+              label="Sub-category"
+              htmlFor="sub_category"
+              tooltip="A more specific type, e.g. Sofa, Bed or Wardrobe. Pick a suggestion or type your own."
+            >
+              <Input
+                id="sub_category"
+                list="subcategory-options"
+                placeholder={subSuggestions[0] ? `e.g. ${subSuggestions[0]}` : "e.g. Sofa"}
+                {...register("sub_category")}
+              />
+              <datalist id="subcategory-options">
+                {subSuggestions.map((s) => (
+                  <option key={s} value={s} />
                 ))}
-              </NativeSelect>
+              </datalist>
             </Field>
           </div>
+          <Field label="Room" tooltip="Which room this is for. Helps you sort and plan room by room.">
+            <NativeSelect {...register("room")}>
+              <option value="">—</option>
+              {ROOMS.map((r) => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </NativeSelect>
+          </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Priority">
               <NativeSelect {...register("priority")}>

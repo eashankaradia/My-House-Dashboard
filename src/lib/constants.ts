@@ -58,6 +58,45 @@ export const PURCHASE_CATEGORIES = [
 
 export const PURCHASE_STATUSES = ["Considering", "Shortlisted", "Ready To Buy", "Purchased"] as const;
 
+/**
+ * Prefilled sub-category suggestions per category. These power a datalist on the
+ * purchase form — users can pick one of these or type their own.
+ */
+export const PURCHASE_SUBCATEGORIES: Record<string, string[]> = {
+  Furniture: [
+    "Sofa", "Armchair", "Bed", "Mattress", "Wardrobe", "Chest of Drawers",
+    "Bedside Table", "Dining Table", "Dining Chairs", "Coffee Table", "Desk",
+    "Bookcase", "TV Unit", "Sideboard", "Shoe Cabinet",
+  ],
+  Appliances: [
+    "Fridge", "Freezer", "Fridge Freezer", "Washing Machine", "Tumble Dryer",
+    "Dishwasher", "Oven", "Hob", "Cooker Hood", "Microwave", "Kettle",
+    "Toaster", "Coffee Machine", "Vacuum Cleaner",
+  ],
+  Technology: [
+    "TV", "Soundbar", "Speaker", "Laptop", "Monitor", "Tablet", "Router",
+    "Smart Hub", "Smart Speaker", "Security Camera", "Doorbell", "Games Console",
+  ],
+  Garden: [
+    "Outdoor Sofa", "Garden Table", "Garden Chairs", "Parasol", "BBQ",
+    "Pizza Oven", "Planters", "Shed", "Lawn Mower", "Decking", "Fencing",
+    "Outdoor Lighting", "Hot Tub",
+  ],
+  Decor: [
+    "Rug", "Curtains", "Blinds", "Cushions", "Throw", "Wall Art", "Mirror",
+    "Table Lamp", "Floor Lamp", "Vase", "Houseplants", "Clock",
+  ],
+  Tools: [
+    "Drill", "Saw", "Sander", "Ladder", "Toolbox", "Screwdriver Set",
+    "Wrench Set", "Workbench", "Spirit Level", "Pressure Washer",
+  ],
+  Storage: [
+    "Shelving", "Storage Boxes", "Wardrobe Organiser", "Cabinet", "Baskets",
+    "Shoe Rack", "Coat Rack", "Under-bed Storage", "Drawer Dividers",
+  ],
+  Other: [],
+};
+
 export const INSPIRATION_SOURCES = [
   "Instagram", "TikTok", "Pinterest", "YouTube", "Blog", "Store", "Other",
 ] as const;

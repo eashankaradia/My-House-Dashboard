@@ -32,7 +32,7 @@ export default async function DocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Documents" description="Warranties, insurance, manuals and more — all in one place.">
+      <PageHeader title="Documents" description="Warranties, insurance, manuals and more — all in one place." info="Upload a file (PDF, image or doc up to 10MB) and tag it with a category. Add an expiry date to get a renewal reminder. Files are stored privately — use Open to view via a secure, short-lived link.">
         <DocumentForm />
       </PageHeader>
 

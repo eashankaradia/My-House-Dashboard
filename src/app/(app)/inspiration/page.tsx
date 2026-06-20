@@ -28,7 +28,7 @@ export default async function InspirationPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Inspiration" description="Your personal board for every home idea.">
+      <PageHeader title="Inspiration" description="Your personal board for every home idea." info="Save links and images from Instagram, Pinterest, TikTok and the web. Group them into collections, tag and filter them, and switch between masonry, card and list views. Use the ⋯ menu on any idea to convert it into a Project or a Purchase.">
         <CollectionForm />
         <InspirationForm collections={collections} />
       </PageHeader>

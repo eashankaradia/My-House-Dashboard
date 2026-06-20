@@ -41,7 +41,7 @@ export default async function AnalyticsPage() {
   if (!hasData) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Analytics" description="Trends and breakdowns across your home." />
+        <PageHeader title="Analytics" description="Trends and breakdowns across your home." info="Visual breakdowns of your spending, savings, projects and maintenance. These charts fill in automatically as you add data in the other sections — there's nothing to enter here." />
         <EmptyState
           icon={BarChart3}
           title="Nothing to analyse yet"
@@ -93,7 +93,7 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Analytics" description="Trends and breakdowns across your home." />
+      <PageHeader title="Analytics" description="Trends and breakdowns across your home." info="Visual breakdowns of your spending, savings, projects and maintenance. These charts fill in automatically as you add data in the other sections — there's nothing to enter here." />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Monthly bills" value={formatCurrency(monthlyBills)} />

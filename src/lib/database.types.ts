@@ -104,6 +104,7 @@ export type Purchase = Timestamps & {
   store: string | null;
   price: number;
   category: PurchaseCategory;
+  sub_category: string | null;
   room: string | null;
   priority: Priority;
   notes: string | null;

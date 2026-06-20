@@ -26,7 +26,7 @@ export default async function MortgagePage() {
   if (!mortgage) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Mortgage" description="Track equity, loan-to-value and payoff." />
+        <PageHeader title="Mortgage" description="Track equity, loan-to-value and payoff." info="Enter your property value, balance, rate and monthly payment. We calculate your equity, loan-to-value and remaining term, and the overpayment calculator shows how extra monthly payments shorten the term and save interest." />
         <EmptyState
           icon={Home}
           title="No mortgage added yet"
@@ -54,7 +54,7 @@ export default async function MortgagePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Mortgage" description={mortgage.property_name}>
+      <PageHeader title="Mortgage" description={mortgage.property_name} info="These figures drive your equity, loan-to-value and remaining term. Use the overpayment calculator to model how extra monthly payments shorten the term and cut total interest. Edit details any time with the button on the right.">
         <MortgageForm mortgage={mortgage} />
       </PageHeader>
 

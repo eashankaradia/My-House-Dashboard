@@ -25,7 +25,7 @@ export default async function SavingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Savings Pots" description="Virtual pots to fund your home goals.">
+      <PageHeader title="Savings Pots" description="Virtual pots to fund your home goals." info="Create a pot per goal (e.g. Emergency Fund, New Kitchen) with a target and a monthly contribution. The progress bar and forecast completion date update as you save. Use the +/- buttons on a pot to quickly adjust its balance.">
         <PotForm />
       </PageHeader>
 
