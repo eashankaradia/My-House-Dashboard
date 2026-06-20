@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 158 64% 39%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 210 40% 94%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 158 64% 39%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 158 64% 39%;
+
+    --radius: 0.85rem;
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 40% 10%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 40% 10%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 158 64% 45%;
+    --primary-foreground: 222 47% 7%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 15%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 33% 19%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 63% 45%;
+    --destructive-foreground: 210 40% 98%;
+
+    --success: 158 64% 45%;
+    --success-foreground: 222 47% 7%;
+
+    --warning: 38 92% 55%;
+    --warning-foreground: 222 47% 7%;
+
+    --border: 217 33% 20%;
+    --input: 217 33% 22%;
+    --ring: 158 64% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* Pinterest-style masonry for the Inspiration hub. */
+.masonry {
+  column-gap: 1rem;
+  columns: 1;
+}
+@media (min-width: 640px) {
+  .masonry {
+    columns: 2;
+  }
+}
+@media (min-width: 1024px) {
+  .masonry {
+    columns: 3;
+  }
+}
+@media (min-width: 1536px) {
+  .masonry {
+    columns: 4;
+  }
+}
+.masonry > * {
+  break-inside: avoid;
+  margin-bottom: 1rem;
+}
+
+/* Subtle custom scrollbar. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-border;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

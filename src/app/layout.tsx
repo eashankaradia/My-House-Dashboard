@@ -1,0 +1,46 @@
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
+import { Providers } from "@/components/providers";
+import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
+
+export const metadata: Metadata = {
+  title: {
+    default: "My House Dashboard",
+    template: "%s · My House Dashboard",
+  },
+  description:
+    "A premium command centre for managing your home — bills, mortgage, savings, projects, purchases, inspiration, maintenance and documents.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "My House Dashboard",
+  },
+  icons: {
+    icon: "/icons/icon.svg",
+    apple: "/icons/icon.svg",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#10b981" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b1220" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans antialiased`}>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}

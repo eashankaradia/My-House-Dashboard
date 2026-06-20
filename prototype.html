@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>My House Dashboard — visual prototype</title>
+<style>
+  :root{
+    --bg:#f4f7fb; --card:#ffffff; --fg:#0f172a; --muted:#64748b;
+    --border:#e2e8f0; --primary:#10b981; --primary-soft:rgba(16,185,129,.12);
+    --warning:#f59e0b; --danger:#ef4444; --radius:14px;
+    --sky:#3b82f6; --violet:#8b5cf6; --amber:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+  /* sidebar */
+  .sidebar{background:#fff;border-right:1px solid var(--border);padding:18px 14px;position:sticky;top:0;height:100vh}
+  .brand{display:flex;align-items:center;gap:10px;padding:8px 10px 18px}
+  .logo{width:36px;height:36px;border-radius:11px;background:var(--primary);display:grid;place-items:center;color:#fff;font-weight:700;box-shadow:0 6px 16px rgba(16,185,129,.35)}
+  .nav a{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;color:var(--muted);font-size:14px;font-weight:500;margin-bottom:2px}
+  .nav a .ic{width:18px;height:18px;opacity:.85}
+  .nav a.active{background:var(--primary-soft);color:#0a8f66}
+  .nav a:hover:not(.active){background:#f1f5f9;color:var(--fg)}
+  /* topbar */
+  .topbar{height:64px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.8);backdrop-filter:blur(8px);
+    display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:5}
+  .avatar{width:36px;height:36px;border-radius:50%;background:var(--primary-soft);color:#0a8f66;display:grid;place-items:center;font-weight:600}
+  .iconbtn{width:38px;height:38px;border-radius:9px;border:1px solid var(--border);background:#fff;display:grid;place-items:center;color:var(--muted);cursor:pointer}
+  .main{padding:26px 28px 48px;max-width:1240px}
+  h1{font-size:28px;margin:0 0 4px;letter-spacing:-.02em}
+  .sub{color:var(--muted);margin:0 0 22px}
+  .sectiontag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);
+    background:var(--primary-soft);padding:5px 10px;border-radius:999px;margin:34px 0 14px}
+  /* cards */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  .grid{display:grid;gap:16px}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g6{grid-template-columns:repeat(6,1fr)}
+  .stat{padding:18px 20px;display:flex;justify-content:space-between;align-items:flex-start}
+  .stat .lbl{font-size:13px;color:var(--muted);font-weight:500;margin-bottom:6px}
+  .stat .val{font-size:24px;font-weight:650;letter-spacing:-.01em}
+  .stat .hint{font-size:12px;color:var(--muted);margin-top:3px}
+  .stat .badge-ic{width:40px;height:40px;border-radius:11px;background:var(--primary-soft);color:#0a8f66;display:grid;place-items:center}
+  .stat .badge-ic.muted{background:#f1f5f9;color:var(--muted)}
+  .stat .badge-ic.warn{background:rgba(245,158,11,.15);color:#b45309}
+  .ch{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 6px}
+  .ch h3{font-size:15px;margin:0}
+  .cb{padding:8px 20px 20px}
+  .tile{border:1px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;background:#fff}
+  .tile:hover{border-color:rgba(16,185,129,.4);background:#f6fdfb}
+  .tile .ti{width:40px;height:40px;border-radius:11px;background:var(--primary-soft);color:#0a8f66;display:grid;place-items:center}
+  .tile span{font-size:12px;font-weight:600}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;padding:9px 0;border-bottom:1px solid #f1f5f9}
+  .row:last-child{border-bottom:0}
+  .row .t{font-weight:550}
+  .row .s{font-size:12px;color:var(--muted)}
+  .badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px}
+  .b-soft{background:#f1f5f9;color:#475569}
+  .b-warn{background:rgba(245,158,11,.15);color:#b45309}
+  .b-danger{background:rgba(239,68,68,.12);color:#dc2626}
+  .b-pri{background:var(--primary-soft);color:#0a8f66}
+  .prog{height:9px;border-radius:999px;background:#eef2f7;overflow:hidden}
+  .prog > i{display:block;height:100%;border-radius:999px;background:var(--primary)}
+  .prog.sm{height:6px}
+  .btn{background:var(--primary);color:#fff;border:0;border-radius:10px;padding:9px 16px;font-weight:600;font-size:14px;cursor:pointer}
+  .btn.ghost{background:#fff;border:1px solid var(--border);color:var(--fg)}
+  .kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .col{background:#f8fafc;border:1px solid var(--border);border-radius:12px}
+  .col .colh{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:7px}
+  .pcard{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 11px;margin:8px;font-size:13px}
+  .pcard .pm{font-size:11px;color:var(--muted);margin-top:3px}
+  .pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:550}
+  .masonry{column-count:3;column-gap:14px}
+  .masonry .mi{break-inside:avoid;margin-bottom:14px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff}
+  .masonry .mi .ph{height:120px;background:linear-gradient(135deg,#d1fae5,#bfdbfe)}
+  .masonry .mi .ph.b{background:linear-gradient(135deg,#fde68a,#fca5a5)}
+  .masonry .mi .ph.c{background:linear-gradient(135deg,#ddd6fe,#bae6fd)}
+  .masonry .mi .mb{padding:11px 12px}
+  .masonry .mi .mt{font-weight:600;font-size:14px;margin-bottom:7px}
+  .note{font-size:12px;color:var(--muted);margin-top:6px}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;font-size:12px;color:var(--muted);margin-top:6px}
+  .legend i{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px}
+  .banner{background:linear-gradient(90deg,#ecfdf5,#eff6ff);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;font-size:13px;color:#475569;margin-bottom:8px}
+  @media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{display:none}.g4,.g3,.g6,.kanban{grid-template-columns:1fr 1fr}.masonry{column-count:2}}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">⌂</div><strong>My House</strong></div>
+    <nav class="nav">
+      <a class="active">▦&nbsp; Dashboard</a>
+      <a>🧾&nbsp; Bills &amp; Expenses</a>
+      <a>🏠&nbsp; Mortgage</a>
+      <a>🐷&nbsp; Savings Pots</a>
+      <a>🔨&nbsp; Projects</a>
+      <a>🛍️&nbsp; Future Purchases</a>
+      <a>💡&nbsp; Inspiration</a>
+      <a>🔧&nbsp; Maintenance</a>
+      <a>🗂️&nbsp; Documents</a>
+      <a>📊&nbsp; Analytics</a>
+    </nav>
+  </aside>
+
+  <div>
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <strong style="letter-spacing:-.01em">Dashboard</strong>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="iconbtn">☾</div>
+        <div class="avatar">EK</div>
+      </div>
+    </div>
+
+    <main class="main">
+      <div class="banner">📐 <strong>Static visual prototype</strong> — this single HTML file mirrors the real app's
+        layout, palette and components with example data. The live app starts empty and is powered by Supabase + Google login.</div>
+
+      <h1>Good evening, Eashan</h1>
+      <p class="sub">Here's how your home is doing today.</p>
+
+      <!-- QUICK ACTIONS -->
+      <div class="grid g6">
+        <div class="tile"><div class="ti">🧾</div><span>Add expense</span></div>
+        <div class="tile"><div class="ti">🔨</div><span>Add project</span></div>
+        <div class="tile"><div class="ti">🛍️</div><span>Add purchase</span></div>
+        <div class="tile"><div class="ti">💡</div><span>Save idea</span></div>
+        <div class="tile"><div class="ti">🔧</div><span>Add maintenance</span></div>
+        <div class="tile"><div class="ti">🗂️</div><span>Add document</span></div>
+      </div>
+
+      <!-- FINANCIAL SUMMARY -->
+      <div class="grid g4" style="margin-top:16px">
+        <div class="card stat"><div><div class="lbl">Monthly bills</div><div class="val">£2,140</div><div class="hint">£25,680/yr</div></div><div class="badge-ic">🧾</div></div>
+        <div class="card stat"><div><div class="lbl">Next bill due</div><div class="val">24 Jun</div><div class="hint">Octopus Energy · £180</div></div><div class="badge-ic muted">📅</div></div>
+        <div class="card stat"><div><div class="lbl">Savings balance</div><div class="val">£14,250</div><div class="hint">Target £900/mo</div></div><div class="badge-ic">🐷</div></div>
+        <div class="card stat"><div><div class="lbl">Ready to buy</div><div class="val">£2,480</div><div class="hint">3 items shortlisted</div></div><div class="badge-ic muted">🛍️</div></div>
+      </div>
+
+      <!-- ROW: savings / projects / reminders -->
+      <div class="grid g3" style="margin-top:16px">
+        <div class="card">
+          <div class="ch"><h3>Savings progress</h3><span style="color:var(--muted)">💰</span></div>
+          <div class="cb">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+              <strong style="font-size:22px">£14,250</strong><span class="s">of £32,000</span></div>
+            <div class="prog"><i style="width:45%"></i></div>
+            <div style="margin-top:14px">
+              <div class="s" style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Emergency Fund</span><span>78%</span></div>
+              <div class="prog sm"><i style="width:78%"></i></div>
+            </div>
+            <div style="margin-top:10px">
+              <div class="s" style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Home Improvements</span><span>40%</span></div>
+              <div class="prog sm"><i style="width:40%;background:var(--sky)"></i></div>
+            </div>
+            <div style="margin-top:10px">
+              <div class="s" style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Garden Project</span><span>22%</span></div>
+              <div class="prog sm"><i style="width:22%;background:var(--violet)"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ch"><h3>Open projects</h3><span style="color:var(--muted)">🔨</span></div>
+          <div class="cb">
+            <div class="row"><div><div class="t">Re-landscape garden</div><div class="s">Quoting</div></div><span class="badge b-danger">High</span></div>
+            <div class="row"><div><div class="t">New kitchen splashback</div><div class="s">Planning</div></div><span class="badge b-warn">Medium</span></div>
+            <div class="row"><div><div class="t">Loft storage build</div><div class="s">Idea</div></div><span class="badge b-soft">Low</span></div>
+            <div class="row"><div><div class="t">Repaint hallway</div><div class="s">Scheduled</div></div><span class="badge b-warn">Medium</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ch"><h3>Renewal reminders</h3><span style="color:var(--muted)">🔔</span></div>
+          <div class="cb">
+            <div class="row"><div><div class="t">Car insurance expires</div><div class="s">28 Jun 2026</div></div><span class="badge b-warn">8d</span></div>
+            <div class="row"><div><div class="t">Octopus Energy bill</div><div class="s">24 Jun 2026</div></div><span class="badge b-warn">4d</span></div>
+            <div class="row"><div><div class="t">Boiler warranty expires</div><div class="s">14 Jul 2026</div></div><span class="badge b-soft">24d</span></div>
+            <div class="row"><div><div class="t">Mortgage fixed term ends</div><div class="s">30 Sep 2026</div></div><span class="badge b-soft">102d</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BILLS / ANALYTICS -->
+      <div class="sectiontag">Bills &amp; Expenses</div>
+      <div class="grid g3">
+        <div class="card" style="grid-column:span 2">
+          <div class="ch"><h3>Spending by category</h3></div>
+          <div class="cb" style="display:flex;flex-direction:column;align-items:center">
+            <!-- donut -->
+            <svg width="220" height="220" viewBox="0 0 42 42">
+              <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#10b981" stroke-width="6" stroke-dasharray="38 62" stroke-dashoffset="25"></circle>
+              <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#3b82f6" stroke-width="6" stroke-dasharray="22 78" stroke-dashoffset="-13"></circle>
+              <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#8b5cf6" stroke-width="6" stroke-dasharray="16 84" stroke-dashoffset="-35"></circle>
+              <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#f59e0b" stroke-width="6" stroke-dasharray="14 86" stroke-dashoffset="-51"></circle>
+              <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#ef4444" stroke-width="6" stroke-dasharray="10 90" stroke-dashoffset="-65"></circle>
+            </svg>
+            <div class="legend">
+              <span><i style="background:#10b981"></i>Mortgage</span><span><i style="background:#3b82f6"></i>Utilities</span>
+              <span><i style="background:#8b5cf6"></i>Council Tax</span><span><i style="background:#f59e0b"></i>Insurance</span>
+              <span><i style="background:#ef4444"></i>Subscriptions</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch"><h3>Upcoming payments</h3></div>
+          <div class="cb">
+            <div class="row"><div><div class="t">Octopus Energy</div><div class="s">24 Jun</div></div><div style="text-align:right"><div class="t">£180</div><span class="badge b-warn">4d</span></div></div>
+            <div class="row"><div><div class="t">Council Tax</div><div class="s">28 Jun</div></div><div style="text-align:right"><div class="t">£195</div><span class="badge b-warn">8d</span></div></div>
+            <div class="row"><div><div class="t">Vodafone</div><div class="s">01 Jul</div></div><div style="text-align:right"><div class="t">£32</div></div></div>
+            <div class="row"><div><div class="t">Netflix</div><div class="s">03 Jul</div></div><div style="text-align:right"><div class="t">£15.99</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROJECTS KANBAN -->
+      <div class="sectiontag">Projects — board view</div>
+      <div class="kanban">
+        <div class="col"><div class="colh"><span><i class="dot" style="background:#94a3b8"></i>Idea <span style="color:var(--muted)">2</span></span></div>
+          <div class="pcard">Loft storage build<div class="pm">Storage · est. £1,200</div></div>
+          <div class="pcard">Smart thermostat<div class="pm">General · est. £220</div></div>
+        </div>
+        <div class="col"><div class="colh"><span><i class="dot" style="background:#0ea5e9"></i>Planning <span style="color:var(--muted)">1</span></span></div>
+          <div class="pcard">Kitchen splashback<div class="pm">Kitchen · est. £600</div></div>
+        </div>
+        <div class="col"><div class="colh"><span><i class="dot" style="background:#8b5cf6"></i>Quoting <span style="color:var(--muted)">1</span></span></div>
+          <div class="pcard">Re-landscape garden<div class="pm">Garden · est. £8,500</div></div>
+        </div>
+        <div class="col"><div class="colh"><span><i class="dot" style="background:#10b981"></i>Completed <span style="color:var(--muted)">1</span></span></div>
+          <div class="pcard">Repaint bedroom<div class="pm">Bedroom · £340 actual</div></div>
+        </div>
+      </div>
+
+      <!-- INSPIRATION MASONRY -->
+      <div class="sectiontag">Inspiration Hub — masonry</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <span class="pill">🗂️ Dream Kitchen <span class="badge b-soft">6</span></span>
+        <span class="pill">🗂️ Garden Ideas <span class="badge b-soft">9</span></span>
+        <span class="pill">🗂️ Storage Solutions <span class="badge b-soft">4</span></span>
+      </div>
+      <div class="masonry">
+        <div class="mi"><div class="ph"></div><div class="mb"><div class="mt">Dark green shaker units</div>
+          <span class="badge b-soft">Instagram</span> <span class="badge b-soft">Kitchen</span> <span class="badge b-danger">High</span>
+          <div class="note">#modern #oak</div></div></div>
+        <div class="mi"><div class="ph c"></div><div class="mb"><div class="mt">Built-in window seat + storage</div>
+          <span class="badge b-soft">Pinterest</span> <span class="badge b-soft">Living Room</span> <span class="badge b-warn">Medium</span></div></div>
+        <div class="mi"><div class="ph b"></div><div class="mb"><div class="mt">Raised garden beds layout</div>
+          <span class="badge b-soft">TikTok</span> <span class="badge b-soft">Garden</span> <span class="badge b-warn">Medium</span>
+          <div class="note">Convert → Project / Purchase</div></div></div>
+        <div class="mi"><div class="ph c"></div><div class="mb"><div class="mt">Boot room peg rail</div>
+          <span class="badge b-soft">Blog</span> <span class="badge b-soft">Hallway</span> <span class="badge b-soft">Low</span></div></div>
+        <div class="mi"><div class="ph"></div><div class="mb"><div class="mt">Pergola with climbing roses</div>
+          <span class="badge b-soft">YouTube</span> <span class="badge b-soft">Garden</span> <span class="badge b-danger">High</span></div></div>
+        <div class="mi"><div class="ph b"></div><div class="mb"><div class="mt">Fluted bathroom vanity</div>
+          <span class="badge b-soft">Instagram</span> <span class="badge b-soft">Bathroom</span> <span class="badge b-warn">Medium</span></div></div>
+      </div>
+
+      <!-- MORTGAGE -->
+      <div class="sectiontag">Mortgage — overpayment projection</div>
+      <div class="grid g3">
+        <div class="card stat"><div><div class="lbl">Equity</div><div class="val">£182,000</div><div class="hint">42% of value</div></div><div class="badge-ic">💷</div></div>
+        <div class="card stat"><div><div class="lbl">Loan-to-value</div><div class="val">58.0%</div><div class="hint">4.19% rate</div></div><div class="badge-ic muted">％</div></div>
+        <div class="card stat"><div><div class="lbl">Remaining term</div><div class="val">21y 4m</div><div class="hint">£1,420/mo</div></div><div class="badge-ic muted">📅</div></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="ch"><h3>Payoff projection — £200/mo overpayment saves 4y 2m &amp; £18,400 interest</h3></div>
+        <div class="cb">
+          <svg width="100%" height="220" viewBox="0 0 600 220" preserveAspectRatio="none">
+            <line x1="0" y1="180" x2="600" y2="180" stroke="#e2e8f0"/>
+            <line x1="0" y1="120" x2="600" y2="120" stroke="#eef2f7"/>
+            <line x1="0" y1="60" x2="600" y2="60" stroke="#eef2f7"/>
+            <polyline fill="none" stroke="#3b82f6" stroke-width="3" points="0,40 100,70 200,95 300,118 400,140 500,162 600,180"/>
+            <polyline fill="none" stroke="#10b981" stroke-width="3" points="0,40 100,62 200,82 300,104 400,128 500,158 600,180"/>
+          </svg>
+          <div class="legend"><span><i style="background:#3b82f6"></i>Current</span><span><i style="background:#10b981"></i>Overpaying £200/mo</span></div>
+        </div>
+      </div>
+
+      <p class="note" style="margin-top:30px">Light mode shown. The real app also ships a full dark theme, mobile drawer
+      navigation, toast notifications, loading/empty/error states, and Recharts-powered interactive charts.</p>
+    </main>
+  </div>
+</div>
+</body>
+</html>

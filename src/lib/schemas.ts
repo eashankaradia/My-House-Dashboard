@@ -1,0 +1,121 @@
+import { z } from "zod";
+import {
+  BILL_CATEGORIES,
+  DOCUMENT_CATEGORIES,
+  FREQUENCIES,
+  INSPIRATION_SOURCES,
+  INSPIRATION_STATUSES,
+  MAINTENANCE_FREQUENCIES,
+  PRIORITIES,
+  PROJECT_CATEGORIES,
+  PROJECT_STATUSES,
+  PURCHASE_CATEGORIES,
+  PURCHASE_STATUSES,
+} from "@/lib/constants";
+
+// Coerce empty strings from inputs to undefined → null on the server.
+const optionalString = z.string().trim().max(2000).optional().or(z.literal("")).transform((v) => v || undefined);
+const optionalDate = z.string().optional().or(z.literal("")).transform((v) => v || undefined);
+const money = z.coerce.number().min(0, "Must be 0 or more").max(1_000_000_000);
+
+export const billSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(120),
+  category: z.enum(BILL_CATEGORIES),
+  amount: money,
+  frequency: z.enum(FREQUENCIES),
+  due_date: optionalDate,
+  payment_account: optionalString,
+  is_fixed: z.coerce.boolean().default(true),
+  notes: optionalString,
+});
+export type BillInput = z.infer<typeof billSchema>;
+
+export const mortgageSchema = z.object({
+  property_name: z.string().trim().min(1, "Required").max(120).default("My Home"),
+  property_value: money,
+  mortgage_balance: money,
+  interest_rate: z.coerce.number().min(0).max(100),
+  monthly_payment: money,
+  term_months: z.coerce.number().int().min(0).max(600).optional(),
+  start_date: optionalDate,
+  fixed_term_end_date: optionalDate,
+  provider: optionalString,
+  notes: optionalString,
+});
+export type MortgageInput = z.infer<typeof mortgageSchema>;
+
+export const savingsPotSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(120),
+  target_amount: money,
+  current_amount: money,
+  monthly_contribution: money,
+  target_date: optionalDate,
+  color: z.string().default("emerald"),
+  notes: optionalString,
+});
+export type SavingsPotInput = z.infer<typeof savingsPotSchema>;
+
+export const projectSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(120),
+  category: z.enum(PROJECT_CATEGORIES),
+  description: optionalString,
+  estimated_cost: money,
+  actual_cost: money,
+  priority: z.enum(PRIORITIES),
+  status: z.enum(PROJECT_STATUSES),
+  target_completion_date: optionalDate,
+  notes: optionalString,
+});
+export type ProjectInput = z.infer<typeof projectSchema>;
+
+export const purchaseSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(120),
+  url: optionalString,
+  store: optionalString,
+  price: money,
+  category: z.enum(PURCHASE_CATEGORIES),
+  room: optionalString,
+  priority: z.enum(PRIORITIES),
+  status: z.enum(PURCHASE_STATUSES),
+  notes: optionalString,
+});
+export type PurchaseInput = z.infer<typeof purchaseSchema>;
+
+export const inspirationSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(160),
+  link: optionalString,
+  source: z.enum(INSPIRATION_SOURCES),
+  category: optionalString,
+  room: optionalString,
+  tags: optionalString, // comma-separated in the form; split on the server
+  notes: optionalString,
+  priority: z.enum(PRIORITIES),
+  status: z.enum(INSPIRATION_STATUSES),
+  image_url: optionalString,
+  collection_id: optionalString,
+});
+export type InspirationInput = z.infer<typeof inspirationSchema>;
+
+export const collectionSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(120),
+  description: optionalString,
+});
+export type CollectionInput = z.infer<typeof collectionSchema>;
+
+export const maintenanceSchema = z.object({
+  task: z.string().trim().min(1, "Task is required").max(160),
+  frequency: z.enum(MAINTENANCE_FREQUENCIES),
+  last_completed_date: optionalDate,
+  next_due_date: optionalDate,
+  cost: money,
+  notes: optionalString,
+});
+export type MaintenanceInput = z.infer<typeof maintenanceSchema>;
+
+export const documentSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(160),
+  category: z.enum(DOCUMENT_CATEGORIES),
+  expiry_date: optionalDate,
+  notes: optionalString,
+});
+export type DocumentInput = z.infer<typeof documentSchema>;
