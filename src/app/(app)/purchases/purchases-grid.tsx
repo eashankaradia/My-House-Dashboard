@@ -1,17 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  ChevronDown,
-  ChevronUp,
-  ExternalLink,
-  LayoutGrid,
-  Pencil,
-  Plus,
-  Rows3,
-  ShoppingBag,
-  Star,
-} from "lucide-react";
+import { LayoutGrid, Pencil, Plus, Rows3, ShoppingBag } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,13 +17,9 @@ import type { MemberMap } from "@/lib/household";
 import type { PurchaseOption, PurchaseWithOptions } from "@/lib/database.types";
 import { PurchaseForm } from "./purchase-form";
 import { OptionForm } from "./option-form";
-import {
-  chooseOption,
-  deleteOption,
-  deletePurchase,
-  moveOption,
-  updatePurchaseStatus,
-} from "./actions";
+import { OptionRow } from "./option-row";
+import { PurchaseDetailDialog } from "./purchase-detail";
+import { deletePurchase, updatePurchaseStatus } from "./actions";
 
 const SORTS = {
   priority: "Priority",
@@ -184,7 +170,9 @@ function CompactRow({ purchase, memberMap }: { purchase: PurchaseWithOptions; me
     <div className="flex items-center gap-3 px-4 py-2.5 text-sm">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="truncate font-medium">{purchase.name}</span>
+          <PurchaseDetailDialog purchase={purchase} memberMap={memberMap}>
+            <button className="truncate text-left font-medium hover:underline">{purchase.name}</button>
+          </PurchaseDetailDialog>
           <Badge variant={priorityVariant(purchase.priority)}>{purchase.priority}</Badge>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -226,7 +214,9 @@ function PurchaseCard({ purchase, memberMap }: { purchase: PurchaseWithOptions; 
       <CardContent className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="truncate font-medium">{purchase.name}</p>
+            <PurchaseDetailDialog purchase={purchase} memberMap={memberMap}>
+              <button className="truncate text-left font-medium hover:underline">{purchase.name}</button>
+            </PurchaseDetailDialog>
             <p className="text-xs text-muted-foreground">
               {purchase.sub_category ? `${purchase.category} · ${purchase.sub_category}` : purchase.category}
               {purchase.room ? ` · ${purchase.room}` : ""}
@@ -296,103 +286,3 @@ function PurchaseCard({ purchase, memberMap }: { purchase: PurchaseWithOptions; 
   );
 }
 
-function OptionRow({
-  purchaseId,
-  option,
-  isFirst,
-  isLast,
-}: {
-  purchaseId: string;
-  option: PurchaseOption;
-  isFirst: boolean;
-  isLast: boolean;
-}) {
-  const [pending, startTransition] = React.useTransition();
-  const { toast } = useToast();
-
-  function run(fn: () => Promise<{ error?: string } | void>) {
-    startTransition(async () => {
-      const res = await fn();
-      if (res?.error) toast({ variant: "destructive", title: "Couldn't update", description: res.error });
-    });
-  }
-
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-2 rounded-lg border p-2",
-        option.is_chosen ? "border-primary/40 bg-primary/5" : "bg-card",
-      )}
-    >
-      {/* Rank controls */}
-      <div className="flex flex-col">
-        <button
-          onClick={() => run(() => moveOption(purchaseId, option.id, "up"))}
-          disabled={pending || isFirst}
-          aria-label="Rank higher"
-          className="text-muted-foreground hover:text-foreground disabled:opacity-30"
-        >
-          <ChevronUp className="h-4 w-4" />
-        </button>
-        <button
-          onClick={() => run(() => moveOption(purchaseId, option.id, "down"))}
-          disabled={pending || isLast}
-          aria-label="Rank lower"
-          className="text-muted-foreground hover:text-foreground disabled:opacity-30"
-        >
-          <ChevronDown className="h-4 w-4" />
-        </button>
-      </div>
-
-      {option.image_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={option.image_url} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover" />
-      ) : null}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <p className="truncate text-sm font-medium">{option.name}</p>
-          {option.is_chosen ? <Badge variant="success">Picked</Badge> : null}
-        </div>
-        <p className="truncate text-xs text-muted-foreground">
-          {[option.store, option.notes].filter(Boolean).join(" · ") || " "}
-        </p>
-      </div>
-      <div className="flex shrink-0 flex-col items-end gap-0.5">
-        <span className="text-sm font-semibold">{formatCurrency(option.price)}</span>
-        {option.url ? (
-          <a
-            href={option.url}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-0.5 text-[11px] text-primary hover:underline"
-          >
-            View <ExternalLink className="h-3 w-3" />
-          </a>
-        ) : null}
-      </div>
-      <div className="flex shrink-0 items-center">
-        <button
-          onClick={() => run(() => chooseOption(purchaseId, option.id))}
-          disabled={pending}
-          aria-label={option.is_chosen ? "Chosen option" : "Pick this option"}
-          className={cn(
-            "rounded-md p-1.5 transition-colors hover:bg-accent",
-            option.is_chosen ? "text-amber-500" : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          <Star className={cn("h-4 w-4", option.is_chosen && "fill-amber-500")} />
-        </button>
-        <OptionForm
-          purchaseId={purchaseId}
-          option={option}
-          trigger={
-            <button className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Edit option">
-              <Pencil className="h-4 w-4" />
-            </button>
-          }
-        />
-        <ConfirmDelete itemLabel="option" action={deleteOption.bind(null, option.id)} />
-      </div>
-    </div>
-  );
-}

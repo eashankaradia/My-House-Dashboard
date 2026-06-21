@@ -220,6 +220,16 @@ export type HouseholdMember = {
   created_at: string;
 };
 
+export type ActivityLog = {
+  id: number;
+  user_id: string | null;
+  action: "insert" | "update" | "delete";
+  entity_type: string;
+  entity_id: string | null;
+  entity_label: string | null;
+  created_at: string;
+};
+
 export type ProjectWithTasks = Project & { tasks: ProjectTask[] };
 
 export type InspirationSource =
@@ -268,6 +278,7 @@ export type Database = {
       purchase_options: Row<PurchaseOption>;
       project_tasks: Row<ProjectTask>;
       household_members: Row<HouseholdMember>;
+      activity_log: Row<ActivityLog>;
       maintenance_tasks: Row<MaintenanceTask>;
       documents: Row<Document>;
     };

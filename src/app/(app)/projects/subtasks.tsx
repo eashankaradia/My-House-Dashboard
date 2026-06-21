@@ -1,0 +1,69 @@
+"use client";
+
+import * as React from "react";
+import { Plus, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import type { ProjectTask, ProjectWithTasks } from "@/lib/database.types";
+import { addTask, deleteTask, toggleTask } from "./actions";
+
+export function Subtasks({ project }: { project: ProjectWithTasks }) {
+  const [title, setTitle] = React.useState("");
+  const [pending, startTransition] = React.useTransition();
+  const { toast } = useToast();
+
+  function add(e: React.FormEvent) {
+    e.preventDefault();
+    const t = title.trim();
+    if (!t) return;
+    setTitle("");
+    startTransition(async () => {
+      const res = await addTask(project.id, t);
+      if (res?.error) toast({ variant: "destructive", title: "Couldn't add task", description: res.error });
+    });
+  }
+
+  function toggle(task: ProjectTask) {
+    startTransition(async () => {
+      await toggleTask(task.id, !task.is_done);
+    });
+  }
+
+  return (
+    <div className="space-y-1.5 rounded-lg bg-muted/30 p-2">
+      {project.tasks.length === 0 ? (
+        <p className="px-1 text-xs text-muted-foreground">No sub-tasks yet</p>
+      ) : (
+        project.tasks.map((task) => (
+          <div key={task.id} className="flex items-center gap-2">
+            <Checkbox checked={task.is_done} onCheckedChange={() => toggle(task)} className="h-4 w-4" />
+            <span className={cn("flex-1 text-sm", task.is_done && "text-muted-foreground line-through")}>
+              {task.title}
+            </span>
+            <button
+              onClick={() => startTransition(async () => void (await deleteTask(task.id)))}
+              className="text-muted-foreground hover:text-destructive"
+              aria-label="Delete task"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))
+      )}
+      <form onSubmit={add} className="flex items-center gap-2 pt-1">
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Add a sub-task…"
+          className="h-8 text-sm"
+        />
+        <Button type="submit" size="icon" variant="outline" className="h-8 w-8 shrink-0" disabled={pending}>
+          <Plus className="h-4 w-4" />
+        </Button>
+      </form>
+    </div>
+  );
+}
