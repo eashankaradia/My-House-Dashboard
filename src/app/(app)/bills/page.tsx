@@ -1,27 +1,29 @@
-import { AlertTriangle, CalendarClock, Pencil, Receipt, TrendingUp } from "lucide-react";
+import { AlertTriangle, CalendarClock, Receipt, TrendingUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
-import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { formatCurrency, formatDate, daysUntil, toAnnual, toMonthly } from "@/lib/utils";
-import { FREQUENCY_LABELS } from "@/lib/constants";
+import { getHouseholdMap } from "@/lib/household";
 import type { Bill } from "@/lib/database.types";
 import { BillForm } from "./bill-form";
-import { deleteBill } from "./actions";
+import { BillsList } from "./bills-list";
 
 export const metadata = { title: "Bills & Expenses" };
 
 export default async function BillsPage() {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("bills")
-    .select("*")
-    .order("category", { ascending: true })
-    .order("name", { ascending: true });
+  const [{ data }, memberMap] = await Promise.all([
+    supabase
+      .from("bills")
+      .select("*")
+      .order("category", { ascending: true })
+      .order("name", { ascending: true }),
+    getHouseholdMap(),
+  ]);
   const bills = (data ?? []) as Bill[];
 
   const monthlyTotal = bills.reduce((sum, b) => sum + toMonthly(b.amount, b.frequency), 0);
@@ -117,47 +119,7 @@ export default async function BillsPage() {
             </Card>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>All bills</CardTitle>
-            </CardHeader>
-            <CardContent className="divide-y">
-              {bills.map((bill) => (
-                <div key={bill.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate font-medium">{bill.name}</p>
-                      <Badge variant="secondary">{bill.category}</Badge>
-                      {!bill.is_fixed ? <Badge variant="outline">Variable</Badge> : null}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {FREQUENCY_LABELS[bill.frequency]}
-                      {bill.payment_account ? ` · ${bill.payment_account}` : ""}
-                      {bill.due_date ? ` · due ${formatDate(bill.due_date)}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="text-right">
-                      <p className="font-semibold">{formatCurrency(bill.amount)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatCurrency(toMonthly(bill.amount, bill.frequency))}/mo
-                      </p>
-                    </div>
-                    <BillForm
-                      bill={bill}
-                      trigger={
-                        <button className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground">
-                          <span className="sr-only">Edit</span>
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                      }
-                    />
-                    <ConfirmDelete itemLabel="bill" action={deleteBill.bind(null, bill.id)} />
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          <BillsList bills={bills} memberMap={memberMap} />
         </>
       )}
     </div>

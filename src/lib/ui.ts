@@ -20,6 +20,7 @@ export const STATUS_ACCENT: Record<string, string> = {
   Scheduled: "bg-amber-500",
   "In Progress": "bg-blue-500",
   Completed: "bg-emerald-500",
+  Interesting: "bg-slate-400",
   Considering: "bg-slate-400",
   Shortlisted: "bg-sky-500",
   "Ready To Buy": "bg-amber-500",

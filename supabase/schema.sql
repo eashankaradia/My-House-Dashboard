@@ -218,7 +218,7 @@ create table if not exists public.purchases (
   priority              text not null default 'Medium' check (priority in ('Low','Medium','High')),
   notes                 text,
   status                text not null default 'Considering'
-                          check (status in ('Considering','Shortlisted','Ready To Buy','Purchased')),
+                          check (status in ('Interesting','Considering','Shortlisted','Ready To Buy','Purchased')),
   image_url             text,
   purchased_at          date,
   source_inspiration_id uuid references public.inspiration (id) on delete set null,
@@ -241,9 +241,45 @@ create table if not exists public.purchase_options (
   image_url   text,
   notes       text,
   is_chosen   boolean not null default false,
+  rank        integer not null default 0,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
+
+-- ---------------------------------------------------------------------------
+-- project_tasks — sub-tasks / checklist items under a project.
+-- ---------------------------------------------------------------------------
+create table if not exists public.project_tasks (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users (id) on delete cascade,
+  project_id uuid not null references public.projects (id) on delete cascade,
+  title      text not null,
+  is_done    boolean not null default false,
+  position   integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists project_tasks_project_idx on public.project_tasks (project_id);
+
+-- ---------------------------------------------------------------------------
+-- household_members — shared access between members of the same home, while
+-- each row keeps its creator (user_id) for "Added by …" attribution.
+-- ---------------------------------------------------------------------------
+create table if not exists public.household_members (
+  user_id      uuid primary key references auth.users (id) on delete cascade,
+  display_name text not null,
+  created_at   timestamptz not null default now()
+);
+alter table public.household_members enable row level security;
+
+create or replace function public.is_household_member()
+returns boolean language sql security definer stable set search_path = public as $$
+  select exists (select 1 from public.household_members where user_id = auth.uid());
+$$;
+
+drop policy if exists "members_read" on public.household_members;
+create policy "members_read" on public.household_members for select
+  using (auth.uid() = user_id or public.is_household_member());
 
 -- ---------------------------------------------------------------------------
 -- maintenance_tasks — recurring home maintenance + reminders.
@@ -344,7 +380,8 @@ declare
 begin
   foreach t in array array[
     'profiles','bills','mortgages','savings_pots','collections','inspiration',
-    'projects','purchases','purchase_options','maintenance_tasks','documents','ai_conversations'
+    'projects','purchases','purchase_options','project_tasks','maintenance_tasks',
+    'documents','ai_conversations'
   ]
   loop
     execute format('drop trigger if exists set_updated_at on public.%I;', t);
@@ -356,7 +393,8 @@ end;
 $$;
 
 -- ===========================================================================
--- Row Level Security — owner-only access on every domain table.
+-- Row Level Security — a row is visible/editable by its creator OR any member
+-- of the household (so two people can share one home's data).
 -- ===========================================================================
 do $$
 declare
@@ -364,27 +402,34 @@ declare
 begin
   foreach t in array array[
     'bills','mortgages','savings_pots','collections','inspiration','projects',
-    'purchases','purchase_options','maintenance_tasks','documents','ai_conversations','ai_messages',
-    'ai_cost_estimates','ai_categorizations'
+    'purchases','purchase_options','project_tasks','maintenance_tasks','documents',
+    'ai_conversations','ai_messages','ai_cost_estimates','ai_categorizations'
   ]
   loop
     execute format('alter table public.%I enable row level security;', t);
 
     execute format('drop policy if exists "owner_select" on public.%I;', t);
+    execute format('drop policy if exists "hh_select" on public.%I;', t);
     execute format(
-      'create policy "owner_select" on public.%I for select using (auth.uid() = user_id);', t);
+      'create policy "hh_select" on public.%I for select
+         using (auth.uid() = user_id or public.is_household_member());', t);
 
     execute format('drop policy if exists "owner_insert" on public.%I;', t);
+    execute format('drop policy if exists "hh_insert" on public.%I;', t);
     execute format(
-      'create policy "owner_insert" on public.%I for insert with check (auth.uid() = user_id);', t);
+      'create policy "hh_insert" on public.%I for insert with check (auth.uid() = user_id);', t);
 
     execute format('drop policy if exists "owner_update" on public.%I;', t);
+    execute format('drop policy if exists "hh_update" on public.%I;', t);
     execute format(
-      'create policy "owner_update" on public.%I for update using (auth.uid() = user_id);', t);
+      'create policy "hh_update" on public.%I for update
+         using (auth.uid() = user_id or public.is_household_member());', t);
 
     execute format('drop policy if exists "owner_delete" on public.%I;', t);
+    execute format('drop policy if exists "hh_delete" on public.%I;', t);
     execute format(
-      'create policy "owner_delete" on public.%I for delete using (auth.uid() = user_id);', t);
+      'create policy "hh_delete" on public.%I for delete
+         using (auth.uid() = user_id or public.is_household_member());', t);
   end loop;
 end;
 $$;

@@ -1,22 +1,35 @@
 "use client";
 
 import * as React from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, Plus, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
+import { AddedBy } from "@/components/shared/added-by";
 import { BarChart } from "@/components/charts/bar-chart";
 import { useToast } from "@/hooks/use-toast";
 import { PROJECT_STATUSES } from "@/lib/constants";
 import { priorityVariant, STATUS_ACCENT } from "@/lib/ui";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import type { Project } from "@/lib/database.types";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import type { MemberMap } from "@/lib/household";
+import type { ProjectTask, ProjectWithTasks } from "@/lib/database.types";
 import { ProjectForm } from "./project-form";
-import { deleteProject, updateProjectStatus } from "./actions";
+import { addTask, deleteProject, deleteTask, toggleTask, updateProjectStatus } from "./actions";
 
-export function ProjectsViews({ projects }: { projects: Project[] }) {
+export function ProjectsViews({
+  projects,
+  memberMap,
+}: {
+  projects: ProjectWithTasks[];
+  memberMap: MemberMap;
+}) {
+  const [compact, setCompact] = React.useState(false);
+
   return (
     <Tabs defaultValue="kanban">
       <TabsList>
@@ -40,7 +53,7 @@ export function ProjectsViews({ projects }: { projects: Project[] }) {
                 </div>
                 <div className="space-y-2 p-2">
                   {items.map((project) => (
-                    <ProjectCard key={project.id} project={project} compact />
+                    <ProjectCard key={project.id} project={project} memberMap={memberMap} compact />
                   ))}
                   {items.length === 0 ? (
                     <p className="px-2 py-6 text-center text-xs text-muted-foreground">Nothing here</p>
@@ -53,11 +66,71 @@ export function ProjectsViews({ projects }: { projects: Project[] }) {
       </TabsContent>
 
       <TabsContent value="list">
-        <div className="space-y-2">
-          {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
+        <div className="mb-3 flex items-center justify-end gap-2">
+          <span className="text-xs text-muted-foreground">View</span>
+          <div className="flex items-center rounded-lg border p-0.5 text-xs">
+            <button
+              onClick={() => setCompact(false)}
+              className={cn("rounded-md px-2 py-1", !compact && "bg-accent")}
+            >
+              Detailed
+            </button>
+            <button
+              onClick={() => setCompact(true)}
+              className={cn("rounded-md px-2 py-1", compact && "bg-accent")}
+            >
+              Compact
+            </button>
+          </div>
         </div>
+
+        {compact ? (
+          <Card>
+            <CardContent className="divide-y p-0">
+              {projects.map((project) => {
+                const done = project.tasks.filter((t) => t.is_done).length;
+                return (
+                  <div key={project.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                    <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATUS_ACCENT[project.status]}`} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate font-medium">{project.name}</span>
+                        <Badge variant={priorityVariant(project.priority)}>{project.priority}</Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>
+                          {project.status} · {project.category}
+                          {project.tasks.length ? ` · ${done}/${project.tasks.length} tasks` : ""}
+                        </span>
+                        <AddedBy name={memberMap[project.user_id]} />
+                      </div>
+                    </div>
+                    <span className="shrink-0 font-medium">
+                      {formatCurrency(project.actual_cost || project.estimated_cost)}
+                    </span>
+                    <div className="flex shrink-0 items-center">
+                      <ProjectForm
+                        project={project}
+                        trigger={
+                          <button className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Edit">
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        }
+                      />
+                      <ConfirmDelete itemLabel="project" action={deleteProject.bind(null, project.id)} />
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {projects.map((project) => (
+              <ProjectCard key={project.id} project={project} memberMap={memberMap} />
+            ))}
+          </div>
+        )}
       </TabsContent>
 
       <TabsContent value="costs">
@@ -67,9 +140,18 @@ export function ProjectsViews({ projects }: { projects: Project[] }) {
   );
 }
 
-function ProjectCard({ project, compact = false }: { project: Project; compact?: boolean }) {
+function ProjectCard({
+  project,
+  memberMap,
+  compact = false,
+}: {
+  project: ProjectWithTasks;
+  memberMap: MemberMap;
+  compact?: boolean;
+}) {
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
+  const done = project.tasks.filter((t) => t.is_done).length;
 
   function move(status: string) {
     startTransition(async () => {
@@ -80,43 +162,48 @@ function ProjectCard({ project, compact = false }: { project: Project; compact?:
 
   return (
     <Card className="shadow-none">
-      <CardContent className={compact ? "space-y-2 p-3" : "flex flex-wrap items-center gap-3 p-4"}>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <p className="truncate font-medium">{project.name}</p>
-            <Badge variant={priorityVariant(project.priority)}>{project.priority}</Badge>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {project.category}
-            {project.target_completion_date ? ` · ${formatDate(project.target_completion_date)}` : ""}
-          </p>
-          {!compact && project.description ? (
-            <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{project.description}</p>
-          ) : null}
-        </div>
-
-        <div className={compact ? "flex items-center justify-between gap-2" : "flex items-center gap-3"}>
-          <div className="text-right text-sm">
-            <p className="font-medium">{formatCurrency(project.actual_cost || project.estimated_cost)}</p>
+      <CardContent className={compact ? "space-y-2 p-3" : "space-y-3 p-4"}>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <p className="truncate font-medium">{project.name}</p>
+              <Badge variant={priorityVariant(project.priority)}>{project.priority}</Badge>
+            </div>
             <p className="text-xs text-muted-foreground">
-              {project.actual_cost ? "actual" : "est."}
+              {project.category}
+              {project.target_completion_date ? ` · ${formatDate(project.target_completion_date)}` : ""}
+              {project.tasks.length ? ` · ${done}/${project.tasks.length} tasks` : ""}
             </p>
           </div>
-          <NativeSelect
-            value={project.status}
-            disabled={pending}
-            onChange={(e) => move(e.target.value)}
-            className="h-8 w-[130px] text-xs"
-          >
-            {PROJECT_STATUSES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </NativeSelect>
-          <div className="flex items-center">
+          <div className="text-right text-sm">
+            <p className="font-medium">{formatCurrency(project.actual_cost || project.estimated_cost)}</p>
+            <p className="text-xs text-muted-foreground">{project.actual_cost ? "actual" : "est."}</p>
+          </div>
+        </div>
+
+        {!compact && project.description ? (
+          <p className="line-clamp-2 text-sm text-muted-foreground">{project.description}</p>
+        ) : null}
+
+        {!compact ? <Subtasks project={project} /> : null}
+
+        <div className="flex items-center justify-between gap-2 border-t pt-2">
+          <AddedBy name={memberMap[project.user_id]} />
+          <div className="flex items-center gap-2">
+            <NativeSelect
+              value={project.status}
+              disabled={pending}
+              onChange={(e) => move(e.target.value)}
+              className="h-8 w-[130px] text-xs"
+            >
+              {PROJECT_STATUSES.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </NativeSelect>
             <ProjectForm
               project={project}
               trigger={
-                <button className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+                <button className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Edit">
                   <Pencil className="h-4 w-4" />
                 </button>
               }
@@ -129,7 +216,69 @@ function ProjectCard({ project, compact = false }: { project: Project; compact?:
   );
 }
 
-function CostSummary({ projects }: { projects: Project[] }) {
+function Subtasks({ project }: { project: ProjectWithTasks }) {
+  const [title, setTitle] = React.useState("");
+  const [pending, startTransition] = React.useTransition();
+  const { toast } = useToast();
+
+  function add(e: React.FormEvent) {
+    e.preventDefault();
+    const t = title.trim();
+    if (!t) return;
+    setTitle("");
+    startTransition(async () => {
+      const res = await addTask(project.id, t);
+      if (res?.error) toast({ variant: "destructive", title: "Couldn't add task", description: res.error });
+    });
+  }
+
+  function toggle(task: ProjectTask) {
+    startTransition(async () => {
+      await toggleTask(task.id, !task.is_done);
+    });
+  }
+
+  return (
+    <div className="space-y-1.5 rounded-lg bg-muted/30 p-2">
+      {project.tasks.length === 0 ? (
+        <p className="px-1 text-xs text-muted-foreground">No sub-tasks yet</p>
+      ) : (
+        project.tasks.map((task) => (
+          <div key={task.id} className="flex items-center gap-2">
+            <Checkbox
+              checked={task.is_done}
+              onCheckedChange={() => toggle(task)}
+              className="h-4 w-4"
+            />
+            <span className={cn("flex-1 text-sm", task.is_done && "text-muted-foreground line-through")}>
+              {task.title}
+            </span>
+            <button
+              onClick={() => startTransition(async () => void (await deleteTask(task.id)))}
+              className="text-muted-foreground hover:text-destructive"
+              aria-label="Delete task"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))
+      )}
+      <form onSubmit={add} className="flex items-center gap-2 pt-1">
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Add a sub-task…"
+          className="h-8 text-sm"
+        />
+        <Button type="submit" size="icon" variant="outline" className="h-8 w-8 shrink-0" disabled={pending}>
+          <Plus className="h-4 w-4" />
+        </Button>
+      </form>
+    </div>
+  );
+}
+
+function CostSummary({ projects }: { projects: ProjectWithTasks[] }) {
   const totalEst = projects.reduce((s, p) => s + Number(p.estimated_cost), 0);
   const totalActual = projects.reduce((s, p) => s + Number(p.actual_cost), 0);
 

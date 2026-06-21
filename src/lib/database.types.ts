@@ -125,6 +125,7 @@ export type PurchaseOption = Timestamps & {
   image_url: string | null;
   notes: string | null;
   is_chosen: boolean;
+  rank: number;
 };
 
 /** A purchase with its compared options attached (used in list views). */
@@ -197,7 +198,29 @@ export type PurchaseCategory =
   | "Storage"
   | "Other";
 
-export type PurchaseStatus = "Considering" | "Shortlisted" | "Ready To Buy" | "Purchased";
+export type PurchaseStatus =
+  | "Interesting"
+  | "Considering"
+  | "Shortlisted"
+  | "Ready To Buy"
+  | "Purchased";
+
+export type ProjectTask = Timestamps & {
+  id: string;
+  user_id: string;
+  project_id: string;
+  title: string;
+  is_done: boolean;
+  position: number;
+};
+
+export type HouseholdMember = {
+  user_id: string;
+  display_name: string;
+  created_at: string;
+};
+
+export type ProjectWithTasks = Project & { tasks: ProjectTask[] };
 
 export type InspirationSource =
   | "Instagram"
@@ -243,6 +266,8 @@ export type Database = {
       projects: Row<Project>;
       purchases: Row<Purchase>;
       purchase_options: Row<PurchaseOption>;
+      project_tasks: Row<ProjectTask>;
+      household_members: Row<HouseholdMember>;
       maintenance_tasks: Row<MaintenanceTask>;
       documents: Row<Document>;
     };

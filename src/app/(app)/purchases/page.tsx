@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
 import { formatCurrency } from "@/lib/utils";
+import { getHouseholdMap } from "@/lib/household";
 import type { Purchase, PurchaseOption, PurchaseWithOptions } from "@/lib/database.types";
 import { PurchaseForm } from "./purchase-form";
 import { PurchasesGrid } from "./purchases-grid";
@@ -20,9 +21,10 @@ function effectivePrice(p: PurchaseWithOptions): number {
 
 export default async function PurchasesPage() {
   const supabase = await createClient();
-  const [{ data: purchaseData }, { data: optionData }] = await Promise.all([
+  const [{ data: purchaseData }, { data: optionData }, memberMap] = await Promise.all([
     supabase.from("purchases").select("*").order("created_at", { ascending: false }),
-    supabase.from("purchase_options").select("*").order("price", { ascending: true }),
+    supabase.from("purchase_options").select("*").order("rank", { ascending: true }),
+    getHouseholdMap(),
   ]);
 
   const options = (optionData ?? []) as PurchaseOption[];
@@ -57,7 +59,7 @@ export default async function PurchasesPage() {
             <StatCard label="Wishlist value" value={formatCurrency(wishlistValue)} icon={Wallet} accent="muted" />
             <StatCard label="Purchased" value={formatCurrency(purchasedValue)} hint={`${purchased.length} bought`} icon={CheckCircle2} />
           </div>
-          <PurchasesGrid purchases={purchases} />
+          <PurchasesGrid purchases={purchases} memberMap={memberMap} />
         </>
       )}
     </div>

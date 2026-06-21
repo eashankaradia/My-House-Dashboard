@@ -126,6 +126,38 @@ export async function deleteOption(id: string): Promise<ActionResult> {
   return {};
 }
 
+/** Move an option up or down the preference ranking and renumber 0..n. */
+export async function moveOption(
+  purchaseId: string,
+  optionId: string,
+  direction: "up" | "down",
+): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { data, error: readErr } = await supabase
+    .from("purchase_options")
+    .select("id, rank, price")
+    .eq("purchase_id", purchaseId);
+  if (readErr) return { error: readErr.message };
+
+  const ordered = (data ?? [])
+    .slice()
+    .sort((a, b) => a.rank - b.rank || Number(a.price) - Number(b.price));
+  const idx = ordered.findIndex((o) => o.id === optionId);
+  if (idx === -1) return { error: "Option not found" };
+  const swapWith = direction === "up" ? idx - 1 : idx + 1;
+  if (swapWith < 0 || swapWith >= ordered.length) return {};
+
+  [ordered[idx], ordered[swapWith]] = [ordered[swapWith], ordered[idx]];
+
+  // Persist sequential ranks.
+  for (let i = 0; i < ordered.length; i++) {
+    const { error } = await supabase.from("purchase_options").update({ rank: i }).eq("id", ordered[i].id);
+    if (error) return { error: error.message };
+  }
+  revalidatePath("/purchases");
+  return {};
+}
+
 /** Mark one option as the chosen one (and clear the others on the same item). */
 export async function chooseOption(purchaseId: string, optionId: string): Promise<ActionResult> {
   const { supabase } = await getActionContext();

@@ -56,7 +56,9 @@ export const PURCHASE_CATEGORIES = [
   "Furniture", "Appliances", "Technology", "Garden", "Decor", "Tools", "Storage", "Other",
 ] as const;
 
-export const PURCHASE_STATUSES = ["Considering", "Shortlisted", "Ready To Buy", "Purchased"] as const;
+export const PURCHASE_STATUSES = [
+  "Interesting", "Considering", "Shortlisted", "Ready To Buy", "Purchased",
+] as const;
 
 /**
  * Prefilled sub-category suggestions per category. These power a datalist on the

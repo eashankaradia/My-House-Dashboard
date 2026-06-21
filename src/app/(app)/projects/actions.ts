@@ -64,3 +64,33 @@ export async function deleteProject(id: string): Promise<ActionResult> {
   revalidatePath("/dashboard");
   return {};
 }
+
+// --- Project sub-tasks -----------------------------------------------------
+
+export async function addTask(projectId: string, title: string): Promise<ActionResult> {
+  const clean = title.trim();
+  if (!clean) return { error: "Task can't be empty" };
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase
+    .from("project_tasks")
+    .insert({ user_id: user.id, project_id: projectId, title: clean });
+  if (error) return { error: error.message };
+  revalidatePath("/projects");
+  return {};
+}
+
+export async function toggleTask(id: string, isDone: boolean): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("project_tasks").update({ is_done: isDone }).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/projects");
+  return {};
+}
+
+export async function deleteTask(id: string): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("project_tasks").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/projects");
+  return {};
+}
