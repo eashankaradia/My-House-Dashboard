@@ -1,13 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Pencil, Plus, X } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
@@ -17,9 +14,10 @@ import { PROJECT_STATUSES } from "@/lib/constants";
 import { priorityVariant, STATUS_ACCENT } from "@/lib/ui";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
-import type { ProjectTask, ProjectWithTasks } from "@/lib/database.types";
+import type { ProjectWithTasks } from "@/lib/database.types";
 import { ProjectForm } from "./project-form";
-import { addTask, deleteProject, deleteTask, toggleTask, updateProjectStatus } from "./actions";
+import { ProjectDetailDialog } from "./project-detail";
+import { deleteProject, updateProjectStatus } from "./actions";
 
 export function ProjectsViews({
   projects,
@@ -94,7 +92,9 @@ export function ProjectsViews({
                     <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATUS_ACCENT[project.status]}`} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="truncate font-medium">{project.name}</span>
+                        <ProjectDetailDialog project={project} memberMap={memberMap}>
+                          <button className="truncate text-left font-medium hover:underline">{project.name}</button>
+                        </ProjectDetailDialog>
                         <Badge variant={priorityVariant(project.priority)}>{project.priority}</Badge>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -166,7 +166,9 @@ function ProjectCard({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <p className="truncate font-medium">{project.name}</p>
+              <ProjectDetailDialog project={project} memberMap={memberMap}>
+                <button className="truncate text-left font-medium hover:underline">{project.name}</button>
+              </ProjectDetailDialog>
               <Badge variant={priorityVariant(project.priority)}>{project.priority}</Badge>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -184,8 +186,6 @@ function ProjectCard({
         {!compact && project.description ? (
           <p className="line-clamp-2 text-sm text-muted-foreground">{project.description}</p>
         ) : null}
-
-        {!compact ? <Subtasks project={project} /> : null}
 
         <div className="flex items-center justify-between gap-2 border-t pt-2">
           <AddedBy name={memberMap[project.user_id]} />
@@ -213,68 +213,6 @@ function ProjectCard({
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function Subtasks({ project }: { project: ProjectWithTasks }) {
-  const [title, setTitle] = React.useState("");
-  const [pending, startTransition] = React.useTransition();
-  const { toast } = useToast();
-
-  function add(e: React.FormEvent) {
-    e.preventDefault();
-    const t = title.trim();
-    if (!t) return;
-    setTitle("");
-    startTransition(async () => {
-      const res = await addTask(project.id, t);
-      if (res?.error) toast({ variant: "destructive", title: "Couldn't add task", description: res.error });
-    });
-  }
-
-  function toggle(task: ProjectTask) {
-    startTransition(async () => {
-      await toggleTask(task.id, !task.is_done);
-    });
-  }
-
-  return (
-    <div className="space-y-1.5 rounded-lg bg-muted/30 p-2">
-      {project.tasks.length === 0 ? (
-        <p className="px-1 text-xs text-muted-foreground">No sub-tasks yet</p>
-      ) : (
-        project.tasks.map((task) => (
-          <div key={task.id} className="flex items-center gap-2">
-            <Checkbox
-              checked={task.is_done}
-              onCheckedChange={() => toggle(task)}
-              className="h-4 w-4"
-            />
-            <span className={cn("flex-1 text-sm", task.is_done && "text-muted-foreground line-through")}>
-              {task.title}
-            </span>
-            <button
-              onClick={() => startTransition(async () => void (await deleteTask(task.id)))}
-              className="text-muted-foreground hover:text-destructive"
-              aria-label="Delete task"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ))
-      )}
-      <form onSubmit={add} className="flex items-center gap-2 pt-1">
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Add a sub-task…"
-          className="h-8 text-sm"
-        />
-        <Button type="submit" size="icon" variant="outline" className="h-8 w-8 shrink-0" disabled={pending}>
-          <Plus className="h-4 w-4" />
-        </Button>
-      </form>
-    </div>
   );
 }
 

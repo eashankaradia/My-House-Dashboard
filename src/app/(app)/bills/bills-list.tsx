@@ -11,6 +11,7 @@ import { cn, formatCurrency, formatDate, toMonthly } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { Bill } from "@/lib/database.types";
 import { BillForm } from "./bill-form";
+import { BillDetailDialog } from "./bill-detail";
 import { deleteBill } from "./actions";
 
 export function BillsList({ bills, memberMap }: { bills: Bill[]; memberMap: MemberMap }) {
@@ -33,7 +34,9 @@ export function BillsList({ bills, memberMap }: { bills: Bill[]; memberMap: Memb
         {bills.map((bill) =>
           compact ? (
             <div key={bill.id} className="flex items-center gap-3 py-2 text-sm first:pt-0 last:pb-0">
-              <span className="min-w-0 flex-1 truncate font-medium">{bill.name}</span>
+              <BillDetailDialog bill={bill} memberMap={memberMap}>
+                <button className="min-w-0 flex-1 truncate text-left font-medium hover:underline">{bill.name}</button>
+              </BillDetailDialog>
               <Badge variant="secondary">{bill.category}</Badge>
               {bill.due_date ? (
                 <span className="hidden w-20 shrink-0 text-right text-xs text-muted-foreground sm:block">
@@ -60,7 +63,9 @@ export function BillsList({ bills, memberMap }: { bills: Bill[]; memberMap: Memb
             <div key={bill.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="truncate font-medium">{bill.name}</p>
+                  <BillDetailDialog bill={bill} memberMap={memberMap}>
+                    <button className="truncate text-left font-medium hover:underline">{bill.name}</button>
+                  </BillDetailDialog>
                   <Badge variant="secondary">{bill.category}</Badge>
                   {!bill.is_fixed ? <Badge variant="outline">Variable</Badge> : null}
                 </div>

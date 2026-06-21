@@ -2,15 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV_ITEMS } from "@/lib/constants";
+import { ALWAYS_VISIBLE, NAV_ITEMS } from "@/lib/constants";
+import { useHiddenTabs } from "@/hooks/use-hidden-tabs";
 import { cn } from "@/lib/utils";
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const { hidden } = useHiddenTabs();
+  const items = NAV_ITEMS.filter(
+    (i) => ALWAYS_VISIBLE.includes(i.href as (typeof ALWAYS_VISIBLE)[number]) || !hidden.includes(i.href),
+  );
 
   return (
     <nav className="flex flex-1 flex-col gap-1 px-3 py-2">
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
         const Icon = item.icon;
         return (

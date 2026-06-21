@@ -9,6 +9,8 @@ import {
   Wrench,
   FolderArchive,
   BarChart3,
+  CalendarDays,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 
@@ -30,8 +32,13 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Ideas & link collections" },
   { title: "Maintenance", href: "/maintenance", icon: Wrench, description: "Reminders & servicing" },
   { title: "Documents", href: "/documents", icon: FolderArchive, description: "Warranties, insurance & more" },
+  { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance" },
   { title: "Analytics", href: "/analytics", icon: BarChart3, description: "Trends & breakdowns" },
+  { title: "Settings", href: "/settings", icon: Settings, description: "Tabs, household & change log" },
 ];
+
+/** Tabs that can never be hidden from the sidebar. */
+export const ALWAYS_VISIBLE = ["/dashboard", "/settings"] as const;
 
 // --- Option lists shared by forms (kept in sync with schema CHECK lists) -----
 
