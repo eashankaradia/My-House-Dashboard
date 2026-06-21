@@ -68,9 +68,17 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
   const selectedCategory = watch("category");
   const subSuggestions = PURCHASE_SUBCATEGORIES[selectedCategory] ?? [];
 
+  // "found" = a specific product (capture its price/link here); "compare" = a
+  // type of thing you'll add options to compare later.
+  const [mode, setMode] = React.useState<"found" | "compare">(
+    editing && Number(purchase?.price) === 0 ? "compare" : "found",
+  );
+
   function onSubmit(values: PurchaseInput) {
+    const payload =
+      mode === "compare" ? { ...values, price: 0, url: "", store: "" } : values;
     startTransition(async () => {
-      const result = editing ? await updatePurchase(purchase!.id, values) : await createPurchase(values);
+      const result = editing ? await updatePurchase(purchase!.id, payload) : await createPurchase(payload);
       if (result?.error) {
         toast({ variant: "destructive", title: "Something went wrong", description: result.error });
         return;
@@ -96,20 +104,66 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
           <DialogDescription>Something you&apos;d love for the home — now or later.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Field label="Item name" htmlFor="name" required error={errors.name?.message}>
-            <Input id="name" placeholder="e.g. Corner sofa" {...register("name")} />
-          </Field>
-          <Field label="Link (URL)" htmlFor="url">
-            <Input id="url" type="url" placeholder="https://…" {...register("url")} />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Store" htmlFor="store">
-              <Input id="store" placeholder="e.g. IKEA" {...register("store")} />
-            </Field>
-            <Field label="Price (£)" htmlFor="price" error={errors.price?.message}>
-              <Input id="price" type="number" step="0.01" {...register("price")} />
-            </Field>
+          {/* Mode selector */}
+          <div className="grid grid-cols-2 gap-2 rounded-lg border bg-muted/40 p-1">
+            <button
+              type="button"
+              onClick={() => setMode("found")}
+              className={`rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                mode === "found" ? "bg-background shadow-sm" : "text-muted-foreground"
+              }`}
+            >
+              A specific item I&apos;ve found
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("compare")}
+              className={`rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                mode === "compare" ? "bg-background shadow-sm" : "text-muted-foreground"
+              }`}
+            >
+              A thing to compare options for
+            </button>
           </div>
+
+          <Field
+            label={mode === "compare" ? "What do you want?" : "Item name"}
+            htmlFor="name"
+            required
+            error={errors.name?.message}
+            tooltip={
+              mode === "compare"
+                ? "The thing you want (e.g. 'New sofa'). You'll add options to compare after saving."
+                : "The specific product you've found."
+            }
+          >
+            <Input
+              id="name"
+              placeholder={mode === "compare" ? "e.g. New sofa" : "e.g. DFS Corner sofa"}
+              {...register("name")}
+            />
+          </Field>
+
+          {mode === "found" ? (
+            <>
+              <Field label="Link (URL)" htmlFor="url">
+                <Input id="url" type="url" placeholder="https://…" {...register("url")} />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Store" htmlFor="store">
+                  <Input id="store" placeholder="e.g. IKEA" {...register("store")} />
+                </Field>
+                <Field label="Price (£)" htmlFor="price" error={errors.price?.message}>
+                  <Input id="price" type="number" step="0.01" {...register("price")} />
+                </Field>
+              </div>
+            </>
+          ) : (
+            <p className="rounded-lg border border-dashed bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+              After saving, use <span className="font-medium text-foreground">Add option</span> on the
+              card to add products to compare — each with its own price, link and photo.
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <Field label="Category" tooltip="The broad type of item. Choosing a category updates the sub-category suggestions below.">
               <NativeSelect {...register("category")}>

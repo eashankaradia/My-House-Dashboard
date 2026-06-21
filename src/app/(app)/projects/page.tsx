@@ -4,7 +4,8 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
 import { formatCurrency } from "@/lib/utils";
-import type { Project } from "@/lib/database.types";
+import { getHouseholdMap } from "@/lib/household";
+import type { Project, ProjectTask, ProjectWithTasks } from "@/lib/database.types";
 import { ProjectForm } from "./project-form";
 import { ProjectsViews } from "./projects-views";
 
@@ -12,11 +13,16 @@ export const metadata = { title: "Projects" };
 
 export default async function ProjectsPage() {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("projects")
-    .select("*")
-    .order("created_at", { ascending: false });
-  const projects = (data ?? []) as Project[];
+  const [{ data }, { data: taskData }, memberMap] = await Promise.all([
+    supabase.from("projects").select("*").order("created_at", { ascending: false }),
+    supabase.from("project_tasks").select("*").order("created_at", { ascending: true }),
+    getHouseholdMap(),
+  ]);
+  const tasks = (taskData ?? []) as ProjectTask[];
+  const projects: ProjectWithTasks[] = ((data ?? []) as Project[]).map((p) => ({
+    ...p,
+    tasks: tasks.filter((t) => t.project_id === p.id),
+  }));
 
   const active = projects.filter((p) => p.status !== "Completed");
   const totalEstimated = projects.reduce((s, p) => s + Number(p.estimated_cost), 0);
@@ -43,7 +49,7 @@ export default async function ProjectsPage() {
             <StatCard label="Estimated value" value={formatCurrency(totalEstimated)} accent="muted" />
             <StatCard label="Completed" value={String(completed)} accent="muted" />
           </div>
-          <ProjectsViews projects={projects} />
+          <ProjectsViews projects={projects} memberMap={memberMap} />
         </>
       )}
     </div>

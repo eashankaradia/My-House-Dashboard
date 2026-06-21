@@ -3,20 +3,23 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { daysUntil, formatCurrency } from "@/lib/utils";
+import { getHouseholdMap } from "@/lib/household";
 import type { MaintenanceTask } from "@/lib/database.types";
 import { MaintenanceForm } from "./maintenance-form";
-import { MaintenanceRow } from "./maintenance-row";
+import { MaintenanceList } from "./maintenance-list";
 
 export const metadata = { title: "Maintenance" };
 
 export default async function MaintenancePage() {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("maintenance_tasks")
-    .select("*")
-    .order("next_due_date", { ascending: true, nullsFirst: false });
+  const [{ data }, memberMap] = await Promise.all([
+    supabase
+      .from("maintenance_tasks")
+      .select("*")
+      .order("next_due_date", { ascending: true, nullsFirst: false }),
+    getHouseholdMap(),
+  ]);
   const tasks = (data ?? []) as MaintenanceTask[];
 
   const overdue = tasks.filter((t) => {
@@ -51,16 +54,7 @@ export default async function MaintenancePage() {
             <StatCard label="Annual upkeep cost" value={formatCurrency(annualCost)} icon={Wrench} />
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Schedule</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {tasks.map((task) => (
-                <MaintenanceRow key={task.id} task={task} />
-              ))}
-            </CardContent>
-          </Card>
+          <MaintenanceList tasks={tasks} memberMap={memberMap} />
         </>
       )}
     </div>
