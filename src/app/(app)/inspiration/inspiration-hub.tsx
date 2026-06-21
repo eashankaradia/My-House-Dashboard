@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { priorityVariant } from "@/lib/ui";
 import type { Collection, Inspiration } from "@/lib/database.types";
 import { InspirationForm } from "./inspiration-form";
+import { InspirationDetailDialog } from "./inspiration-detail";
 import { convertInspiration, deleteInspiration } from "./actions";
 
 type View = "masonry" | "cards" | "list";
@@ -226,7 +227,9 @@ function InspirationCard({
       ) : null}
       <CardContent className="space-y-2 p-4">
         <div className="flex items-start justify-between gap-2">
-          <p className="font-medium leading-snug">{item.title}</p>
+          <InspirationDetailDialog item={item} collections={collections}>
+            <button className="text-left font-medium leading-snug hover:underline">{item.title}</button>
+          </InspirationDetailDialog>
           <ActionsMenu item={item} collections={collections} />
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -267,7 +270,9 @@ function InspirationRow({ item, collections }: { item: Inspiration; collections:
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{item.title}</p>
+          <InspirationDetailDialog item={item} collections={collections}>
+            <button className="block w-full truncate text-left font-medium hover:underline">{item.title}</button>
+          </InspirationDetailDialog>
           <p className="truncate text-xs text-muted-foreground">
             {[item.source, item.category, item.room].filter(Boolean).join(" · ")}
           </p>
