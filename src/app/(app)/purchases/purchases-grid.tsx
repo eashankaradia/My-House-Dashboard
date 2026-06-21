@@ -9,6 +9,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AddedBy } from "@/components/shared/added-by";
+import { ExportButton } from "@/components/shared/export-button";
 import { useToast } from "@/hooks/use-toast";
 import { PURCHASE_STATUSES } from "@/lib/constants";
 import { priorityVariant } from "@/lib/ui";
@@ -101,6 +102,20 @@ export function PurchasesGrid({
         </NativeSelect>
 
         <div className="ml-auto flex items-center gap-2">
+          <ExportButton
+            filename="wishlist"
+            rows={filtered.map((p) => ({
+              name: p.name,
+              category: p.category,
+              sub_category: p.sub_category,
+              room: p.room,
+              priority: p.priority,
+              status: p.status,
+              options: p.options.length,
+              price: effectivePrice(p),
+            }))}
+            columns={["name", "category", "sub_category", "room", "priority", "status", "options", "price"]}
+          />
           <span className="text-sm text-muted-foreground">{filtered.length} items</span>
           <div className="flex items-center rounded-lg border p-0.5">
             <button

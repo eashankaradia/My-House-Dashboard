@@ -9,6 +9,7 @@ import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { useToast } from "@/hooks/use-toast";
 import { daysUntil, formatDate } from "@/lib/utils";
 import type { Document } from "@/lib/database.types";
+import { DocumentDetailDialog } from "./document-detail";
 import { deleteDocument, getDocumentUrl } from "./actions";
 
 export function DocumentRow({ doc }: { doc: Document }) {
@@ -35,7 +36,9 @@ export function DocumentRow({ doc }: { doc: Document }) {
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <p className="truncate font-medium">{doc.name}</p>
+            <DocumentDetailDialog doc={doc}>
+              <button className="truncate text-left font-medium hover:underline">{doc.name}</button>
+            </DocumentDetailDialog>
             <Badge variant="secondary">{doc.category}</Badge>
           </div>
           <p className="text-xs text-muted-foreground">

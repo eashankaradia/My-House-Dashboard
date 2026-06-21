@@ -4,6 +4,7 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AddedBy } from "@/components/shared/added-by";
+import { ExportButton } from "@/components/shared/export-button";
 import { FREQUENCY_LABELS } from "@/lib/constants";
 import { cn, daysUntil, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -24,13 +25,20 @@ export function MaintenanceList({
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle>Schedule</CardTitle>
-        <div className="flex items-center rounded-lg border p-0.5 text-xs">
-          <button onClick={() => setCompact(false)} className={cn("rounded-md px-2 py-1", !compact && "bg-accent")}>
-            Detailed
-          </button>
-          <button onClick={() => setCompact(true)} className={cn("rounded-md px-2 py-1", compact && "bg-accent")}>
-            Compact
-          </button>
+        <div className="flex items-center gap-2">
+          <ExportButton
+            filename="maintenance"
+            rows={tasks}
+            columns={["task", "frequency", "last_completed_date", "next_due_date", "cost", "notes"]}
+          />
+          <div className="flex items-center rounded-lg border p-0.5 text-xs">
+            <button onClick={() => setCompact(false)} className={cn("rounded-md px-2 py-1", !compact && "bg-accent")}>
+              Detailed
+            </button>
+            <button onClick={() => setCompact(true)} className={cn("rounded-md px-2 py-1", compact && "bg-accent")}>
+              Compact
+            </button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className={compact ? "divide-y p-0" : "space-y-2"}>
