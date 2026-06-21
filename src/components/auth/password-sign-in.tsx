@@ -33,11 +33,14 @@ export function PasswordSignIn() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setLoading(false);
-      toast({
-        variant: "destructive",
-        title: "Sign-in failed",
-        description: "Check your username and password and try again.",
-      });
+      let description = error.message;
+      if (/confirm/i.test(error.message)) {
+        description =
+          "This account isn't confirmed. In Supabase → Authentication → Users, recreate it with “Auto Confirm User” ticked.";
+      } else if (/invalid login/i.test(error.message)) {
+        description = `No account matched. Make sure a Supabase user exists with email "${email}" and this password.`;
+      }
+      toast({ variant: "destructive", title: "Sign-in failed", description });
       return;
     }
     // Full navigation so the server middleware picks up the new session cookie.
