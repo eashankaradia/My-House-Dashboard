@@ -15,27 +15,37 @@ import { PROJECT_STATUSES } from "@/lib/constants";
 import { priorityVariant, STATUS_ACCENT } from "@/lib/ui";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
-import type { ProjectWithTasks } from "@/lib/database.types";
+import type { ProjectTask, ProjectWithTasks } from "@/lib/database.types";
 import { ProjectForm } from "./project-form";
 import { ProjectDetailDialog } from "./project-detail";
+import { TasksView } from "../tasks/tasks-view";
 import { deleteProject, updateProjectStatus } from "./actions";
 
 export function ProjectsViews({
   projects,
+  tasks,
+  projectOptions,
   memberMap,
 }: {
   projects: ProjectWithTasks[];
+  tasks: ProjectTask[];
+  projectOptions: { id: string; name: string }[];
   memberMap: MemberMap;
 }) {
   const [compact, setCompact] = React.useState(false);
 
   return (
-    <Tabs defaultValue="kanban">
+    <Tabs defaultValue="tasks">
       <TabsList>
+        <TabsTrigger value="tasks">Tasks</TabsTrigger>
         <TabsTrigger value="kanban">Board</TabsTrigger>
         <TabsTrigger value="list">List</TabsTrigger>
         <TabsTrigger value="costs">Costs</TabsTrigger>
       </TabsList>
+
+      <TabsContent value="tasks">
+        <TasksView tasks={tasks} projects={projectOptions} memberMap={memberMap} />
+      </TabsContent>
 
       <TabsContent value="kanban">
         <div className="grid grid-flow-col auto-cols-[minmax(260px,1fr)] gap-4 overflow-x-auto pb-2">

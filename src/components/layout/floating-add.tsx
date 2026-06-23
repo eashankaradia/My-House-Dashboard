@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { FolderArchive, Hammer, Lightbulb, Plus, Receipt, ShoppingBag, Wrench, X } from "lucide-react";
+import { CheckSquare, FolderArchive, Hammer, Lightbulb, Plus, Receipt, ShoppingBag, Wrench, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { BillForm } from "@/app/(app)/bills/bill-form";
 import { ProjectForm } from "@/app/(app)/projects/project-form";
+import { TaskQuickForm } from "@/app/(app)/projects/task-quick-form";
 import { PurchaseForm } from "@/app/(app)/purchases/purchase-form";
 import { InspirationForm } from "@/app/(app)/inspiration/inspiration-form";
 import { MaintenanceForm } from "@/app/(app)/maintenance/maintenance-form";
@@ -27,20 +28,29 @@ Pill.displayName = "Pill";
 
 export function FloatingAdd() {
   const [open, setOpen] = React.useState(false);
-  const close = () => setOpen(false);
 
   return (
     <div className="fixed bottom-20 right-4 z-40 flex flex-col items-end gap-2 lg:bottom-6 lg:right-6">
-      {open ? (
-        <div className="flex flex-col items-end gap-2">
-          <BillForm trigger={<Pill icon={Receipt} label="Expense" onClick={close} />} />
-          <ProjectForm trigger={<Pill icon={Hammer} label="Project" onClick={close} />} />
-          <PurchaseForm trigger={<Pill icon={ShoppingBag} label="Purchase" onClick={close} />} />
-          <InspirationForm collections={[]} trigger={<Pill icon={Lightbulb} label="Idea" onClick={close} />} />
-          <MaintenanceForm trigger={<Pill icon={Wrench} label="Maintenance" onClick={close} />} />
-          <DocumentForm trigger={<Pill icon={FolderArchive} label="Document" onClick={close} />} />
-        </div>
-      ) : null}
+      {/*
+        The form components stay mounted at all times — collapsing the menu only
+        hides them via CSS. Unmounting them on close (the previous approach) tore
+        down each form's Dialog before it could open, so the options did nothing.
+      */}
+      <div
+        className={
+          "flex flex-col items-end gap-2 transition-opacity " +
+          (open ? "opacity-100" : "pointer-events-none opacity-0")
+        }
+        aria-hidden={!open}
+      >
+        <TaskQuickForm trigger={<Pill icon={CheckSquare} label="Task" tabIndex={open ? 0 : -1} />} />
+        <BillForm trigger={<Pill icon={Receipt} label="Expense" tabIndex={open ? 0 : -1} />} />
+        <ProjectForm trigger={<Pill icon={Hammer} label="Project" tabIndex={open ? 0 : -1} />} />
+        <PurchaseForm trigger={<Pill icon={ShoppingBag} label="Purchase" tabIndex={open ? 0 : -1} />} />
+        <InspirationForm collections={[]} trigger={<Pill icon={Lightbulb} label="Idea" tabIndex={open ? 0 : -1} />} />
+        <MaintenanceForm trigger={<Pill icon={Wrench} label="Maintenance" tabIndex={open ? 0 : -1} />} />
+        <DocumentForm trigger={<Pill icon={FolderArchive} label="Document" tabIndex={open ? 0 : -1} />} />
+      </div>
 
       <button
         onClick={() => setOpen((v) => !v)}

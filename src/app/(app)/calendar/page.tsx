@@ -54,7 +54,7 @@ export default async function CalendarPage() {
   }
   for (const t of (tasks.data ?? []) as ProjectTask[]) {
     if (t.due_date && !t.is_done)
-      events.push({ date: t.due_date, title: t.title, type: "task", href: "/tasks" });
+      events.push({ date: t.due_date, title: t.title, type: "task", href: "/projects" });
   }
 
   return (
