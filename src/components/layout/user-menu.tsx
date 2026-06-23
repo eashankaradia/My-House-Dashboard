@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { LogOut, Settings } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -34,6 +35,13 @@ export function UserMenu({ name, email, avatarUrl }: Props) {
           <span className="truncate">{name ?? "Signed in"}</span>
           <span className="truncate text-xs font-normal text-muted-foreground">{email}</span>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/settings">
+            <Settings className="h-4 w-4" />
+            Settings
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <form ref={formRef} action="/auth/signout" method="post" />
         <DropdownMenuItem

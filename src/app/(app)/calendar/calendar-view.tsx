@@ -21,6 +21,7 @@ const TYPE_STYLES = {
   document: "bg-rose-500",
   mortgage: "bg-emerald-500",
   savings: "bg-teal-500",
+  task: "bg-indigo-500",
 } as const;
 
 const TYPE_LABEL: Record<string, string> = {
@@ -30,6 +31,7 @@ const TYPE_LABEL: Record<string, string> = {
   document: "Renewal/expiry",
   mortgage: "Mortgage",
   savings: "Savings target",
+  task: "Task",
 };
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

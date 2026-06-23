@@ -88,6 +88,7 @@ export async function addOption(purchaseId: string, raw: PurchaseOptionInput): P
     store: parsed.data.store ?? null,
     url: parsed.data.url ?? null,
     price: parsed.data.price,
+    start_price: parsed.data.price,
     image_url: parsed.data.image_url ?? null,
     notes: parsed.data.notes ?? null,
   });

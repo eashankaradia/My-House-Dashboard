@@ -16,9 +16,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
+import { ImageUpload } from "@/components/shared/image-upload";
 import { useToast } from "@/hooks/use-toast";
 import { purchaseOptionSchema, type PurchaseOptionInput } from "@/lib/schemas";
 import type { PurchaseOption } from "@/lib/database.types";
+import { fetchLinkPreview } from "@/app/actions/link-preview";
 import { addOption, updateOption } from "./actions";
 
 type Props = {
@@ -33,10 +35,14 @@ export function OptionForm({ purchaseId, option, trigger }: Props) {
   const { toast } = useToast();
   const editing = Boolean(option);
 
+  const [fetching, setFetching] = React.useState(false);
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm<PurchaseOptionInput>({
     resolver: zodResolver(purchaseOptionSchema),
@@ -49,6 +55,22 @@ export function OptionForm({ purchaseId, option, trigger }: Props) {
       notes: option?.notes ?? "",
     },
   });
+
+  async function autofill() {
+    const url = getValues("url");
+    if (!url) return;
+    setFetching(true);
+    const res = await fetchLinkPreview(url);
+    setFetching(false);
+    if (res.error) {
+      toast({ variant: "destructive", title: "Couldn't auto-fill", description: res.error });
+      return;
+    }
+    if (res.title && !getValues("name")) setValue("name", res.title.slice(0, 160));
+    if (res.price) setValue("price", res.price);
+    if (res.image) setValue("image_url", res.image);
+    toast({ title: "Filled from link" });
+  }
 
   function onSubmit(values: PurchaseOptionInput) {
     startTransition(async () => {
@@ -86,11 +108,17 @@ export function OptionForm({ purchaseId, option, trigger }: Props) {
               <Input id="o-price" type="number" step="0.01" {...register("price")} />
             </Field>
           </div>
-          <Field label="Link (URL)" htmlFor="o-url">
-            <Input id="o-url" type="url" placeholder="https://…" {...register("url")} />
+          <Field label="Link (URL)" htmlFor="o-url" tooltip="Paste the product page, then tap Auto-fill to pull the name, price and photo.">
+            <div className="flex gap-2">
+              <Input id="o-url" type="url" placeholder="https://…" {...register("url")} />
+              <Button type="button" variant="outline" onClick={autofill} disabled={fetching} className="shrink-0">
+                {fetching ? "…" : "Auto-fill"}
+              </Button>
+            </div>
           </Field>
-          <Field label="Image URL" htmlFor="o-image" hint="Optional — shows a thumbnail">
-            <Input id="o-image" type="url" placeholder="https://…" {...register("image_url")} />
+          <Field label="Photo" hint="Upload a photo or it's filled from the link">
+            <ImageUpload value={watch("image_url")} onChange={(url) => setValue("image_url", url ?? "")} />
+            <input type="hidden" {...register("image_url")} />
           </Field>
           <Field label="Notes" htmlFor="o-notes">
             <Textarea id="o-notes" rows={2} placeholder="Colour, size, delivery time…" {...register("notes")} />

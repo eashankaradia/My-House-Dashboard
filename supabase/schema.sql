@@ -195,6 +195,7 @@ create table if not exists public.projects (
                            check (status in ('Idea','Planning','Quoting','Scheduled','In Progress','Completed')),
   target_completion_date date,
   notes                 text,
+  image_url             text,
   source_inspiration_id  uuid references public.inspiration (id) on delete set null,
   created_at            timestamptz not null default now(),
   updated_at            timestamptz not null default now()
@@ -242,6 +243,7 @@ create table if not exists public.purchase_options (
   notes       text,
   is_chosen   boolean not null default false,
   rank        integer not null default 0,
+  start_price numeric(12,2) not null default 0,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
@@ -252,9 +254,10 @@ create table if not exists public.purchase_options (
 create table if not exists public.project_tasks (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references auth.users (id) on delete cascade,
-  project_id uuid not null references public.projects (id) on delete cascade,
+  project_id uuid references public.projects (id) on delete cascade,
   title      text not null,
   is_done    boolean not null default false,
+  due_date   date,
   position   integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

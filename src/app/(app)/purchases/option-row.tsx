@@ -72,6 +72,15 @@ export function OptionRow({
       </div>
       <div className="flex shrink-0 flex-col items-end gap-0.5">
         <span className="text-sm font-semibold">{formatCurrency(option.price)}</span>
+        {option.start_price > 0 && option.price < option.start_price ? (
+          <span className="text-[11px] font-medium text-emerald-600">
+            ↓ {formatCurrency(option.start_price - option.price)}
+          </span>
+        ) : option.start_price > 0 && option.price > option.start_price ? (
+          <span className="text-[11px] font-medium text-rose-600">
+            ↑ {formatCurrency(option.price - option.start_price)}
+          </span>
+        ) : null}
         {option.url ? (
           <a
             href={option.url}

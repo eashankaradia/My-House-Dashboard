@@ -41,6 +41,10 @@ export function ProjectDetailDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          {project.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={project.image_url} alt={project.name} className="max-h-56 w-full rounded-lg object-cover" />
+          ) : null}
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Detail label="Status" value={project.status} />
             <Detail label="Category" value={project.category} />

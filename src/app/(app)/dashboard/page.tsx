@@ -130,10 +130,6 @@ export default async function DashboardPage() {
         <p className="text-muted-foreground">Here&apos;s how your home is doing today.</p>
       </div>
 
-      <div className="flex items-center gap-1.5">
-        <h2 className="text-sm font-medium text-muted-foreground">Quick add</h2>
-        <InfoHint text="One-tap shortcuts to add a bill, project, purchase, idea, maintenance task or document from anywhere." />
-      </div>
       <QuickActions collections={collections} />
 
       {/* Financial summary */}

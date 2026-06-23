@@ -8,6 +8,7 @@ import type {
   MaintenanceTask,
   Mortgage,
   Project,
+  ProjectTask,
   SavingsPot,
 } from "@/lib/database.types";
 import { CalendarView, type CalEvent } from "./calendar-view";
@@ -16,13 +17,14 @@ export const metadata = { title: "Calendar" };
 
 export default async function CalendarPage() {
   const supabase = await createClient();
-  const [bills, maint, projects, docs, mortgages, pots] = await Promise.all([
+  const [bills, maint, projects, docs, mortgages, pots, tasks] = await Promise.all([
     supabase.from("bills").select("*"),
     supabase.from("maintenance_tasks").select("*"),
     supabase.from("projects").select("*"),
     supabase.from("documents").select("*"),
     supabase.from("mortgages").select("*"),
     supabase.from("savings_pots").select("*"),
+    supabase.from("project_tasks").select("*"),
   ]);
 
   const events: CalEvent[] = [];
@@ -49,6 +51,10 @@ export default async function CalendarPage() {
   for (const pot of (pots.data ?? []) as SavingsPot[]) {
     if (pot.target_date)
       events.push({ date: pot.target_date, title: `${pot.name} target`, type: "savings", href: "/savings" });
+  }
+  for (const t of (tasks.data ?? []) as ProjectTask[]) {
+    if (t.due_date && !t.is_done)
+      events.push({ date: t.due_date, title: t.title, type: "task", href: "/tasks" });
   }
 
   return (

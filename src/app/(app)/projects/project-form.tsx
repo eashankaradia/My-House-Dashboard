@@ -18,6 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
+import { ImageUpload } from "@/components/shared/image-upload";
 import { useToast } from "@/hooks/use-toast";
 import { PRIORITIES, PROJECT_CATEGORIES, PROJECT_STATUSES } from "@/lib/constants";
 import { projectSchema, type ProjectInput } from "@/lib/schemas";
@@ -41,6 +42,8 @@ export function ProjectForm({ project, trigger, defaults }: Props) {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<ProjectInput>({
     resolver: zodResolver(projectSchema),
@@ -54,6 +57,7 @@ export function ProjectForm({ project, trigger, defaults }: Props) {
       status: project?.status ?? "Idea",
       target_completion_date: project?.target_completion_date ?? "",
       notes: project?.notes ?? "",
+      image_url: project?.image_url ?? "",
     },
   });
 
@@ -126,6 +130,10 @@ export function ProjectForm({ project, trigger, defaults }: Props) {
           </div>
           <Field label="Description" htmlFor="description">
             <Textarea id="description" rows={2} {...register("description")} />
+          </Field>
+          <Field label="Photo" hint="Optional cover image">
+            <ImageUpload value={watch("image_url")} onChange={(url) => setValue("image_url", url ?? "")} />
+            <input type="hidden" {...register("image_url")} />
           </Field>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
