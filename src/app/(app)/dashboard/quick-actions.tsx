@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Receipt, Hammer, ShoppingBag, Lightbulb, Wrench, FolderArchive } from "lucide-react";
+import { ChevronDown, Receipt, Hammer, ShoppingBag, Lightbulb, Wrench, FolderArchive } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { BillForm } from "@/app/(app)/bills/bill-form";
 import { ProjectForm } from "@/app/(app)/projects/project-form";
 import { PurchaseForm } from "@/app/(app)/purchases/purchase-form";
@@ -30,14 +31,26 @@ const ActionTile = React.forwardRef<
 ActionTile.displayName = "ActionTile";
 
 export function QuickActions({ collections }: { collections: Collection[] }) {
+  const [open, setOpen] = React.useState(false);
   return (
-    <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-      <BillForm trigger={<ActionTile icon={Receipt} label="Add expense" />} />
-      <ProjectForm trigger={<ActionTile icon={Hammer} label="Add project" />} />
-      <PurchaseForm trigger={<ActionTile icon={ShoppingBag} label="Add purchase" />} />
-      <InspirationForm collections={collections} trigger={<ActionTile icon={Lightbulb} label="Save idea" />} />
-      <MaintenanceForm trigger={<ActionTile icon={Wrench} label="Add maintenance" />} />
-      <DocumentForm trigger={<ActionTile icon={FolderArchive} label="Add document" />} />
+    <div>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
+      >
+        Quick add
+        <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
+      </button>
+      {open ? (
+        <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-6">
+          <BillForm trigger={<ActionTile icon={Receipt} label="Add expense" />} />
+          <ProjectForm trigger={<ActionTile icon={Hammer} label="Add project" />} />
+          <PurchaseForm trigger={<ActionTile icon={ShoppingBag} label="Add purchase" />} />
+          <InspirationForm collections={collections} trigger={<ActionTile icon={Lightbulb} label="Save idea" />} />
+          <MaintenanceForm trigger={<ActionTile icon={Wrench} label="Add maintenance" />} />
+          <DocumentForm trigger={<ActionTile icon={FolderArchive} label="Add document" />} />
+        </div>
+      ) : null}
     </div>
   );
 }

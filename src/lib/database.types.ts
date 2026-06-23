@@ -93,6 +93,7 @@ export type Project = Timestamps & {
   status: ProjectStatus;
   target_completion_date: string | null;
   notes: string | null;
+  image_url: string | null;
   source_inspiration_id: string | null;
 };
 
@@ -126,6 +127,7 @@ export type PurchaseOption = Timestamps & {
   notes: string | null;
   is_chosen: boolean;
   rank: number;
+  start_price: number;
 };
 
 /** A purchase with its compared options attached (used in list views). */
@@ -208,9 +210,10 @@ export type PurchaseStatus =
 export type ProjectTask = Timestamps & {
   id: string;
   user_id: string;
-  project_id: string;
+  project_id: string | null;
   title: string;
   is_done: boolean;
+  due_date: string | null;
   position: number;
 };
 

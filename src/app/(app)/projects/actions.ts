@@ -16,6 +16,7 @@ function toRow(values: ProjectInput) {
     status: values.status,
     target_completion_date: values.target_completion_date ?? null,
     notes: values.notes ?? null,
+    image_url: values.image_url ?? null,
   };
 }
 
@@ -65,17 +66,47 @@ export async function deleteProject(id: string): Promise<ActionResult> {
   return {};
 }
 
-// --- Project sub-tasks -----------------------------------------------------
+// --- Tasks (project sub-tasks + standalone) --------------------------------
 
 export async function addTask(projectId: string, title: string): Promise<ActionResult> {
-  const clean = title.trim();
+  return createTask({ title, project_id: projectId });
+}
+
+export async function createTask(input: {
+  title: string;
+  project_id?: string | null;
+  due_date?: string | null;
+}): Promise<ActionResult> {
+  const clean = input.title.trim();
   if (!clean) return { error: "Task can't be empty" };
   const { supabase, user } = await getActionContext();
-  const { error } = await supabase
-    .from("project_tasks")
-    .insert({ user_id: user.id, project_id: projectId, title: clean });
+  const { error } = await supabase.from("project_tasks").insert({
+    user_id: user.id,
+    project_id: input.project_id ?? null,
+    title: clean,
+    due_date: input.due_date || null,
+  });
   if (error) return { error: error.message };
   revalidatePath("/projects");
+  revalidatePath("/tasks");
+  revalidatePath("/calendar");
+  return {};
+}
+
+export async function updateTask(
+  id: string,
+  input: { title?: string; project_id?: string | null; due_date?: string | null },
+): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const patch: { title?: string; project_id?: string | null; due_date?: string | null } = {};
+  if (input.title !== undefined) patch.title = input.title.trim();
+  if (input.project_id !== undefined) patch.project_id = input.project_id || null;
+  if (input.due_date !== undefined) patch.due_date = input.due_date || null;
+  const { error } = await supabase.from("project_tasks").update(patch).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/projects");
+  revalidatePath("/tasks");
+  revalidatePath("/calendar");
   return {};
 }
 
@@ -84,6 +115,7 @@ export async function toggleTask(id: string, isDone: boolean): Promise<ActionRes
   const { error } = await supabase.from("project_tasks").update({ is_done: isDone }).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/projects");
+  revalidatePath("/tasks");
   return {};
 }
 
@@ -92,5 +124,7 @@ export async function deleteTask(id: string): Promise<ActionResult> {
   const { error } = await supabase.from("project_tasks").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/projects");
+  revalidatePath("/tasks");
+  revalidatePath("/calendar");
   return {};
 }

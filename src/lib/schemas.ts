@@ -65,6 +65,7 @@ export const projectSchema = z.object({
   status: z.enum(PROJECT_STATUSES),
   target_completion_date: optionalDate,
   notes: optionalString,
+  image_url: optionalString,
 });
 export type ProjectInput = z.infer<typeof projectSchema>;
 

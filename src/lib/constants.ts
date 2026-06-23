@@ -10,7 +10,7 @@ import {
   FolderArchive,
   BarChart3,
   CalendarDays,
-  Settings,
+  ListChecks,
   type LucideIcon,
 } from "lucide-react";
 
@@ -28,17 +28,17 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Mortgage", href: "/mortgage", icon: Home, description: "Balance, equity & payoff" },
   { title: "Savings Pots", href: "/savings", icon: PiggyBank, description: "Goals & contributions" },
   { title: "Projects", href: "/projects", icon: Hammer, description: "Plan & track home projects" },
+  { title: "Tasks", href: "/tasks", icon: ListChecks, description: "Everything to do, in one list" },
   { title: "Future Purchases", href: "/purchases", icon: ShoppingBag, description: "Your home wishlist" },
   { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Ideas & link collections" },
   { title: "Maintenance", href: "/maintenance", icon: Wrench, description: "Reminders & servicing" },
   { title: "Documents", href: "/documents", icon: FolderArchive, description: "Warranties, insurance & more" },
   { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance" },
   { title: "Analytics", href: "/analytics", icon: BarChart3, description: "Trends & breakdowns" },
-  { title: "Settings", href: "/settings", icon: Settings, description: "Tabs, household & change log" },
 ];
 
 /** Tabs that can never be hidden from the sidebar. */
-export const ALWAYS_VISIBLE = ["/dashboard", "/settings"] as const;
+export const ALWAYS_VISIBLE = ["/dashboard"] as const;
 
 // --- Option lists shared by forms (kept in sync with schema CHECK lists) -----
 

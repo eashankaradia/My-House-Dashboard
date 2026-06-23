@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { FloatingAdd } from "@/components/layout/floating-add";
 import { AutoRefresh } from "@/components/layout/auto-refresh";
 import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -66,6 +67,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </div>
 
       <BottomNav />
+      <FloatingAdd />
       <AutoRefresh />
     </div>
   );

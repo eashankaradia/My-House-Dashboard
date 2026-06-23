@@ -18,7 +18,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
+import { ImageUpload } from "@/components/shared/image-upload";
 import { useToast } from "@/hooks/use-toast";
+import { fetchLinkPreview } from "@/app/actions/link-preview";
 import {
   INSPIRATION_CATEGORIES,
   INSPIRATION_SOURCES,
@@ -42,10 +44,14 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
   const { toast } = useToast();
   const editing = Boolean(inspiration);
 
+  const [fetching, setFetching] = React.useState(false);
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm<InspirationInput>({
     resolver: zodResolver(inspirationSchema),
@@ -63,6 +69,21 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
       collection_id: inspiration?.collection_id ?? "",
     },
   });
+
+  async function autofill() {
+    const link = getValues("link");
+    if (!link) return;
+    setFetching(true);
+    const res = await fetchLinkPreview(link);
+    setFetching(false);
+    if (res.error) {
+      toast({ variant: "destructive", title: "Couldn't auto-fill", description: res.error });
+      return;
+    }
+    if (res.title && !getValues("title")) setValue("title", res.title.slice(0, 160));
+    if (res.image) setValue("image_url", res.image);
+    toast({ title: "Filled from link" });
+  }
 
   function onSubmit(values: InspirationInput) {
     startTransition(async () => {
@@ -97,11 +118,17 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
           <Field label="Title" htmlFor="title" required error={errors.title?.message}>
             <Input id="title" placeholder="e.g. Dark green kitchen units" {...register("title")} />
           </Field>
-          <Field label="Link (URL)" htmlFor="link">
-            <Input id="link" type="url" placeholder="https://…" {...register("link")} />
+          <Field label="Link (URL)" htmlFor="link" tooltip="Paste a link, then tap Auto-fill to pull the title and image.">
+            <div className="flex gap-2">
+              <Input id="link" type="url" placeholder="https://…" {...register("link")} />
+              <Button type="button" variant="outline" onClick={autofill} disabled={fetching} className="shrink-0">
+                {fetching ? "…" : "Auto-fill"}
+              </Button>
+            </div>
           </Field>
-          <Field label="Image URL" htmlFor="image_url" hint="Optional — shows a preview on the card">
-            <Input id="image_url" type="url" placeholder="https://…" {...register("image_url")} />
+          <Field label="Photo" hint="Upload or auto-filled from the link">
+            <ImageUpload value={watch("image_url")} onChange={(url) => setValue("image_url", url ?? "")} />
+            <input type="hidden" {...register("image_url")} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Source">
