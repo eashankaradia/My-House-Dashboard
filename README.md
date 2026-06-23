@@ -65,8 +65,9 @@ Built with **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS**,
 | **Analytics** | Recharts breakdowns: spending by category, projected outgoings, project costs, savings, maintenance and wishlist value. |
 
 Plus: dark/light mode, desktop sidebar + mobile drawer nav, loading/empty/error
-states, toast notifications, and a database schema that already supports the
-**future AI features** (assistant, cost estimation, idea categorisation).
+states, toast notifications, a household **change log** of who changed what, and
+**Tasks** living alongside Projects (standalone or tied to a project, with
+add-to-calendar).
 
 The app starts **completely empty** — no seed data. You build everything from
 scratch.
@@ -186,17 +187,6 @@ Every domain table carries a `user_id` and is protected by **row-level security*
 so a user can only ever read or write their own rows. Document files live in a
 **private** storage bucket scoped to a per-user folder (`<uid>/…`) and are served
 via short-lived signed URLs. The app is single-user today but multi-tenant-ready.
-
----
-
-## 🤖 Future AI (schema already in place)
-
-The schema ships with empty tables so AI features need **no migration** later:
-
-- `ai_conversations` / `ai_messages` — the **AI House Assistant** ("What should I
-  prioritise?", "How much can I spend on furniture?", "Which renewals are coming up?").
-- `ai_cost_estimates` — **AI cost estimation** for projects, purchases and free-text.
-- `ai_categorizations` — **AI idea categorisation** for Instagram / TikTok / Pinterest links.
 
 ---
 

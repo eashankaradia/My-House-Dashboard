@@ -9,13 +9,18 @@ import type { Project, ProjectTask, ProjectWithTasks } from "@/lib/database.type
 import { ProjectForm } from "./project-form";
 import { ProjectsViews } from "./projects-views";
 
-export const metadata = { title: "Projects" };
+export const metadata = { title: "Projects & Tasks" };
 
 export default async function ProjectsPage() {
   const supabase = await createClient();
   const [{ data }, { data: taskData }, memberMap] = await Promise.all([
     supabase.from("projects").select("*").order("created_at", { ascending: false }),
-    supabase.from("project_tasks").select("*").order("created_at", { ascending: true }),
+    supabase
+      .from("project_tasks")
+      .select("*")
+      .order("is_done", { ascending: true })
+      .order("due_date", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: false }),
     getHouseholdMap(),
   ]);
   const tasks = (taskData ?? []) as ProjectTask[];
@@ -23,22 +28,28 @@ export default async function ProjectsPage() {
     ...p,
     tasks: tasks.filter((t) => t.project_id === p.id),
   }));
+  const projectOptions = projects.map((p) => ({ id: p.id, name: p.name }));
 
   const active = projects.filter((p) => p.status !== "Completed");
   const totalEstimated = projects.reduce((s, p) => s + Number(p.estimated_cost), 0);
-  const completed = projects.filter((p) => p.status === "Completed").length;
+  const openTasks = tasks.filter((t) => !t.is_done).length;
+  const hasContent = projects.length > 0 || tasks.length > 0;
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Projects" description="Plan and track every home project." info="Add a project, then drag it through stages from Idea to Completed. Record estimated vs actual cost. Use the Board, List and Costs tabs to view it different ways. Change a card's status with the dropdown on it.">
+      <PageHeader
+        title="Projects & Tasks"
+        description="Plan home projects and track every to-do in one place."
+        info="The Tasks tab lists everything to do — standalone or tied to a project — with due dates and an add-to-calendar option. The Board, List and Costs tabs manage projects; move a project through Idea → Completed and record estimated vs actual cost."
+      >
         <ProjectForm />
       </PageHeader>
 
-      {projects.length === 0 ? (
+      {!hasContent ? (
         <EmptyState
           icon={Hammer}
-          title="No projects yet"
-          description="Capture ideas and move them across the board from idea to done — with estimated and actual costs."
+          title="Nothing here yet"
+          description="Add a project to plan bigger work, or add a quick task in the Tasks tab. Tasks can stand alone or be tied to a project."
         >
           <ProjectForm />
         </EmptyState>
@@ -46,10 +57,15 @@ export default async function ProjectsPage() {
         <>
           <div className="grid gap-4 sm:grid-cols-3">
             <StatCard label="Active projects" value={String(active.length)} icon={Hammer} />
-            <StatCard label="Estimated value" value={formatCurrency(totalEstimated)} accent="muted" />
-            <StatCard label="Completed" value={String(completed)} accent="muted" />
+            <StatCard label="Open tasks" value={String(openTasks)} accent="muted" />
+            <StatCard label="Project value" value={formatCurrency(totalEstimated)} accent="muted" />
           </div>
-          <ProjectsViews projects={projects} memberMap={memberMap} />
+          <ProjectsViews
+            projects={projects}
+            tasks={tasks}
+            projectOptions={projectOptions}
+            memberMap={memberMap}
+          />
         </>
       )}
     </div>

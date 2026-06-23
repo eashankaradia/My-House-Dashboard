@@ -1,30 +1,17 @@
-import { Eye, History, LayoutGrid, LogOut, Users } from "lucide-react";
+import { Eye, LayoutGrid, LogOut, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { formatDate, initialsFromName } from "@/lib/utils";
+import { initialsFromName } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
-import type { ActivityLog, HouseholdMember } from "@/lib/database.types";
+import type { HouseholdMember } from "@/lib/database.types";
 import { DisplayNameForm } from "./display-name-form";
 import { TabVisibilitySettings } from "./tab-visibility";
 
 export const metadata = { title: "Settings" };
-
-const ENTITY_LABEL: Record<string, string> = {
-  bills: "bill",
-  mortgages: "mortgage",
-  savings_pots: "savings pot",
-  collections: "collection",
-  inspiration: "idea",
-  projects: "project",
-  purchases: "purchase",
-  maintenance_tasks: "maintenance task",
-  documents: "document",
-};
-const ACTION_VERB: Record<string, string> = { insert: "added", update: "updated", delete: "removed" };
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -32,14 +19,12 @@ export default async function SettingsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: memberData }, { data: activityData }, memberMap] = await Promise.all([
+  const [{ data: memberData }, memberMap] = await Promise.all([
     supabase.from("household_members").select("*").order("display_name"),
-    supabase.from("activity_log").select("*").order("created_at", { ascending: false }).limit(40),
     getHouseholdMap(),
   ]);
 
   const members = (memberData ?? []) as HouseholdMember[];
-  const activity = (activityData ?? []) as ActivityLog[];
   const myName = (user && memberMap[user.id]) || "";
 
   return (
@@ -47,7 +32,7 @@ export default async function SettingsPage() {
       <PageHeader
         title="Settings"
         description="Personalise your dashboard and manage your household."
-        info="Change your display name, choose which tabs appear in the sidebar, see who's in your household, and review the change log of everything that's been added or edited."
+        info="Change your display name, choose which tabs appear in the sidebar, and see who's in your household. The full change log lives in its own tab."
       />
 
       {/* Profile */}
@@ -111,36 +96,6 @@ export default async function SettingsPage() {
                 {user?.id === m.user_id ? (
                   <span className="ml-auto text-xs text-muted-foreground">You</span>
                 ) : null}
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Change log */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <History className="h-4 w-4" /> Change log
-          </CardTitle>
-          <CardDescription>Recent additions and edits across your home.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-1.5">
-          {activity.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No activity yet. Once the change-log migration is run, edits will appear here.
-            </p>
-          ) : (
-            activity.map((a) => (
-              <div key={a.id} className="flex items-center justify-between gap-3 border-b py-2 text-sm last:border-0">
-                <span className="min-w-0">
-                  <span className="font-medium">{(a.user_id && memberMap[a.user_id]) || "Someone"}</span>{" "}
-                  {ACTION_VERB[a.action] ?? a.action} {ENTITY_LABEL[a.entity_type] ?? a.entity_type}
-                  {a.entity_label ? (
-                    <span className="text-muted-foreground"> “{a.entity_label}”</span>
-                  ) : null}
-                </span>
-                <span className="shrink-0 text-xs text-muted-foreground">{formatDate(a.created_at)}</span>
               </div>
             ))
           )}

@@ -10,7 +10,7 @@ import {
   FolderArchive,
   BarChart3,
   CalendarDays,
-  ListChecks,
+  History,
   type LucideIcon,
 } from "lucide-react";
 
@@ -27,14 +27,14 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Bills & Expenses", href: "/bills", icon: Receipt, description: "Recurring household costs" },
   { title: "Mortgage", href: "/mortgage", icon: Home, description: "Balance, equity & payoff" },
   { title: "Savings Pots", href: "/savings", icon: PiggyBank, description: "Goals & contributions" },
-  { title: "Projects", href: "/projects", icon: Hammer, description: "Plan & track home projects" },
-  { title: "Tasks", href: "/tasks", icon: ListChecks, description: "Everything to do, in one list" },
+  { title: "Projects & Tasks", href: "/projects", icon: Hammer, description: "Plan projects and track to-dos" },
   { title: "Future Purchases", href: "/purchases", icon: ShoppingBag, description: "Your home wishlist" },
   { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Ideas & link collections" },
   { title: "Maintenance", href: "/maintenance", icon: Wrench, description: "Reminders & servicing" },
   { title: "Documents", href: "/documents", icon: FolderArchive, description: "Warranties, insurance & more" },
   { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance" },
   { title: "Analytics", href: "/analytics", icon: BarChart3, description: "Trends & breakdowns" },
+  { title: "Change log", href: "/activity", icon: History, description: "Who changed what, and when" },
 ];
 
 /** Tabs that can never be hidden from the sidebar. */

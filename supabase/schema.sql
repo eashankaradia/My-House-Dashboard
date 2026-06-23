@@ -321,55 +321,6 @@ create table if not exists public.documents (
 );
 
 -- ===========================================================================
--- AI scaffolding — tables exist now so future AI features need no migration.
--- ===========================================================================
-create table if not exists public.ai_conversations (
-  id         uuid primary key default gen_random_uuid(),
-  user_id    uuid not null references auth.users (id) on delete cascade,
-  title      text not null default 'New conversation',
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create table if not exists public.ai_messages (
-  id              uuid primary key default gen_random_uuid(),
-  user_id         uuid not null references auth.users (id) on delete cascade,
-  conversation_id uuid not null references public.ai_conversations (id) on delete cascade,
-  role            text not null check (role in ('user','assistant','system')),
-  content         text not null,
-  created_at      timestamptz not null default now()
-);
-
--- AI cost estimates for projects / purchases / free-text descriptions.
-create table if not exists public.ai_cost_estimates (
-  id            uuid primary key default gen_random_uuid(),
-  user_id       uuid not null references auth.users (id) on delete cascade,
-  entity_type   text not null check (entity_type in ('project','purchase','freeform')),
-  entity_id     uuid,
-  description   text,
-  estimate_low  numeric(12,2),
-  estimate_high numeric(12,2),
-  currency      text not null default 'GBP',
-  model         text,
-  rationale     text,
-  created_at    timestamptz not null default now()
-);
-
--- AI categorisation suggestions for saved links (Instagram / TikTok / Pinterest).
-create table if not exists public.ai_categorizations (
-  id                 uuid primary key default gen_random_uuid(),
-  user_id            uuid not null references auth.users (id) on delete cascade,
-  inspiration_id     uuid references public.inspiration (id) on delete cascade,
-  source_url         text,
-  suggested_category text,
-  suggested_room     text,
-  suggested_tags     text[] not null default '{}',
-  confidence         numeric(4,3),
-  model              text,
-  created_at         timestamptz not null default now()
-);
-
--- ===========================================================================
 -- Idempotent migrations for existing databases (safe to re-run).
 -- ===========================================================================
 alter table public.purchases add column if not exists sub_category text;
@@ -384,7 +335,7 @@ begin
   foreach t in array array[
     'profiles','bills','mortgages','savings_pots','collections','inspiration',
     'projects','purchases','purchase_options','project_tasks','maintenance_tasks',
-    'documents','ai_conversations'
+    'documents'
   ]
   loop
     execute format('drop trigger if exists set_updated_at on public.%I;', t);
@@ -405,8 +356,7 @@ declare
 begin
   foreach t in array array[
     'bills','mortgages','savings_pots','collections','inspiration','projects',
-    'purchases','purchase_options','project_tasks','maintenance_tasks','documents',
-    'ai_conversations','ai_messages','ai_cost_estimates','ai_categorizations'
+    'purchases','purchase_options','project_tasks','maintenance_tasks','documents'
   ]
   loop
     execute format('alter table public.%I enable row level security;', t);

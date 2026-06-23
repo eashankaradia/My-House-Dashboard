@@ -88,7 +88,6 @@ export async function createTask(input: {
   });
   if (error) return { error: error.message };
   revalidatePath("/projects");
-  revalidatePath("/tasks");
   revalidatePath("/calendar");
   return {};
 }
@@ -105,7 +104,6 @@ export async function updateTask(
   const { error } = await supabase.from("project_tasks").update(patch).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/projects");
-  revalidatePath("/tasks");
   revalidatePath("/calendar");
   return {};
 }
@@ -115,7 +113,6 @@ export async function toggleTask(id: string, isDone: boolean): Promise<ActionRes
   const { error } = await supabase.from("project_tasks").update({ is_done: isDone }).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/projects");
-  revalidatePath("/tasks");
   return {};
 }
 
@@ -124,7 +121,6 @@ export async function deleteTask(id: string): Promise<ActionResult> {
   const { error } = await supabase.from("project_tasks").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/projects");
-  revalidatePath("/tasks");
   revalidatePath("/calendar");
   return {};
 }
