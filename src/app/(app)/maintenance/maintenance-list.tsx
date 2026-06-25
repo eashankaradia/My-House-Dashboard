@@ -18,7 +18,7 @@ export function MaintenanceList({
   tasks: MaintenanceTask[];
   memberMap: MemberMap;
 }) {
-  const [compact, setCompact] = React.useState(false);
+  const [compact, setCompact] = React.useState(true);
 
   return (
     <Card>

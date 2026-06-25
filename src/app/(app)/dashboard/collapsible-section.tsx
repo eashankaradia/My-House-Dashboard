@@ -22,7 +22,7 @@ export function CollapsibleSection({
   count: number;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = React.useState(true);
+  const [open, setOpen] = React.useState(false);
 
   return (
     <Card>

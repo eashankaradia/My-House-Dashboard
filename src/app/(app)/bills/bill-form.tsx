@@ -117,7 +117,7 @@ export function BillForm({ bill, accounts = [], trigger }: Props) {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="End date" htmlFor="end_date" error={errors.end_date?.message}>
+            <Field label="End date (optional)" htmlFor="end_date" error={errors.end_date?.message}>
               <Input id="end_date" type="date" {...register("end_date")} />
             </Field>
             <Field label="Payment account">

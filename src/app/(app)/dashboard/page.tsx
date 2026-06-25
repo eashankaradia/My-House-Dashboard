@@ -22,9 +22,9 @@ import type {
   Purchase,
   SavingsPot,
 } from "@/lib/database.types";
-import { QuickActions } from "./quick-actions";
 import { DashboardWidget, EditDashboardButton } from "./dashboard-customize";
 import { CollapsibleSection } from "./collapsible-section";
+import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
 export const metadata = { title: "Dashboard" };
 
@@ -44,7 +44,6 @@ export default async function DashboardPage() {
     maintRes,
     docsRes,
     mortgageRes,
-    collectionsRes,
     memberMap,
   ] = await Promise.all([
     supabase.from("bills").select("*"),
@@ -56,7 +55,6 @@ export default async function DashboardPage() {
     supabase.from("maintenance_tasks").select("*"),
     supabase.from("documents").select("*"),
     supabase.from("mortgages").select("*").limit(1),
-    supabase.from("collections").select("*").order("name"),
     getHouseholdMap(),
   ]);
 
@@ -69,7 +67,6 @@ export default async function DashboardPage() {
   const maintenance = (maintRes.data ?? []) as MaintenanceTask[];
   const documents = (docsRes.data ?? []) as Document[];
   const mortgage = (mortgageRes.data?.[0] as Mortgage | undefined) ?? undefined;
-  const collections = collectionsRes.data ?? [];
 
   // --- Headline numbers worth a glance -------------------------------------
   const savedTotal = pots.reduce((s, p) => s + Number(p.current_amount), 0);
@@ -139,8 +136,6 @@ export default async function DashboardPage() {
         </div>
         <EditDashboardButton />
       </div>
-
-      <QuickActions collections={collections} />
 
       {/* Glance stats */}
       <DashboardWidget id="finance">
@@ -290,6 +285,11 @@ export default async function DashboardPage() {
             ))
           )}
         </CollapsibleSection>
+      </DashboardWidget>
+
+      {/* What everyone in the household has been doing */}
+      <DashboardWidget id="activity">
+        <SectionActivityLog title="Activity by household" limit={12} />
       </DashboardWidget>
     </div>
   );

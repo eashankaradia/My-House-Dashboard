@@ -22,6 +22,7 @@ export const DASHBOARD_WIDGETS: { id: string; label: string }[] = [
   { id: "maintenance", label: "Upcoming maintenance" },
   { id: "inspiration", label: "Recent inspiration" },
   { id: "purchases", label: "Added to wishlist" },
+  { id: "activity", label: "Activity by household" },
 ];
 
 /** Hides its children when the user has switched this widget off. */

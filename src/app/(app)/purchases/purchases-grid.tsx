@@ -61,7 +61,7 @@ export function PurchasesGrid({
   const [status, setStatus] = React.useState<string>("All");
   const [room, setRoom] = React.useState<string>("All");
   const [sort, setSort] = React.useState<keyof typeof SORTS>("priority");
-  const [compact, setCompact] = React.useState(false);
+  const [compact, setCompact] = React.useState(true);
   const [onlyMine, setOnlyMine] = React.useState(false);
 
   const rooms = Array.from(new Set(purchases.map((p) => p.room).filter(Boolean))) as string[];
