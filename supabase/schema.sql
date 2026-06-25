@@ -297,18 +297,34 @@ create index if not exists project_tasks_project_idx on public.project_tasks (pr
 create table if not exists public.household_members (
   user_id      uuid primary key references auth.users (id) on delete cascade,
   display_name text not null,
+  -- Members sharing a household_id can see each other's data. New members
+  -- default to their own fresh household (isolated until explicitly grouped).
+  household_id uuid not null default gen_random_uuid(),
   created_at   timestamptz not null default now()
 );
 alter table public.household_members enable row level security;
 
+-- Kept for backwards compatibility; row visibility uses same_household() below.
 create or replace function public.is_household_member()
 returns boolean language sql security definer stable set search_path = public as $$
   select exists (select 1 from public.household_members where user_id = auth.uid());
 $$;
 
+-- True when the current user shares a household with `target` (the row owner).
+create or replace function public.same_household(target uuid)
+returns boolean language sql security definer stable set search_path = public as $$
+  select exists (
+    select 1
+    from public.household_members me
+    join public.household_members them on them.household_id = me.household_id
+    where me.user_id = auth.uid()
+      and them.user_id = target
+  );
+$$;
+
 drop policy if exists "members_read" on public.household_members;
 create policy "members_read" on public.household_members for select
-  using (auth.uid() = user_id or public.is_household_member());
+  using (auth.uid() = user_id or public.same_household(user_id));
 
 -- ---------------------------------------------------------------------------
 -- maintenance_tasks — recurring home maintenance + reminders.
@@ -392,7 +408,7 @@ begin
     execute format('drop policy if exists "hh_select" on public.%I;', t);
     execute format(
       'create policy "hh_select" on public.%I for select
-         using (auth.uid() = user_id or public.is_household_member());', t);
+         using (auth.uid() = user_id or public.same_household(user_id));', t);
 
     execute format('drop policy if exists "owner_insert" on public.%I;', t);
     execute format('drop policy if exists "hh_insert" on public.%I;', t);
@@ -403,13 +419,13 @@ begin
     execute format('drop policy if exists "hh_update" on public.%I;', t);
     execute format(
       'create policy "hh_update" on public.%I for update
-         using (auth.uid() = user_id or public.is_household_member());', t);
+         using (auth.uid() = user_id or public.same_household(user_id));', t);
 
     execute format('drop policy if exists "owner_delete" on public.%I;', t);
     execute format('drop policy if exists "hh_delete" on public.%I;', t);
     execute format(
       'create policy "hh_delete" on public.%I for delete
-         using (auth.uid() = user_id or public.is_household_member());', t);
+         using (auth.uid() = user_id or public.same_household(user_id));', t);
   end loop;
 end;
 $$;
@@ -431,7 +447,7 @@ alter table public.activity_log enable row level security;
 
 drop policy if exists "activity_select" on public.activity_log;
 create policy "activity_select" on public.activity_log for select
-  using (auth.uid() = user_id or public.is_household_member());
+  using (auth.uid() = user_id or public.same_household(user_id));
 
 create or replace function public.log_activity()
 returns trigger language plpgsql security definer set search_path = public as $$
