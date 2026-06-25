@@ -32,25 +32,22 @@ export function FloatingAdd() {
   return (
     <div className="fixed bottom-20 right-4 z-40 flex flex-col items-end gap-2 lg:bottom-6 lg:right-6">
       {/*
-        The form components stay mounted at all times — collapsing the menu only
-        hides them via CSS. Unmounting them on close (the previous approach) tore
-        down each form's Dialog before it could open, so the options did nothing.
+        The pills mount only while the menu is open. We deliberately do NOT
+        close the menu when a pill is tapped — doing so unmounts the form before
+        its dialog can open (the old "options do nothing" bug). The dialog opens
+        over the menu; closing the dialog leaves the menu open, ready for another.
       */}
-      <div
-        className={
-          "flex flex-col items-end gap-2 transition-opacity " +
-          (open ? "opacity-100" : "pointer-events-none opacity-0")
-        }
-        aria-hidden={!open}
-      >
-        <TaskQuickForm trigger={<Pill icon={CheckSquare} label="Task" tabIndex={open ? 0 : -1} />} />
-        <BillForm trigger={<Pill icon={Receipt} label="Expense" tabIndex={open ? 0 : -1} />} />
-        <ProjectForm trigger={<Pill icon={Hammer} label="Project" tabIndex={open ? 0 : -1} />} />
-        <PurchaseForm trigger={<Pill icon={ShoppingBag} label="Purchase" tabIndex={open ? 0 : -1} />} />
-        <InspirationForm collections={[]} trigger={<Pill icon={Lightbulb} label="Idea" tabIndex={open ? 0 : -1} />} />
-        <MaintenanceForm trigger={<Pill icon={Wrench} label="Maintenance" tabIndex={open ? 0 : -1} />} />
-        <DocumentForm trigger={<Pill icon={FolderArchive} label="Document" tabIndex={open ? 0 : -1} />} />
-      </div>
+      {open ? (
+        <div className="flex flex-col items-end gap-2">
+          <TaskQuickForm trigger={<Pill icon={CheckSquare} label="Task" />} />
+          <BillForm trigger={<Pill icon={Receipt} label="Expense" />} />
+          <ProjectForm trigger={<Pill icon={Hammer} label="Project" />} />
+          <PurchaseForm trigger={<Pill icon={ShoppingBag} label="Purchase" />} />
+          <InspirationForm collections={[]} trigger={<Pill icon={Lightbulb} label="Idea" />} />
+          <MaintenanceForm trigger={<Pill icon={Wrench} label="Maintenance" />} />
+          <DocumentForm trigger={<Pill icon={FolderArchive} label="Document" />} />
+        </div>
+      ) : null}
 
       <button
         onClick={() => setOpen((v) => !v)}
