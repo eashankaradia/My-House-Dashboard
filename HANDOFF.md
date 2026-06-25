@@ -67,7 +67,9 @@ supabase as unknown as {...}`) for the pattern.
 
 ## 4. Git / delivery workflow
 
-- **Feature branch:** `claude/home-dashboard-build-yv7ewz`. Develop here.
+- Create a fresh feature branch from `main` for each new batch. Historical
+  branches include `claude/home-dashboard-build-yv7ewz` and
+  `codex/continue-dashboard-backlog`.
 - **Never** force-push or rewrite history. Push with `git push -u origin <branch>`.
 - **PR-per-batch**, merged to `main` with **merge method "merge"** (NOT squash —
   squash previously caused merge conflicts on later PRs).
@@ -355,11 +357,10 @@ purchases stat tweaks (above). **Still TODO** (no code yet — pick up here):
 
 ## 11. Current status & possible next steps
 
-- Active continuation branch: **`codex/continue-dashboard-backlog`**, draft
-  **PR #23**. Every completed batch is committed and pushed.
-- **Outstanding user actions after merge:** run migrations **0009**, **0010**,
+- **PR #23 merged to `main`** as merge commit `e62a46f` on 2026-06-25.
+- **Outstanding user actions:** run migrations **0009**, **0010**,
   **0011**, **0012**, and **0013** (and confirm 0008/0007 are run).
-- Verification on the continuation branch: `npm run typecheck`, `npm run lint`,
+- Verification on merged code: `npm run typecheck`, `npm run lint`,
   and the full `npm run build` all pass. The login page now renders a setup
   notice instead of crashing the build when Supabase public environment
   variables are absent (useful for unconfigured previews).
@@ -395,7 +396,7 @@ the start of future sessions.
 
 ### Current in-progress work
 
-Branch: `codex/continue-dashboard-backlog`, draft PR #23.
+PR #23 is merged. Current handoff-only branch: `codex/post-merge-handoff`.
 
 The bills/accounts/payment batch is complete in code and verified with
 typecheck/lint. Migration `0012_bill_accounts_payments.sql` must be run after
@@ -410,7 +411,8 @@ have Supabase public environment variables. The login page is now hardened for
 that condition; the fix is verified by a full local production build without
 those variables. The replacement Vercel deployment for commit `16698b3` passed.
 
-Next exact step: merge PR #23 when ready, run migrations 0009–0013 in order,
-then visually test the migrations-backed screens with live household data. No
-requested feature from the 2026-06-25 backlog remains intentionally
-unimplemented.
+Next exact step: run migrations 0009–0013 in order in the live Supabase project,
+then visually test the migrations-backed screens with live household data. The
+user should open the logged-in Supabase SQL Editor in the in-app browser; never
+ask them to paste credentials or secret keys into chat. No requested feature
+from the 2026-06-25 backlog remains intentionally unimplemented.
