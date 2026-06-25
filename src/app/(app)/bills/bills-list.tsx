@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
-import { ExportButton } from "@/components/shared/export-button";
 import { FREQUENCY_LABELS } from "@/lib/constants";
 import { cn, formatCurrency, formatDate, toMonthly } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -35,11 +34,6 @@ export function BillsList({
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle>All bills</CardTitle>
         <div className="flex items-center gap-2">
-          <ExportButton
-            filename="bills"
-            rows={bills}
-            columns={["name", "category", "amount", "frequency", "due_date", "payment_account", "is_fixed", "notes"]}
-          />
           <div className="flex items-center rounded-lg border p-0.5 text-xs">
             <button onClick={() => setCompact(false)} className={cn("rounded-md px-2 py-1", !compact && "bg-accent")}>
               Detailed

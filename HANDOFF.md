@@ -287,6 +287,9 @@ Recently added (chronological, by PR):
   posts/reels, Facebook videos, TikTok video URLs, and YouTube links render
   inline when their URL can be converted to an embed; unsupported links retain
   an open-original fallback. Typecheck and lint pass.
+  Removed Bills, Purchases, Projects, and Maintenance per-tab CSV buttons.
+  Settings now has one Export data card with a dataset picker and CSV download.
+  Typecheck and lint pass.
 
 ### ⏳ Large outstanding request (batches still to do)
 The user submitted a big list (2026-06-25). Done so far: dashboard redesign +
@@ -310,8 +313,8 @@ purchases stat tweaks (above). **Still TODO** (no code yet — pick up here):
 10. **Bills:** done in code — payment accounts, user/joint association, bill
     account dropdown, end date, payment ledger, and expected-vs-actual tracking.
     Requires migration 0012.
-11. **Export:** remove per-tab CSV buttons; move to a single export in Settings
-    with a picker for what to export.
+11. **Export:** done — removed per-tab buttons and added a Settings dataset
+    picker/export.
 12. **Share to WhatsApp** — shared detail-dialog component is done for the main
     entity types; extend to any remaining secondary entities/views.
 
@@ -394,9 +397,8 @@ The bills/accounts/payment batch is complete in code and verified with
 typecheck/lint. Migration `0012_bill_accounts_payments.sql` must be run after
 merge.
 
-The Inspiration social-feed/embed batch is complete and verified with
-typecheck/lint.
+The centralised export batch is complete and verified with typecheck/lint.
 
-Next exact step: remove per-tab CSV buttons, build a single Settings export
-picker for bills, purchases, projects, and maintenance, then verify, update this
-file, commit, and push.
+Next exact step: finish the remaining secondary edit buttons/timestamps/share
+coverage (compact rows, purchase options, savings accounts, tasks), run a full
+verification/build attempt, update this file and PR #23, then commit and push.
