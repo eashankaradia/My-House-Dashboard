@@ -4,13 +4,12 @@ import * as React from "react";
 import { useSearchParams } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
-import { BarChart } from "@/components/charts/bar-chart";
 import { useToast } from "@/hooks/use-toast";
 import { PROJECT_STATUSES } from "@/lib/constants";
 import { priorityVariant, STATUS_ACCENT } from "@/lib/ui";
@@ -35,7 +34,7 @@ export function ProjectsViews({
   memberMap: MemberMap;
   currentUserId: string;
 }) {
-  const [compact, setCompact] = React.useState(false);
+  const [compact, setCompact] = React.useState(true);
   // A ?project= deep-link opens a project detail dialog, which only mounts in
   // the List tab — so start there when one is present (otherwise default tab).
   const searchParams = useSearchParams();
@@ -47,7 +46,6 @@ export function ProjectsViews({
         <TabsTrigger value="tasks">Tasks</TabsTrigger>
         <TabsTrigger value="kanban">Board</TabsTrigger>
         <TabsTrigger value="list">List</TabsTrigger>
-        <TabsTrigger value="costs">Costs</TabsTrigger>
       </TabsList>
 
       <TabsContent value="tasks">
@@ -153,10 +151,6 @@ export function ProjectsViews({
           </div>
         )}
       </TabsContent>
-
-      <TabsContent value="costs">
-        <CostSummary projects={projects} />
-      </TabsContent>
     </Tabs>
   );
 }
@@ -240,47 +234,3 @@ function ProjectCard({
   );
 }
 
-function CostSummary({ projects }: { projects: ProjectWithTasks[] }) {
-  const totalEst = projects.reduce((s, p) => s + Number(p.estimated_cost), 0);
-  const totalActual = projects.reduce((s, p) => s + Number(p.actual_cost), 0);
-
-  const byCategory = new Map<string, number>();
-  for (const p of projects) {
-    const cost = Number(p.actual_cost) || Number(p.estimated_cost);
-    byCategory.set(p.category, (byCategory.get(p.category) ?? 0) + cost);
-  }
-  const data = Array.from(byCategory.entries())
-    .map(([name, value]) => ({ name, value: Math.round(value) }))
-    .sort((a, b) => b.value - a.value);
-
-  return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      <div className="space-y-4">
-        <Card>
-          <CardContent className="p-5">
-            <p className="text-sm text-muted-foreground">Total estimated</p>
-            <p className="text-2xl font-semibold">{formatCurrency(totalEst)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-5">
-            <p className="text-sm text-muted-foreground">Total actual spend</p>
-            <p className="text-2xl font-semibold">{formatCurrency(totalActual)}</p>
-          </CardContent>
-        </Card>
-      </div>
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle>Cost by category</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {data.length ? (
-            <BarChart data={data} multicolor />
-          ) : (
-            <p className="text-sm text-muted-foreground">No costs recorded yet.</p>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}

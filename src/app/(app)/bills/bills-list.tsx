@@ -26,7 +26,7 @@ export function BillsList({
   payments: BillPayment[];
   memberMap: MemberMap;
 }) {
-  const [compact, setCompact] = React.useState(false);
+  const [compact, setCompact] = React.useState(true);
   const accountNames = new Map(accounts.map((account) => [account.id, account.name]));
 
   return (

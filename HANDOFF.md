@@ -2,7 +2,56 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-25 (Codex continuation batch).
+> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch A).
+
+## 0. Latest session (Claude, after Codex continuation)
+
+Codex completed the entire first big list (#11–#28: non-negotiables, my-items
+filter, change-log filters, inspiration social feed + embeds, collapsible linked
+items, notifications, clickable calendar days, bills accounts/payments/end-date,
+export-to-settings, WhatsApp share, item timestamps, per-tab `SectionActivityLog`).
+Migrations 0009–0013 are RUN LIVE; production deployed.
+
+The user then submitted a **second** big list (2026-06-25, "do my stuff").
+Working through it in build+lint-verified batches.
+
+### Batch A (done, no DB): dashboard/UX quick wins
+- Dashboard sections **collapsed by default** (`collapsible-section.tsx`).
+- Removed the **quick-add** (`QuickActions`) block from the dashboard (FAB covers it).
+- **Activity by household** section added at the bottom of the dashboard
+  (`SectionActivityLog` now accepts no `entityTypes` = all activity; new widget
+  id `activity` in `DASHBOARD_WIDGETS`).
+- **Compact by default** in bills / maintenance / purchases / projects-list.
+- Removed the **project value (Costs) view** from `projects-views.tsx`
+  (CostSummary + its imports gone).
+- "**End date (optional)**" label on the bill form.
+
+### Batch B+ — STILL TODO from the second list (pick up here)
+1. Calendar: let a user **add an event to a date**, with **recurring** option
+   (needs `calendar_events` table + migration; calendar page currently derives
+   events from other tables only).
+2. **Search**: a search box in the sidebar tab list + a search icon in the top
+   bar (command-palette style across items).
+3. Move **dark-mode toggle** out of the top bar into the **profile/initials menu**
+   alongside Settings; replace the standalone dark-mode icon.
+4. **Point-out / notify**: an action on a purchase/item to push it to another
+   household member's notifications (reuse Codex's notifications push; NOT the
+   notification bar). 
+5. **Admin actions** (e.g. add payment account) as a **small button at the bottom
+   of the page** rather than inline.
+6. Dashboard: a **small week-ahead calendar** strip.
+7. **Bottom tab bar**: put the **+ (FAB) in the middle**; add an **Inspiration**
+   tab; in Settings let the user **choose which bottom tabs show and their order**
+   (localStorage prefs like sidebar/dashboard).
+8. **Projects board**: an **expandable full-page, mobile-optimised** board view.
+9. **Tasks**: replace the X-on-complete with **clear/archive against the project**
+   (keep for progress), and **add notes to tasks** (needs `project_tasks.notes`).
+10. **Analytics**: rebuild around **actionable insight** — monthly payment
+    **trends** and **expected vs actual** (uses Codex's `bill_payments`).
+11. **Settings → glance stats**: let each user pick **which glance stats** show and
+    **their order** (per-user customisation; extend dashboard prefs).
+12. Meta: the user wants to be told **when their Claude usage resets in UK time**
+    (agent can't see this — acknowledge, can't compute their plan reset).
 
 ---
 

@@ -10,18 +10,18 @@ import { ACTION_VERB, activityHref, ENTITY_LABEL } from "@/app/(app)/activity/ac
 export async function SectionActivityLog({
   entityTypes,
   title = "Recent updates",
+  limit = 20,
 }: {
-  entityTypes: string[];
+  /** Filter to these entity types. Omit to show all household activity. */
+  entityTypes?: string[];
   title?: string;
+  limit?: number;
 }) {
   const supabase = await createClient();
+  const base = supabase.from("activity_log").select("*");
+  const filtered = entityTypes && entityTypes.length ? base.in("entity_type", entityTypes) : base;
   const [{ data }, memberMap] = await Promise.all([
-    supabase
-      .from("activity_log")
-      .select("*")
-      .in("entity_type", entityTypes)
-      .order("created_at", { ascending: false })
-      .limit(20),
+    filtered.order("created_at", { ascending: false }).limit(limit),
     getHouseholdMap(),
   ]);
   const activity = (data ?? []) as ActivityLog[];
