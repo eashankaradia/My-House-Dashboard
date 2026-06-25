@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
 import { formatCurrency } from "@/lib/utils";
-import type { SavingsPot } from "@/lib/database.types";
+import type { SavingsAccount, SavingsContribution, SavingsPot } from "@/lib/database.types";
 import { PotForm } from "./pot-form";
 import { PotCard } from "./pot-card";
 
@@ -12,11 +12,14 @@ export const metadata = { title: "Savings Pots" };
 
 export default async function SavingsPage() {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("savings_pots")
-    .select("*")
-    .order("created_at", { ascending: true });
+  const [{ data }, { data: accountData }, { data: contribData }] = await Promise.all([
+    supabase.from("savings_pots").select("*").order("created_at", { ascending: true }),
+    supabase.from("savings_accounts").select("*").order("created_at", { ascending: true }),
+    supabase.from("savings_contributions").select("*").order("occurred_on", { ascending: true }),
+  ]);
   const pots = (data ?? []) as SavingsPot[];
+  const accounts = (accountData ?? []) as SavingsAccount[];
+  const contributions = (contribData ?? []) as SavingsContribution[];
 
   const totalSaved = pots.reduce((s, p) => s + Number(p.current_amount), 0);
   const totalTarget = pots.reduce((s, p) => s + Number(p.target_amount), 0);
@@ -47,7 +50,12 @@ export default async function SavingsPage() {
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {pots.map((pot) => (
-              <PotCard key={pot.id} pot={pot} />
+              <PotCard
+                key={pot.id}
+                pot={pot}
+                accounts={accounts.filter((a) => a.pot_id === pot.id)}
+                contributions={contributions.filter((c) => c.pot_id === pot.id)}
+              />
             ))}
           </div>
         </>

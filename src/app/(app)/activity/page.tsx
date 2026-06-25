@@ -1,4 +1,5 @@
 import { History } from "lucide-react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -13,6 +14,7 @@ const ENTITY_LABEL: Record<string, string> = {
   bills: "bill",
   mortgages: "mortgage",
   savings_pots: "savings pot",
+  savings_accounts: "savings account",
   collections: "collection",
   inspiration: "idea",
   projects: "project",
@@ -22,6 +24,21 @@ const ENTITY_LABEL: Record<string, string> = {
   documents: "document",
 };
 const ACTION_VERB: Record<string, string> = { insert: "added", update: "updated", delete: "removed" };
+
+/** Where clicking a change takes you — the section that holds that item. */
+const ENTITY_HREF: Record<string, string> = {
+  bills: "/bills",
+  mortgages: "/mortgage",
+  savings_pots: "/savings",
+  savings_accounts: "/savings",
+  collections: "/inspiration",
+  inspiration: "/inspiration",
+  projects: "/projects",
+  project_tasks: "/projects",
+  purchases: "/purchases",
+  maintenance_tasks: "/maintenance",
+  documents: "/documents",
+};
 
 export default async function ActivityPage() {
   const supabase = await createClient();
@@ -49,18 +66,36 @@ export default async function ActivityPage() {
       ) : (
         <Card>
           <CardContent className="divide-y p-0">
-            {activity.map((a) => (
-              <div key={a.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-                <span className="min-w-0">
-                  <span className="font-medium">{(a.user_id && memberMap[a.user_id]) || "Someone"}</span>{" "}
-                  {ACTION_VERB[a.action] ?? a.action} {ENTITY_LABEL[a.entity_type] ?? a.entity_type}
-                  {a.entity_label ? (
-                    <span className="text-muted-foreground"> “{a.entity_label}”</span>
-                  ) : null}
-                </span>
-                <span className="shrink-0 text-xs text-muted-foreground">{formatDate(a.created_at)}</span>
-              </div>
-            ))}
+            {activity.map((a) => {
+              const href = ENTITY_HREF[a.entity_type];
+              const inner = (
+                <>
+                  <span className="min-w-0">
+                    <span className="font-medium">{(a.user_id && memberMap[a.user_id]) || "Someone"}</span>{" "}
+                    {ACTION_VERB[a.action] ?? a.action} {ENTITY_LABEL[a.entity_type] ?? a.entity_type}
+                    {a.entity_label ? (
+                      <span className="text-muted-foreground"> “{a.entity_label}”</span>
+                    ) : null}
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{formatDate(a.created_at)}</span>
+                </>
+              );
+              const rowClass =
+                "flex items-center justify-between gap-3 px-4 py-3 text-sm";
+              return href ? (
+                <Link
+                  key={a.id}
+                  href={href}
+                  className={rowClass + " transition-colors hover:bg-accent active:bg-accent"}
+                >
+                  {inner}
+                </Link>
+              ) : (
+                <div key={a.id} className={rowClass}>
+                  {inner}
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
       )}

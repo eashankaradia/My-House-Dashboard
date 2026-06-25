@@ -140,6 +140,32 @@ create table if not exists public.savings_pots (
   updated_at           timestamptz not null default now()
 );
 
+-- savings_accounts — named accounts that hold a pot's money (Marcus, ISA…).
+-- A pot can have several; an account's balance is derived from its
+-- contributions.
+create table if not exists public.savings_accounts (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users (id) on delete cascade,
+  pot_id     uuid not null references public.savings_pots (id) on delete cascade,
+  name       text not null,
+  notes      text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- savings_contributions — dated ledger of deposits / withdrawals per pot.
+-- Amount is signed (+ deposit, − withdrawal); occurred_on can be back-dated.
+create table if not exists public.savings_contributions (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references auth.users (id) on delete cascade,
+  pot_id      uuid not null references public.savings_pots (id) on delete cascade,
+  account_id  uuid references public.savings_accounts (id) on delete set null,
+  amount      numeric(12,2) not null,
+  occurred_on date not null default current_date,
+  note        text,
+  created_at  timestamptz not null default now()
+);
+
 -- ---------------------------------------------------------------------------
 -- collections — group inspiration links (Dream Kitchen, Garden Ideas...).
 -- Declared before inspiration so the FK resolves.
@@ -333,9 +359,9 @@ declare
   t text;
 begin
   foreach t in array array[
-    'profiles','bills','mortgages','savings_pots','collections','inspiration',
-    'projects','purchases','purchase_options','project_tasks','maintenance_tasks',
-    'documents'
+    'profiles','bills','mortgages','savings_pots','savings_accounts','collections',
+    'inspiration','projects','purchases','purchase_options','project_tasks',
+    'maintenance_tasks','documents'
   ]
   loop
     execute format('drop trigger if exists set_updated_at on public.%I;', t);
@@ -355,8 +381,9 @@ declare
   t text;
 begin
   foreach t in array array[
-    'bills','mortgages','savings_pots','collections','inspiration','projects',
-    'purchases','purchase_options','project_tasks','maintenance_tasks','documents'
+    'bills','mortgages','savings_pots','savings_accounts','savings_contributions',
+    'collections','inspiration','projects','purchases','purchase_options',
+    'project_tasks','maintenance_tasks','documents'
   ]
   loop
     execute format('alter table public.%I enable row level security;', t);
@@ -440,6 +467,10 @@ $$;
 -- ===========================================================================
 create index if not exists bills_user_idx on public.bills (user_id);
 create index if not exists savings_pots_user_idx on public.savings_pots (user_id);
+create index if not exists savings_accounts_pot_idx on public.savings_accounts (pot_id);
+create index if not exists savings_contributions_pot_idx on public.savings_contributions (pot_id);
+create index if not exists savings_contributions_account_idx on public.savings_contributions (account_id);
+create index if not exists savings_contributions_date_idx on public.savings_contributions (occurred_on);
 create index if not exists projects_user_status_idx on public.projects (user_id, status);
 create index if not exists purchases_user_status_idx on public.purchases (user_id, status);
 create index if not exists purchase_options_purchase_idx on public.purchase_options (purchase_id);

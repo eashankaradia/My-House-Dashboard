@@ -87,6 +87,28 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
+
+  /* Mobile tap responsiveness:
+     - `manipulation` drops the ~300ms double-tap-to-zoom delay browsers add to
+       taps, so buttons/links fire immediately.
+     - a faint branded tap highlight gives instant feedback on touch instead of
+       the default grey flash (or nothing). */
+  button,
+  a,
+  [role="button"],
+  label,
+  summary,
+  .cursor-pointer {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: hsl(var(--primary) / 0.12);
+  }
+
+  /* Instant visual feedback on press for tappable rows/controls. */
+  button:active,
+  a:active,
+  [role="button"]:active {
+    opacity: 0.7;
+  }
 }
 
 /* Pinterest-style masonry for the Inspiration hub. */
