@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { ShareButton } from "@/components/shared/share-button";
+import { PointOutButton } from "@/components/shared/point-out-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { useToast } from "@/hooks/use-toast";
 import { priorityVariant } from "@/lib/ui";
@@ -99,6 +100,7 @@ export function InspirationDetailDialog({
             </Button>
             <div className="ml-auto flex items-center gap-2">
               <ShareButton title={item.title} text={item.notes ?? item.link ?? undefined} />
+              <PointOutButton label={item.title} href={`/inspiration?item=${item.id}`} />
               <InspirationForm inspiration={item} collections={collections} />
               <ConfirmDelete itemLabel="idea" action={deleteInspiration.bind(null, item.id)} variant="menu" />
             </div>

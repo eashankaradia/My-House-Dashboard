@@ -57,10 +57,14 @@ Working through it in build+lint-verified batches.
 - **Sidebar tab search**: a "Search tabs…" filter box at the top of
   `sidebar-nav.tsx` filters the visible nav items.
 
-### Batch E+ — STILL TODO from the second list (pick up here)
-4. **Point-out / notify**: an action on a purchase/item to push it to another
-   household member's notifications (reuse Codex's notifications push; NOT the
-   notification bar). 
+### Batch E (done, no DB): point-out to a household member
+- `notifications/actions.ts#listOtherMembers` returns household members ≠ self.
+- `components/shared/point-out-button.tsx` (`PointOutButton{label, href}`): a
+  bell+ icon → dialog listing other members → `sendNotification(member, "Take a
+  look: …", href)`. Added next to ShareButton in all 7 detail dialogs (bill,
+  document, inspiration, maintenance, project, purchase, savings pot).
+
+### Batch F+ — STILL TODO from the second list (pick up here)
 5. **Admin actions** (e.g. add payment account) as a **small button at the bottom
    of the page** rather than inline.
 6. Dashboard: a **small week-ahead calendar** strip.

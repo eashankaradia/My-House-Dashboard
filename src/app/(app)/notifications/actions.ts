@@ -3,6 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { getActionContext, type ActionResult } from "@/lib/action-utils";
 
+/** Household members other than the current user (for "point out to…"). */
+export async function listOtherMembers(): Promise<{ id: string; name: string }[]> {
+  const { supabase, user } = await getActionContext();
+  const { data } = await supabase.from("household_members").select("user_id, display_name");
+  return (data ?? [])
+    .filter((m) => m.user_id !== user.id)
+    .map((m) => ({ id: m.user_id, name: m.display_name }));
+}
+
 export async function setNotificationPreference(
   entityType: string,
   enabled: boolean,
