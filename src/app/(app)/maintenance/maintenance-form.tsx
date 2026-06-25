@@ -22,7 +22,8 @@ import { useToast } from "@/hooks/use-toast";
 import { MAINTENANCE_FREQUENCIES, FREQUENCY_LABELS } from "@/lib/constants";
 import { maintenanceSchema, type MaintenanceInput } from "@/lib/schemas";
 import type { MaintenanceTask } from "@/lib/database.types";
-import { createMaintenance, updateMaintenance } from "./actions";
+import { FormDeleteButton } from "@/components/shared/form-delete-button";
+import { createMaintenance, deleteMaintenance, updateMaintenance } from "./actions";
 
 export function MaintenanceForm({ task, trigger }: { task?: MaintenanceTask; trigger?: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
@@ -101,13 +102,27 @@ export function MaintenanceForm({ task, trigger }: { task?: MaintenanceTask; tri
           <Field label="Notes" htmlFor="notes">
             <Textarea id="notes" rows={2} {...register("notes")} />
           </Field>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Saving…" : editing ? "Save changes" : "Add task"}
-            </Button>
+          <DialogFooter className="sm:justify-between">
+            {editing && task ? (
+              <FormDeleteButton
+                label="Delete task"
+                onDelete={async () => {
+                  const res = await deleteMaintenance(task.id);
+                  if (!res?.error) setOpen(false);
+                  return res;
+                }}
+              />
+            ) : (
+              <span />
+            )}
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={pending}>
+                {pending ? "Saving…" : editing ? "Save changes" : "Add task"}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

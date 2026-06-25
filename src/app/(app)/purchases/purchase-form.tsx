@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus } from "lucide-react";
+import { Archive, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,7 +28,7 @@ import {
 } from "@/lib/constants";
 import { purchaseSchema, type PurchaseInput } from "@/lib/schemas";
 import type { Purchase } from "@/lib/database.types";
-import { createPurchase, updatePurchase } from "./actions";
+import { createPurchase, deletePurchase, setPurchaseArchived, updatePurchase } from "./actions";
 
 type Props = {
   purchase?: Purchase;
@@ -86,6 +86,27 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
       toast({ title: editing ? "Purchase updated" : "Added to wishlist" });
       setOpen(false);
       if (!editing) reset();
+    });
+  }
+
+  function archive() {
+    if (!purchase) return;
+    startTransition(async () => {
+      const res = await setPurchaseArchived(purchase.id, true);
+      if (res?.error) toast({ variant: "destructive", title: "Couldn't archive", description: res.error });
+      else {
+        toast({ title: "Item archived" });
+        setOpen(false);
+      }
+    });
+  }
+
+  function remove() {
+    if (!purchase) return;
+    startTransition(async () => {
+      const res = await deletePurchase(purchase.id);
+      if (res?.error) toast({ variant: "destructive", title: "Couldn't delete", description: res.error });
+      else setOpen(false);
     });
   }
 
@@ -217,13 +238,27 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
           <Field label="Notes" htmlFor="notes">
             <Textarea id="notes" rows={2} {...register("notes")} />
           </Field>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Saving…" : editing ? "Save changes" : "Add item"}
-            </Button>
+          <DialogFooter className="sm:justify-between">
+            {editing ? (
+              <div className="flex items-center gap-1">
+                <Button type="button" variant="ghost" size="icon" onClick={archive} disabled={pending} aria-label="Archive item" title="Archive">
+                  <Archive className="h-4 w-4" />
+                </Button>
+                <Button type="button" variant="ghost" size="icon" onClick={remove} disabled={pending} aria-label="Delete item" title="Delete" className="text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <span />
+            )}
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={pending}>
+                {pending ? "Saving…" : editing ? "Save changes" : "Add item"}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

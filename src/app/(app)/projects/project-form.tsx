@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus } from "lucide-react";
+import { Archive, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PRIORITIES, PROJECT_CATEGORIES, PROJECT_STATUSES } from "@/lib/constants";
 import { projectSchema, type ProjectInput } from "@/lib/schemas";
 import type { Project } from "@/lib/database.types";
-import { createProject, updateProject } from "./actions";
+import { createProject, deleteProject, setProjectArchived, updateProject } from "./actions";
 
 type Props = {
   project?: Project;
@@ -71,6 +71,27 @@ export function ProjectForm({ project, trigger, defaults }: Props) {
       toast({ title: editing ? "Project updated" : "Project added" });
       setOpen(false);
       if (!editing) reset();
+    });
+  }
+
+  function archive() {
+    if (!project) return;
+    startTransition(async () => {
+      const res = await setProjectArchived(project.id, true);
+      if (res?.error) toast({ variant: "destructive", title: "Couldn't archive", description: res.error });
+      else {
+        toast({ title: "Project archived" });
+        setOpen(false);
+      }
+    });
+  }
+
+  function remove() {
+    if (!project) return;
+    startTransition(async () => {
+      const res = await deleteProject(project.id);
+      if (res?.error) toast({ variant: "destructive", title: "Couldn't delete", description: res.error });
+      else setOpen(false);
     });
   }
 
@@ -135,13 +156,27 @@ export function ProjectForm({ project, trigger, defaults }: Props) {
             <ImageUpload value={watch("image_url")} onChange={(url) => setValue("image_url", url ?? "")} />
             <input type="hidden" {...register("image_url")} />
           </Field>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Saving…" : editing ? "Save changes" : "Add project"}
-            </Button>
+          <DialogFooter className="sm:justify-between">
+            {editing ? (
+              <div className="flex items-center gap-1">
+                <Button type="button" variant="ghost" size="icon" onClick={archive} disabled={pending} aria-label="Archive project" title="Archive">
+                  <Archive className="h-4 w-4" />
+                </Button>
+                <Button type="button" variant="ghost" size="icon" onClick={remove} disabled={pending} aria-label="Delete project" title="Delete" className="text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <span />
+            )}
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={pending}>
+                {pending ? "Saving…" : editing ? "Save changes" : "Add project"}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

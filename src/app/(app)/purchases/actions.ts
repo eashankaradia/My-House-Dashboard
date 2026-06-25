@@ -75,6 +75,24 @@ export async function deletePurchase(id: string): Promise<ActionResult> {
   return {};
 }
 
+/** Archive or restore a purchase (archived items are hidden from the list). */
+export async function setPurchaseArchived(id: string, archived: boolean): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase
+    .from("purchases")
+    .update({ archived_at: archived ? new Date().toISOString() : null })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/purchases");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+/** Restore an archived purchase (single-arg form for passing to UI). */
+export async function restorePurchase(id: string): Promise<ActionResult> {
+  return setPurchaseArchived(id, false);
+}
+
 /** Toggle the current user's favourite "star" on a purchase. */
 export async function toggleStar(purchaseId: string): Promise<ActionResult> {
   const { supabase, user } = await getActionContext();

@@ -22,7 +22,8 @@ import { useToast } from "@/hooks/use-toast";
 import { POT_COLORS } from "@/lib/constants";
 import { savingsPotSchema, type SavingsPotInput } from "@/lib/schemas";
 import type { SavingsPot } from "@/lib/database.types";
-import { createPot, updatePot } from "./actions";
+import { FormDeleteButton } from "@/components/shared/form-delete-button";
+import { createPot, deletePot, updatePot } from "./actions";
 
 export function PotForm({ pot, trigger }: { pot?: SavingsPot; trigger?: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
@@ -107,13 +108,27 @@ export function PotForm({ pot, trigger }: { pot?: SavingsPot; trigger?: React.Re
           <Field label="Notes" htmlFor="notes">
             <Textarea id="notes" rows={2} {...register("notes")} />
           </Field>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Saving…" : editing ? "Save changes" : "Create pot"}
-            </Button>
+          <DialogFooter className="sm:justify-between">
+            {editing && pot ? (
+              <FormDeleteButton
+                label="Delete pot"
+                onDelete={async () => {
+                  const res = await deletePot(pot.id);
+                  if (!res?.error) setOpen(false);
+                  return res;
+                }}
+              />
+            ) : (
+              <span />
+            )}
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={pending}>
+                {pending ? "Saving…" : editing ? "Save changes" : "Create pot"}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
