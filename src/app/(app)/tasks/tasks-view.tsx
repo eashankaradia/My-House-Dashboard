@@ -20,6 +20,7 @@ import { Field } from "@/components/shared/form-field";
 import { AddToCalendar } from "@/components/shared/add-to-calendar";
 import { AddedBy } from "@/components/shared/added-by";
 import { useToast } from "@/hooks/use-toast";
+import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { cn, daysUntil, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { ProjectTask } from "@/lib/database.types";
@@ -193,7 +194,7 @@ function TaskEditDialog({
   projects: ProjectOption[];
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = React.useState(false);
+  const { open, onOpenChange } = useOpenFromUrl(task.id, "task");
   const [title, setTitle] = React.useState(task.title);
   const [projectId, setProjectId] = React.useState(task.project_id ?? "");
   const [due, setDue] = React.useState(task.due_date ?? "");
@@ -223,12 +224,12 @@ function TaskEditDialog({
         return;
       }
       toast({ title: "Task updated" });
-      setOpen(false);
+      onOpenChange(false);
     });
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -252,7 +253,7 @@ function TaskEditDialog({
             </Field>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
               Cancel
             </Button>
             <Button type="submit" disabled={pending || !title.trim()}>

@@ -16,6 +16,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { ProjectWithTasks } from "@/lib/database.types";
 import { ProjectForm } from "./project-form";
+import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { Subtasks } from "./subtasks";
 import { deleteProject } from "./actions";
 
@@ -28,9 +29,10 @@ export function ProjectDetailDialog({
   memberMap: MemberMap;
   children: React.ReactNode;
 }) {
+  const { open, onOpenChange } = useOpenFromUrl(project.id, "project");
   const done = project.tasks.filter((t) => t.is_done).length;
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>

@@ -15,6 +15,7 @@ import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { useToast } from "@/hooks/use-toast";
 import { priorityVariant } from "@/lib/ui";
 import type { Collection, Inspiration } from "@/lib/database.types";
+import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { InspirationForm } from "./inspiration-form";
 import { convertInspiration, deleteInspiration } from "./actions";
 
@@ -27,6 +28,7 @@ export function InspirationDetailDialog({
   collections: Collection[];
   children: React.ReactNode;
 }) {
+  const { open, onOpenChange } = useOpenFromUrl(item.id);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
 
@@ -42,7 +44,7 @@ export function InspirationDetailDialog({
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
