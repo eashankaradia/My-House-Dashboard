@@ -293,6 +293,15 @@ export type PurchaseStar = {
   created_at: string;
 };
 
+export type CalendarEvent = Timestamps & {
+  id: string;
+  user_id: string;
+  title: string;
+  event_date: string;
+  recurrence: "none" | "weekly" | "monthly" | "yearly";
+  notes: string | null;
+};
+
 export type LinkType = "task" | "project" | "purchase" | "bill" | "inspiration";
 
 export type Link = {
@@ -376,6 +385,7 @@ export type Database = {
       purchase_options: Row<PurchaseOption>;
       purchase_stars: Row<PurchaseStar>;
       links: Row<Link>;
+      calendar_events: Row<CalendarEvent>;
       project_tasks: Row<ProjectTask>;
       household_members: Row<HouseholdMember>;
       activity_log: Row<ActivityLog>;

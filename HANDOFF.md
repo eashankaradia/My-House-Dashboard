@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch B: task notes/clear).
+> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch C: calendar events).
 
 ## 0. Latest session (Claude, after Codex continuation)
 
@@ -35,10 +35,18 @@ Working through it in build+lint-verified batches.
   projects page now builds each `project.tasks` from ALL tasks (incl. archived);
   `Subtasks` shows active ones + an "N cleared (kept for progress)" line.
 
-### Batch C+ — STILL TODO from the second list (pick up here)
-1. Calendar: let a user **add an event to a date**, with **recurring** option
-   (needs `calendar_events` table + migration; calendar page currently derives
-   events from other tables only).
+### Batch C (done): calendar events — **needs migration 0015**
+- `0015_calendar_events.sql` adds `calendar_events` (title, event_date,
+  recurrence none/weekly/monthly/yearly, notes) + household RLS. RUN THIS LIVE.
+- `calendar/actions.ts`: `createCalendarEvent`, `deleteCalendarEvent`.
+- Calendar page expands recurring events across a window (now − 2mo … now + 18mo)
+  into `CalEvent`s (type `event`, carries `id`); passes the actions to the view.
+- `CalendarView`: "+ Event" button (opens today's day dialog), each day dialog
+  has an inline add-event form (title + recurrence) and custom events get a
+  delete ×. The empty-state is gone (you can always add). New `event` type
+  styled fuchsia in the legend.
+
+### Batch D+ — STILL TODO from the second list (pick up here)
 2. **Search**: a search box in the sidebar tab list + a search icon in the top
    bar (command-palette style across items).
 3. Move **dark-mode toggle** out of the top bar into the **profile/initials menu**
