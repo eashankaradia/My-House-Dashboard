@@ -66,6 +66,29 @@ export async function deleteProject(id: string): Promise<ActionResult> {
   return {};
 }
 
+/** Archive or restore a project (archived projects are hidden from the list). */
+export async function setProjectArchived(id: string, archived: boolean): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase
+    .from("projects")
+    .update({ archived_at: archived ? new Date().toISOString() : null })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/projects");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+/** Restore an archived project (single-arg form for passing to UI). */
+export async function restoreProject(id: string): Promise<ActionResult> {
+  return setProjectArchived(id, false);
+}
+
+/** Restore an archived task. */
+export async function restoreTask(id: string): Promise<ActionResult> {
+  return setTaskArchived(id, false);
+}
+
 // --- Tasks (project sub-tasks + standalone) --------------------------------
 
 export async function addTask(projectId: string, title: string): Promise<ActionResult> {
@@ -76,6 +99,7 @@ export async function createTask(input: {
   title: string;
   project_id?: string | null;
   due_date?: string | null;
+  assigned_to?: string | null;
 }): Promise<ActionResult> {
   const clean = input.title.trim();
   if (!clean) return { error: "Task can't be empty" };
@@ -85,6 +109,7 @@ export async function createTask(input: {
     project_id: input.project_id ?? null,
     title: clean,
     due_date: input.due_date || null,
+    assigned_to: input.assigned_to || null,
   });
   if (error) return { error: error.message };
   revalidatePath("/projects");
@@ -94,14 +119,33 @@ export async function createTask(input: {
 
 export async function updateTask(
   id: string,
-  input: { title?: string; project_id?: string | null; due_date?: string | null },
+  input: { title?: string; project_id?: string | null; due_date?: string | null; assigned_to?: string | null },
 ): Promise<ActionResult> {
   const { supabase } = await getActionContext();
-  const patch: { title?: string; project_id?: string | null; due_date?: string | null } = {};
+  const patch: {
+    title?: string;
+    project_id?: string | null;
+    due_date?: string | null;
+    assigned_to?: string | null;
+  } = {};
   if (input.title !== undefined) patch.title = input.title.trim();
   if (input.project_id !== undefined) patch.project_id = input.project_id || null;
   if (input.due_date !== undefined) patch.due_date = input.due_date || null;
+  if (input.assigned_to !== undefined) patch.assigned_to = input.assigned_to || null;
   const { error } = await supabase.from("project_tasks").update(patch).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/projects");
+  revalidatePath("/calendar");
+  return {};
+}
+
+/** Archive or restore a task (archived tasks are hidden from the list). */
+export async function setTaskArchived(id: string, archived: boolean): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase
+    .from("project_tasks")
+    .update({ archived_at: archived ? new Date().toISOString() : null })
+    .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/projects");
   revalidatePath("/calendar");

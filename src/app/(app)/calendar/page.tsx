@@ -37,6 +37,7 @@ export default async function CalendarPage() {
       events.push({ date: m.next_due_date, title: m.task, type: "maintenance", href: `/maintenance?item=${m.id}` });
   }
   for (const p of (projects.data ?? []) as Project[]) {
+    if (p.archived_at) continue;
     if (p.target_completion_date)
       events.push({ date: p.target_completion_date, title: `${p.name} target`, type: "project", href: `/projects?project=${p.id}` });
   }
@@ -53,6 +54,7 @@ export default async function CalendarPage() {
       events.push({ date: pot.target_date, title: `${pot.name} target`, type: "savings", href: `/savings?item=${pot.id}` });
   }
   for (const t of (tasks.data ?? []) as ProjectTask[]) {
+    if (t.archived_at) continue;
     if (t.due_date && !t.is_done)
       events.push({ date: t.due_date, title: t.title, type: "task", href: `/projects?task=${t.id}` });
   }

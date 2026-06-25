@@ -30,7 +30,8 @@ import {
 } from "@/lib/constants";
 import { inspirationSchema, type InspirationInput } from "@/lib/schemas";
 import type { Collection, Inspiration } from "@/lib/database.types";
-import { createInspiration, updateInspiration } from "./actions";
+import { FormDeleteButton } from "@/components/shared/form-delete-button";
+import { createInspiration, deleteInspiration, updateInspiration } from "./actions";
 
 type Props = {
   inspiration?: Inspiration;
@@ -187,13 +188,27 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
           <Field label="Notes" htmlFor="notes">
             <Textarea id="notes" rows={2} {...register("notes")} />
           </Field>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Saving…" : editing ? "Save changes" : "Save idea"}
-            </Button>
+          <DialogFooter className="sm:justify-between">
+            {editing && inspiration ? (
+              <FormDeleteButton
+                label="Delete idea"
+                onDelete={async () => {
+                  const res = await deleteInspiration(inspiration.id);
+                  if (!res?.error) setOpen(false);
+                  return res;
+                }}
+              />
+            ) : (
+              <span />
+            )}
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={pending}>
+                {pending ? "Saving…" : editing ? "Save changes" : "Save idea"}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

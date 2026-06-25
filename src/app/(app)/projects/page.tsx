@@ -5,14 +5,19 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
 import { formatCurrency } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
+import { ArchivedSection } from "@/components/shared/archived-section";
 import type { Project, ProjectTask, ProjectWithTasks } from "@/lib/database.types";
 import { ProjectForm } from "./project-form";
 import { ProjectsViews } from "./projects-views";
+import { deleteProject, deleteTask, restoreProject, restoreTask } from "./actions";
 
 export const metadata = { title: "Projects & Tasks" };
 
 export default async function ProjectsPage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const [{ data }, { data: taskData }, memberMap] = await Promise.all([
     supabase.from("projects").select("*").order("created_at", { ascending: false }),
     supabase
@@ -23,17 +28,23 @@ export default async function ProjectsPage() {
       .order("created_at", { ascending: false }),
     getHouseholdMap(),
   ]);
-  const tasks = (taskData ?? []) as ProjectTask[];
-  const projects: ProjectWithTasks[] = ((data ?? []) as Project[]).map((p) => ({
-    ...p,
-    tasks: tasks.filter((t) => t.project_id === p.id),
-  }));
+  // Archived tasks/projects are hidden from the main lists.
+  const allTasks = (taskData ?? []) as ProjectTask[];
+  const tasks = allTasks.filter((t) => !t.archived_at);
+  const archivedTasks = allTasks.filter((t) => t.archived_at);
+  const allProjects = (data ?? []) as Project[];
+  const archivedProjects = allProjects.filter((p) => p.archived_at);
+  const projects: ProjectWithTasks[] = allProjects
+    .filter((p) => !p.archived_at)
+    .map((p) => ({ ...p, tasks: tasks.filter((t) => t.project_id === p.id) }));
   const projectOptions = projects.map((p) => ({ id: p.id, name: p.name }));
+  const currentUserId = user?.id ?? "";
 
   const active = projects.filter((p) => p.status !== "Completed");
   const totalEstimated = projects.reduce((s, p) => s + Number(p.estimated_cost), 0);
   const openTasks = tasks.filter((t) => !t.is_done).length;
-  const hasContent = projects.length > 0 || tasks.length > 0;
+  const hasContent =
+    projects.length > 0 || tasks.length > 0 || archivedProjects.length > 0 || archivedTasks.length > 0;
 
   return (
     <div className="space-y-6">
@@ -65,6 +76,19 @@ export default async function ProjectsPage() {
             tasks={tasks}
             projectOptions={projectOptions}
             memberMap={memberMap}
+            currentUserId={currentUserId}
+          />
+          <ArchivedSection
+            items={archivedProjects.map((p) => ({ id: p.id, label: p.name }))}
+            noun="projects"
+            onRestore={restoreProject}
+            onDelete={deleteProject}
+          />
+          <ArchivedSection
+            items={archivedTasks.map((t) => ({ id: t.id, label: t.title }))}
+            noun="tasks"
+            onRestore={restoreTask}
+            onDelete={deleteTask}
           />
         </>
       )}

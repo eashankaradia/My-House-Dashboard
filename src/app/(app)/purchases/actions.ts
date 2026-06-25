@@ -75,6 +75,49 @@ export async function deletePurchase(id: string): Promise<ActionResult> {
   return {};
 }
 
+/** Archive or restore a purchase (archived items are hidden from the list). */
+export async function setPurchaseArchived(id: string, archived: boolean): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase
+    .from("purchases")
+    .update({ archived_at: archived ? new Date().toISOString() : null })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/purchases");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+/** Restore an archived purchase (single-arg form for passing to UI). */
+export async function restorePurchase(id: string): Promise<ActionResult> {
+  return setPurchaseArchived(id, false);
+}
+
+/** Toggle the current user's favourite "star" on a purchase. */
+export async function toggleStar(purchaseId: string): Promise<ActionResult> {
+  const { supabase, user } = await getActionContext();
+  const { data: existing, error: readErr } = await supabase
+    .from("purchase_stars")
+    .select("id")
+    .eq("purchase_id", purchaseId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (readErr) return { error: readErr.message };
+
+  if (existing) {
+    const { error } = await supabase.from("purchase_stars").delete().eq("id", existing.id);
+    if (error) return { error: error.message };
+  } else {
+    const { error } = await supabase
+      .from("purchase_stars")
+      .insert({ purchase_id: purchaseId, user_id: user.id });
+    if (error) return { error: error.message };
+  }
+  revalidatePath("/purchases");
+  revalidatePath("/dashboard");
+  return {};
+}
+
 // --- Purchase options (competing products to compare) ----------------------
 
 export async function addOption(purchaseId: string, raw: PurchaseOptionInput): Promise<ActionResult> {

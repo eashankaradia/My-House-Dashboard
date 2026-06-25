@@ -114,6 +114,7 @@ export type Project = Timestamps & {
   notes: string | null;
   image_url: string | null;
   source_inspiration_id: string | null;
+  archived_at: string | null;
 };
 
 export type Purchase = Timestamps & {
@@ -132,6 +133,7 @@ export type Purchase = Timestamps & {
   image_url: string | null;
   purchased_at: string | null;
   source_inspiration_id: string | null;
+  archived_at: string | null;
 };
 
 export type PurchaseOption = Timestamps & {
@@ -151,6 +153,9 @@ export type PurchaseOption = Timestamps & {
 
 /** A purchase with its compared options attached (used in list views). */
 export type PurchaseWithOptions = Purchase & { options: PurchaseOption[] };
+
+/** A purchase plus its household stars (who marked it a favourite). */
+export type PurchaseStarInfo = { user_id: string; name: string };
 
 export type MaintenanceTask = Timestamps & {
   id: string;
@@ -234,6 +239,15 @@ export type ProjectTask = Timestamps & {
   is_done: boolean;
   due_date: string | null;
   position: number;
+  assigned_to: string | null;
+  archived_at: string | null;
+};
+
+export type PurchaseStar = {
+  id: string;
+  purchase_id: string;
+  user_id: string;
+  created_at: string;
 };
 
 export type HouseholdMember = {
@@ -301,6 +315,7 @@ export type Database = {
       projects: Row<Project>;
       purchases: Row<Purchase>;
       purchase_options: Row<PurchaseOption>;
+      purchase_stars: Row<PurchaseStar>;
       project_tasks: Row<ProjectTask>;
       household_members: Row<HouseholdMember>;
       activity_log: Row<ActivityLog>;

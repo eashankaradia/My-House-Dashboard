@@ -22,7 +22,8 @@ import { useToast } from "@/hooks/use-toast";
 import { BILL_CATEGORIES, FREQUENCIES, FREQUENCY_LABELS } from "@/lib/constants";
 import { billSchema, type BillInput } from "@/lib/schemas";
 import type { Bill } from "@/lib/database.types";
-import { createBill, updateBill } from "./actions";
+import { FormDeleteButton } from "@/components/shared/form-delete-button";
+import { createBill, deleteBill, updateBill } from "./actions";
 
 type Props = { bill?: Bill; trigger?: React.ReactNode };
 
@@ -130,13 +131,27 @@ export function BillForm({ bill, trigger }: Props) {
             <Textarea id="notes" rows={2} {...register("notes")} />
           </Field>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Saving…" : editing ? "Save changes" : "Add bill"}
-            </Button>
+          <DialogFooter className="sm:justify-between">
+            {editing && bill ? (
+              <FormDeleteButton
+                label="Delete bill"
+                onDelete={async () => {
+                  const res = await deleteBill(bill.id);
+                  if (!res?.error) setOpen(false);
+                  return res;
+                }}
+              />
+            ) : (
+              <span />
+            )}
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={pending}>
+                {pending ? "Saving…" : editing ? "Save changes" : "Add bill"}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

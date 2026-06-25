@@ -23,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CardTrigger } from "@/components/shared/card-trigger";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { priorityVariant } from "@/lib/ui";
@@ -225,23 +226,25 @@ function InspirationCard({
         // eslint-disable-next-line @next/next/no-img-element
         <img src={item.image_url} alt={item.title} className="w-full object-cover" />
       ) : null}
-      <CardContent className="space-y-2 p-4">
-        <div className="flex items-start justify-between gap-2">
-          <InspirationDetailDialog item={item} collections={collections}>
-            <button className="text-left font-medium leading-snug hover:underline">{item.title}</button>
-          </InspirationDetailDialog>
+      <CardContent className="relative space-y-2 p-4">
+        <div className="absolute right-2 top-3">
           <ActionsMenu item={item} collections={collections} />
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          <Badge variant="secondary">{item.source}</Badge>
-          {item.category ? <Badge variant="outline">{item.category}</Badge> : null}
-          {item.room ? <Badge variant="outline">{item.room}</Badge> : null}
-          <Badge variant={priorityVariant(item.priority)}>{item.priority}</Badge>
-        </div>
-        {item.tags?.length ? (
-          <p className="text-xs text-muted-foreground">{item.tags.map((t) => `#${t}`).join(" ")}</p>
-        ) : null}
-        {item.notes ? <p className="text-sm text-muted-foreground">{item.notes}</p> : null}
+        <InspirationDetailDialog item={item} collections={collections}>
+          <CardTrigger className="space-y-2 rounded-md pr-8">
+            <span className="block font-medium leading-snug hover:underline">{item.title}</span>
+            <div className="flex flex-wrap gap-1.5">
+              <Badge variant="secondary">{item.source}</Badge>
+              {item.category ? <Badge variant="outline">{item.category}</Badge> : null}
+              {item.room ? <Badge variant="outline">{item.room}</Badge> : null}
+              <Badge variant={priorityVariant(item.priority)}>{item.priority}</Badge>
+            </div>
+            {item.tags?.length ? (
+              <p className="text-xs text-muted-foreground">{item.tags.map((t) => `#${t}`).join(" ")}</p>
+            ) : null}
+            {item.notes ? <p className="text-sm text-muted-foreground">{item.notes}</p> : null}
+          </CardTrigger>
+        </InspirationDetailDialog>
         {item.link ? (
           <a
             href={item.link}
@@ -269,14 +272,14 @@ function InspirationRow({ item, collections }: { item: Inspiration; collections:
             {item.source.slice(0, 2)}
           </div>
         )}
-        <div className="min-w-0 flex-1">
-          <InspirationDetailDialog item={item} collections={collections}>
-            <button className="block w-full truncate text-left font-medium hover:underline">{item.title}</button>
-          </InspirationDetailDialog>
-          <p className="truncate text-xs text-muted-foreground">
-            {[item.source, item.category, item.room].filter(Boolean).join(" · ")}
-          </p>
-        </div>
+        <InspirationDetailDialog item={item} collections={collections}>
+          <CardTrigger className="min-w-0 flex-1 rounded-md">
+            <span className="block truncate font-medium hover:underline">{item.title}</span>
+            <p className="truncate text-xs text-muted-foreground">
+              {[item.source, item.category, item.room].filter(Boolean).join(" · ")}
+            </p>
+          </CardTrigger>
+        </InspirationDetailDialog>
         <Badge variant={priorityVariant(item.priority)}>{item.priority}</Badge>
         <ActionsMenu item={item} collections={collections} />
       </CardContent>

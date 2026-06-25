@@ -31,6 +31,7 @@ import type {
   SavingsPot,
 } from "@/lib/database.types";
 import { QuickActions } from "./quick-actions";
+import { DashboardWidget, EditDashboardButton } from "./dashboard-customize";
 
 export const metadata = { title: "Dashboard" };
 
@@ -64,8 +65,8 @@ export default async function DashboardPage() {
 
   const bills = (billsRes.data ?? []) as Bill[];
   const pots = (potsRes.data ?? []) as SavingsPot[];
-  const projects = (projectsRes.data ?? []) as Project[];
-  const purchases = (purchasesRes.data ?? []) as Purchase[];
+  const projects = ((projectsRes.data ?? []) as Project[]).filter((p) => !p.archived_at);
+  const purchases = ((purchasesRes.data ?? []) as Purchase[]).filter((p) => !p.archived_at);
   const inspiration = (inspoRes.data ?? []) as Inspiration[];
   const maintenance = (maintRes.data ?? []) as MaintenanceTask[];
   const documents = (docsRes.data ?? []) as Document[];
@@ -120,19 +121,23 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            {greeting}, {firstName}
-          </h1>
-          <InfoHint text="Your home at a glance. The cards summarise your finances, savings, projects, reminders and recent activity — they update automatically as you add things. Use the buttons below to add anything quickly, or the sidebar to open a section." />
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              {greeting}, {firstName}
+            </h1>
+            <InfoHint text="Your home at a glance. The cards summarise your finances, savings, projects, reminders and recent activity — they update automatically as you add things. Use ‘Edit dashboard’ to choose which cards show. Use the buttons below to add anything quickly, or the sidebar to open a section." />
+          </div>
+          <p className="text-muted-foreground">Here&apos;s how your home is doing today.</p>
         </div>
-        <p className="text-muted-foreground">Here&apos;s how your home is doing today.</p>
+        <EditDashboardButton />
       </div>
 
       <QuickActions collections={collections} />
 
       {/* Financial summary */}
+      <DashboardWidget id="finance">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Monthly bills" value={formatCurrency(monthlyBills)} hint={`${formatCurrency(annualBills)}/yr`} icon={Receipt} />
         <StatCard
@@ -151,12 +156,16 @@ export default async function DashboardPage() {
           accent="muted"
         />
       </div>
+      </DashboardWidget>
 
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Savings progress */}
+        <DashboardWidget id="savings">
         <Card className="lg:col-span-1">
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Savings progress</CardTitle>
+            <CardTitle className="text-base">
+              <Link href="/savings" className="hover:underline">Savings progress</Link>
+            </CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-4">
@@ -190,11 +199,15 @@ export default async function DashboardPage() {
             )}
           </CardContent>
         </Card>
+        </DashboardWidget>
 
         {/* Open projects */}
+        <DashboardWidget id="projects">
         <Card className="lg:col-span-1">
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Open projects</CardTitle>
+            <CardTitle className="text-base">
+              <Link href="/projects" className="hover:underline">Open projects</Link>
+            </CardTitle>
             <Hammer className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-3">
@@ -216,11 +229,15 @@ export default async function DashboardPage() {
             )}
           </CardContent>
         </Card>
+        </DashboardWidget>
 
         {/* Reminders */}
+        <DashboardWidget id="reminders">
         <Card className="lg:col-span-1">
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Renewal reminders</CardTitle>
+            <CardTitle className="text-base">
+              <Link href="/calendar" className="hover:underline">Renewal reminders</Link>
+            </CardTitle>
             <BellRing className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-3">
@@ -243,13 +260,17 @@ export default async function DashboardPage() {
             )}
           </CardContent>
         </Card>
+        </DashboardWidget>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Upcoming maintenance */}
+        <DashboardWidget id="maintenance">
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Upcoming maintenance</CardTitle>
+            <CardTitle className="text-base">
+              <Link href="/maintenance" className="hover:underline">Upcoming maintenance</Link>
+            </CardTitle>
             <Wrench className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-3">
@@ -275,11 +296,15 @@ export default async function DashboardPage() {
             )}
           </CardContent>
         </Card>
+        </DashboardWidget>
 
         {/* Recent inspiration */}
+        <DashboardWidget id="inspiration">
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Recent inspiration</CardTitle>
+            <CardTitle className="text-base">
+              <Link href="/inspiration" className="hover:underline">Recent inspiration</Link>
+            </CardTitle>
             <Lightbulb className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-3">
@@ -301,11 +326,15 @@ export default async function DashboardPage() {
             )}
           </CardContent>
         </Card>
+        </DashboardWidget>
 
         {/* Recent purchases */}
+        <DashboardWidget id="purchases">
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Recent purchases</CardTitle>
+            <CardTitle className="text-base">
+              <Link href="/purchases" className="hover:underline">Recent purchases</Link>
+            </CardTitle>
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-3">
@@ -327,6 +356,7 @@ export default async function DashboardPage() {
             )}
           </CardContent>
         </Card>
+        </DashboardWidget>
       </div>
     </div>
   );
