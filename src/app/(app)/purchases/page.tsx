@@ -53,9 +53,9 @@ export default async function PurchasesPage() {
   }
 
   const wishlist = purchases.filter((p) => p.status !== "Purchased");
-  const wishlistValue = wishlist.reduce((s, p) => s + effectivePrice(p), 0);
   const purchased = purchases.filter((p) => p.status === "Purchased");
-  const purchasedValue = purchased.reduce((s, p) => s + effectivePrice(p), 0);
+  const readyToBuy = purchases.filter((p) => p.status === "Ready To Buy");
+  const readyToBuyValue = readyToBuy.reduce((s, p) => s + effectivePrice(p), 0);
 
   return (
     <div className="space-y-6">
@@ -77,8 +77,8 @@ export default async function PurchasesPage() {
             <>
               <div className="grid gap-4 sm:grid-cols-3">
                 <StatCard label="Wishlist items" value={String(wishlist.length)} icon={ShoppingBag} />
-                <StatCard label="Wishlist value" value={formatCurrency(wishlistValue)} icon={Wallet} accent="muted" />
-                <StatCard label="Purchased" value={formatCurrency(purchasedValue)} hint={`${purchased.length} bought`} icon={CheckCircle2} />
+                <StatCard label="Ready to buy" value={formatCurrency(readyToBuyValue)} hint={`${readyToBuy.length} item${readyToBuy.length === 1 ? "" : "s"}`} icon={Wallet} />
+                <StatCard label="Purchased" value={String(purchased.length)} hint="items bought" icon={CheckCircle2} accent="muted" />
               </div>
               <PurchasesGrid purchases={purchases} memberMap={memberMap} starInfo={starInfo} />
             </>
