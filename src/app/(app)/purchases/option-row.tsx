@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp, ExternalLink, Pencil, Star } from "lucide-react
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { useToast } from "@/hooks/use-toast";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import type { PurchaseOption } from "@/lib/database.types";
 import { OptionForm } from "./option-form";
 import { chooseOption, deleteOption, moveOption } from "./actions";
@@ -69,6 +69,9 @@ export function OptionRow({
         <p className="truncate text-xs text-muted-foreground">
           {[option.store, option.notes].filter(Boolean).join(" · ") || " "}
         </p>
+        <p className="text-[11px] text-muted-foreground">
+          Added {formatDate(option.created_at)} · updated {formatDate(option.updated_at)}
+        </p>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-0.5">
         <span className="text-sm font-semibold">{formatCurrency(option.price)}</span>
@@ -108,8 +111,9 @@ export function OptionRow({
           purchaseId={purchaseId}
           option={option}
           trigger={
-            <button className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Edit option">
+            <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
               <Pencil className="h-4 w-4" />
+              Edit
             </button>
           }
         />

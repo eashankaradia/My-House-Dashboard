@@ -294,10 +294,10 @@ Recently added (chronological, by PR):
 ### ⏳ Large outstanding request (batches still to do)
 The user submitted a big list (2026-06-25). Done so far: dashboard redesign +
 purchases stat tweaks (above). **Still TODO** (no code yet — pick up here):
-1. Finish converting any remaining compact-row edit icon triggers to **"Edit"**
-   text (main forms/dialogs are done).
-2. Extend **timestamps** to secondary entities such as purchase options and
-   savings accounts (main item detail dialogs are done).
+1. **Edit labels:** done for main forms and remaining compact-row/account/option
+   pencil actions.
+2. **Timestamps:** done for main item dialogs, tasks, purchase options, and
+   savings accounts.
 3. **Per-tab update log** — done for every data-management section via the
    shared `SectionActivityLog` component.
 4. **Purchases:** done in code — non-negotiable features/qualities field
@@ -315,8 +315,8 @@ purchases stat tweaks (above). **Still TODO** (no code yet — pick up here):
     Requires migration 0012.
 11. **Export:** done — removed per-tab buttons and added a Settings dataset
     picker/export.
-12. **Share to WhatsApp** — shared detail-dialog component is done for the main
-    entity types; extend to any remaining secondary entities/views.
+12. **Share to WhatsApp:** done for main entity detail dialogs and task dialogs
+    using native share with a `wa.me` fallback.
 
 ---
 
@@ -355,10 +355,14 @@ purchases stat tweaks (above). **Still TODO** (no code yet — pick up here):
 
 ## 11. Current status & possible next steps
 
-- **Branch `claude/home-dashboard-build-yv7ewz` is merged to `main` through PR #20.**
-- **Outstanding user actions:** run migrations **0009** and **0010** (and confirm
-  0008/0007 are run). Set up the demo if desired (dashboard user + `seed_demo.sql`).
-- No known build failures. No automated tests exist.
+- Active continuation branch: **`codex/continue-dashboard-backlog`**, draft
+  **PR #23**. Every completed batch is committed and pushed.
+- **Outstanding user actions after merge:** run migrations **0009**, **0010**,
+  **0011**, **0012**, and **0013** (and confirm 0008/0007 are run).
+- Verification on the continuation branch: `npm run typecheck` passes and
+  `npm run lint` passes. `npm run build` compiles successfully and reaches
+  static-page generation, then fails on `/login` only because this checkout has
+  no `NEXT_PUBLIC_SUPABASE_URL` / anon key environment variables.
 - Ideas not yet requested/built: income/budgeting (explicitly excluded by user),
   notifications/reminders by email, richer analytics, link auto-cleanup on delete,
   showing linked-item counts on cards, assignee avatars.
@@ -397,8 +401,12 @@ The bills/accounts/payment batch is complete in code and verified with
 typecheck/lint. Migration `0012_bill_accounts_payments.sql` must be run after
 merge.
 
-The centralised export batch is complete and verified with typecheck/lint.
+The consistency sweep is complete: visible Edit labels on remaining pencil
+actions, timestamps on options/accounts/tasks, and task sharing. Typecheck and
+lint pass. Production compilation succeeds; final prerender requires Supabase
+environment variables.
 
-Next exact step: finish the remaining secondary edit buttons/timestamps/share
-coverage (compact rows, purchase options, savings accounts, tasks), run a full
-verification/build attempt, update this file and PR #23, then commit and push.
+Next exact step: deploy/preview PR #23 with its normal Vercel environment,
+visually test the new migrations-backed screens after SQL 0011–0013 are run,
+and fix any live-data issues found. No requested feature from the 2026-06-25
+backlog remains intentionally unimplemented.

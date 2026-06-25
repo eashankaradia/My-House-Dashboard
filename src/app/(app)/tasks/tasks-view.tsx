@@ -23,6 +23,8 @@ import { CardTrigger } from "@/components/shared/card-trigger";
 import { useToast } from "@/hooks/use-toast";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { LinkedItems } from "@/app/(app)/links/linked-items";
+import { ItemTimestamps } from "@/components/shared/item-timestamps";
+import { ShareButton } from "@/components/shared/share-button";
 import { cn, daysUntil, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { ProjectTask } from "@/lib/database.types";
@@ -336,6 +338,7 @@ function TaskEditDialog({
               </NativeSelect>
             </Field>
           ) : null}
+          <ItemTimestamps createdAt={task.created_at} updatedAt={task.updated_at} />
           <div className="border-t pt-3">
             <LinkedItems type="task" id={task.id} />
           </div>
@@ -348,9 +351,12 @@ function TaskEditDialog({
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
-            <Button type="submit" disabled={pending || !title.trim()}>
+            <div className="flex items-center gap-2">
+              <ShareButton title={task.title} text={task.due_date ? `Due ${formatDate(task.due_date)}` : undefined} />
+              <Button type="submit" disabled={pending || !title.trim()}>
               {pending ? "Saving…" : "Save changes"}
-            </Button>
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
