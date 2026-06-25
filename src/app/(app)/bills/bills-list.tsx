@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
+import { CardTrigger } from "@/components/shared/card-trigger";
 import { ExportButton } from "@/components/shared/export-button";
 import { FREQUENCY_LABELS } from "@/lib/constants";
 import { cn, formatCurrency, formatDate, toMonthly } from "@/lib/utils";
@@ -43,18 +44,20 @@ export function BillsList({ bills, memberMap }: { bills: Bill[]; memberMap: Memb
           compact ? (
             <div key={bill.id} className="flex items-center gap-3 py-2 text-sm first:pt-0 last:pb-0">
               <BillDetailDialog bill={bill} memberMap={memberMap}>
-                <button className="min-w-0 flex-1 truncate text-left font-medium hover:underline">{bill.name}</button>
+                <CardTrigger className="flex min-w-0 flex-1 items-center gap-3 rounded-md">
+                  <span className="min-w-0 flex-1 truncate font-medium">{bill.name}</span>
+                  <Badge variant="secondary">{bill.category}</Badge>
+                  {bill.due_date ? (
+                    <span className="hidden w-20 shrink-0 text-right text-xs text-muted-foreground sm:block">
+                      {formatDate(bill.due_date)}
+                    </span>
+                  ) : null}
+                  <span className="w-20 shrink-0 text-right font-semibold">
+                    {formatCurrency(toMonthly(bill.amount, bill.frequency))}
+                    <span className="text-xs font-normal text-muted-foreground">/mo</span>
+                  </span>
+                </CardTrigger>
               </BillDetailDialog>
-              <Badge variant="secondary">{bill.category}</Badge>
-              {bill.due_date ? (
-                <span className="hidden w-20 shrink-0 text-right text-xs text-muted-foreground sm:block">
-                  {formatDate(bill.due_date)}
-                </span>
-              ) : null}
-              <span className="w-20 shrink-0 text-right font-semibold">
-                {formatCurrency(toMonthly(bill.amount, bill.frequency))}
-                <span className="text-xs font-normal text-muted-foreground">/mo</span>
-              </span>
               <div className="flex shrink-0 items-center">
                 <BillForm
                   bill={bill}
@@ -69,23 +72,23 @@ export function BillsList({ bills, memberMap }: { bills: Bill[]; memberMap: Memb
             </div>
           ) : (
             <div key={bill.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <BillDetailDialog bill={bill} memberMap={memberMap}>
-                    <button className="truncate text-left font-medium hover:underline">{bill.name}</button>
-                  </BillDetailDialog>
-                  <Badge variant="secondary">{bill.category}</Badge>
-                  {!bill.is_fixed ? <Badge variant="outline">Variable</Badge> : null}
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>
-                    {FREQUENCY_LABELS[bill.frequency]}
-                    {bill.payment_account ? ` · ${bill.payment_account}` : ""}
-                    {bill.due_date ? ` · due ${formatDate(bill.due_date)}` : ""}
-                  </span>
-                  <AddedBy name={memberMap[bill.user_id]} />
-                </div>
-              </div>
+              <BillDetailDialog bill={bill} memberMap={memberMap}>
+                <CardTrigger className="min-w-0 flex-1 rounded-md">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-medium">{bill.name}</span>
+                    <Badge variant="secondary">{bill.category}</Badge>
+                    {!bill.is_fixed ? <Badge variant="outline">Variable</Badge> : null}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>
+                      {FREQUENCY_LABELS[bill.frequency]}
+                      {bill.payment_account ? ` · ${bill.payment_account}` : ""}
+                      {bill.due_date ? ` · due ${formatDate(bill.due_date)}` : ""}
+                    </span>
+                    <AddedBy name={memberMap[bill.user_id]} />
+                  </div>
+                </CardTrigger>
+              </BillDetailDialog>
               <div className="flex items-center gap-1">
                 <div className="text-right">
                   <p className="font-semibold">{formatCurrency(bill.amount)}</p>

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
+import { CardTrigger } from "@/components/shared/card-trigger";
 import { ExportButton } from "@/components/shared/export-button";
 import { BarChart } from "@/components/charts/bar-chart";
 import { useToast } from "@/hooks/use-toast";
@@ -27,11 +28,13 @@ export function ProjectsViews({
   tasks,
   projectOptions,
   memberMap,
+  currentUserId,
 }: {
   projects: ProjectWithTasks[];
   tasks: ProjectTask[];
   projectOptions: { id: string; name: string }[];
   memberMap: MemberMap;
+  currentUserId: string;
 }) {
   const [compact, setCompact] = React.useState(false);
   // A ?project= deep-link opens a project detail dialog, which only mounts in
@@ -49,7 +52,7 @@ export function ProjectsViews({
       </TabsList>
 
       <TabsContent value="tasks">
-        <TasksView tasks={tasks} projects={projectOptions} memberMap={memberMap} />
+        <TasksView tasks={tasks} projects={projectOptions} memberMap={memberMap} currentUserId={currentUserId} />
       </TabsContent>
 
       <TabsContent value="kanban">
@@ -123,25 +126,27 @@ export function ProjectsViews({
                 const done = project.tasks.filter((t) => t.is_done).length;
                 return (
                   <div key={project.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
-                    <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATUS_ACCENT[project.status]}`} />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <ProjectDetailDialog project={project} memberMap={memberMap}>
-                          <button className="truncate text-left font-medium hover:underline">{project.name}</button>
-                        </ProjectDetailDialog>
-                        <Badge variant={priorityVariant(project.priority)}>{project.priority}</Badge>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>
-                          {project.status} · {project.category}
-                          {project.tasks.length ? ` · ${done}/${project.tasks.length} tasks` : ""}
+                    <ProjectDetailDialog project={project} memberMap={memberMap}>
+                      <CardTrigger className="flex min-w-0 flex-1 items-center gap-3 rounded-md">
+                        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATUS_ACCENT[project.status]}`} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate font-medium">{project.name}</span>
+                            <Badge variant={priorityVariant(project.priority)}>{project.priority}</Badge>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>
+                              {project.status} · {project.category}
+                              {project.tasks.length ? ` · ${done}/${project.tasks.length} tasks` : ""}
+                            </span>
+                            <AddedBy name={memberMap[project.user_id]} />
+                          </div>
+                        </div>
+                        <span className="shrink-0 font-medium">
+                          {formatCurrency(project.actual_cost || project.estimated_cost)}
                         </span>
-                        <AddedBy name={memberMap[project.user_id]} />
-                      </div>
-                    </div>
-                    <span className="shrink-0 font-medium">
-                      {formatCurrency(project.actual_cost || project.estimated_cost)}
-                    </span>
+                      </CardTrigger>
+                    </ProjectDetailDialog>
                     <div className="flex shrink-0 items-center">
                       <ProjectForm
                         project={project}
@@ -197,29 +202,31 @@ function ProjectCard({
   return (
     <Card className="shadow-none">
       <CardContent className={compact ? "space-y-2 p-3" : "space-y-3 p-4"}>
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <ProjectDetailDialog project={project} memberMap={memberMap}>
-                <button className="truncate text-left font-medium hover:underline">{project.name}</button>
-              </ProjectDetailDialog>
-              <Badge variant={priorityVariant(project.priority)}>{project.priority}</Badge>
+        <ProjectDetailDialog project={project} memberMap={memberMap}>
+          <CardTrigger className={compact ? "space-y-2 rounded-md" : "space-y-3 rounded-md"}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="truncate font-medium hover:underline">{project.name}</span>
+                  <Badge variant={priorityVariant(project.priority)}>{project.priority}</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {project.category}
+                  {project.target_completion_date ? ` · ${formatDate(project.target_completion_date)}` : ""}
+                  {project.tasks.length ? ` · ${done}/${project.tasks.length} tasks` : ""}
+                </p>
+              </div>
+              <div className="text-right text-sm">
+                <p className="font-medium">{formatCurrency(project.actual_cost || project.estimated_cost)}</p>
+                <p className="text-xs text-muted-foreground">{project.actual_cost ? "actual" : "est."}</p>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {project.category}
-              {project.target_completion_date ? ` · ${formatDate(project.target_completion_date)}` : ""}
-              {project.tasks.length ? ` · ${done}/${project.tasks.length} tasks` : ""}
-            </p>
-          </div>
-          <div className="text-right text-sm">
-            <p className="font-medium">{formatCurrency(project.actual_cost || project.estimated_cost)}</p>
-            <p className="text-xs text-muted-foreground">{project.actual_cost ? "actual" : "est."}</p>
-          </div>
-        </div>
 
-        {!compact && project.description ? (
-          <p className="line-clamp-2 text-sm text-muted-foreground">{project.description}</p>
-        ) : null}
+            {!compact && project.description ? (
+              <p className="line-clamp-2 text-sm text-muted-foreground">{project.description}</p>
+            ) : null}
+          </CardTrigger>
+        </ProjectDetailDialog>
 
         <div className="flex items-center justify-between gap-2 border-t pt-2">
           <AddedBy name={memberMap[project.user_id]} />

@@ -13,6 +13,9 @@ export const metadata = { title: "Projects & Tasks" };
 
 export default async function ProjectsPage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const [{ data }, { data: taskData }, memberMap] = await Promise.all([
     supabase.from("projects").select("*").order("created_at", { ascending: false }),
     supabase
@@ -23,12 +26,15 @@ export default async function ProjectsPage() {
       .order("created_at", { ascending: false }),
     getHouseholdMap(),
   ]);
-  const tasks = (taskData ?? []) as ProjectTask[];
+  // Archived tasks are hidden from the main list.
+  const allTasks = (taskData ?? []) as ProjectTask[];
+  const tasks = allTasks.filter((t) => !t.archived_at);
   const projects: ProjectWithTasks[] = ((data ?? []) as Project[]).map((p) => ({
     ...p,
     tasks: tasks.filter((t) => t.project_id === p.id),
   }));
   const projectOptions = projects.map((p) => ({ id: p.id, name: p.name }));
+  const currentUserId = user?.id ?? "";
 
   const active = projects.filter((p) => p.status !== "Completed");
   const totalEstimated = projects.reduce((s, p) => s + Number(p.estimated_cost), 0);
@@ -65,6 +71,7 @@ export default async function ProjectsPage() {
             tasks={tasks}
             projectOptions={projectOptions}
             memberMap={memberMap}
+            currentUserId={currentUserId}
           />
         </>
       )}

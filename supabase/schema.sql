@@ -223,6 +223,7 @@ create table if not exists public.projects (
   notes                 text,
   image_url             text,
   source_inspiration_id  uuid references public.inspiration (id) on delete set null,
+  archived_at           timestamptz,
   created_at            timestamptz not null default now(),
   updated_at            timestamptz not null default now()
 );
@@ -249,9 +250,28 @@ create table if not exists public.purchases (
   image_url             text,
   purchased_at          date,
   source_inspiration_id uuid references public.inspiration (id) on delete set null,
+  archived_at           timestamptz,
   created_at            timestamptz not null default now(),
   updated_at            timestamptz not null default now()
 );
+
+-- purchase_stars — per-member "favourite" stars on a purchase (who starred).
+create table if not exists public.purchase_stars (
+  id          uuid primary key default gen_random_uuid(),
+  purchase_id uuid not null references public.purchases (id) on delete cascade,
+  user_id     uuid not null references auth.users (id) on delete cascade,
+  created_at  timestamptz not null default now(),
+  unique (purchase_id, user_id)
+);
+create index if not exists purchase_stars_purchase_idx on public.purchase_stars (purchase_id);
+alter table public.purchase_stars enable row level security;
+drop policy if exists "stars_select" on public.purchase_stars;
+create policy "stars_select" on public.purchase_stars for select
+  using (auth.uid() = user_id or public.same_household(user_id));
+drop policy if exists "stars_insert" on public.purchase_stars;
+create policy "stars_insert" on public.purchase_stars for insert with check (auth.uid() = user_id);
+drop policy if exists "stars_delete" on public.purchase_stars;
+create policy "stars_delete" on public.purchase_stars for delete using (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------------
 -- purchase_options — competing products/options for a wishlist item, so you
@@ -278,15 +298,17 @@ create table if not exists public.purchase_options (
 -- project_tasks — sub-tasks / checklist items under a project.
 -- ---------------------------------------------------------------------------
 create table if not exists public.project_tasks (
-  id         uuid primary key default gen_random_uuid(),
-  user_id    uuid not null references auth.users (id) on delete cascade,
-  project_id uuid references public.projects (id) on delete cascade,
-  title      text not null,
-  is_done    boolean not null default false,
-  due_date   date,
-  position   integer not null default 0,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references auth.users (id) on delete cascade,
+  project_id  uuid references public.projects (id) on delete cascade,
+  title       text not null,
+  is_done     boolean not null default false,
+  due_date    date,
+  position    integer not null default 0,
+  assigned_to uuid references auth.users (id) on delete set null,
+  archived_at timestamptz,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
 );
 create index if not exists project_tasks_project_idx on public.project_tasks (project_id);
 

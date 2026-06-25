@@ -156,7 +156,9 @@ export default async function DashboardPage() {
         {/* Savings progress */}
         <Card className="lg:col-span-1">
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Savings progress</CardTitle>
+            <CardTitle className="text-base">
+              <Link href="/savings" className="hover:underline">Savings progress</Link>
+            </CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-4">
@@ -194,7 +196,9 @@ export default async function DashboardPage() {
         {/* Open projects */}
         <Card className="lg:col-span-1">
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Open projects</CardTitle>
+            <CardTitle className="text-base">
+              <Link href="/projects" className="hover:underline">Open projects</Link>
+            </CardTitle>
             <Hammer className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-3">
@@ -220,7 +224,9 @@ export default async function DashboardPage() {
         {/* Reminders */}
         <Card className="lg:col-span-1">
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Renewal reminders</CardTitle>
+            <CardTitle className="text-base">
+              <Link href="/calendar" className="hover:underline">Renewal reminders</Link>
+            </CardTitle>
             <BellRing className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-3">
@@ -249,7 +255,9 @@ export default async function DashboardPage() {
         {/* Upcoming maintenance */}
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Upcoming maintenance</CardTitle>
+            <CardTitle className="text-base">
+              <Link href="/maintenance" className="hover:underline">Upcoming maintenance</Link>
+            </CardTitle>
             <Wrench className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-3">
@@ -279,7 +287,9 @@ export default async function DashboardPage() {
         {/* Recent inspiration */}
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Recent inspiration</CardTitle>
+            <CardTitle className="text-base">
+              <Link href="/inspiration" className="hover:underline">Recent inspiration</Link>
+            </CardTitle>
             <Lightbulb className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-3">
@@ -305,7 +315,9 @@ export default async function DashboardPage() {
         {/* Recent purchases */}
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Recent purchases</CardTitle>
+            <CardTitle className="text-base">
+              <Link href="/purchases" className="hover:underline">Recent purchases</Link>
+            </CardTitle>
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="space-y-3">

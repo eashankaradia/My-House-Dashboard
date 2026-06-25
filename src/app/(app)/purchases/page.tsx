@@ -5,9 +5,9 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
 import { formatCurrency } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
-import type { Purchase, PurchaseOption, PurchaseWithOptions } from "@/lib/database.types";
+import type { Purchase, PurchaseOption, PurchaseStar, PurchaseWithOptions } from "@/lib/database.types";
 import { PurchaseForm } from "./purchase-form";
-import { PurchasesGrid } from "./purchases-grid";
+import { PurchasesGrid, type StarInfo } from "./purchases-grid";
 
 export const metadata = { title: "Future Purchases" };
 
@@ -21,17 +21,32 @@ function effectivePrice(p: PurchaseWithOptions): number {
 
 export default async function PurchasesPage() {
   const supabase = await createClient();
-  const [{ data: purchaseData }, { data: optionData }, memberMap] = await Promise.all([
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const [{ data: purchaseData }, { data: optionData }, { data: starData }, memberMap] = await Promise.all([
     supabase.from("purchases").select("*").order("created_at", { ascending: false }),
     supabase.from("purchase_options").select("*").order("rank", { ascending: true }),
+    supabase.from("purchase_stars").select("*"),
     getHouseholdMap(),
   ]);
 
   const options = (optionData ?? []) as PurchaseOption[];
+  const stars = (starData ?? []) as PurchaseStar[];
   const purchases: PurchaseWithOptions[] = ((purchaseData ?? []) as Purchase[]).map((p) => ({
     ...p,
     options: options.filter((o) => o.purchase_id === p.id),
   }));
+
+  // Per-purchase star info: did I star it, and who in the household has.
+  const starInfo: Record<string, StarInfo> = {};
+  for (const p of purchases) {
+    const rows = stars.filter((s) => s.purchase_id === p.id);
+    starInfo[p.id] = {
+      mine: rows.some((s) => s.user_id === user?.id),
+      names: rows.map((s) => memberMap[s.user_id]).filter(Boolean) as string[],
+    };
+  }
 
   const wishlist = purchases.filter((p) => p.status !== "Purchased");
   const wishlistValue = wishlist.reduce((s, p) => s + effectivePrice(p), 0);
@@ -59,7 +74,7 @@ export default async function PurchasesPage() {
             <StatCard label="Wishlist value" value={formatCurrency(wishlistValue)} icon={Wallet} accent="muted" />
             <StatCard label="Purchased" value={formatCurrency(purchasedValue)} hint={`${purchased.length} bought`} icon={CheckCircle2} />
           </div>
-          <PurchasesGrid purchases={purchases} memberMap={memberMap} />
+          <PurchasesGrid purchases={purchases} memberMap={memberMap} starInfo={starInfo} />
         </>
       )}
     </div>

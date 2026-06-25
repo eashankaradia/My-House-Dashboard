@@ -76,6 +76,7 @@ export async function createTask(input: {
   title: string;
   project_id?: string | null;
   due_date?: string | null;
+  assigned_to?: string | null;
 }): Promise<ActionResult> {
   const clean = input.title.trim();
   if (!clean) return { error: "Task can't be empty" };
@@ -85,6 +86,7 @@ export async function createTask(input: {
     project_id: input.project_id ?? null,
     title: clean,
     due_date: input.due_date || null,
+    assigned_to: input.assigned_to || null,
   });
   if (error) return { error: error.message };
   revalidatePath("/projects");
@@ -94,14 +96,33 @@ export async function createTask(input: {
 
 export async function updateTask(
   id: string,
-  input: { title?: string; project_id?: string | null; due_date?: string | null },
+  input: { title?: string; project_id?: string | null; due_date?: string | null; assigned_to?: string | null },
 ): Promise<ActionResult> {
   const { supabase } = await getActionContext();
-  const patch: { title?: string; project_id?: string | null; due_date?: string | null } = {};
+  const patch: {
+    title?: string;
+    project_id?: string | null;
+    due_date?: string | null;
+    assigned_to?: string | null;
+  } = {};
   if (input.title !== undefined) patch.title = input.title.trim();
   if (input.project_id !== undefined) patch.project_id = input.project_id || null;
   if (input.due_date !== undefined) patch.due_date = input.due_date || null;
+  if (input.assigned_to !== undefined) patch.assigned_to = input.assigned_to || null;
   const { error } = await supabase.from("project_tasks").update(patch).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/projects");
+  revalidatePath("/calendar");
+  return {};
+}
+
+/** Archive or restore a task (archived tasks are hidden from the list). */
+export async function setTaskArchived(id: string, archived: boolean): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase
+    .from("project_tasks")
+    .update({ archived_at: archived ? new Date().toISOString() : null })
+    .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/projects");
   revalidatePath("/calendar");

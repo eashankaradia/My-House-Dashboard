@@ -9,6 +9,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AddedBy } from "@/components/shared/added-by";
+import { CardTrigger } from "@/components/shared/card-trigger";
 import { ExportButton } from "@/components/shared/export-button";
 import { useToast } from "@/hooks/use-toast";
 import { PURCHASE_STATUSES } from "@/lib/constants";
@@ -20,7 +21,11 @@ import { PurchaseForm } from "./purchase-form";
 import { OptionForm } from "./option-form";
 import { OptionRow } from "./option-row";
 import { PurchaseDetailDialog } from "./purchase-detail";
+import { StarButton } from "./star-button";
 import { deletePurchase, updatePurchaseStatus } from "./actions";
+
+export type StarInfo = { mine: boolean; names: string[] };
+const noStar: StarInfo = { mine: false, names: [] };
 
 const SORTS = {
   priority: "Priority",
@@ -46,9 +51,11 @@ function effectivePrice(p: PurchaseWithOptions): number {
 export function PurchasesGrid({
   purchases,
   memberMap,
+  starInfo,
 }: {
   purchases: PurchaseWithOptions[];
   memberMap: MemberMap;
+  starInfo: Record<string, StarInfo>;
 }) {
   const [status, setStatus] = React.useState<string>("All");
   const [room, setRoom] = React.useState<string>("All");
@@ -142,14 +149,14 @@ export function PurchasesGrid({
         <Card>
           <CardContent className="divide-y p-0">
             {filtered.map((purchase) => (
-              <CompactRow key={purchase.id} purchase={purchase} memberMap={memberMap} />
+              <CompactRow key={purchase.id} purchase={purchase} memberMap={memberMap} star={starInfo[purchase.id] ?? noStar} />
             ))}
           </CardContent>
         </Card>
       ) : (
         <div className="grid items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((purchase) => (
-            <PurchaseCard key={purchase.id} purchase={purchase} memberMap={memberMap} />
+            <PurchaseCard key={purchase.id} purchase={purchase} memberMap={memberMap} star={starInfo[purchase.id] ?? noStar} />
           ))}
         </div>
       )}
@@ -179,25 +186,34 @@ function StatusSelect({ purchase }: { purchase: PurchaseWithOptions }) {
   );
 }
 
-function CompactRow({ purchase, memberMap }: { purchase: PurchaseWithOptions; memberMap: MemberMap }) {
+function CompactRow({
+  purchase,
+  memberMap,
+  star,
+}: {
+  purchase: PurchaseWithOptions;
+  memberMap: MemberMap;
+  star: StarInfo;
+}) {
   const opts = sortedOptions(purchase);
   return (
     <div className="flex items-center gap-3 px-4 py-2.5 text-sm">
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <PurchaseDetailDialog purchase={purchase} memberMap={memberMap}>
-            <button className="truncate text-left font-medium hover:underline">{purchase.name}</button>
-          </PurchaseDetailDialog>
-          <Badge variant={priorityVariant(purchase.priority)}>{purchase.priority}</Badge>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="truncate">
-            {[purchase.sub_category || purchase.category, purchase.room].filter(Boolean).join(" · ")}
-            {opts.length ? ` · ${opts.length} option${opts.length === 1 ? "" : "s"}` : ""}
-          </span>
-          <AddedBy name={memberMap[purchase.user_id]} />
-        </div>
-      </div>
+      <StarButton purchaseId={purchase.id} mine={star.mine} names={star.names} />
+      <PurchaseDetailDialog purchase={purchase} memberMap={memberMap}>
+        <CardTrigger className="min-w-0 flex-1 rounded-md">
+          <div className="flex items-center gap-2">
+            <span className="truncate font-medium">{purchase.name}</span>
+            <Badge variant={priorityVariant(purchase.priority)}>{purchase.priority}</Badge>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="truncate">
+              {[purchase.sub_category || purchase.category, purchase.room].filter(Boolean).join(" · ")}
+              {opts.length ? ` · ${opts.length} option${opts.length === 1 ? "" : "s"}` : ""}
+            </span>
+            <AddedBy name={memberMap[purchase.user_id]} />
+          </div>
+        </CardTrigger>
+      </PurchaseDetailDialog>
       <span className="shrink-0 font-semibold">{formatCurrency(effectivePrice(purchase))}</span>
       <div className="hidden w-32 shrink-0 sm:block">
         <StatusSelect purchase={purchase} />
@@ -217,7 +233,15 @@ function CompactRow({ purchase, memberMap }: { purchase: PurchaseWithOptions; me
   );
 }
 
-function PurchaseCard({ purchase, memberMap }: { purchase: PurchaseWithOptions; memberMap: MemberMap }) {
+function PurchaseCard({
+  purchase,
+  memberMap,
+  star,
+}: {
+  purchase: PurchaseWithOptions;
+  memberMap: MemberMap;
+  star: StarInfo;
+}) {
   const options = sortedOptions(purchase);
   const prices = options.map((o) => Number(o.price));
   const min = prices.length ? Math.min(...prices) : 0;
@@ -228,16 +252,19 @@ function PurchaseCard({ purchase, memberMap }: { purchase: PurchaseWithOptions; 
     <Card className="flex flex-col">
       <CardContent className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <PurchaseDetailDialog purchase={purchase} memberMap={memberMap}>
-              <button className="truncate text-left font-medium hover:underline">{purchase.name}</button>
-            </PurchaseDetailDialog>
-            <p className="text-xs text-muted-foreground">
-              {purchase.sub_category ? `${purchase.category} · ${purchase.sub_category}` : purchase.category}
-              {purchase.room ? ` · ${purchase.room}` : ""}
-            </p>
+          <PurchaseDetailDialog purchase={purchase} memberMap={memberMap}>
+            <CardTrigger className="min-w-0 flex-1 rounded-md">
+              <span className="truncate font-medium hover:underline">{purchase.name}</span>
+              <p className="text-xs text-muted-foreground">
+                {purchase.sub_category ? `${purchase.category} · ${purchase.sub_category}` : purchase.category}
+                {purchase.room ? ` · ${purchase.room}` : ""}
+              </p>
+            </CardTrigger>
+          </PurchaseDetailDialog>
+          <div className="flex shrink-0 items-center gap-1">
+            <StarButton purchaseId={purchase.id} mine={star.mine} names={star.names} />
+            <Badge variant={priorityVariant(purchase.priority)}>{purchase.priority}</Badge>
           </div>
-          <Badge variant={priorityVariant(purchase.priority)}>{purchase.priority}</Badge>
         </div>
 
         <div className="flex items-baseline justify-between gap-2">
