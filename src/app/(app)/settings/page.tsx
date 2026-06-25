@@ -1,4 +1,4 @@
-import { Eye, LayoutGrid, LogOut, Users } from "lucide-react";
+import { Bell, Eye, LayoutGrid, LogOut, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,9 +7,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { initialsFromName } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
-import type { HouseholdMember } from "@/lib/database.types";
+import type { HouseholdMember, NotificationPreference } from "@/lib/database.types";
 import { DisplayNameForm } from "./display-name-form";
 import { TabVisibilitySettings } from "./tab-visibility";
+import { NotificationPreferences } from "./notification-preferences";
 
 export const metadata = { title: "Settings" };
 
@@ -19,13 +20,15 @@ export default async function SettingsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: memberData }, memberMap] = await Promise.all([
+  const [{ data: memberData }, { data: preferenceData }, memberMap] = await Promise.all([
     supabase.from("household_members").select("*").order("display_name"),
+    supabase.from("notification_preferences").select("*"),
     getHouseholdMap(),
   ]);
 
   const members = (memberData ?? []) as HouseholdMember[];
   const myName = (user && memberMap[user.id]) || "";
+  const preferences = (preferenceData ?? []) as NotificationPreference[];
 
   return (
     <div className="space-y-6">
@@ -70,6 +73,18 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <TabVisibilitySettings />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Bell className="h-4 w-4" /> Notification preferences
+          </CardTitle>
+          <CardDescription>Choose which household updates appear in your notification inbox.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <NotificationPreferences preferences={preferences} />
         </CardContent>
       </Card>
 

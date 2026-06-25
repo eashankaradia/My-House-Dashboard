@@ -573,6 +573,102 @@ create index if not exists inspiration_collection_idx on public.inspiration (col
 create index if not exists maintenance_user_due_idx on public.maintenance_tasks (user_id, next_due_date);
 create index if not exists documents_user_idx on public.documents (user_id);
 
+-- Notifications and per-user preferences.
+create table if not exists public.notification_preferences (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  entity_type text not null,
+  enabled boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, entity_type)
+);
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  recipient_user_id uuid not null references auth.users (id) on delete cascade,
+  sender_user_id uuid references auth.users (id) on delete set null,
+  entity_type text,
+  entity_id uuid,
+  title text not null,
+  message text,
+  href text,
+  read_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists notifications_recipient_idx
+  on public.notifications (recipient_user_id, created_at desc);
+alter table public.notification_preferences enable row level security;
+alter table public.notifications enable row level security;
+drop policy if exists "preferences_own" on public.notification_preferences;
+create policy "preferences_own" on public.notification_preferences for all
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "notifications_read" on public.notifications;
+create policy "notifications_read" on public.notifications for select
+  using (auth.uid() = recipient_user_id);
+drop policy if exists "notifications_insert" on public.notifications;
+create policy "notifications_insert" on public.notifications for insert
+  with check (auth.uid() = sender_user_id and
+    (auth.uid() = recipient_user_id or public.same_household(recipient_user_id)));
+drop policy if exists "notifications_update" on public.notifications;
+create policy "notifications_update" on public.notifications for update
+  using (auth.uid() = recipient_user_id);
+drop policy if exists "notifications_delete" on public.notifications;
+create policy "notifications_delete" on public.notifications for delete
+  using (auth.uid() = recipient_user_id);
+
+create or replace function public.notify_household_update()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare rec jsonb; actor uuid; label text; member record;
+begin
+  actor := auth.uid();
+  if actor is null then return new; end if;
+  rec := to_jsonb(new);
+  label := coalesce(rec->>'name', rec->>'title', rec->>'task', rec->>'property_name', tg_table_name);
+  for member in
+    select hm.user_id
+    from public.household_members hm
+    join public.household_members me on me.household_id = hm.household_id
+    left join public.notification_preferences np
+      on np.user_id = hm.user_id and np.entity_type = tg_table_name
+    where me.user_id = actor and hm.user_id <> actor and coalesce(np.enabled, true)
+  loop
+    insert into public.notifications
+      (recipient_user_id, sender_user_id, entity_type, entity_id, title, message, href)
+    values (
+      member.user_id, actor, tg_table_name, nullif(rec->>'id', '')::uuid,
+      'Household update', left(label, 160),
+      case tg_table_name
+        when 'bills' then '/bills' when 'mortgages' then '/mortgage'
+        when 'savings_pots' then '/savings' when 'projects' then '/projects'
+        when 'project_tasks' then '/projects' when 'purchases' then '/purchases'
+        when 'inspiration' then '/inspiration'
+        when 'maintenance_tasks' then '/maintenance'
+        when 'documents' then '/documents' else null end
+    );
+  end loop;
+  return new;
+end;
+$$;
+drop trigger if exists set_updated_at on public.notification_preferences;
+create trigger set_updated_at before update on public.notification_preferences
+  for each row execute function public.set_updated_at();
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'bills','mortgages','savings_pots','projects','project_tasks','purchases',
+    'inspiration','maintenance_tasks','documents'
+  ]
+  loop
+    execute format('drop trigger if exists notify_household_update on public.%I;', t);
+    execute format(
+      'create trigger notify_household_update after insert or update on public.%I
+       for each row execute function public.notify_household_update();', t
+    );
+  end loop;
+end;
+$$;
+
 -- ===========================================================================
 -- Storage — private buckets for documents and inspiration/purchase images.
 -- ===========================================================================

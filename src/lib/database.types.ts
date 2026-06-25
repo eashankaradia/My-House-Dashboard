@@ -50,6 +50,26 @@ export type BillPayment = Timestamps & {
   notes: string | null;
 };
 
+export type NotificationPreference = Timestamps & {
+  id: string;
+  user_id: string;
+  entity_type: string;
+  enabled: boolean;
+};
+
+export type Notification = {
+  id: string;
+  recipient_user_id: string;
+  sender_user_id: string | null;
+  entity_type: string | null;
+  entity_id: string | null;
+  title: string;
+  message: string | null;
+  href: string | null;
+  read_at: string | null;
+  created_at: string;
+};
+
 export type Mortgage = Timestamps & {
   id: string;
   user_id: string;
@@ -342,6 +362,8 @@ export type Database = {
       bills: Row<Bill>;
       payment_accounts: Row<PaymentAccount>;
       bill_payments: Row<BillPayment>;
+      notification_preferences: Row<NotificationPreference>;
+      notifications: Row<Notification>;
       mortgages: Row<Mortgage>;
       savings_pots: Row<SavingsPot>;
       savings_accounts: Row<SavingsAccount>;

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Home } from "lucide-react";
+import { Bell, Home } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -22,6 +22,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const meta = user.user_metadata ?? {};
   const name = (meta.full_name as string) ?? (meta.name as string) ?? null;
+  const { count: unreadCount } = await supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("recipient_user_id", user.id)
+    .is("read_at", null);
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[16rem_1fr]">
@@ -52,6 +57,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </Link>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
+            <Link
+              href="/notifications"
+              className="relative rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+              aria-label={`${unreadCount ?? 0} unread notifications`}
+            >
+              <Bell className="h-5 w-5" />
+              {(unreadCount ?? 0) > 0 ? (
+                <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
+                  {unreadCount}
+                </span>
+              ) : null}
+            </Link>
             <ThemeToggle />
             <UserMenu
               name={name}
