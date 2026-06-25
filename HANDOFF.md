@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch C: calendar events).
+> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch D: search + dark-mode move).
 
 ## 0. Latest session (Claude, after Codex continuation)
 
@@ -46,11 +46,18 @@ Working through it in build+lint-verified batches.
   delete ×. The empty-state is gone (you can always add). New `event` type
   styled fuchsia in the legend.
 
-### Batch D+ — STILL TODO from the second list (pick up here)
-2. **Search**: a search box in the sidebar tab list + a search icon in the top
-   bar (command-palette style across items).
-3. Move **dark-mode toggle** out of the top bar into the **profile/initials menu**
-   alongside Settings; replace the standalone dark-mode icon.
+### Batch D (done, no DB): search + dark-mode move
+- Dark mode moved into the **profile (initials) menu** (`user-menu.tsx`, uses
+  next-themes); the standalone top-bar `ThemeToggle` is removed from
+  `(app)/layout.tsx` (Settings still has the Appearance card).
+- **Global search**: top-bar search icon → dialog (`global-search.tsx`) that
+  calls `app/(app)/search/actions.ts#searchItems` (ilike across bills/projects/
+  tasks/purchases/inspiration/maintenance/documents/savings) and deep-links to
+  each result.
+- **Sidebar tab search**: a "Search tabs…" filter box at the top of
+  `sidebar-nav.tsx` filters the visible nav items.
+
+### Batch E+ — STILL TODO from the second list (pick up here)
 4. **Point-out / notify**: an action on a purchase/item to push it to another
    household member's notifications (reuse Codex's notifications push; NOT the
    notification bar). 
