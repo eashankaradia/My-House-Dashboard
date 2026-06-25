@@ -24,8 +24,29 @@ export type Bill = Timestamps & {
   amount: number;
   frequency: Frequency;
   due_date: string | null;
+  end_date: string | null;
   payment_account: string | null;
+  account_id: string | null;
   is_fixed: boolean;
+  notes: string | null;
+};
+
+export type PaymentAccount = Timestamps & {
+  id: string;
+  user_id: string;
+  name: string;
+  owner_user_id: string | null;
+  notes: string | null;
+};
+
+export type BillPayment = Timestamps & {
+  id: string;
+  user_id: string;
+  bill_id: string;
+  account_id: string | null;
+  payment_date: string;
+  expected_amount: number;
+  actual_amount: number | null;
   notes: string | null;
 };
 
@@ -319,6 +340,8 @@ export type Database = {
     Tables: {
       profiles: Row<Profile>;
       bills: Row<Bill>;
+      payment_accounts: Row<PaymentAccount>;
+      bill_payments: Row<BillPayment>;
       mortgages: Row<Mortgage>;
       savings_pots: Row<SavingsPot>;
       savings_accounts: Row<SavingsAccount>;

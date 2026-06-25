@@ -95,8 +95,39 @@ create table if not exists public.bills (
   frequency       text not null default 'monthly'
                     check (frequency in ('weekly','monthly','quarterly','annually','one-off')),
   due_date        date,
+  end_date        date,
   payment_account text,
+  account_id      uuid,
   is_fixed        boolean not null default true,
+  notes           text,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+
+create table if not exists public.payment_accounts (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null references auth.users (id) on delete cascade,
+  name          text not null,
+  owner_user_id uuid references auth.users (id) on delete set null,
+  notes         text,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+alter table public.bills
+  drop constraint if exists bills_account_id_fkey;
+alter table public.bills
+  add constraint bills_account_id_fkey foreign key (account_id)
+  references public.payment_accounts (id) on delete set null;
+
+create table if not exists public.bill_payments (
+  id              uuid primary key default gen_random_uuid(),
+  user_id         uuid not null references auth.users (id) on delete cascade,
+  bill_id         uuid not null references public.bills (id) on delete cascade,
+  account_id      uuid references public.payment_accounts (id) on delete set null,
+  payment_date    date not null default current_date,
+  expected_amount numeric(12,2) not null default 0,
+  actual_amount   numeric(12,2),
   notes           text,
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now()
@@ -420,7 +451,7 @@ declare
   t text;
 begin
   foreach t in array array[
-    'profiles','bills','mortgages','savings_pots','savings_accounts','collections',
+    'profiles','bills','payment_accounts','bill_payments','mortgages','savings_pots','savings_accounts','collections',
     'inspiration','projects','purchases','purchase_options','project_tasks',
     'maintenance_tasks','documents'
   ]
@@ -442,7 +473,7 @@ declare
   t text;
 begin
   foreach t in array array[
-    'bills','mortgages','savings_pots','savings_accounts','savings_contributions',
+    'bills','payment_accounts','bill_payments','mortgages','savings_pots','savings_accounts','savings_contributions',
     'collections','inspiration','projects','purchases','purchase_options',
     'project_tasks','maintenance_tasks','documents'
   ]
@@ -511,7 +542,7 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'bills','mortgages','savings_pots','collections','inspiration',
+    'bills','payment_accounts','bill_payments','mortgages','savings_pots','collections','inspiration',
     'projects','purchases','maintenance_tasks','documents'
   ]
   loop
@@ -527,6 +558,8 @@ $$;
 -- Helpful indexes.
 -- ===========================================================================
 create index if not exists bills_user_idx on public.bills (user_id);
+create index if not exists payment_accounts_user_idx on public.payment_accounts (user_id);
+create index if not exists bill_payments_bill_date_idx on public.bill_payments (bill_id, payment_date desc);
 create index if not exists savings_pots_user_idx on public.savings_pots (user_id);
 create index if not exists savings_accounts_pot_idx on public.savings_accounts (pot_id);
 create index if not exists savings_contributions_pot_idx on public.savings_contributions (pot_id);

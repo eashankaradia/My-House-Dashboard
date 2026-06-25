@@ -124,6 +124,7 @@ here too). Incremental migrations in `supabase/migrations/`:
 | 0009_assignees_stars_archive.sql | `project_tasks.assigned_to` + `archived_at`; `projects.archived_at`; `purchases.archived_at`; `purchase_stars` table |
 | 0010_links.sql | `links` table (generic cross-entity associations) |
 | 0011_purchase_requirements.sql | `purchases.non_negotiables` |
+| 0012_bill_accounts_payments.sql | payment accounts, bill end/account fields, expected-vs-actual payment log |
 
 ### ⚠️ Migrations the user must run (verify with them)
 The user runs SQL manually. As of this writing, **0009 and 0010 may not yet be
@@ -270,6 +271,10 @@ Recently added (chronological, by PR):
   non-negotiable features/qualities (migration 0011). Typecheck and lint pass.
   Added a shared Recent updates card to the bottom of Bills, Mortgage, Savings,
   Projects & Tasks, Purchases, Inspiration, Maintenance, and Documents.
+  Added proper bill payment accounts (joint or associated with a household
+  member), account dropdowns on bills, bill end dates, and a payment-history
+  ledger that defaults actual to expected and reports expected-vs-actual totals
+  and differences. Requires migration 0012. Typecheck and lint pass.
 
 ### ⏳ Large outstanding request (batches still to do)
 The user submitted a big list (2026-06-25). Done so far: dashboard redesign +
@@ -289,11 +294,9 @@ purchases stat tweaks (above). **Still TODO** (no code yet — pick up here):
 8. **Notifications** (DB): per-user prefs for what they're notified about
    (tasks/projects/purchases/…); ability to push a notification to another user.
 9. **Calendar:** clickable days → detail of what's on that day.
-10. **Bills:** payments log (expected auto value + user-entered actual);
-    end date on bills; expected-vs-actual tracking; payment_account as a dropdown
-    of accounts; associate an account to a user or "joint"; see which bills come
-    from which account. (DB: bills.end_date, a `bill_payments` table, an
-    `accounts` concept.)
+10. **Bills:** done in code — payment accounts, user/joint association, bill
+    account dropdown, end date, payment ledger, and expected-vs-actual tracking.
+    Requires migration 0012.
 11. **Export:** remove per-tab CSV buttons; move to a single export in Settings
     with a picker for what to export.
 12. **Share to WhatsApp** — shared detail-dialog component is done for the main
@@ -352,3 +355,32 @@ After every code change, update: section 6 (migrations table + pending list),
 section 8 (feature inventory / PR list), section 11 (status), and the "Last
 updated" date at the top. Keep it specific enough that a cold-start agent can
 continue without re-reading the whole codebase.
+
+### Mandatory continuity protocol
+
+This is a user requirement for every agent (Codex, Claude, or a developer):
+
+1. Update this file **before every commit** with completed work, verification,
+   migrations, and the exact next unfinished step.
+2. Commit and push every coherent batch. Do not leave completed work only in an
+   agent session.
+3. Keep the active PR description current when scope changes materially.
+4. If context, token, or credit limits may become tight, stop new feature work
+   early and create a final pushed handoff checkpoint.
+5. A feature is not considered safely handed off until it is committed and
+   pushed.
+
+These same rules are mirrored in root `CLAUDE.md` so Claude Code reads them at
+the start of future sessions.
+
+### Current in-progress work
+
+Branch: `codex/continue-dashboard-backlog`, draft PR #23.
+
+The bills/accounts/payment batch is complete in code and verified with
+typecheck/lint. Migration `0012_bill_accounts_payments.sql` must be run after
+merge.
+
+Next exact step: implement notification preferences, the per-user notification
+inbox, and “push to another household member”; then verify, update this file,
+commit, and push.

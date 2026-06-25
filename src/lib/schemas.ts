@@ -24,11 +24,28 @@ export const billSchema = z.object({
   amount: money,
   frequency: z.enum(FREQUENCIES),
   due_date: optionalDate,
-  payment_account: optionalString,
+  end_date: optionalDate,
+  account_id: optionalString,
   is_fixed: z.coerce.boolean().default(true),
   notes: optionalString,
 });
 export type BillInput = z.infer<typeof billSchema>;
+
+export const paymentAccountSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(120),
+  owner_user_id: optionalString,
+  notes: optionalString,
+});
+export type PaymentAccountInput = z.infer<typeof paymentAccountSchema>;
+
+export const billPaymentSchema = z.object({
+  payment_date: z.string().min(1, "Payment date is required"),
+  expected_amount: money,
+  actual_amount: z.coerce.number().min(0).optional(),
+  account_id: optionalString,
+  notes: optionalString,
+});
+export type BillPaymentInput = z.infer<typeof billPaymentSchema>;
 
 export const mortgageSchema = z.object({
   property_name: z.string().trim().min(1, "Required").max(120).default("My Home"),

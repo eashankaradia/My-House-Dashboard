@@ -11,13 +11,24 @@ import { ExportButton } from "@/components/shared/export-button";
 import { FREQUENCY_LABELS } from "@/lib/constants";
 import { cn, formatCurrency, formatDate, toMonthly } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
-import type { Bill } from "@/lib/database.types";
+import type { Bill, BillPayment, PaymentAccount } from "@/lib/database.types";
 import { BillForm } from "./bill-form";
 import { BillDetailDialog } from "./bill-detail";
 import { deleteBill } from "./actions";
 
-export function BillsList({ bills, memberMap }: { bills: Bill[]; memberMap: MemberMap }) {
+export function BillsList({
+  bills,
+  accounts,
+  payments,
+  memberMap,
+}: {
+  bills: Bill[];
+  accounts: PaymentAccount[];
+  payments: BillPayment[];
+  memberMap: MemberMap;
+}) {
   const [compact, setCompact] = React.useState(false);
+  const accountNames = new Map(accounts.map((account) => [account.id, account.name]));
 
   return (
     <Card>
@@ -43,7 +54,7 @@ export function BillsList({ bills, memberMap }: { bills: Bill[]; memberMap: Memb
         {bills.map((bill) =>
           compact ? (
             <div key={bill.id} className="flex items-center gap-3 py-2 text-sm first:pt-0 last:pb-0">
-              <BillDetailDialog bill={bill} memberMap={memberMap}>
+              <BillDetailDialog bill={bill} accounts={accounts} payments={payments.filter((payment) => payment.bill_id === bill.id)} memberMap={memberMap}>
                 <CardTrigger className="flex min-w-0 flex-1 items-center gap-3 rounded-md">
                   <span className="min-w-0 flex-1 truncate font-medium">{bill.name}</span>
                   <Badge variant="secondary">{bill.category}</Badge>
@@ -61,6 +72,7 @@ export function BillsList({ bills, memberMap }: { bills: Bill[]; memberMap: Memb
               <div className="flex shrink-0 items-center">
                 <BillForm
                   bill={bill}
+                  accounts={accounts}
                   trigger={
                     <button className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Edit">
                       <Pencil className="h-4 w-4" />
@@ -72,7 +84,7 @@ export function BillsList({ bills, memberMap }: { bills: Bill[]; memberMap: Memb
             </div>
           ) : (
             <div key={bill.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-              <BillDetailDialog bill={bill} memberMap={memberMap}>
+              <BillDetailDialog bill={bill} accounts={accounts} payments={payments.filter((payment) => payment.bill_id === bill.id)} memberMap={memberMap}>
                 <CardTrigger className="min-w-0 flex-1 rounded-md">
                   <div className="flex items-center gap-2">
                     <span className="truncate font-medium">{bill.name}</span>
@@ -82,8 +94,9 @@ export function BillsList({ bills, memberMap }: { bills: Bill[]; memberMap: Memb
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>
                       {FREQUENCY_LABELS[bill.frequency]}
-                      {bill.payment_account ? ` · ${bill.payment_account}` : ""}
+                      {bill.account_id ? ` · ${accountNames.get(bill.account_id) ?? "Account"}` : bill.payment_account ? ` · ${bill.payment_account}` : ""}
                       {bill.due_date ? ` · due ${formatDate(bill.due_date)}` : ""}
+                      {bill.end_date ? ` · ends ${formatDate(bill.end_date)}` : ""}
                     </span>
                     <AddedBy name={memberMap[bill.user_id]} />
                   </div>
@@ -98,6 +111,7 @@ export function BillsList({ bills, memberMap }: { bills: Bill[]; memberMap: Memb
                 </div>
                 <BillForm
                   bill={bill}
+                  accounts={accounts}
                   trigger={
                     <button className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground">
                       <span className="sr-only">Edit</span>
