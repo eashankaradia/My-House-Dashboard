@@ -2,17 +2,23 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import { cn, formatDate } from "@/lib/utils";
+import type { ActionResult } from "@/lib/action-utils";
 
 export type CalEvent = {
   date: string; // yyyy-mm-dd
   title: string;
   type: keyof typeof TYPE_STYLES;
   href: string;
+  /** Set for user-added calendar_events, so they can be deleted. */
+  id?: string;
 };
 
 const TYPE_STYLES = {
@@ -23,6 +29,7 @@ const TYPE_STYLES = {
   mortgage: "bg-emerald-500",
   savings: "bg-teal-500",
   task: "bg-indigo-500",
+  event: "bg-fuchsia-500",
 } as const;
 
 const TYPE_LABEL: Record<string, string> = {
@@ -33,6 +40,7 @@ const TYPE_LABEL: Record<string, string> = {
   mortgage: "Mortgage",
   savings: "Savings target",
   task: "Task",
+  event: "Your event",
 };
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -41,7 +49,15 @@ function ymd(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function CalendarView({ events }: { events: CalEvent[] }) {
+export function CalendarView({
+  events,
+  onAdd,
+  onDelete,
+}: {
+  events: CalEvent[];
+  onAdd: (input: { title: string; event_date: string; recurrence?: string; notes?: string | null }) => Promise<ActionResult>;
+  onDelete: (id: string) => Promise<ActionResult>;
+}) {
   const today = new Date();
   const [cursor, setCursor] = React.useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDate, setSelectedDate] = React.useState<string | null>(null);
@@ -82,6 +98,9 @@ export function CalendarView({ events }: { events: CalEvent[] }) {
               {cursor.toLocaleString("en-GB", { month: "long", year: "numeric" })}
             </h2>
             <div className="flex items-center gap-1">
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSelectedDate(ymd(today))}>
+                <Plus className="h-4 w-4" /> Event
+              </Button>
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCursor(new Date(year, month - 1, 1))}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -147,17 +166,30 @@ export function CalendarView({ events }: { events: CalEvent[] }) {
             <p className="text-sm text-muted-foreground">No key dates this month.</p>
           ) : (
             <div className="space-y-2">
-              {monthEvents.map((e, i) => (
-                <Link
-                  key={i}
-                  href={e.href}
-                  className="flex items-center gap-2 rounded-lg border p-2 text-sm transition-colors hover:bg-accent"
-                >
-                  <span className={cn("h-2 w-2 shrink-0 rounded-full", TYPE_STYLES[e.type])} />
-                  <span className="min-w-0 flex-1 truncate">{e.title}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground">{formatDate(e.date)}</span>
-                </Link>
-              ))}
+              {monthEvents.map((e, i) => {
+                const rowClass = "flex items-center gap-2 rounded-lg border p-2 text-sm";
+                const inner = (
+                  <>
+                    <span className={cn("h-2 w-2 shrink-0 rounded-full", TYPE_STYLES[e.type])} />
+                    <span className="min-w-0 flex-1 truncate">{e.title}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">{formatDate(e.date)}</span>
+                  </>
+                );
+                return e.href ? (
+                  <Link key={i} href={e.href} className={`${rowClass} transition-colors hover:bg-accent`}>
+                    {inner}
+                  </Link>
+                ) : (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setSelectedDate(e.date)}
+                    className={`${rowClass} w-full text-left transition-colors hover:bg-accent`}
+                  >
+                    {inner}
+                  </button>
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -170,25 +202,106 @@ export function CalendarView({ events }: { events: CalEvent[] }) {
           </DialogHeader>
           <div className="space-y-2">
             {selectedDate && (byDate.get(selectedDate) ?? []).length > 0 ? (
-              (byDate.get(selectedDate) ?? []).map((event, index) => (
-                <Link
-                  key={`${event.type}-${index}`}
-                  href={event.href}
-                  className="flex items-center gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-accent"
-                >
-                  <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", TYPE_STYLES[event.type])} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-medium">{event.title}</span>
-                    <span className="text-xs text-muted-foreground">{TYPE_LABEL[event.type]}</span>
-                  </span>
-                </Link>
-              ))
+              (byDate.get(selectedDate) ?? []).map((event, index) =>
+                event.type === "event" ? (
+                  <div
+                    key={`event-${event.id ?? index}`}
+                    className="flex items-center gap-3 rounded-lg border p-3 text-sm"
+                  >
+                    <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", TYPE_STYLES.event)} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium">{event.title}</span>
+                      <span className="text-xs text-muted-foreground">{TYPE_LABEL.event}</span>
+                    </span>
+                    {event.id ? <DeleteEventButton id={event.id} onDelete={onDelete} /> : null}
+                  </div>
+                ) : (
+                  <Link
+                    key={`${event.type}-${index}`}
+                    href={event.href}
+                    className="flex items-center gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-accent"
+                  >
+                    <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", TYPE_STYLES[event.type])} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium">{event.title}</span>
+                      <span className="text-xs text-muted-foreground">{TYPE_LABEL[event.type]}</span>
+                    </span>
+                  </Link>
+                ),
+              )
             ) : (
-              <p className="py-6 text-center text-sm text-muted-foreground">Nothing scheduled for this day.</p>
+              <p className="py-2 text-center text-sm text-muted-foreground">Nothing scheduled for this day.</p>
             )}
+            {selectedDate ? <AddEventForm date={selectedDate} onAdd={onAdd} /> : null}
           </div>
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function DeleteEventButton({ id, onDelete }: { id: string; onDelete: (id: string) => Promise<ActionResult> }) {
+  const [pending, startTransition] = React.useTransition();
+  const { toast } = useToast();
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      aria-label="Delete event"
+      onClick={() =>
+        startTransition(async () => {
+          const res = await onDelete(id);
+          if (res?.error) toast({ variant: "destructive", title: "Couldn't delete", description: res.error });
+        })
+      }
+      className="shrink-0 text-muted-foreground hover:text-destructive"
+    >
+      <X className="h-4 w-4" />
+    </button>
+  );
+}
+
+function AddEventForm({
+  date,
+  onAdd,
+}: {
+  date: string;
+  onAdd: (input: { title: string; event_date: string; recurrence?: string; notes?: string | null }) => Promise<ActionResult>;
+}) {
+  const [title, setTitle] = React.useState("");
+  const [recurrence, setRecurrence] = React.useState("none");
+  const [pending, startTransition] = React.useTransition();
+  const { toast } = useToast();
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim()) return;
+    startTransition(async () => {
+      const res = await onAdd({ title, event_date: date, recurrence });
+      if (res?.error) {
+        toast({ variant: "destructive", title: "Couldn't add", description: res.error });
+        return;
+      }
+      toast({ title: "Event added" });
+      setTitle("");
+      setRecurrence("none");
+    });
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-2 rounded-lg border bg-card/40 p-2.5">
+      <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Add an event…" className="h-9" />
+      <div className="flex items-center gap-2">
+        <NativeSelect value={recurrence} onChange={(e) => setRecurrence(e.target.value)} className="h-9 flex-1 text-sm">
+          <option value="none">One-off</option>
+          <option value="weekly">Repeats weekly</option>
+          <option value="monthly">Repeats monthly</option>
+          <option value="yearly">Repeats yearly</option>
+        </NativeSelect>
+        <Button type="submit" size="sm" disabled={pending || !title.trim()} className="gap-1.5">
+          <Plus className="h-4 w-4" /> Add
+        </Button>
+      </div>
+    </form>
   );
 }

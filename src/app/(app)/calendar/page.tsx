@@ -1,9 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
-import { EmptyState } from "@/components/shared/empty-state";
-import { CalendarDays } from "lucide-react";
 import type {
   Bill,
+  CalendarEvent,
   Document,
   MaintenanceTask,
   Mortgage,
@@ -12,12 +11,44 @@ import type {
   SavingsPot,
 } from "@/lib/database.types";
 import { CalendarView, type CalEvent } from "./calendar-view";
+import { createCalendarEvent, deleteCalendarEvent } from "./actions";
 
 export const metadata = { title: "Calendar" };
 
+function ymd(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Expand a (maybe recurring) event into the dates that fall in the window. */
+function expandRecurring(ev: CalendarEvent, start: Date, end: Date): string[] {
+  const out: string[] = [];
+  const cur = new Date(`${ev.event_date}T00:00:00`);
+  const advance = () => {
+    if (ev.recurrence === "weekly") cur.setDate(cur.getDate() + 7);
+    else if (ev.recurrence === "monthly") cur.setMonth(cur.getMonth() + 1);
+    else if (ev.recurrence === "yearly") cur.setFullYear(cur.getFullYear() + 1);
+  };
+  if (ev.recurrence === "none") {
+    if (cur >= start && cur <= end) out.push(ymd(cur));
+    return out;
+  }
+  let guard = 0;
+  while (cur < start && guard < 5000) {
+    advance();
+    guard += 1;
+  }
+  guard = 0;
+  while (cur <= end && guard < 1000) {
+    out.push(ymd(cur));
+    advance();
+    guard += 1;
+  }
+  return out;
+}
+
 export default async function CalendarPage() {
   const supabase = await createClient();
-  const [bills, maint, projects, docs, mortgages, pots, tasks] = await Promise.all([
+  const [bills, maint, projects, docs, mortgages, pots, tasks, calEvents] = await Promise.all([
     supabase.from("bills").select("*"),
     supabase.from("maintenance_tasks").select("*"),
     supabase.from("projects").select("*"),
@@ -25,6 +56,7 @@ export default async function CalendarPage() {
     supabase.from("mortgages").select("*"),
     supabase.from("savings_pots").select("*"),
     supabase.from("project_tasks").select("*"),
+    supabase.from("calendar_events").select("*"),
   ]);
 
   const events: CalEvent[] = [];
@@ -59,22 +91,25 @@ export default async function CalendarPage() {
       events.push({ date: t.due_date, title: t.title, type: "task", href: `/projects?task=${t.id}` });
   }
 
+  // User-added events, expanded across a window around today so recurring ones
+  // show on every occurrence the user can navigate to.
+  const now = new Date();
+  const windowStart = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+  const windowEnd = new Date(now.getFullYear(), now.getMonth() + 18, 0);
+  for (const ev of (calEvents.data ?? []) as CalendarEvent[]) {
+    for (const date of expandRecurring(ev, windowStart, windowEnd)) {
+      events.push({ date, title: ev.title, type: "event", href: "", id: ev.id });
+    }
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Calendar"
         description="Every key date across your home in one view."
-        info="Shows bill due dates, maintenance, project targets, document renewals, your mortgage fixed-term end and savings targets. Click any event to jump to it. Add dates in each section to populate the calendar."
+        info="Shows your own events plus bill due dates, maintenance, project targets, document renewals, your mortgage fixed-term end and savings targets. Click a day to see details or add an event."
       />
-      {events.length === 0 ? (
-        <EmptyState
-          icon={CalendarDays}
-          title="No dates yet"
-          description="Add due dates to bills, next-due dates to maintenance, target dates to projects and savings, or expiry dates to documents — they'll all show up here."
-        />
-      ) : (
-        <CalendarView events={events} />
-      )}
+      <CalendarView events={events} onAdd={createCalendarEvent} onDelete={deleteCalendarEvent} />
     </div>
   );
 }
