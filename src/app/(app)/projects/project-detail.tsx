@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
 import { ShareButton } from "@/components/shared/share-button";
+import { PointOutButton } from "@/components/shared/point-out-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { priorityVariant } from "@/lib/ui";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -85,6 +86,7 @@ export function ProjectDetailDialog({
             <AddedBy name={memberMap[project.user_id]} />
             <div className="flex items-center gap-2">
               <ShareButton title={project.name} text={`${project.status} · ${done}/${project.tasks.length} tasks done`} />
+              <PointOutButton label={project.name} href={`/projects?project=${project.id}`} />
               <ProjectForm project={project} />
               <ConfirmDelete itemLabel="project" action={deleteProject.bind(null, project.id)} variant="menu" />
             </div>

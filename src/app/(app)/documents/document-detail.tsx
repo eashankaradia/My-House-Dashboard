@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { ShareButton } from "@/components/shared/share-button";
+import { PointOutButton } from "@/components/shared/point-out-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
@@ -70,6 +71,7 @@ export function DocumentDetailDialog({ doc, children }: { doc: Document; childre
                 </Button>
               ) : null}
               <ShareButton title={doc.name} text={`${doc.category} · renewal ${formatDate(doc.expiry_date)}`} />
+              <PointOutButton label={doc.name} href={`/documents?item=${doc.id}`} />
             </div>
             <ConfirmDelete itemLabel="document" action={deleteDocument.bind(null, doc.id)} variant="menu" />
           </div>

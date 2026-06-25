@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
 import { ShareButton } from "@/components/shared/share-button";
+import { PointOutButton } from "@/components/shared/point-out-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { FREQUENCY_LABELS } from "@/lib/constants";
 import { formatCurrency, formatDate, toAnnual, toMonthly } from "@/lib/utils";
@@ -80,6 +81,7 @@ export function BillDetailDialog({
             <AddedBy name={memberMap[bill.user_id]} />
             <div className="flex items-center gap-2">
               <ShareButton title={bill.name} text={`${formatCurrency(bill.amount)} · ${FREQUENCY_LABELS[bill.frequency] ?? bill.frequency}`} />
+              <PointOutButton label={bill.name} href={`/bills?item=${bill.id}`} />
               <BillForm bill={bill} accounts={accounts} />
               <ConfirmDelete itemLabel="bill" action={deleteBill.bind(null, bill.id)} variant="menu" />
             </div>

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
 import { ShareButton } from "@/components/shared/share-button";
+import { PointOutButton } from "@/components/shared/point-out-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { priorityVariant } from "@/lib/ui";
 import { formatCurrency } from "@/lib/utils";
@@ -107,6 +108,7 @@ export function PurchaseDetailDialog({
             <AddedBy name={memberMap[purchase.user_id]} />
             <div className="flex items-center gap-2">
               <ShareButton title={purchase.name} text={`${purchase.status} · ${purchase.category}`} />
+              <PointOutButton label={purchase.name} href={`/purchases?item=${purchase.id}`} />
               <PurchaseForm purchase={purchase} />
               <ConfirmDelete itemLabel="item" action={deletePurchase.bind(null, purchase.id)} variant="menu" />
             </div>
