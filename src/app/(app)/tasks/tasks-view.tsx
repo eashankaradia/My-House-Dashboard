@@ -22,6 +22,7 @@ import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
 import { useToast } from "@/hooks/use-toast";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
+import { LinkedItems } from "@/app/(app)/links/linked-items";
 import { cn, daysUntil, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { ProjectTask } from "@/lib/database.types";
@@ -335,6 +336,9 @@ function TaskEditDialog({
               </NativeSelect>
             </Field>
           ) : null}
+          <div className="border-t pt-3">
+            <LinkedItems type="task" id={task.id} />
+          </div>
           <DialogFooter className="flex-row items-center justify-between sm:justify-between">
             <div className="flex items-center gap-1">
               <Button type="button" variant="ghost" size="icon" onClick={archive} disabled={pending} aria-label="Archive task" title="Archive">

@@ -17,6 +17,7 @@ import type { MemberMap } from "@/lib/household";
 import type { ProjectWithTasks } from "@/lib/database.types";
 import { ProjectForm } from "./project-form";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
+import { LinkedItems } from "@/app/(app)/links/linked-items";
 import { Subtasks } from "./subtasks";
 import { deleteProject } from "./actions";
 
@@ -74,6 +75,9 @@ export function ProjectDetailDialog({
             <Subtasks project={project} />
           </div>
 
+          <div className="border-t pt-3">
+            <LinkedItems type="project" id={project.id} />
+          </div>
           <div className="flex items-center justify-between border-t pt-3">
             <AddedBy name={memberMap[project.user_id]} />
             <div className="flex items-center gap-2">
