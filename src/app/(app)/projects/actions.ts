@@ -100,6 +100,7 @@ export async function createTask(input: {
   project_id?: string | null;
   due_date?: string | null;
   assigned_to?: string | null;
+  notes?: string | null;
 }): Promise<ActionResult> {
   const clean = input.title.trim();
   if (!clean) return { error: "Task can't be empty" };
@@ -110,6 +111,7 @@ export async function createTask(input: {
     title: clean,
     due_date: input.due_date || null,
     assigned_to: input.assigned_to || null,
+    notes: input.notes || null,
   });
   if (error) return { error: error.message };
   revalidatePath("/projects");
@@ -119,7 +121,13 @@ export async function createTask(input: {
 
 export async function updateTask(
   id: string,
-  input: { title?: string; project_id?: string | null; due_date?: string | null; assigned_to?: string | null },
+  input: {
+    title?: string;
+    project_id?: string | null;
+    due_date?: string | null;
+    assigned_to?: string | null;
+    notes?: string | null;
+  },
 ): Promise<ActionResult> {
   const { supabase } = await getActionContext();
   const patch: {
@@ -127,12 +135,34 @@ export async function updateTask(
     project_id?: string | null;
     due_date?: string | null;
     assigned_to?: string | null;
+    notes?: string | null;
   } = {};
   if (input.title !== undefined) patch.title = input.title.trim();
   if (input.project_id !== undefined) patch.project_id = input.project_id || null;
   if (input.due_date !== undefined) patch.due_date = input.due_date || null;
   if (input.assigned_to !== undefined) patch.assigned_to = input.assigned_to || null;
+  if (input.notes !== undefined) patch.notes = input.notes || null;
   const { error } = await supabase.from("project_tasks").update(patch).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/projects");
+  revalidatePath("/calendar");
+  return {};
+}
+
+/**
+ * "Clear" completed tasks: archive every done, not-yet-archived task. They stay
+ * against their project (and still count toward progress) but leave the active
+ * list. Optionally scope to a single project.
+ */
+export async function clearCompletedTasks(projectId?: string | null): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  let query = supabase
+    .from("project_tasks")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("is_done", true)
+    .is("archived_at", null);
+  if (projectId) query = query.eq("project_id", projectId);
+  const { error } = await query;
   if (error) return { error: error.message };
   revalidatePath("/projects");
   revalidatePath("/calendar");

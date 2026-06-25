@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { NativeSelect } from "@/components/ui/native-select";
 import {
@@ -28,7 +29,7 @@ import { ShareButton } from "@/components/shared/share-button";
 import { cn, daysUntil, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { ProjectTask } from "@/lib/database.types";
-import { createTask, deleteTask, setTaskArchived, toggleTask, updateTask } from "@/app/(app)/projects/actions";
+import { clearCompletedTasks, createTask, deleteTask, setTaskArchived, toggleTask, updateTask } from "@/app/(app)/projects/actions";
 
 type ProjectOption = { id: string; name: string };
 type Member = { id: string; name: string };
@@ -100,8 +101,9 @@ export function TasksView({
 
       {done.length > 0 ? (
         <Card>
-          <CardHeader>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
             <CardTitle className="text-base text-muted-foreground">Done ({done.length})</CardTitle>
+            <ClearCompletedButton />
           </CardHeader>
           <CardContent className="space-y-1.5">
             {done.map((task) => (
@@ -111,6 +113,30 @@ export function TasksView({
         </Card>
       ) : null}
     </div>
+  );
+}
+
+/** Archives all completed tasks — they stay against their project for progress. */
+function ClearCompletedButton() {
+  const [pending, startTransition] = React.useTransition();
+  const { toast } = useToast();
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      disabled={pending}
+      onClick={() =>
+        startTransition(async () => {
+          const res = await clearCompletedTasks();
+          if (res?.error) toast({ variant: "destructive", title: "Couldn't clear", description: res.error });
+          else toast({ title: "Completed tasks cleared" });
+        })
+      }
+      className="gap-1.5"
+    >
+      <Archive className="h-3.5 w-3.5" /> Clear completed
+    </Button>
   );
 }
 
@@ -249,6 +275,7 @@ function TaskEditDialog({
   const [projectId, setProjectId] = React.useState(task.project_id ?? "");
   const [assignee, setAssignee] = React.useState(task.assigned_to ?? "");
   const [due, setDue] = React.useState(task.due_date ?? "");
+  const [notes, setNotes] = React.useState(task.notes ?? "");
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
 
@@ -259,8 +286,9 @@ function TaskEditDialog({
       setProjectId(task.project_id ?? "");
       setAssignee(task.assigned_to ?? "");
       setDue(task.due_date ?? "");
+      setNotes(task.notes ?? "");
     }
-  }, [open, task.title, task.project_id, task.assigned_to, task.due_date]);
+  }, [open, task.title, task.project_id, task.assigned_to, task.due_date, task.notes]);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -271,6 +299,7 @@ function TaskEditDialog({
         project_id: projectId || null,
         due_date: due || null,
         assigned_to: assignee || null,
+        notes: notes || null,
       });
       if (res?.error) {
         toast({ variant: "destructive", title: "Couldn't save task", description: res.error });
@@ -338,6 +367,9 @@ function TaskEditDialog({
               </NativeSelect>
             </Field>
           ) : null}
+          <Field label="Notes" htmlFor="te-notes">
+            <Textarea id="te-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Progress, context, links…" />
+          </Field>
           <ItemTimestamps createdAt={task.created_at} updatedAt={task.updated_at} />
           <div className="border-t pt-3">
             <LinkedItems type="task" id={task.id} />
