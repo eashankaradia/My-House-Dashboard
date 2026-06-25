@@ -408,9 +408,9 @@ lint, and the complete production build pass.
 Vercel's first PR deployment (commit `0303eef`) failed because Preview did not
 have Supabase public environment variables. The login page is now hardened for
 that condition; the fix is verified by a full local production build without
-those variables.
+those variables. The replacement Vercel deployment for commit `16698b3` passed.
 
-Next exact step: confirm the new Vercel deployment for the latest commit is
-green, then visually test migrations-backed screens after SQL 0011–0013 are
-run. No requested feature from the 2026-06-25 backlog remains intentionally
+Next exact step: merge PR #23 when ready, run migrations 0009–0013 in order,
+then visually test the migrations-backed screens with live household data. No
+requested feature from the 2026-06-25 backlog remains intentionally
 unimplemented.
