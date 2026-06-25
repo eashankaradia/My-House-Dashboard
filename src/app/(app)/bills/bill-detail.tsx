@@ -16,6 +16,7 @@ import { formatCurrency, formatDate, toAnnual, toMonthly } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { Bill } from "@/lib/database.types";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
+import { LinkedItems } from "@/app/(app)/links/linked-items";
 import { BillForm } from "./bill-form";
 import { deleteBill } from "./actions";
 
@@ -55,6 +56,9 @@ export function BillDetailDialog({
               <p className="text-sm">{bill.notes}</p>
             </div>
           ) : null}
+          <div className="border-t pt-3">
+            <LinkedItems type="bill" id={bill.id} />
+          </div>
           <div className="flex items-center justify-between border-t pt-3">
             <AddedBy name={memberMap[bill.user_id]} />
             <div className="flex items-center gap-2">

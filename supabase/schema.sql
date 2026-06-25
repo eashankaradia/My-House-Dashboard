@@ -273,6 +273,28 @@ create policy "stars_insert" on public.purchase_stars for insert with check (aut
 drop policy if exists "stars_delete" on public.purchase_stars;
 create policy "stars_delete" on public.purchase_stars for delete using (auth.uid() = user_id);
 
+-- links — generic associations between items (task<->purchase, project<->bill…).
+create table if not exists public.links (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users (id) on delete cascade,
+  a_type     text not null check (a_type in ('task','project','purchase','bill','inspiration')),
+  a_id       uuid not null,
+  b_type     text not null check (b_type in ('task','project','purchase','bill','inspiration')),
+  b_id       uuid not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists links_a_idx on public.links (a_type, a_id);
+create index if not exists links_b_idx on public.links (b_type, b_id);
+alter table public.links enable row level security;
+drop policy if exists "links_select" on public.links;
+create policy "links_select" on public.links for select
+  using (auth.uid() = user_id or public.same_household(user_id));
+drop policy if exists "links_insert" on public.links;
+create policy "links_insert" on public.links for insert with check (auth.uid() = user_id);
+drop policy if exists "links_delete" on public.links;
+create policy "links_delete" on public.links for delete
+  using (auth.uid() = user_id or public.same_household(user_id));
+
 -- ---------------------------------------------------------------------------
 -- purchase_options — competing products/options for a wishlist item, so you
 -- can compare prices and pick a favourite (e.g. three sofas for one "Sofa").

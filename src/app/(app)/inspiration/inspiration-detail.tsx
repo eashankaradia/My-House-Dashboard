@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { priorityVariant } from "@/lib/ui";
 import type { Collection, Inspiration } from "@/lib/database.types";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
+import { LinkedItems } from "@/app/(app)/links/linked-items";
 import { InspirationForm } from "./inspiration-form";
 import { convertInspiration, deleteInspiration } from "./actions";
 
@@ -78,6 +79,10 @@ export function InspirationDetailDialog({
               Open link <ExternalLink className="h-3.5 w-3.5" />
             </a>
           ) : null}
+
+          <div className="border-t pt-3">
+            <LinkedItems type="inspiration" id={item.id} />
+          </div>
 
           <div className="flex flex-wrap items-center gap-2 border-t pt-3">
             <Button variant="outline" size="sm" onClick={() => convert("project")} disabled={pending} className="gap-1.5">

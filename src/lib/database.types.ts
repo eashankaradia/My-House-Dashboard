@@ -250,6 +250,18 @@ export type PurchaseStar = {
   created_at: string;
 };
 
+export type LinkType = "task" | "project" | "purchase" | "bill" | "inspiration";
+
+export type Link = {
+  id: string;
+  user_id: string;
+  a_type: LinkType;
+  a_id: string;
+  b_type: LinkType;
+  b_id: string;
+  created_at: string;
+};
+
 export type HouseholdMember = {
   user_id: string;
   display_name: string;
@@ -316,6 +328,7 @@ export type Database = {
       purchases: Row<Purchase>;
       purchase_options: Row<PurchaseOption>;
       purchase_stars: Row<PurchaseStar>;
+      links: Row<Link>;
       project_tasks: Row<ProjectTask>;
       household_members: Row<HouseholdMember>;
       activity_log: Row<ActivityLog>;

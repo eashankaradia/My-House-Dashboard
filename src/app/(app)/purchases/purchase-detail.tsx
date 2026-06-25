@@ -21,6 +21,7 @@ import { PurchaseForm } from "./purchase-form";
 import { OptionForm } from "./option-form";
 import { OptionRow } from "./option-row";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
+import { LinkedItems } from "@/app/(app)/links/linked-items";
 import { deletePurchase } from "./actions";
 
 export function PurchaseDetailDialog({
@@ -90,6 +91,9 @@ export function PurchaseDetailDialog({
             </div>
           </div>
 
+          <div className="border-t pt-3">
+            <LinkedItems type="purchase" id={purchase.id} />
+          </div>
           <div className="flex items-center justify-between border-t pt-3">
             <AddedBy name={memberMap[purchase.user_id]} />
             <div className="flex items-center gap-2">
