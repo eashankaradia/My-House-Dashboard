@@ -359,10 +359,10 @@ purchases stat tweaks (above). **Still TODO** (no code yet — pick up here):
   **PR #23**. Every completed batch is committed and pushed.
 - **Outstanding user actions after merge:** run migrations **0009**, **0010**,
   **0011**, **0012**, and **0013** (and confirm 0008/0007 are run).
-- Verification on the continuation branch: `npm run typecheck` passes and
-  `npm run lint` passes. `npm run build` compiles successfully and reaches
-  static-page generation, then fails on `/login` only because this checkout has
-  no `NEXT_PUBLIC_SUPABASE_URL` / anon key environment variables.
+- Verification on the continuation branch: `npm run typecheck`, `npm run lint`,
+  and the full `npm run build` all pass. The login page now renders a setup
+  notice instead of crashing the build when Supabase public environment
+  variables are absent (useful for unconfigured previews).
 - Ideas not yet requested/built: income/budgeting (explicitly excluded by user),
   notifications/reminders by email, richer analytics, link auto-cleanup on delete,
   showing linked-item counts on cards, assignee avatars.
@@ -402,11 +402,15 @@ typecheck/lint. Migration `0012_bill_accounts_payments.sql` must be run after
 merge.
 
 The consistency sweep is complete: visible Edit labels on remaining pencil
-actions, timestamps on options/accounts/tasks, and task sharing. Typecheck and
-lint pass. Production compilation succeeds; final prerender requires Supabase
-environment variables.
+actions, timestamps on options/accounts/tasks, and task sharing. Typecheck,
+lint, and the complete production build pass.
 
-Next exact step: deploy/preview PR #23 with its normal Vercel environment,
-visually test the new migrations-backed screens after SQL 0011–0013 are run,
-and fix any live-data issues found. No requested feature from the 2026-06-25
-backlog remains intentionally unimplemented.
+Vercel's first PR deployment (commit `0303eef`) failed because Preview did not
+have Supabase public environment variables. The login page is now hardened for
+that condition; the fix is verified by a full local production build without
+those variables.
+
+Next exact step: confirm the new Vercel deployment for the latest commit is
+green, then visually test migrations-backed screens after SQL 0011–0013 are
+run. No requested feature from the 2026-06-25 backlog remains intentionally
+unimplemented.
