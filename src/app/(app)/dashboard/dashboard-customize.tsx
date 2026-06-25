@@ -16,13 +16,12 @@ import { cn } from "@/lib/utils";
 
 /** The widgets a user can show/hide on their dashboard. */
 export const DASHBOARD_WIDGETS: { id: string; label: string }[] = [
-  { id: "finance", label: "Financial summary" },
-  { id: "savings", label: "Savings progress" },
-  { id: "projects", label: "Open projects" },
+  { id: "finance", label: "Glance stats" },
   { id: "reminders", label: "Renewal reminders" },
+  { id: "projects", label: "Open projects & tasks" },
   { id: "maintenance", label: "Upcoming maintenance" },
   { id: "inspiration", label: "Recent inspiration" },
-  { id: "purchases", label: "Recent purchases" },
+  { id: "purchases", label: "Added to wishlist" },
 ];
 
 /** Hides its children when the user has switched this widget off. */
@@ -39,8 +38,8 @@ export function EditDashboardButton() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <SlidersHorizontal className="h-4 w-4" /> Edit dashboard
+        <Button variant="outline" size="icon" aria-label="Edit dashboard" title="Edit dashboard">
+          <SlidersHorizontal className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">

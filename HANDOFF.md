@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-25.
+> after **every** change. Last updated: 2026-06-25 (dashboard redesign batch).
 
 ---
 
@@ -247,6 +247,45 @@ Recently added (chronological, by PR):
   Needs migration **0009**.
 - **Cross-linking** (#20): `links` table; LinkedItems in every detail dialog +
   task editor. Needs migration **0010**.
+- **HANDOFF.md** (#21): this document.
+- **Dashboard redesign** (#22, no DB): rewrote `dashboard/page.tsx` to be
+  glance/actionable-only. Removed the info button, the Monthly-bills stat, and
+  the Savings-progress card. Greeting now uses the household display name
+  (`memberMap[user.id]`). "Edit dashboard" is icon-only. New
+  `dashboard/collapsible-section.tsx` — each section is a `CollapsibleSection`
+  (title links to its tab, a count badge of what's coming up, collapse toggle),
+  still wrapped in `DashboardWidget` for show/hide. Glance stats reduced to Next
+  bill due / Savings balance / Ready to buy. Open-projects rows are one line
+  (`name · status · N to do`) plus an "Upcoming tasks" sublist (soonest-due
+  tasks). Inspiration + wishlist rows show timestamps; wishlist excludes
+  Purchased. `DASHBOARD_WIDGETS` updated (dropped `savings`). Purchases page
+  stats: removed Wishlist value, added Ready-to-buy value; Purchased shows a
+  count not a value.
+
+### ⏳ Large outstanding request (batches still to do)
+The user submitted a big list (2026-06-25). Done so far: dashboard redesign +
+purchases stat tweaks (above). **Still TODO** (no code yet — pick up here):
+1. Every item's edit action icon should read **"Edit"** (text), app-wide.
+2. **Timestamps on every item** (created + last updated) shown in detail dialogs.
+3. **Per-tab update log** at the bottom of every section (filter `activity_log`
+   by that entity type).
+4. **Purchases:** add "non-negotiable features/qualities" field (DB column);
+   filter to "my items".
+5. **Change log:** filter by user and by tab (entity type).
+6. **Inspiration:** make it a scrollable social-feed-style thread AND a database;
+   embed Instagram/Facebook/TikTok reels inline.
+7. **Linked items collapsible** inside all popup cards.
+8. **Notifications** (DB): per-user prefs for what they're notified about
+   (tasks/projects/purchases/…); ability to push a notification to another user.
+9. **Calendar:** clickable days → detail of what's on that day.
+10. **Bills:** payments log (expected auto value + user-entered actual);
+    end date on bills; expected-vs-actual tracking; payment_account as a dropdown
+    of accounts; associate an account to a user or "joint"; see which bills come
+    from which account. (DB: bills.end_date, a `bill_payments` table, an
+    `accounts` concept.)
+11. **Export:** remove per-tab CSV buttons; move to a single export in Settings
+    with a picker for what to export.
+12. **Share to WhatsApp** from everything (wa.me deep links / Web Share API).
 
 ---
 

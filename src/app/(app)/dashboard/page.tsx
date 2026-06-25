@@ -1,37 +1,30 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  BellRing,
   CalendarClock,
-  Hammer,
-  Lightbulb,
   PiggyBank,
-  Receipt,
   ShoppingBag,
-  Wallet,
-  Wrench,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/shared/stat-card";
-import { InfoHint } from "@/components/shared/info-hint";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { priorityVariant } from "@/lib/ui";
-import { daysUntil, formatCurrency, formatDate, toAnnual, toMonthly } from "@/lib/utils";
+import { daysUntil, formatCurrency, formatDate } from "@/lib/utils";
+import { getHouseholdMap } from "@/lib/household";
 import type {
   Bill,
-  Collection,
   Document,
   Inspiration,
   MaintenanceTask,
   Mortgage,
   Project,
+  ProjectTask,
   Purchase,
   SavingsPot,
 } from "@/lib/database.types";
 import { QuickActions } from "./quick-actions";
 import { DashboardWidget, EditDashboardButton } from "./dashboard-customize";
+import { CollapsibleSection } from "./collapsible-section";
 
 export const metadata = { title: "Dashboard" };
 
@@ -45,40 +38,42 @@ export default async function DashboardPage() {
     billsRes,
     potsRes,
     projectsRes,
+    tasksRes,
     purchasesRes,
     inspoRes,
     maintRes,
     docsRes,
     mortgageRes,
     collectionsRes,
+    memberMap,
   ] = await Promise.all([
     supabase.from("bills").select("*"),
     supabase.from("savings_pots").select("*"),
-    supabase.from("projects").select("*").order("created_at", { ascending: false }),
+    supabase.from("projects").select("*").order("updated_at", { ascending: false }),
+    supabase.from("project_tasks").select("*"),
     supabase.from("purchases").select("*").order("created_at", { ascending: false }),
-    supabase.from("inspiration").select("*").order("created_at", { ascending: false }).limit(5),
+    supabase.from("inspiration").select("*").order("updated_at", { ascending: false }).limit(5),
     supabase.from("maintenance_tasks").select("*"),
     supabase.from("documents").select("*"),
     supabase.from("mortgages").select("*").limit(1),
     supabase.from("collections").select("*").order("name"),
+    getHouseholdMap(),
   ]);
 
   const bills = (billsRes.data ?? []) as Bill[];
   const pots = (potsRes.data ?? []) as SavingsPot[];
   const projects = ((projectsRes.data ?? []) as Project[]).filter((p) => !p.archived_at);
+  const allTasks = ((tasksRes.data ?? []) as ProjectTask[]).filter((t) => !t.archived_at);
   const purchases = ((purchasesRes.data ?? []) as Purchase[]).filter((p) => !p.archived_at);
   const inspiration = (inspoRes.data ?? []) as Inspiration[];
   const maintenance = (maintRes.data ?? []) as MaintenanceTask[];
   const documents = (docsRes.data ?? []) as Document[];
   const mortgage = (mortgageRes.data?.[0] as Mortgage | undefined) ?? undefined;
-  const collections = (collectionsRes.data ?? []) as Collection[];
+  const collections = collectionsRes.data ?? [];
 
-  // --- Financial summary ----------------------------------------------------
-  const monthlyBills = bills.reduce((s, b) => s + toMonthly(b.amount, b.frequency), 0);
-  const annualBills = bills.reduce((s, b) => s + toAnnual(b.amount, b.frequency), 0);
-  const monthlyTarget = pots.reduce((s, p) => s + Number(p.monthly_contribution), 0);
+  // --- Headline numbers worth a glance -------------------------------------
   const savedTotal = pots.reduce((s, p) => s + Number(p.current_amount), 0);
-  const targetTotal = pots.reduce((s, p) => s + Number(p.target_amount), 0);
+  const monthlyTarget = pots.reduce((s, p) => s + Number(p.monthly_contribution), 0);
 
   const nextBill = bills
     .filter((b) => b.due_date && (daysUntil(b.due_date) ?? -1) >= 0)
@@ -87,9 +82,19 @@ export default async function DashboardPage() {
   const readyToBuy = purchases.filter((p) => p.status === "Ready To Buy");
   const readyToBuyValue = readyToBuy.reduce((s, p) => s + Number(p.price), 0);
 
+  // --- Open projects (one line each) + the tasks due soonest ----------------
   const openProjects = projects.filter((p) => p.status !== "Completed");
+  const openTaskCount = (projectId: string) =>
+    allTasks.filter((t) => t.project_id === projectId && !t.is_done).length;
+  const projectName = new Map(projects.map((p) => [p.id, p.name]));
 
-  // --- Renewal reminders (bills due, docs expiring, mortgage fix end) --------
+  const upcomingTasks = allTasks
+    .filter((t) => !t.is_done && t.due_date)
+    .map((t) => ({ task: t, days: daysUntil(t.due_date) }))
+    .sort((a, b) => (a.days ?? 0) - (b.days ?? 0))
+    .slice(0, 5);
+
+  // --- Renewal reminders ----------------------------------------------------
   type Reminder = { label: string; date: string | null; days: number; href: string };
   const reminders: Reminder[] = [];
   for (const b of bills) {
@@ -114,250 +119,178 @@ export default async function DashboardPage() {
     .sort((a, b) => (a.days ?? 0) - (b.days ?? 0))
     .slice(0, 5);
 
+  // --- Recently added to the wishlist (not yet purchased) -------------------
+  const recentPurchases = purchases.filter((p) => p.status !== "Purchased").slice(0, 5);
+
   const greeting = getGreeting();
-  const firstName =
-    ((user?.user_metadata?.full_name as string) ?? (user?.user_metadata?.name as string) ?? "")
-      .split(" ")[0] || "there";
+  const myName =
+    (user && memberMap[user.id]) ||
+    ((user?.user_metadata?.full_name as string) ?? (user?.user_metadata?.name as string) ?? "").split(" ")[0] ||
+    "there";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              {greeting}, {firstName}
-            </h1>
-            <InfoHint text="Your home at a glance. The cards summarise your finances, savings, projects, reminders and recent activity — they update automatically as you add things. Use ‘Edit dashboard’ to choose which cards show. Use the buttons below to add anything quickly, or the sidebar to open a section." />
-          </div>
-          <p className="text-muted-foreground">Here&apos;s how your home is doing today.</p>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            {greeting}, {myName}
+          </h1>
+          <p className="text-muted-foreground">Here&apos;s what needs your attention.</p>
         </div>
         <EditDashboardButton />
       </div>
 
       <QuickActions collections={collections} />
 
-      {/* Financial summary */}
+      {/* Glance stats */}
       <DashboardWidget id="finance">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Monthly bills" value={formatCurrency(monthlyBills)} hint={`${formatCurrency(annualBills)}/yr`} icon={Receipt} />
-        <StatCard
-          label="Next bill due"
-          value={nextBill ? formatDate(nextBill.due_date) : "—"}
-          hint={nextBill ? `${nextBill.name} · ${formatCurrency(nextBill.amount)}` : "Nothing scheduled"}
-          icon={CalendarClock}
-          accent="muted"
-        />
-        <StatCard label="Savings balance" value={formatCurrency(savedTotal)} hint={`Target ${formatCurrency(monthlyTarget)}/mo`} icon={PiggyBank} />
-        <StatCard
-          label="Ready to buy"
-          value={formatCurrency(readyToBuyValue)}
-          hint={`${readyToBuy.length} item${readyToBuy.length === 1 ? "" : "s"} shortlisted`}
-          icon={ShoppingBag}
-          accent="muted"
-        />
-      </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard
+            label="Next bill due"
+            value={nextBill ? formatDate(nextBill.due_date) : "—"}
+            hint={nextBill ? `${nextBill.name} · ${formatCurrency(nextBill.amount)}` : "Nothing scheduled"}
+            icon={CalendarClock}
+          />
+          <StatCard label="Savings balance" value={formatCurrency(savedTotal)} hint={`Target ${formatCurrency(monthlyTarget)}/mo`} icon={PiggyBank} accent="muted" />
+          <StatCard
+            label="Ready to buy"
+            value={formatCurrency(readyToBuyValue)}
+            hint={`${readyToBuy.length} item${readyToBuy.length === 1 ? "" : "s"}`}
+            icon={ShoppingBag}
+          />
+        </div>
       </DashboardWidget>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Savings progress */}
-        <DashboardWidget id="savings">
-        <Card className="lg:col-span-1">
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">
-              <Link href="/savings" className="hover:underline">Savings progress</Link>
-            </CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {pots.length === 0 ? (
-              <Empty href="/savings" label="Create your first savings pot" icon={PiggyBank} />
-            ) : (
-              <>
-                <div>
-                  <div className="mb-1.5 flex items-baseline justify-between">
-                    <span className="text-2xl font-semibold">{formatCurrency(savedTotal)}</span>
-                    <span className="text-xs text-muted-foreground">of {formatCurrency(targetTotal)}</span>
-                  </div>
-                  <Progress value={targetTotal ? (savedTotal / targetTotal) * 100 : 0} />
+      {/* Renewal reminders */}
+      <DashboardWidget id="reminders">
+        <CollapsibleSection title="Renewal reminders" href="/calendar" count={reminders.length}>
+          {reminders.length === 0 ? (
+            <p className="py-2 text-sm text-muted-foreground">Nothing needs attention. 🎉</p>
+          ) : (
+            reminders.slice(0, 6).map((r, i) => (
+              <RowLink key={i} href={r.href}>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{r.label}</p>
+                  <p className="text-xs text-muted-foreground">{formatDate(r.date)}</p>
                 </div>
-                <div className="space-y-2.5">
-                  {pots.slice(0, 4).map((p) => {
-                    const pct = p.target_amount ? Math.min(100, (p.current_amount / p.target_amount) * 100) : 0;
-                    return (
-                      <RowLink key={p.id} href={`/savings?item=${p.id}`}>
-                        <div className="mb-1 flex justify-between text-sm">
-                          <span className="truncate">{p.name}</span>
-                          <span className="text-muted-foreground">{Math.round(pct)}%</span>
-                        </div>
-                        <Progress value={pct} className="h-1.5" />
-                      </RowLink>
-                    );
-                  })}
-                </div>
-                <SeeAll href="/savings" />
-              </>
-            )}
-          </CardContent>
-        </Card>
-        </DashboardWidget>
+                {r.days < 0 ? (
+                  <Badge variant="destructive">{Math.abs(r.days)}d late</Badge>
+                ) : (
+                  <Badge variant={r.days <= 14 ? "warning" : "secondary"}>{r.days}d</Badge>
+                )}
+              </RowLink>
+            ))
+          )}
+        </CollapsibleSection>
+      </DashboardWidget>
 
-        {/* Open projects */}
-        <DashboardWidget id="projects">
-        <Card className="lg:col-span-1">
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">
-              <Link href="/projects" className="hover:underline">Open projects</Link>
-            </CardTitle>
-            <Hammer className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {openProjects.length === 0 ? (
-              <Empty href="/projects" label="Start a home project" icon={Hammer} />
-            ) : (
-              <>
-                {openProjects.slice(0, 5).map((p) => (
-                  <RowLink key={p.id} href={`/projects?project=${p.id}`} className="flex items-center justify-between gap-2 text-sm">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{p.name}</p>
-                      <p className="text-xs text-muted-foreground">{p.status}</p>
-                    </div>
-                    <Badge variant={priorityVariant(p.priority)}>{p.priority}</Badge>
-                  </RowLink>
-                ))}
-                <SeeAll href="/projects" />
-              </>
-            )}
-          </CardContent>
-        </Card>
-        </DashboardWidget>
+      {/* Open projects + upcoming tasks */}
+      <DashboardWidget id="projects">
+        <CollapsibleSection title="Open projects" href="/projects" count={openProjects.length}>
+          {openProjects.length === 0 ? (
+            <Empty href="/projects" label="Start a home project" />
+          ) : (
+            openProjects.slice(0, 6).map((p) => {
+              const todo = openTaskCount(p.id);
+              return (
+                <RowLink key={p.id} href={`/projects?project=${p.id}`}>
+                  <p className="min-w-0 flex-1 truncate">
+                    <span className="font-medium">{p.name}</span>
+                    <span className="text-muted-foreground"> · {p.status}</span>
+                    {todo > 0 ? <span className="text-muted-foreground"> · {todo} to do</span> : null}
+                  </p>
+                  <Badge variant={priorityVariant(p.priority)}>{p.priority}</Badge>
+                </RowLink>
+              );
+            })
+          )}
 
-        {/* Reminders */}
-        <DashboardWidget id="reminders">
-        <Card className="lg:col-span-1">
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">
-              <Link href="/calendar" className="hover:underline">Renewal reminders</Link>
-            </CardTitle>
-            <BellRing className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {reminders.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">Nothing needs attention. 🎉</p>
-            ) : (
-              reminders.slice(0, 6).map((r, i) => (
-                <RowLink key={i} href={r.href} className="flex items-center justify-between gap-2 text-sm">
+          {upcomingTasks.length > 0 ? (
+            <div className="pt-1">
+              <p className="px-1 pb-1 pt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Upcoming tasks
+              </p>
+              {upcomingTasks.map(({ task, days }) => (
+                <RowLink key={task.id} href={`/projects?task=${task.id}`}>
                   <div className="min-w-0">
-                    <p className="truncate font-medium">{r.label}</p>
-                    <p className="text-xs text-muted-foreground">{formatDate(r.date)}</p>
+                    <p className="truncate">{task.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {task.project_id ? `${projectName.get(task.project_id) ?? "Project"} · ` : ""}
+                      {formatDate(task.due_date)}
+                    </p>
                   </div>
-                  {r.days < 0 ? (
-                    <Badge variant="destructive">{Math.abs(r.days)}d late</Badge>
+                  {days !== null && days < 0 ? (
+                    <Badge variant="destructive">{Math.abs(days)}d late</Badge>
                   ) : (
-                    <Badge variant={r.days <= 14 ? "warning" : "secondary"}>{r.days}d</Badge>
+                    <Badge variant={days !== null && days <= 7 ? "warning" : "secondary"}>{days}d</Badge>
                   )}
                 </RowLink>
-              ))
-            )}
-          </CardContent>
-        </Card>
-        </DashboardWidget>
-      </div>
+              ))}
+            </div>
+          ) : null}
+        </CollapsibleSection>
+      </DashboardWidget>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Upcoming maintenance */}
-        <DashboardWidget id="maintenance">
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">
-              <Link href="/maintenance" className="hover:underline">Upcoming maintenance</Link>
-            </CardTitle>
-            <Wrench className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {upcomingMaint.length === 0 ? (
-              <Empty href="/maintenance" label="Add a maintenance task" icon={Wrench} />
-            ) : (
-              <>
-                {upcomingMaint.map(({ task, days }) => (
-                  <RowLink key={task.id} href={`/maintenance?item=${task.id}`} className="flex items-center justify-between gap-2 text-sm">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{task.task}</p>
-                      <p className="text-xs text-muted-foreground">{formatDate(task.next_due_date)}</p>
-                    </div>
-                    {days !== null && days < 0 ? (
-                      <Badge variant="destructive">overdue</Badge>
-                    ) : (
-                      <Badge variant={days !== null && days <= 30 ? "warning" : "secondary"}>{days}d</Badge>
-                    )}
-                  </RowLink>
-                ))}
-                <SeeAll href="/maintenance" />
-              </>
-            )}
-          </CardContent>
-        </Card>
-        </DashboardWidget>
+      {/* Upcoming maintenance */}
+      <DashboardWidget id="maintenance">
+        <CollapsibleSection title="Upcoming maintenance" href="/maintenance" count={upcomingMaint.length}>
+          {upcomingMaint.length === 0 ? (
+            <Empty href="/maintenance" label="Add a maintenance task" />
+          ) : (
+            upcomingMaint.map(({ task, days }) => (
+              <RowLink key={task.id} href={`/maintenance?item=${task.id}`}>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{task.task}</p>
+                  <p className="text-xs text-muted-foreground">{formatDate(task.next_due_date)}</p>
+                </div>
+                {days !== null && days < 0 ? (
+                  <Badge variant="destructive">overdue</Badge>
+                ) : (
+                  <Badge variant={days !== null && days <= 30 ? "warning" : "secondary"}>{days}d</Badge>
+                )}
+              </RowLink>
+            ))
+          )}
+        </CollapsibleSection>
+      </DashboardWidget>
 
-        {/* Recent inspiration */}
-        <DashboardWidget id="inspiration">
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">
-              <Link href="/inspiration" className="hover:underline">Recent inspiration</Link>
-            </CardTitle>
-            <Lightbulb className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {inspiration.length === 0 ? (
-              <Empty href="/inspiration" label="Save your first idea" icon={Lightbulb} />
-            ) : (
-              <>
-                {inspiration.map((i) => (
-                  <RowLink key={i.id} href={`/inspiration?item=${i.id}`} className="flex items-center justify-between gap-2 text-sm">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{i.title}</p>
-                      <p className="text-xs text-muted-foreground">{[i.source, i.room].filter(Boolean).join(" · ")}</p>
-                    </div>
-                    <Badge variant="secondary">{i.status}</Badge>
-                  </RowLink>
-                ))}
-                <SeeAll href="/inspiration" />
-              </>
-            )}
-          </CardContent>
-        </Card>
-        </DashboardWidget>
+      {/* Recent inspiration (timestamped) */}
+      <DashboardWidget id="inspiration">
+        <CollapsibleSection title="Recent inspiration" href="/inspiration" count={inspiration.length}>
+          {inspiration.length === 0 ? (
+            <Empty href="/inspiration" label="Save your first idea" />
+          ) : (
+            inspiration.map((i) => (
+              <RowLink key={i.id} href={`/inspiration?item=${i.id}`}>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{i.title}</p>
+                  <p className="text-xs text-muted-foreground">{[i.source, i.room].filter(Boolean).join(" · ")}</p>
+                </div>
+                <span className="shrink-0 text-xs text-muted-foreground">{formatDate(i.updated_at)}</span>
+              </RowLink>
+            ))
+          )}
+        </CollapsibleSection>
+      </DashboardWidget>
 
-        {/* Recent purchases */}
-        <DashboardWidget id="purchases">
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">
-              <Link href="/purchases" className="hover:underline">Recent purchases</Link>
-            </CardTitle>
-            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {purchases.length === 0 ? (
-              <Empty href="/purchases" label="Add to your wishlist" icon={ShoppingBag} />
-            ) : (
-              <>
-                {purchases.slice(0, 5).map((p) => (
-                  <RowLink key={p.id} href={`/purchases?item=${p.id}`} className="flex items-center justify-between gap-2 text-sm">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{p.name}</p>
-                      <p className="text-xs text-muted-foreground">{p.status}</p>
-                    </div>
-                    <span className="text-sm font-medium">{formatCurrency(p.price)}</span>
-                  </RowLink>
-                ))}
-                <SeeAll href="/purchases" />
-              </>
-            )}
-          </CardContent>
-        </Card>
-        </DashboardWidget>
-      </div>
+      {/* Recently added to the wishlist (timestamped, excludes purchased) */}
+      <DashboardWidget id="purchases">
+        <CollapsibleSection title="Added to wishlist" href="/purchases" count={recentPurchases.length}>
+          {recentPurchases.length === 0 ? (
+            <Empty href="/purchases" label="Add to your wishlist" />
+          ) : (
+            recentPurchases.map((p) => (
+              <RowLink key={p.id} href={`/purchases?item=${p.id}`}>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{p.name}</p>
+                  <p className="text-xs text-muted-foreground">{p.status}</p>
+                </div>
+                <span className="shrink-0 text-xs text-muted-foreground">{formatDate(p.created_at)}</span>
+              </RowLink>
+            ))
+          )}
+        </CollapsibleSection>
+      </DashboardWidget>
     </div>
   );
 }
@@ -369,45 +302,25 @@ function getGreeting() {
   return "Good evening";
 }
 
-/** A dashboard list row that links to its section, with a tappable hover state. */
-function RowLink({
-  href,
-  className,
-  children,
-}: {
-  href: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
+/** A dashboard list row that links to its item, with a tappable hover state. */
+function RowLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <Link
       href={href}
-      className={`-mx-2 block rounded-md px-2 py-1.5 transition-colors hover:bg-accent active:bg-accent ${className ?? ""}`}
+      className="-mx-2 flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent active:bg-accent"
     >
       {children}
     </Link>
   );
 }
 
-function SeeAll({ href }: { href: string }) {
+function Empty({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-1 pt-1 text-xs font-medium text-primary hover:underline"
+      className="flex items-center justify-center gap-1 rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
     >
-      See all <ArrowRight className="h-3 w-3" />
-    </Link>
-  );
-}
-
-function Empty({ href, label, icon: Icon }: { href: string; label: string; icon: typeof Hammer }) {
-  return (
-    <Link
-      href={href}
-      className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-6 text-center text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
-    >
-      <Icon className="h-5 w-5" />
-      {label}
+      {label} <ArrowRight className="h-3.5 w-3.5" />
     </Link>
   );
 }
