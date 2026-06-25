@@ -32,12 +32,17 @@ export function Subtasks({ project }: { project: ProjectWithTasks }) {
     });
   }
 
+  // Show active sub-tasks here; cleared (archived) ones still count toward the
+  // project's progress but are summarised rather than listed.
+  const active = project.tasks.filter((t) => !t.archived_at);
+  const clearedCount = project.tasks.length - active.length;
+
   return (
     <div className="space-y-1.5 rounded-lg bg-muted/30 p-2">
-      {project.tasks.length === 0 ? (
+      {active.length === 0 ? (
         <p className="px-1 text-xs text-muted-foreground">No sub-tasks yet</p>
       ) : (
-        project.tasks.map((task) => (
+        active.map((task) => (
           <div key={task.id} className="flex items-center gap-2">
             <Checkbox checked={task.is_done} onCheckedChange={() => toggle(task)} className="h-4 w-4" />
             <span className={cn("flex-1 text-sm", task.is_done && "text-muted-foreground line-through")}>
@@ -53,6 +58,9 @@ export function Subtasks({ project }: { project: ProjectWithTasks }) {
           </div>
         ))
       )}
+      {clearedCount > 0 ? (
+        <p className="px-1 text-xs text-muted-foreground">{clearedCount} cleared (kept for progress)</p>
+      ) : null}
       <form onSubmit={add} className="flex items-center gap-2 pt-1">
         <Input
           value={title}

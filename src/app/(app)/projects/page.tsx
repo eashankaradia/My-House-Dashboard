@@ -35,9 +35,12 @@ export default async function ProjectsPage() {
   const archivedTasks = allTasks.filter((t) => t.archived_at);
   const allProjects = (data ?? []) as Project[];
   const archivedProjects = allProjects.filter((p) => p.archived_at);
+  // Project progress counts ALL its tasks (including cleared/archived ones), so
+  // clearing completed tasks doesn't lose progress. The interactive lists below
+  // still filter archived out for display.
   const projects: ProjectWithTasks[] = allProjects
     .filter((p) => !p.archived_at)
-    .map((p) => ({ ...p, tasks: tasks.filter((t) => t.project_id === p.id) }));
+    .map((p) => ({ ...p, tasks: allTasks.filter((t) => t.project_id === p.id) }));
   const projectOptions = projects.map((p) => ({ id: p.id, name: p.name }));
   const currentUserId = user?.id ?? "";
 

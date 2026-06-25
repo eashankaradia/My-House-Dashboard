@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch A).
+> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch B: task notes/clear).
 
 ## 0. Latest session (Claude, after Codex continuation)
 
@@ -26,7 +26,16 @@ Working through it in build+lint-verified batches.
   (CostSummary + its imports gone).
 - "**End date (optional)**" label on the bill form.
 
-### Batch B+ — STILL TODO from the second list (pick up here)
+### Batch B (done): task notes + clear completed — **needs migration 0014**
+- `0014_task_notes.sql` adds `project_tasks.notes`. RUN THIS LIVE.
+- Task editor has a **Notes** textarea (createTask/updateTask accept `notes`).
+- **Clear completed**: button in the Tasks "Done" card archives all done tasks
+  (`clearCompletedTasks` action). Cleared tasks move to the Archived-tasks
+  section (restore/delete) AND still count toward project progress, because the
+  projects page now builds each `project.tasks` from ALL tasks (incl. archived);
+  `Subtasks` shows active ones + an "N cleared (kept for progress)" line.
+
+### Batch C+ — STILL TODO from the second list (pick up here)
 1. Calendar: let a user **add an event to a date**, with **recurring** option
    (needs `calendar_events` table + migration; calendar page currently derives
    events from other tables only).

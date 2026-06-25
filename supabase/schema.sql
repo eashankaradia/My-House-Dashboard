@@ -361,6 +361,7 @@ create table if not exists public.project_tasks (
   position    integer not null default 0,
   assigned_to uuid references auth.users (id) on delete set null,
   archived_at timestamptz,
+  notes       text,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );

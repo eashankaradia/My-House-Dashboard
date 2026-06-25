@@ -283,6 +283,7 @@ export type ProjectTask = Timestamps & {
   position: number;
   assigned_to: string | null;
   archived_at: string | null;
+  notes: string | null;
 };
 
 export type PurchaseStar = {
