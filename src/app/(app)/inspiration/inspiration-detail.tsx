@@ -21,6 +21,7 @@ import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { LinkedItems } from "@/app/(app)/links/linked-items";
 import { InspirationForm } from "./inspiration-form";
 import { convertInspiration, deleteInspiration } from "./actions";
+import { SocialEmbed } from "./social-embed";
 
 export function InspirationDetailDialog({
   item,
@@ -54,7 +55,9 @@ export function InspirationDetailDialog({
           <DialogTitle>{item.title}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          {item.image_url ? (
+          {item.link ? (
+            <SocialEmbed link={item.link} title={item.title} />
+          ) : item.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={item.image_url} alt={item.title} className="max-h-64 w-full rounded-lg object-cover" />
           ) : null}

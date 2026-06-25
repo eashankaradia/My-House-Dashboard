@@ -282,6 +282,11 @@ Recently added (chronological, by PR):
   pass.
   Made every calendar day cell clickable. A day-detail dialog lists everything
   scheduled that day and links to each exact item. Typecheck and lint pass.
+  Reworked Inspiration so the default view is a scrollable social-style feed,
+  while retaining masonry/cards/list database views and filters. Instagram
+  posts/reels, Facebook videos, TikTok video URLs, and YouTube links render
+  inline when their URL can be converted to an embed; unsupported links retain
+  an open-original fallback. Typecheck and lint pass.
 
 ### ⏳ Large outstanding request (batches still to do)
 The user submitted a big list (2026-06-25). Done so far: dashboard redesign +
@@ -295,8 +300,8 @@ purchases stat tweaks (above). **Still TODO** (no code yet — pick up here):
 4. **Purchases:** done in code — non-negotiable features/qualities field
    (migration 0011) and "my items" filter.
 5. **Change log:** done — filter by user and by tab (entity type).
-6. **Inspiration:** make it a scrollable social-feed-style thread AND a database;
-   embed Instagram/Facebook/TikTok reels inline.
+6. **Inspiration:** done — social-feed default plus existing database
+   filters/views and inline supported social/video embeds.
 7. **Linked items collapsible** inside all popup cards — done.
 8. **Notifications:** done in code — per-user section preferences, automatic
    household update notifications, inbox/unread state, and manual pushes.
@@ -389,9 +394,9 @@ The bills/accounts/payment batch is complete in code and verified with
 typecheck/lint. Migration `0012_bill_accounts_payments.sql` must be run after
 merge.
 
-The calendar day-detail batch is complete and verified with typecheck/lint.
+The Inspiration social-feed/embed batch is complete and verified with
+typecheck/lint.
 
-Next exact step: rebuild Inspiration as a scroll-friendly social feed while
-preserving database filters/views, and render supported Instagram, Facebook,
-TikTok, and YouTube content inline; then verify, update this file, commit, and
-push.
+Next exact step: remove per-tab CSV buttons, build a single Settings export
+picker for bills, purchases, projects, and maintenance, then verify, update this
+file, commit, and push.
