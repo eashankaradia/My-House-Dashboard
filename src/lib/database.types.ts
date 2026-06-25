@@ -239,6 +239,7 @@ export type ProjectTask = Timestamps & {
 export type HouseholdMember = {
   user_id: string;
   display_name: string;
+  household_id: string;
   created_at: string;
 };
 
