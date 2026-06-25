@@ -52,20 +52,24 @@ export function PurchasesGrid({
   purchases,
   memberMap,
   starInfo,
+  currentUserId,
 }: {
   purchases: PurchaseWithOptions[];
   memberMap: MemberMap;
   starInfo: Record<string, StarInfo>;
+  currentUserId?: string;
 }) {
   const [status, setStatus] = React.useState<string>("All");
   const [room, setRoom] = React.useState<string>("All");
   const [sort, setSort] = React.useState<keyof typeof SORTS>("priority");
   const [compact, setCompact] = React.useState(false);
+  const [onlyMine, setOnlyMine] = React.useState(false);
 
   const rooms = Array.from(new Set(purchases.map((p) => p.room).filter(Boolean))) as string[];
   const rank = { High: 0, Medium: 1, Low: 2 } as const;
 
   const filtered = purchases
+    .filter((p) => (!onlyMine ? true : p.user_id === currentUserId))
     .filter((p) => (status === "All" ? true : p.status === status))
     .filter((p) => (room === "All" ? true : p.room === room))
     .sort((a, b) => {
@@ -86,6 +90,22 @@ export function PurchasesGrid({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center rounded-lg border p-0.5 text-sm">
+          <button
+            type="button"
+            onClick={() => setOnlyMine(false)}
+            className={cn("rounded-md px-2.5 py-1", !onlyMine && "bg-accent")}
+          >
+            All
+          </button>
+          <button
+            type="button"
+            onClick={() => setOnlyMine(true)}
+            className={cn("rounded-md px-2.5 py-1", onlyMine && "bg-accent")}
+          >
+            Mine
+          </button>
+        </div>
         <NativeSelect value={status} onChange={(e) => setStatus(e.target.value)} className="h-9 w-auto text-sm">
           <option value="All">All statuses</option>
           {PURCHASE_STATUSES.map((s) => (

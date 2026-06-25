@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Archive, Plus, Trash2 } from "lucide-react";
+import { Archive, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -100,7 +100,8 @@ export function ProjectForm({ project, trigger, defaults }: Props) {
       <DialogTrigger asChild>
         {trigger ?? (
           <Button>
-            <Plus className="h-4 w-4" /> New project
+            {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {editing ? "Edit" : "New project"}
           </Button>
         )}
       </DialogTrigger>

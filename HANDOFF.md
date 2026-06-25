@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-25 (dashboard redesign batch).
+> after **every** change. Last updated: 2026-06-25 (Codex continuation batch).
 
 ---
 
@@ -123,6 +123,7 @@ here too). Incremental migrations in `supabase/migrations/`:
 | 0008_household_isolation.sql | `household_members.household_id`, `same_household()`, per-household RLS on all tables + activity_log |
 | 0009_assignees_stars_archive.sql | `project_tasks.assigned_to` + `archived_at`; `projects.archived_at`; `purchases.archived_at`; `purchase_stars` table |
 | 0010_links.sql | `links` table (generic cross-entity associations) |
+| 0011_purchase_requirements.sql | `purchases.non_negotiables` |
 
 ### ⚠️ Migrations the user must run (verify with them)
 The user runs SQL manually. As of this writing, **0009 and 0010 may not yet be
@@ -261,20 +262,28 @@ Recently added (chronological, by PR):
   Purchased. `DASHBOARD_WIDGETS` updated (dropped `savings`). Purchases page
   stats: removed Wishlist value, added Ready-to-buy value; Purchased shows a
   count not a value.
+- **Codex continuation batch** (branch `codex/continue-dashboard-backlog`):
+  restored Claude's unpushed batch-2 work: collapsible linked items, Purchases
+  All/Mine filter, Change-log user/tab filters, and native-share/WhatsApp
+  fallback in main detail dialogs. Added created/updated timestamps to main item
+  dialogs and made default edit actions read "Edit". Added purchase
+  non-negotiable features/qualities (migration 0011). Typecheck and lint pass.
 
 ### ⏳ Large outstanding request (batches still to do)
 The user submitted a big list (2026-06-25). Done so far: dashboard redesign +
 purchases stat tweaks (above). **Still TODO** (no code yet — pick up here):
-1. Every item's edit action icon should read **"Edit"** (text), app-wide.
-2. **Timestamps on every item** (created + last updated) shown in detail dialogs.
+1. Finish converting any remaining compact-row edit icon triggers to **"Edit"**
+   text (main forms/dialogs are done).
+2. Extend **timestamps** to secondary entities such as purchase options and
+   savings accounts (main item detail dialogs are done).
 3. **Per-tab update log** at the bottom of every section (filter `activity_log`
    by that entity type).
-4. **Purchases:** add "non-negotiable features/qualities" field (DB column);
-   filter to "my items".
-5. **Change log:** filter by user and by tab (entity type).
+4. **Purchases:** done in code — non-negotiable features/qualities field
+   (migration 0011) and "my items" filter.
+5. **Change log:** done — filter by user and by tab (entity type).
 6. **Inspiration:** make it a scrollable social-feed-style thread AND a database;
    embed Instagram/Facebook/TikTok reels inline.
-7. **Linked items collapsible** inside all popup cards.
+7. **Linked items collapsible** inside all popup cards — done.
 8. **Notifications** (DB): per-user prefs for what they're notified about
    (tasks/projects/purchases/…); ability to push a notification to another user.
 9. **Calendar:** clickable days → detail of what's on that day.
@@ -285,7 +294,8 @@ purchases stat tweaks (above). **Still TODO** (no code yet — pick up here):
     `accounts` concept.)
 11. **Export:** remove per-tab CSV buttons; move to a single export in Settings
     with a picker for what to export.
-12. **Share to WhatsApp** from everything (wa.me deep links / Web Share API).
+12. **Share to WhatsApp** — shared detail-dialog component is done for the main
+    entity types; extend to any remaining secondary entities/views.
 
 ---
 

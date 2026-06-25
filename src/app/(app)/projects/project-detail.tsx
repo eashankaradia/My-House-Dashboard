@@ -11,6 +11,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
+import { ShareButton } from "@/components/shared/share-button";
+import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { priorityVariant } from "@/lib/ui";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -69,6 +71,7 @@ export function ProjectDetailDialog({
               <p className="text-sm">{project.notes}</p>
             </div>
           ) : null}
+          <ItemTimestamps createdAt={project.created_at} updatedAt={project.updated_at} />
 
           <div>
             <p className="mb-1.5 text-xs font-medium text-muted-foreground">Sub-tasks</p>
@@ -81,6 +84,7 @@ export function ProjectDetailDialog({
           <div className="flex items-center justify-between border-t pt-3">
             <AddedBy name={memberMap[project.user_id]} />
             <div className="flex items-center gap-2">
+              <ShareButton title={project.name} text={`${project.status} · ${done}/${project.tasks.length} tasks done`} />
               <ProjectForm project={project} />
               <ConfirmDelete itemLabel="project" action={deleteProject.bind(null, project.id)} variant="menu" />
             </div>

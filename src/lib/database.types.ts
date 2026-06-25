@@ -128,6 +128,7 @@ export type Purchase = Timestamps & {
   sub_category: string | null;
   room: string | null;
   priority: Priority;
+  non_negotiables: string | null;
   notes: string | null;
   status: PurchaseStatus;
   image_url: string | null;

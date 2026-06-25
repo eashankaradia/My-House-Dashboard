@@ -98,6 +98,7 @@ export const purchaseSchema = z.object({
   room: optionalString,
   priority: z.enum(PRIORITIES),
   status: z.enum(PURCHASE_STATUSES),
+  non_negotiables: optionalString,
   notes: optionalString,
 });
 export type PurchaseInput = z.infer<typeof purchaseSchema>;

@@ -80,7 +80,7 @@ export default async function PurchasesPage() {
                 <StatCard label="Ready to buy" value={formatCurrency(readyToBuyValue)} hint={`${readyToBuy.length} item${readyToBuy.length === 1 ? "" : "s"}`} icon={Wallet} />
                 <StatCard label="Purchased" value={String(purchased.length)} hint="items bought" icon={CheckCircle2} accent="muted" />
               </div>
-              <PurchasesGrid purchases={purchases} memberMap={memberMap} starInfo={starInfo} />
+              <PurchasesGrid purchases={purchases} memberMap={memberMap} starInfo={starInfo} currentUserId={user?.id} />
             </>
           ) : null}
           <ArchivedSection

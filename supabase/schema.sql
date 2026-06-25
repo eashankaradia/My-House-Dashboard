@@ -244,6 +244,7 @@ create table if not exists public.purchases (
   sub_category          text,
   room                  text,
   priority              text not null default 'Medium' check (priority in ('Low','Medium','High')),
+  non_negotiables       text,
   notes                 text,
   status                text not null default 'Considering'
                           check (status in ('Interesting','Considering','Shortlisted','Ready To Buy','Purchased')),

@@ -11,6 +11,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
+import { ShareButton } from "@/components/shared/share-button";
+import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { FREQUENCY_LABELS } from "@/lib/constants";
 import { formatCurrency, formatDate, toAnnual, toMonthly } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -56,12 +58,14 @@ export function BillDetailDialog({
               <p className="text-sm">{bill.notes}</p>
             </div>
           ) : null}
+          <ItemTimestamps createdAt={bill.created_at} updatedAt={bill.updated_at} />
           <div className="border-t pt-3">
             <LinkedItems type="bill" id={bill.id} />
           </div>
           <div className="flex items-center justify-between border-t pt-3">
             <AddedBy name={memberMap[bill.user_id]} />
             <div className="flex items-center gap-2">
+              <ShareButton title={bill.name} text={`${formatCurrency(bill.amount)} · ${FREQUENCY_LABELS[bill.frequency] ?? bill.frequency}`} />
               <BillForm bill={bill} />
               <ConfirmDelete itemLabel="bill" action={deleteBill.bind(null, bill.id)} variant="menu" />
             </div>

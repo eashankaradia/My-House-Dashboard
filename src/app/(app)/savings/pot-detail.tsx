@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Field } from "@/components/shared/form-field";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
+import { ShareButton } from "@/components/shared/share-button";
+import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { AreaChart } from "@/components/charts/area-chart";
 import { useToast } from "@/hooks/use-toast";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
@@ -197,7 +199,9 @@ export function PotDetailDialog({
           </section>
 
           {/* Footer actions */}
+          <ItemTimestamps createdAt={pot.created_at} updatedAt={pot.updated_at} />
           <div className="flex items-center justify-end gap-2 border-t pt-3">
+            <ShareButton title={pot.name} text={`${formatCurrency(pot.current_amount)} saved of ${formatCurrency(pot.target_amount)}`} />
             <PotForm pot={pot} />
             <ConfirmDelete itemLabel="pot" action={deletePot.bind(null, pot.id)} variant="menu" />
           </div>

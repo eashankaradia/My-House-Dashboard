@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CheckSquare, Hammer, Lightbulb, Link2, Plus, Receipt, ShoppingBag, X } from "lucide-react";
+import { CheckSquare, ChevronDown, Hammer, Lightbulb, Link2, Plus, Receipt, ShoppingBag, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -27,6 +27,7 @@ const ALL_TYPES: LinkType[] = ["task", "project", "purchase", "bill", "inspirati
 export function LinkedItems({ type, id }: { type: LinkType; id: string }) {
   const [items, setItems] = React.useState<LinkedItem[]>([]);
   const [adding, setAdding] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
 
@@ -49,10 +50,17 @@ export function LinkedItems({ type, id }: { type: LinkType; id: string }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          <Link2 className="h-3.5 w-3.5" /> Linked items
-        </p>
-        {!adding ? (
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+          aria-expanded={open}
+        >
+          <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "" : "-rotate-90"}`} />
+          <Link2 className="h-3.5 w-3.5" />
+          Linked items{items.length > 0 ? ` (${items.length})` : ""}
+        </button>
+        {open && !adding ? (
           <button
             type="button"
             onClick={() => setAdding(true)}
@@ -63,11 +71,11 @@ export function LinkedItems({ type, id }: { type: LinkType; id: string }) {
         ) : null}
       </div>
 
-      {items.length === 0 && !adding ? (
+      {open && items.length === 0 && !adding ? (
         <p className="text-xs text-muted-foreground">Nothing linked yet.</p>
       ) : null}
 
-      {items.length > 0 ? (
+      {open && items.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {items.map((it) => {
             const meta = META[it.type];
@@ -96,7 +104,7 @@ export function LinkedItems({ type, id }: { type: LinkType; id: string }) {
         </div>
       ) : null}
 
-      {adding ? (
+      {open && adding ? (
         <AddLink
           selfType={type}
           onCancel={() => setAdding(false)}

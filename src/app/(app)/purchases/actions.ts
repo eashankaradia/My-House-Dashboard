@@ -21,6 +21,7 @@ function toRow(values: PurchaseInput) {
     room: values.room ?? null,
     priority: values.priority,
     status: values.status,
+    non_negotiables: values.non_negotiables ?? null,
     notes: values.notes ?? null,
     purchased_at: values.status === "Purchased" ? new Date().toISOString().slice(0, 10) : null,
   };

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -67,7 +67,8 @@ export function PotForm({ pot, trigger }: { pot?: SavingsPot; trigger?: React.Re
       <DialogTrigger asChild>
         {trigger ?? (
           <Button>
-            <Plus className="h-4 w-4" /> New pot
+            {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {editing ? "Edit" : "New pot"}
           </Button>
         )}
       </DialogTrigger>
