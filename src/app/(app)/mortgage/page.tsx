@@ -11,6 +11,7 @@ import { monthsToYearsLabel, payoffMonths } from "@/lib/finance";
 import type { Mortgage } from "@/lib/database.types";
 import { MortgageForm } from "./mortgage-form";
 import { OverpaymentCalculator } from "./overpayment-calculator";
+import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
 export const metadata = { title: "Mortgage" };
 
@@ -123,6 +124,7 @@ export default async function MortgagePage() {
           />
         </div>
       </div>
+      <SectionActivityLog entityTypes={["mortgages"]} />
     </div>
   );
 }

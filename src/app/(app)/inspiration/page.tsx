@@ -8,6 +8,7 @@ import type { Collection, Inspiration } from "@/lib/database.types";
 import { InspirationForm } from "./inspiration-form";
 import { CollectionForm } from "./collection-form";
 import { InspirationHub } from "./inspiration-hub";
+import { SectionActivityLog } from "@/components/shared/section-activity-log";
 import { deleteCollection } from "./actions";
 
 export const metadata = { title: "Inspiration" };
@@ -68,6 +69,7 @@ export default async function InspirationPage() {
       ) : (
         <InspirationHub items={items} collections={collections} />
       )}
+      <SectionActivityLog entityTypes={["inspiration", "collections"]} />
     </div>
   );
 }

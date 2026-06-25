@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/utils";
 import type { SavingsAccount, SavingsContribution, SavingsPot } from "@/lib/database.types";
 import { PotForm } from "./pot-form";
 import { PotCard } from "./pot-card";
+import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
 export const metadata = { title: "Savings Pots" };
 
@@ -60,6 +61,7 @@ export default async function SavingsPage() {
           </div>
         </>
       )}
+      <SectionActivityLog entityTypes={["savings_pots", "savings_accounts", "savings_contributions"]} />
     </div>
   );
 }

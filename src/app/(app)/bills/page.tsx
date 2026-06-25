@@ -11,6 +11,7 @@ import { getHouseholdMap } from "@/lib/household";
 import type { Bill } from "@/lib/database.types";
 import { BillForm } from "./bill-form";
 import { BillsList } from "./bills-list";
+import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
 export const metadata = { title: "Bills & Expenses" };
 
@@ -122,6 +123,7 @@ export default async function BillsPage() {
           <BillsList bills={bills} memberMap={memberMap} />
         </>
       )}
+      <SectionActivityLog entityTypes={["bills"]} />
     </div>
   );
 }

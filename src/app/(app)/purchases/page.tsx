@@ -10,6 +10,7 @@ import type { Purchase, PurchaseOption, PurchaseStar, PurchaseWithOptions } from
 import { PurchaseForm } from "./purchase-form";
 import { PurchasesGrid, type StarInfo } from "./purchases-grid";
 import { deletePurchase, restorePurchase } from "./actions";
+import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
 export const metadata = { title: "Future Purchases" };
 
@@ -91,6 +92,7 @@ export default async function PurchasesPage() {
           />
         </>
       )}
+      <SectionActivityLog entityTypes={["purchases", "purchase_options", "purchase_stars"]} />
     </div>
   );
 }

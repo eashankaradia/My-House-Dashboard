@@ -268,6 +268,8 @@ Recently added (chronological, by PR):
   fallback in main detail dialogs. Added created/updated timestamps to main item
   dialogs and made default edit actions read "Edit". Added purchase
   non-negotiable features/qualities (migration 0011). Typecheck and lint pass.
+  Added a shared Recent updates card to the bottom of Bills, Mortgage, Savings,
+  Projects & Tasks, Purchases, Inspiration, Maintenance, and Documents.
 
 ### ⏳ Large outstanding request (batches still to do)
 The user submitted a big list (2026-06-25). Done so far: dashboard redesign +
@@ -276,8 +278,8 @@ purchases stat tweaks (above). **Still TODO** (no code yet — pick up here):
    text (main forms/dialogs are done).
 2. Extend **timestamps** to secondary entities such as purchase options and
    savings accounts (main item detail dialogs are done).
-3. **Per-tab update log** at the bottom of every section (filter `activity_log`
-   by that entity type).
+3. **Per-tab update log** — done for every data-management section via the
+   shared `SectionActivityLog` component.
 4. **Purchases:** done in code — non-negotiable features/qualities field
    (migration 0011) and "my items" filter.
 5. **Change log:** done — filter by user and by tab (entity type).

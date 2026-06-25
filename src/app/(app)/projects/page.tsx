@@ -9,6 +9,7 @@ import { ArchivedSection } from "@/components/shared/archived-section";
 import type { Project, ProjectTask, ProjectWithTasks } from "@/lib/database.types";
 import { ProjectForm } from "./project-form";
 import { ProjectsViews } from "./projects-views";
+import { SectionActivityLog } from "@/components/shared/section-activity-log";
 import { deleteProject, deleteTask, restoreProject, restoreTask } from "./actions";
 
 export const metadata = { title: "Projects & Tasks" };
@@ -92,6 +93,7 @@ export default async function ProjectsPage() {
           />
         </>
       )}
+      <SectionActivityLog entityTypes={["projects", "project_tasks"]} />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { DOCUMENT_CATEGORIES } from "@/lib/constants";
 import type { Document } from "@/lib/database.types";
 import { DocumentForm } from "./document-form";
 import { DocumentRow } from "./document-row";
+import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
 export const metadata = { title: "Documents" };
 
@@ -72,6 +73,7 @@ export default async function DocumentsPage() {
           </div>
         </>
       )}
+      <SectionActivityLog entityTypes={["documents"]} />
     </div>
   );
 }
