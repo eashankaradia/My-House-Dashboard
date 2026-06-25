@@ -57,6 +57,25 @@ export type SavingsPot = Timestamps & {
   notes: string | null;
 };
 
+export type SavingsAccount = Timestamps & {
+  id: string;
+  user_id: string;
+  pot_id: string;
+  name: string;
+  notes: string | null;
+};
+
+export type SavingsContribution = {
+  id: string;
+  user_id: string;
+  pot_id: string;
+  account_id: string | null;
+  amount: number;
+  occurred_on: string;
+  note: string | null;
+  created_at: string;
+};
+
 export type Collection = Timestamps & {
   id: string;
   user_id: string;
@@ -274,6 +293,8 @@ export type Database = {
       bills: Row<Bill>;
       mortgages: Row<Mortgage>;
       savings_pots: Row<SavingsPot>;
+      savings_accounts: Row<SavingsAccount>;
+      savings_contributions: Row<SavingsContribution>;
       collections: Row<Collection>;
       inspiration: Row<Inspiration>;
       projects: Row<Project>;

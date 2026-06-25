@@ -55,6 +55,25 @@ export const savingsPotSchema = z.object({
 });
 export type SavingsPotInput = z.infer<typeof savingsPotSchema>;
 
+export const savingsAccountSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(120),
+  notes: optionalString,
+  // Optional opening balance — logged as the account's first contribution.
+  opening_balance: money.optional(),
+  opening_date: optionalDate,
+});
+export type SavingsAccountInput = z.infer<typeof savingsAccountSchema>;
+
+export const savingsContributionSchema = z.object({
+  // Magnitude only; the deposit/withdrawal direction is applied separately.
+  amount: z.coerce.number().positive("Enter an amount above 0").max(1_000_000_000),
+  direction: z.enum(["deposit", "withdrawal"]).default("deposit"),
+  account_id: optionalString,
+  occurred_on: z.string().min(1, "Pick a date"),
+  note: optionalString,
+});
+export type SavingsContributionInput = z.infer<typeof savingsContributionSchema>;
+
 export const projectSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
   category: z.enum(PROJECT_CATEGORIES),

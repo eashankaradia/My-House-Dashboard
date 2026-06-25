@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { SavingsPot } from "@/lib/database.types";
+import type { SavingsAccount, SavingsContribution, SavingsPot } from "@/lib/database.types";
 import { PotForm } from "./pot-form";
 import { PotDetailDialog } from "./pot-detail";
 import { adjustPot, deletePot } from "./actions";
@@ -25,7 +25,15 @@ const COLOR_BG: Record<string, string> = {
   orange: "bg-orange-500",
 };
 
-export function PotCard({ pot }: { pot: SavingsPot }) {
+export function PotCard({
+  pot,
+  accounts,
+  contributions,
+}: {
+  pot: SavingsPot;
+  accounts: SavingsAccount[];
+  contributions: SavingsContribution[];
+}) {
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
 
@@ -55,7 +63,7 @@ export function PotCard({ pot }: { pot: SavingsPot }) {
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className={`h-3 w-3 rounded-full ${COLOR_BG[pot.color] ?? "bg-primary"}`} />
-            <PotDetailDialog pot={pot}>
+            <PotDetailDialog pot={pot} accounts={accounts} contributions={contributions}>
               <button className="text-left font-semibold hover:underline">{pot.name}</button>
             </PotDetailDialog>
           </div>
