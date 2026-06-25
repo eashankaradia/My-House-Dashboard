@@ -30,19 +30,19 @@ export default async function CalendarPage() {
   const events: CalEvent[] = [];
 
   for (const b of (bills.data ?? []) as Bill[]) {
-    if (b.due_date) events.push({ date: b.due_date, title: `${b.name} due`, type: "bill", href: "/bills" });
+    if (b.due_date) events.push({ date: b.due_date, title: `${b.name} due`, type: "bill", href: `/bills?item=${b.id}` });
   }
   for (const m of (maint.data ?? []) as MaintenanceTask[]) {
     if (m.next_due_date)
-      events.push({ date: m.next_due_date, title: m.task, type: "maintenance", href: "/maintenance" });
+      events.push({ date: m.next_due_date, title: m.task, type: "maintenance", href: `/maintenance?item=${m.id}` });
   }
   for (const p of (projects.data ?? []) as Project[]) {
     if (p.target_completion_date)
-      events.push({ date: p.target_completion_date, title: `${p.name} target`, type: "project", href: "/projects" });
+      events.push({ date: p.target_completion_date, title: `${p.name} target`, type: "project", href: `/projects?project=${p.id}` });
   }
   for (const d of (docs.data ?? []) as Document[]) {
     if (d.expiry_date)
-      events.push({ date: d.expiry_date, title: `${d.name} expires`, type: "document", href: "/documents" });
+      events.push({ date: d.expiry_date, title: `${d.name} expires`, type: "document", href: `/documents?item=${d.id}` });
   }
   for (const mo of (mortgages.data ?? []) as Mortgage[]) {
     if (mo.fixed_term_end_date)
@@ -50,11 +50,11 @@ export default async function CalendarPage() {
   }
   for (const pot of (pots.data ?? []) as SavingsPot[]) {
     if (pot.target_date)
-      events.push({ date: pot.target_date, title: `${pot.name} target`, type: "savings", href: "/savings" });
+      events.push({ date: pot.target_date, title: `${pot.name} target`, type: "savings", href: `/savings?item=${pot.id}` });
   }
   for (const t of (tasks.data ?? []) as ProjectTask[]) {
     if (t.due_date && !t.is_done)
-      events.push({ date: t.due_date, title: t.title, type: "task", href: "/projects" });
+      events.push({ date: t.due_date, title: t.title, type: "task", href: `/projects?task=${t.id}` });
   }
 
   return (

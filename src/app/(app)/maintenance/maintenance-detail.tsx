@@ -15,6 +15,7 @@ import { FREQUENCY_LABELS } from "@/lib/constants";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { MaintenanceTask } from "@/lib/database.types";
+import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { MaintenanceForm } from "./maintenance-form";
 import { deleteMaintenance } from "./actions";
 
@@ -27,8 +28,9 @@ export function MaintenanceDetailDialog({
   memberMap: MemberMap;
   children: React.ReactNode;
 }) {
+  const { open, onOpenChange } = useOpenFromUrl(task.id);
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>

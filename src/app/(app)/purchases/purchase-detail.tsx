@@ -20,6 +20,7 @@ import type { PurchaseOption, PurchaseWithOptions } from "@/lib/database.types";
 import { PurchaseForm } from "./purchase-form";
 import { OptionForm } from "./option-form";
 import { OptionRow } from "./option-row";
+import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { deletePurchase } from "./actions";
 
 export function PurchaseDetailDialog({
@@ -31,12 +32,13 @@ export function PurchaseDetailDialog({
   memberMap: MemberMap;
   children: React.ReactNode;
 }) {
+  const { open, onOpenChange } = useOpenFromUrl(purchase.id);
   const options: PurchaseOption[] = [...purchase.options].sort(
     (a, b) => a.rank - b.rank || Number(a.price) - Number(b.price),
   );
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>

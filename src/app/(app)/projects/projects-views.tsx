@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,9 +34,13 @@ export function ProjectsViews({
   memberMap: MemberMap;
 }) {
   const [compact, setCompact] = React.useState(false);
+  // A ?project= deep-link opens a project detail dialog, which only mounts in
+  // the List tab — so start there when one is present (otherwise default tab).
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("project") ? "list" : "tasks";
 
   return (
-    <Tabs defaultValue="tasks">
+    <Tabs defaultValue={initialTab}>
       <TabsList>
         <TabsTrigger value="tasks">Tasks</TabsTrigger>
         <TabsTrigger value="kanban">Board</TabsTrigger>

@@ -25,8 +25,8 @@ const ENTITY_LABEL: Record<string, string> = {
 };
 const ACTION_VERB: Record<string, string> = { insert: "added", update: "updated", delete: "removed" };
 
-/** Where clicking a change takes you — the section that holds that item. */
-const ENTITY_HREF: Record<string, string> = {
+/** The section that holds each entity type. */
+const ENTITY_BASE: Record<string, string> = {
   bills: "/bills",
   mortgages: "/mortgage",
   savings_pots: "/savings",
@@ -39,6 +39,28 @@ const ENTITY_HREF: Record<string, string> = {
   maintenance_tasks: "/maintenance",
   documents: "/documents",
 };
+
+/** Entity types whose detail view can be opened straight from a URL param. */
+const ENTITY_PARAM: Record<string, string> = {
+  bills: "item",
+  savings_pots: "item",
+  inspiration: "item",
+  purchases: "item",
+  maintenance_tasks: "item",
+  documents: "item",
+  projects: "project",
+  project_tasks: "task",
+};
+
+/** Deep-link to the exact item where we can; otherwise just its section. */
+function activityHref(a: ActivityLog): string | undefined {
+  const base = ENTITY_BASE[a.entity_type];
+  if (!base) return undefined;
+  const param = ENTITY_PARAM[a.entity_type];
+  // Skip deletes — the item no longer exists to open.
+  if (param && a.entity_id && a.action !== "delete") return `${base}?${param}=${a.entity_id}`;
+  return base;
+}
 
 export default async function ActivityPage() {
   const supabase = await createClient();
@@ -67,7 +89,7 @@ export default async function ActivityPage() {
         <Card>
           <CardContent className="divide-y p-0">
             {activity.map((a) => {
-              const href = ENTITY_HREF[a.entity_type];
+              const href = activityHref(a);
               const inner = (
                 <>
                   <span className="min-w-0">

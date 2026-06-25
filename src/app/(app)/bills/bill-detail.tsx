@@ -15,6 +15,7 @@ import { FREQUENCY_LABELS } from "@/lib/constants";
 import { formatCurrency, formatDate, toAnnual, toMonthly } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { Bill } from "@/lib/database.types";
+import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { BillForm } from "./bill-form";
 import { deleteBill } from "./actions";
 
@@ -27,8 +28,9 @@ export function BillDetailDialog({
   memberMap: MemberMap;
   children: React.ReactNode;
 }) {
+  const { open, onOpenChange } = useOpenFromUrl(bill.id);
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>

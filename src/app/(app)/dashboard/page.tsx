@@ -93,11 +93,11 @@ export default async function DashboardPage() {
   const reminders: Reminder[] = [];
   for (const b of bills) {
     const d = daysUntil(b.due_date);
-    if (d !== null && d <= 14) reminders.push({ label: `${b.name} bill`, date: b.due_date, days: d, href: "/bills" });
+    if (d !== null && d <= 14) reminders.push({ label: `${b.name} bill`, date: b.due_date, days: d, href: `/bills?item=${b.id}` });
   }
   for (const doc of documents) {
     const d = daysUntil(doc.expiry_date);
-    if (d !== null && d <= 60) reminders.push({ label: `${doc.name} expires`, date: doc.expiry_date, days: d, href: "/documents" });
+    if (d !== null && d <= 60) reminders.push({ label: `${doc.name} expires`, date: doc.expiry_date, days: d, href: `/documents?item=${doc.id}` });
   }
   if (mortgage?.fixed_term_end_date) {
     const d = daysUntil(mortgage.fixed_term_end_date);
@@ -175,7 +175,7 @@ export default async function DashboardPage() {
                   {pots.slice(0, 4).map((p) => {
                     const pct = p.target_amount ? Math.min(100, (p.current_amount / p.target_amount) * 100) : 0;
                     return (
-                      <RowLink key={p.id} href="/savings">
+                      <RowLink key={p.id} href={`/savings?item=${p.id}`}>
                         <div className="mb-1 flex justify-between text-sm">
                           <span className="truncate">{p.name}</span>
                           <span className="text-muted-foreground">{Math.round(pct)}%</span>
@@ -203,7 +203,7 @@ export default async function DashboardPage() {
             ) : (
               <>
                 {openProjects.slice(0, 5).map((p) => (
-                  <RowLink key={p.id} href="/projects" className="flex items-center justify-between gap-2 text-sm">
+                  <RowLink key={p.id} href={`/projects?project=${p.id}`} className="flex items-center justify-between gap-2 text-sm">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{p.name}</p>
                       <p className="text-xs text-muted-foreground">{p.status}</p>
@@ -258,7 +258,7 @@ export default async function DashboardPage() {
             ) : (
               <>
                 {upcomingMaint.map(({ task, days }) => (
-                  <RowLink key={task.id} href="/maintenance" className="flex items-center justify-between gap-2 text-sm">
+                  <RowLink key={task.id} href={`/maintenance?item=${task.id}`} className="flex items-center justify-between gap-2 text-sm">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{task.task}</p>
                       <p className="text-xs text-muted-foreground">{formatDate(task.next_due_date)}</p>
@@ -288,7 +288,7 @@ export default async function DashboardPage() {
             ) : (
               <>
                 {inspiration.map((i) => (
-                  <RowLink key={i.id} href="/inspiration" className="flex items-center justify-between gap-2 text-sm">
+                  <RowLink key={i.id} href={`/inspiration?item=${i.id}`} className="flex items-center justify-between gap-2 text-sm">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{i.title}</p>
                       <p className="text-xs text-muted-foreground">{[i.source, i.room].filter(Boolean).join(" · ")}</p>
@@ -314,7 +314,7 @@ export default async function DashboardPage() {
             ) : (
               <>
                 {purchases.slice(0, 5).map((p) => (
-                  <RowLink key={p.id} href="/purchases" className="flex items-center justify-between gap-2 text-sm">
+                  <RowLink key={p.id} href={`/purchases?item=${p.id}`} className="flex items-center justify-between gap-2 text-sm">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{p.name}</p>
                       <p className="text-xs text-muted-foreground">{p.status}</p>

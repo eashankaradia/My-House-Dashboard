@@ -18,6 +18,7 @@ import { Field } from "@/components/shared/form-field";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AreaChart } from "@/components/charts/area-chart";
 import { useToast } from "@/hooks/use-toast";
+import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import type { SavingsAccount, SavingsContribution, SavingsPot } from "@/lib/database.types";
 import { PotForm } from "./pot-form";
@@ -43,6 +44,7 @@ export function PotDetailDialog({
   contributions: SavingsContribution[];
   children: React.ReactNode;
 }) {
+  const { open, onOpenChange } = useOpenFromUrl(pot.id);
   const pct = pot.target_amount > 0 ? Math.min(100, (pot.current_amount / pot.target_amount) * 100) : 0;
   const remaining = Math.max(0, pot.target_amount - pot.current_amount);
 
@@ -82,7 +84,7 @@ export function PotDetailDialog({
   );
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-h-[88vh] max-w-lg overflow-y-auto">
         <DialogHeader>

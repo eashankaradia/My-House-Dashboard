@@ -15,9 +15,11 @@ import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
 import type { Document } from "@/lib/database.types";
+import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { deleteDocument, getDocumentUrl } from "./actions";
 
 export function DocumentDetailDialog({ doc, children }: { doc: Document; children: React.ReactNode }) {
+  const { open, onOpenChange } = useOpenFromUrl(doc.id);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
 
@@ -35,7 +37,7 @@ export function DocumentDetailDialog({ doc, children }: { doc: Document; childre
   const sizeMb = doc.file_size ? `${(doc.file_size / 1024 / 1024).toFixed(2)} MB` : "—";
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
