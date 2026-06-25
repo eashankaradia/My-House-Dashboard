@@ -280,6 +280,8 @@ Recently added (chronological, by PR):
   update notifications, unread badge/inbox, mark-read controls, and manual
   push-to-household-member messages. Requires migration 0013. Typecheck and lint
   pass.
+  Made every calendar day cell clickable. A day-detail dialog lists everything
+  scheduled that day and links to each exact item. Typecheck and lint pass.
 
 ### ⏳ Large outstanding request (batches still to do)
 The user submitted a big list (2026-06-25). Done so far: dashboard redesign +
@@ -299,7 +301,7 @@ purchases stat tweaks (above). **Still TODO** (no code yet — pick up here):
 8. **Notifications:** done in code — per-user section preferences, automatic
    household update notifications, inbox/unread state, and manual pushes.
    Requires migration 0013.
-9. **Calendar:** clickable days → detail of what's on that day.
+9. **Calendar:** done — clickable days open a detail dialog of that day's events.
 10. **Bills:** done in code — payment accounts, user/joint association, bill
     account dropdown, end date, payment ledger, and expected-vs-actual tracking.
     Requires migration 0012.
@@ -387,9 +389,9 @@ The bills/accounts/payment batch is complete in code and verified with
 typecheck/lint. Migration `0012_bill_accounts_payments.sql` must be run after
 merge.
 
-The notifications batch is complete in code and verified with typecheck/lint.
-Migration `0013_notifications.sql` must be run after merge.
+The calendar day-detail batch is complete and verified with typecheck/lint.
 
-Next exact step: make calendar day cells clickable and show a day-detail dialog
-containing every event on that date; then verify, update this file, commit, and
+Next exact step: rebuild Inspiration as a scroll-friendly social feed while
+preserving database filters/views, and render supported Instagram, Facebook,
+TikTok, and YouTube content inline; then verify, update this file, commit, and
 push.

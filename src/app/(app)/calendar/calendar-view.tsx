@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn, formatDate } from "@/lib/utils";
 
 export type CalEvent = {
@@ -43,6 +44,7 @@ function ymd(d: Date) {
 export function CalendarView({ events }: { events: CalEvent[] }) {
   const today = new Date();
   const [cursor, setCursor] = React.useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [selectedDate, setSelectedDate] = React.useState<string | null>(null);
 
   const byDate = React.useMemo(() => {
     const map = new Map<string, CalEvent[]>();
@@ -104,12 +106,15 @@ export function CalendarView({ events }: { events: CalEvent[] }) {
               const dayEvents = byDate.get(key) ?? [];
               const isToday = key === ymd(today);
               return (
-                <div
+                <button
+                  type="button"
                   key={i}
+                  onClick={() => setSelectedDate(key)}
                   className={cn(
-                    "min-h-[64px] rounded-lg border p-1.5",
+                    "min-h-[64px] rounded-lg border p-1.5 text-left transition-colors hover:bg-accent",
                     isToday ? "border-primary bg-primary/5" : "border-border",
                   )}
+                  aria-label={`View ${dayEvents.length} events on ${formatDate(key)}`}
                 >
                   <div className={cn("text-xs", isToday ? "font-semibold text-primary" : "text-muted-foreground")}>
                     {d.getDate()}
@@ -119,7 +124,7 @@ export function CalendarView({ events }: { events: CalEvent[] }) {
                       <span key={j} className={cn("h-1.5 w-1.5 rounded-full", TYPE_STYLES[e.type])} title={e.title} />
                     ))}
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -157,6 +162,33 @@ export function CalendarView({ events }: { events: CalEvent[] }) {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={Boolean(selectedDate)} onOpenChange={(open) => !open && setSelectedDate(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{selectedDate ? formatDate(selectedDate) : "Day details"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {selectedDate && (byDate.get(selectedDate) ?? []).length > 0 ? (
+              (byDate.get(selectedDate) ?? []).map((event, index) => (
+                <Link
+                  key={`${event.type}-${index}`}
+                  href={event.href}
+                  className="flex items-center gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-accent"
+                >
+                  <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", TYPE_STYLES[event.type])} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">{event.title}</span>
+                    <span className="text-xs text-muted-foreground">{TYPE_LABEL[event.type]}</span>
+                  </span>
+                </Link>
+              ))
+            ) : (
+              <p className="py-6 text-center text-sm text-muted-foreground">Nothing scheduled for this day.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
