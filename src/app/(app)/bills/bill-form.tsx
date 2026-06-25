@@ -21,13 +21,13 @@ import { Field } from "@/components/shared/form-field";
 import { useToast } from "@/hooks/use-toast";
 import { BILL_CATEGORIES, FREQUENCIES, FREQUENCY_LABELS } from "@/lib/constants";
 import { billSchema, type BillInput } from "@/lib/schemas";
-import type { Bill } from "@/lib/database.types";
+import type { Bill, PaymentAccount } from "@/lib/database.types";
 import { FormDeleteButton } from "@/components/shared/form-delete-button";
 import { createBill, deleteBill, updateBill } from "./actions";
 
-type Props = { bill?: Bill; trigger?: React.ReactNode };
+type Props = { bill?: Bill; accounts?: PaymentAccount[]; trigger?: React.ReactNode };
 
-export function BillForm({ bill, trigger }: Props) {
+export function BillForm({ bill, accounts = [], trigger }: Props) {
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
@@ -46,7 +46,8 @@ export function BillForm({ bill, trigger }: Props) {
       amount: bill?.amount ?? 0,
       frequency: bill?.frequency ?? "monthly",
       due_date: bill?.due_date ?? "",
-      payment_account: bill?.payment_account ?? "",
+      end_date: bill?.end_date ?? "",
+      account_id: bill?.account_id ?? "",
       is_fixed: bill?.is_fixed ?? true,
       notes: bill?.notes ?? "",
     },
@@ -116,15 +117,26 @@ export function BillForm({ bill, trigger }: Props) {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Payment account" htmlFor="payment_account">
-              <Input id="payment_account" placeholder="e.g. Joint account" {...register("payment_account")} />
+            <Field label="End date" htmlFor="end_date" error={errors.end_date?.message}>
+              <Input id="end_date" type="date" {...register("end_date")} />
             </Field>
+            <Field label="Payment account">
+              <NativeSelect {...register("account_id")}>
+                <option value="">No account selected</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>{account.name}</option>
+                ))}
+              </NativeSelect>
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <Field label="Type">
               <NativeSelect {...register("is_fixed")}>
                 <option value="true">Fixed</option>
                 <option value="false">Variable</option>
               </NativeSelect>
             </Field>
+            <div />
           </div>
 
           <Field label="Notes" htmlFor="notes">

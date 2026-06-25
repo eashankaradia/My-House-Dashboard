@@ -61,8 +61,9 @@ export function MaintenanceRow({ task }: { task: MaintenanceTask }) {
           <MaintenanceForm
             task={task}
             trigger={
-              <button className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+              <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
                 <Pencil className="h-4 w-4" />
+                Edit
               </button>
             }
           />

@@ -12,6 +12,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
+import { ShareButton } from "@/components/shared/share-button";
+import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
 import type { Document } from "@/lib/database.types";
@@ -59,14 +61,16 @@ export function DocumentDetailDialog({ doc, children }: { doc: Document; childre
               <p className="text-sm">{doc.notes}</p>
             </div>
           ) : null}
+          <ItemTimestamps createdAt={doc.created_at} updatedAt={doc.updated_at} />
           <div className="flex items-center justify-between border-t pt-3">
-            {doc.file_path ? (
-              <Button variant="outline" size="sm" onClick={download} disabled={pending} className="gap-1.5">
-                <Download className="h-4 w-4" /> Open file
-              </Button>
-            ) : (
-              <span />
-            )}
+            <div className="flex items-center gap-2">
+              {doc.file_path ? (
+                <Button variant="outline" size="sm" onClick={download} disabled={pending} className="gap-1.5">
+                  <Download className="h-4 w-4" /> Open file
+                </Button>
+              ) : null}
+              <ShareButton title={doc.name} text={`${doc.category} · renewal ${formatDate(doc.expiry_date)}`} />
+            </div>
             <ConfirmDelete itemLabel="document" action={deleteDocument.bind(null, doc.id)} variant="menu" />
           </div>
         </div>

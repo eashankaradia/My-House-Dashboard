@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Archive, Plus, Trash2 } from "lucide-react";
+import { Archive, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -60,6 +60,7 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
       room: purchase?.room ?? defaults?.room ?? "",
       priority: purchase?.priority ?? defaults?.priority ?? "Medium",
       status: purchase?.status ?? "Considering",
+      non_negotiables: purchase?.non_negotiables ?? "",
       notes: purchase?.notes ?? "",
     },
   });
@@ -115,7 +116,8 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
       <DialogTrigger asChild>
         {trigger ?? (
           <Button>
-            <Plus className="h-4 w-4" /> Add item
+            {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {editing ? "Edit" : "Add item"}
           </Button>
         )}
       </DialogTrigger>
@@ -211,6 +213,18 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
               </datalist>
             </Field>
           </div>
+          <Field
+            label="Non-negotiable features and qualities"
+            htmlFor="non-negotiables"
+            hint="The must-haves an option needs before you'd buy it."
+          >
+            <Textarea
+              id="non-negotiables"
+              rows={3}
+              placeholder="e.g. Solid wood, washable covers, no wider than 210cm"
+              {...register("non_negotiables")}
+            />
+          </Field>
           <Field label="Room" tooltip="Which room this is for. Helps you sort and plan room by room.">
             <NativeSelect {...register("room")}>
               <option value="">—</option>

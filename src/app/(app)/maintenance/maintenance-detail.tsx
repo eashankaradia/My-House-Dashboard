@@ -11,6 +11,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
+import { ShareButton } from "@/components/shared/share-button";
+import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { FREQUENCY_LABELS } from "@/lib/constants";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -52,9 +54,11 @@ export function MaintenanceDetailDialog({
               <p className="text-sm">{task.notes}</p>
             </div>
           ) : null}
+          <ItemTimestamps createdAt={task.created_at} updatedAt={task.updated_at} />
           <div className="flex items-center justify-between border-t pt-3">
             <AddedBy name={memberMap[task.user_id]} />
             <div className="flex items-center gap-2">
+              <ShareButton title={task.task} text={`Next due ${formatDate(task.next_due_date)}`} />
               <MaintenanceForm task={task} />
               <ConfirmDelete itemLabel="task" action={deleteMaintenance.bind(null, task.id)} variant="menu" />
             </div>

@@ -1,4 +1,4 @@
-import { Eye, LayoutGrid, LogOut, Users } from "lucide-react";
+import { Bell, Download, Eye, LayoutGrid, LogOut, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,9 +7,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { initialsFromName } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
-import type { HouseholdMember } from "@/lib/database.types";
+import type { Bill, HouseholdMember, MaintenanceTask, NotificationPreference, Project, Purchase } from "@/lib/database.types";
 import { DisplayNameForm } from "./display-name-form";
 import { TabVisibilitySettings } from "./tab-visibility";
+import { NotificationPreferences } from "./notification-preferences";
+import { ExportSettings } from "./export-settings";
 
 export const metadata = { title: "Settings" };
 
@@ -19,13 +21,31 @@ export default async function SettingsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: memberData }, memberMap] = await Promise.all([
+  const [
+    { data: memberData },
+    { data: preferenceData },
+    { data: billData },
+    { data: purchaseData },
+    { data: projectData },
+    { data: maintenanceData },
+    memberMap,
+  ] = await Promise.all([
     supabase.from("household_members").select("*").order("display_name"),
+    supabase.from("notification_preferences").select("*"),
+    supabase.from("bills").select("*").order("name"),
+    supabase.from("purchases").select("*").order("created_at", { ascending: false }),
+    supabase.from("projects").select("*").order("created_at", { ascending: false }),
+    supabase.from("maintenance_tasks").select("*").order("next_due_date"),
     getHouseholdMap(),
   ]);
 
   const members = (memberData ?? []) as HouseholdMember[];
   const myName = (user && memberMap[user.id]) || "";
+  const preferences = (preferenceData ?? []) as NotificationPreference[];
+  const bills = (billData ?? []) as Bill[];
+  const purchases = (purchaseData ?? []) as Purchase[];
+  const projects = (projectData ?? []) as Project[];
+  const maintenance = (maintenanceData ?? []) as MaintenanceTask[];
 
   return (
     <div className="space-y-6">
@@ -70,6 +90,37 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <TabVisibilitySettings />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Bell className="h-4 w-4" /> Notification preferences
+          </CardTitle>
+          <CardDescription>Choose which household updates appear in your notification inbox.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <NotificationPreferences preferences={preferences} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Download className="h-4 w-4" /> Export data
+          </CardTitle>
+          <CardDescription>Choose a section and download its current data as CSV.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ExportSettings
+            sets={{
+              bills: { label: "Bills & expenses", filename: "bills", rows: bills, columns: ["name", "category", "amount", "frequency", "due_date", "end_date", "account_id", "is_fixed", "notes"] },
+              purchases: { label: "Future purchases", filename: "purchases", rows: purchases, columns: ["name", "category", "sub_category", "room", "priority", "status", "price", "non_negotiables", "notes"] },
+              projects: { label: "Projects", filename: "projects", rows: projects, columns: ["name", "category", "status", "priority", "estimated_cost", "actual_cost", "target_completion_date", "notes"] },
+              maintenance: { label: "Maintenance", filename: "maintenance", rows: maintenance, columns: ["task", "frequency", "last_completed_date", "next_due_date", "cost", "notes"] },
+            }}
+          />
         </CardContent>
       </Card>
 

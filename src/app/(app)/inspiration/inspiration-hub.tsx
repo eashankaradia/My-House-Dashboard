@@ -7,6 +7,7 @@ import {
   LayoutGrid,
   List,
   MoreVertical,
+  Newspaper,
   Pencil,
   Rows3,
   ShoppingBag,
@@ -25,14 +26,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CardTrigger } from "@/components/shared/card-trigger";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { priorityVariant } from "@/lib/ui";
 import type { Collection, Inspiration } from "@/lib/database.types";
 import { InspirationForm } from "./inspiration-form";
 import { InspirationDetailDialog } from "./inspiration-detail";
 import { convertInspiration, deleteInspiration } from "./actions";
+import { SocialEmbed } from "./social-embed";
 
-type View = "masonry" | "cards" | "list";
+type View = "feed" | "masonry" | "cards" | "list";
 
 export function InspirationHub({
   items,
@@ -41,7 +43,7 @@ export function InspirationHub({
   items: Inspiration[];
   collections: Collection[];
 }) {
-  const [view, setView] = React.useState<View>("masonry");
+  const [view, setView] = React.useState<View>("feed");
   const [query, setQuery] = React.useState("");
   const [room, setRoom] = React.useState("All");
   const [collection, setCollection] = React.useState("All");
@@ -93,6 +95,7 @@ export function InspirationHub({
         </select>
 
         <div className="ml-auto flex items-center rounded-lg border p-0.5">
+          <ViewButton active={view === "feed"} onClick={() => setView("feed")} icon={Newspaper} label="Feed" />
           <ViewButton active={view === "masonry"} onClick={() => setView("masonry")} icon={LayoutGrid} label="Masonry" />
           <ViewButton active={view === "cards"} onClick={() => setView("cards")} icon={Rows3} label="Cards" />
           <ViewButton active={view === "list"} onClick={() => setView("list")} icon={List} label="List" />
@@ -101,6 +104,12 @@ export function InspirationHub({
 
       {filtered.length === 0 ? (
         <p className="py-12 text-center text-sm text-muted-foreground">No ideas match your filters.</p>
+      ) : view === "feed" ? (
+        <div className="mx-auto max-w-2xl space-y-5">
+          {filtered.map((item) => (
+            <InspirationFeedItem key={item.id} item={item} collections={collections} />
+          ))}
+        </div>
       ) : view === "masonry" ? (
         <div className="masonry">
           {filtered.map((item) => (
@@ -121,6 +130,41 @@ export function InspirationHub({
         </div>
       )}
     </div>
+  );
+}
+
+function InspirationFeedItem({ item, collections }: { item: Inspiration; collections: Collection[] }) {
+  return (
+    <Card className="overflow-hidden">
+      <CardContent className="space-y-3 p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+            {item.source.slice(0, 2).toUpperCase()}
+          </div>
+          <InspirationDetailDialog item={item} collections={collections}>
+            <CardTrigger className="min-w-0 flex-1 rounded-md">
+              <span className="block font-semibold hover:underline">{item.title}</span>
+              <span className="text-xs text-muted-foreground">
+                {item.source} · updated {formatDate(item.updated_at)}
+              </span>
+            </CardTrigger>
+          </InspirationDetailDialog>
+          <ActionsMenu item={item} collections={collections} />
+        </div>
+        {item.notes ? <p className="whitespace-pre-wrap text-sm">{item.notes}</p> : null}
+        {item.link ? (
+          <SocialEmbed link={item.link} title={item.title} />
+        ) : item.image_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={item.image_url} alt={item.title} className="max-h-[680px] w-full rounded-lg object-cover" />
+        ) : null}
+        <div className="flex flex-wrap gap-1.5">
+          {item.category ? <Badge variant="outline">{item.category}</Badge> : null}
+          {item.room ? <Badge variant="outline">{item.room}</Badge> : null}
+          {item.tags?.map((tag) => <Badge key={tag} variant="secondary">#{tag}</Badge>)}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

@@ -12,6 +12,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
+import { ShareButton } from "@/components/shared/share-button";
+import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { useToast } from "@/hooks/use-toast";
 import { priorityVariant } from "@/lib/ui";
 import type { Collection, Inspiration } from "@/lib/database.types";
@@ -19,6 +21,7 @@ import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { LinkedItems } from "@/app/(app)/links/linked-items";
 import { InspirationForm } from "./inspiration-form";
 import { convertInspiration, deleteInspiration } from "./actions";
+import { SocialEmbed } from "./social-embed";
 
 export function InspirationDetailDialog({
   item,
@@ -52,7 +55,9 @@ export function InspirationDetailDialog({
           <DialogTitle>{item.title}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          {item.image_url ? (
+          {item.link ? (
+            <SocialEmbed link={item.link} title={item.title} />
+          ) : item.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={item.image_url} alt={item.title} className="max-h-64 w-full rounded-lg object-cover" />
           ) : null}
@@ -79,6 +84,7 @@ export function InspirationDetailDialog({
               Open link <ExternalLink className="h-3.5 w-3.5" />
             </a>
           ) : null}
+          <ItemTimestamps createdAt={item.created_at} updatedAt={item.updated_at} />
 
           <div className="border-t pt-3">
             <LinkedItems type="inspiration" id={item.id} />
@@ -92,6 +98,7 @@ export function InspirationDetailDialog({
               <ShoppingBag className="h-4 w-4" /> To purchase
             </Button>
             <div className="ml-auto flex items-center gap-2">
+              <ShareButton title={item.title} text={item.notes ?? item.link ?? undefined} />
               <InspirationForm inspiration={item} collections={collections} />
               <ConfirmDelete itemLabel="idea" action={deleteInspiration.bind(null, item.id)} variant="menu" />
             </div>

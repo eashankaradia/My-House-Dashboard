@@ -8,23 +8,29 @@ import { Badge } from "@/components/ui/badge";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { formatCurrency, formatDate, daysUntil, toAnnual, toMonthly } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
-import type { Bill } from "@/lib/database.types";
+import type { Bill, BillPayment, PaymentAccount } from "@/lib/database.types";
 import { BillForm } from "./bill-form";
 import { BillsList } from "./bills-list";
+import { SectionActivityLog } from "@/components/shared/section-activity-log";
+import { PaymentAccounts } from "./payment-accounts";
 
 export const metadata = { title: "Bills & Expenses" };
 
 export default async function BillsPage() {
   const supabase = await createClient();
-  const [{ data }, memberMap] = await Promise.all([
+  const [{ data }, { data: accountData }, { data: paymentData }, memberMap] = await Promise.all([
     supabase
       .from("bills")
       .select("*")
       .order("category", { ascending: true })
       .order("name", { ascending: true }),
+    supabase.from("payment_accounts").select("*").order("name"),
+    supabase.from("bill_payments").select("*").order("payment_date", { ascending: false }),
     getHouseholdMap(),
   ]);
   const bills = (data ?? []) as Bill[];
+  const accounts = (accountData ?? []) as PaymentAccount[];
+  const payments = (paymentData ?? []) as BillPayment[];
 
   const monthlyTotal = bills.reduce((sum, b) => sum + toMonthly(b.amount, b.frequency), 0);
   const annualTotal = bills.reduce((sum, b) => sum + toAnnual(b.amount, b.frequency), 0);
@@ -49,7 +55,7 @@ export default async function BillsPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Bills & Expenses" description="Every recurring household cost in one place." info="Add each bill with its amount and how often it's paid (weekly, monthly, etc.). We convert everything to true monthly and annual totals, chart it by category, and flag bills that are due soon or overdue. Add a due date to power those reminders.">
-        <BillForm />
+        <BillForm accounts={accounts} />
       </PageHeader>
 
       {bills.length === 0 ? (
@@ -58,7 +64,7 @@ export default async function BillsPage() {
           title="No bills yet"
           description="Add your recurring costs — mortgage, utilities, subscriptions — to see your true monthly and annual spend."
         >
-          <BillForm />
+          <BillForm accounts={accounts} />
         </EmptyState>
       ) : (
         <>
@@ -119,9 +125,11 @@ export default async function BillsPage() {
             </Card>
           </div>
 
-          <BillsList bills={bills} memberMap={memberMap} />
+          <PaymentAccounts accounts={accounts} memberMap={memberMap} />
+          <BillsList bills={bills} accounts={accounts} payments={payments} memberMap={memberMap} />
         </>
       )}
+      <SectionActivityLog entityTypes={["bills", "payment_accounts", "bill_payments"]} />
     </div>
   );
 }

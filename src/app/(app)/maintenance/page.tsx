@@ -8,6 +8,7 @@ import { getHouseholdMap } from "@/lib/household";
 import type { MaintenanceTask } from "@/lib/database.types";
 import { MaintenanceForm } from "./maintenance-form";
 import { MaintenanceList } from "./maintenance-list";
+import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
 export const metadata = { title: "Maintenance" };
 
@@ -57,6 +58,7 @@ export default async function MaintenancePage() {
           <MaintenanceList tasks={tasks} memberMap={memberMap} />
         </>
       )}
+      <SectionActivityLog entityTypes={["maintenance_tasks"]} />
     </div>
   );
 }

@@ -10,7 +10,6 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
-import { ExportButton } from "@/components/shared/export-button";
 import { BarChart } from "@/components/charts/bar-chart";
 import { useToast } from "@/hooks/use-toast";
 import { PROJECT_STATUSES } from "@/lib/constants";
@@ -84,24 +83,6 @@ export function ProjectsViews({
 
       <TabsContent value="list">
         <div className="mb-3 flex items-center justify-end gap-2">
-          <ExportButton
-            filename="projects"
-            rows={projects.map((p) => ({
-              name: p.name,
-              category: p.category,
-              status: p.status,
-              priority: p.priority,
-              estimated_cost: p.estimated_cost,
-              actual_cost: p.actual_cost,
-              target_completion_date: p.target_completion_date,
-              tasks_total: p.tasks.length,
-              tasks_done: p.tasks.filter((t) => t.is_done).length,
-            }))}
-            columns={[
-              "name", "category", "status", "priority", "estimated_cost",
-              "actual_cost", "target_completion_date", "tasks_total", "tasks_done",
-            ]}
-          />
           <span className="text-xs text-muted-foreground">View</span>
           <div className="flex items-center rounded-lg border p-0.5 text-xs">
             <button
@@ -151,8 +132,9 @@ export function ProjectsViews({
                       <ProjectForm
                         project={project}
                         trigger={
-                          <button className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Edit">
+                          <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
                             <Pencil className="h-4 w-4" />
+                            Edit
                           </button>
                         }
                       />
@@ -244,8 +226,9 @@ function ProjectCard({
             <ProjectForm
               project={project}
               trigger={
-                <button className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Edit">
+                <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
                   <Pencil className="h-4 w-4" />
+                  Edit
                 </button>
               }
             />

@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
+import { ShareButton } from "@/components/shared/share-button";
+import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { priorityVariant } from "@/lib/ui";
 import { formatCurrency } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -65,6 +67,13 @@ export function PurchaseDetailDialog({
               <p className="text-sm">{purchase.notes}</p>
             </div>
           ) : null}
+          {purchase.non_negotiables ? (
+            <div>
+              <p className="text-xs font-medium text-muted-foreground">Non-negotiable features and qualities</p>
+              <p className="whitespace-pre-wrap text-sm">{purchase.non_negotiables}</p>
+            </div>
+          ) : null}
+          <ItemTimestamps createdAt={purchase.created_at} updatedAt={purchase.updated_at} />
 
           <div>
             <p className="mb-1.5 text-xs font-medium text-muted-foreground">
@@ -97,6 +106,7 @@ export function PurchaseDetailDialog({
           <div className="flex items-center justify-between border-t pt-3">
             <AddedBy name={memberMap[purchase.user_id]} />
             <div className="flex items-center gap-2">
+              <ShareButton title={purchase.name} text={`${purchase.status} · ${purchase.category}`} />
               <PurchaseForm purchase={purchase} />
               <ConfirmDelete itemLabel="item" action={deletePurchase.bind(null, purchase.id)} variant="menu" />
             </div>

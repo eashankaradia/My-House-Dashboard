@@ -40,6 +40,18 @@ export const NAV_ITEMS: NavItem[] = [
 /** Tabs that can never be hidden from the sidebar. */
 export const ALWAYS_VISIBLE = ["/dashboard"] as const;
 
+export const NOTIFICATION_ENTITY_TYPES = [
+  ["bills", "Bills"],
+  ["mortgages", "Mortgage"],
+  ["savings_pots", "Savings"],
+  ["projects", "Projects"],
+  ["project_tasks", "Tasks"],
+  ["purchases", "Purchases"],
+  ["inspiration", "Inspiration"],
+  ["maintenance_tasks", "Maintenance"],
+  ["documents", "Documents"],
+] as const;
+
 // --- Option lists shared by forms (kept in sync with schema CHECK lists) -----
 
 export const BILL_CATEGORIES = [

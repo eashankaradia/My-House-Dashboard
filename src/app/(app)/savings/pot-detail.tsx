@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Field } from "@/components/shared/form-field";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
+import { ShareButton } from "@/components/shared/share-button";
+import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { AreaChart } from "@/components/charts/area-chart";
 import { useToast } from "@/hooks/use-toast";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
@@ -137,14 +139,18 @@ export function PotDetailDialog({
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium">{a.name}</p>
                       {a.notes ? <p className="truncate text-xs text-muted-foreground">{a.notes}</p> : null}
+                      <p className="text-[11px] text-muted-foreground">
+                        Added {formatDate(a.created_at)} · updated {formatDate(a.updated_at)}
+                      </p>
                     </div>
                     <span className="shrink-0 font-medium">{formatCurrency(balanceOf(a.id))}</span>
                     <AccountForm
                       potId={pot.id}
                       account={a}
                       trigger={
-                        <button className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Edit account">
+                        <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
                           <Pencil className="h-3.5 w-3.5" />
+                          Edit
                         </button>
                       }
                     />
@@ -197,7 +203,9 @@ export function PotDetailDialog({
           </section>
 
           {/* Footer actions */}
+          <ItemTimestamps createdAt={pot.created_at} updatedAt={pot.updated_at} />
           <div className="flex items-center justify-end gap-2 border-t pt-3">
+            <ShareButton title={pot.name} text={`${formatCurrency(pot.current_amount)} saved of ${formatCurrency(pot.target_amount)}`} />
             <PotForm pot={pot} />
             <ConfirmDelete itemLabel="pot" action={deletePot.bind(null, pot.id)} variant="menu" />
           </div>

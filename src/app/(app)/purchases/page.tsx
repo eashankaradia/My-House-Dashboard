@@ -10,6 +10,7 @@ import type { Purchase, PurchaseOption, PurchaseStar, PurchaseWithOptions } from
 import { PurchaseForm } from "./purchase-form";
 import { PurchasesGrid, type StarInfo } from "./purchases-grid";
 import { deletePurchase, restorePurchase } from "./actions";
+import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
 export const metadata = { title: "Future Purchases" };
 
@@ -80,7 +81,7 @@ export default async function PurchasesPage() {
                 <StatCard label="Ready to buy" value={formatCurrency(readyToBuyValue)} hint={`${readyToBuy.length} item${readyToBuy.length === 1 ? "" : "s"}`} icon={Wallet} />
                 <StatCard label="Purchased" value={String(purchased.length)} hint="items bought" icon={CheckCircle2} accent="muted" />
               </div>
-              <PurchasesGrid purchases={purchases} memberMap={memberMap} starInfo={starInfo} />
+              <PurchasesGrid purchases={purchases} memberMap={memberMap} starInfo={starInfo} currentUserId={user?.id} />
             </>
           ) : null}
           <ArchivedSection
@@ -91,6 +92,7 @@ export default async function PurchasesPage() {
           />
         </>
       )}
+      <SectionActivityLog entityTypes={["purchases", "purchase_options", "purchase_stars"]} />
     </div>
   );
 }

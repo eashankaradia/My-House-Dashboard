@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -106,7 +106,8 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
       <DialogTrigger asChild>
         {trigger ?? (
           <Button>
-            <Plus className="h-4 w-4" /> Save idea
+            {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {editing ? "Edit" : "Save idea"}
           </Button>
         )}
       </DialogTrigger>
