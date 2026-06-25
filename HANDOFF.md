@@ -358,8 +358,9 @@ purchases stat tweaks (above). **Still TODO** (no code yet — pick up here):
 ## 11. Current status & possible next steps
 
 - **PR #23 merged to `main`** as merge commit `e62a46f` on 2026-06-25.
-- **Outstanding user actions:** run migrations **0009**, **0010**,
-  **0011**, **0012**, and **0013** (and confirm 0008/0007 are run).
+- Live migrations **0009**, **0010**, **0011**, **0012**, and **0013** were run
+  successfully in Supabase on 2026-06-25. Confirm 0007/0008 only if older
+  savings/household features show problems.
 - Verification on merged code: `npm run typecheck`, `npm run lint`,
   and the full `npm run build` all pass. The login page now renders a setup
   notice instead of crashing the build when Supabase public environment
@@ -411,8 +412,10 @@ have Supabase public environment variables. The login page is now hardened for
 that condition; the fix is verified by a full local production build without
 those variables. The replacement Vercel deployment for commit `16698b3` passed.
 
-Next exact step: run migrations 0009–0013 in order in the live Supabase project,
-then visually test the migrations-backed screens with live household data. The
-user should open the logged-in Supabase SQL Editor in the in-app browser; never
-ask them to paste credentials or secret keys into chat. No requested feature
-from the 2026-06-25 backlog remains intentionally unimplemented.
+Migrations 0009–0013 are complete in the live Supabase project. Production
+deployment `my-house-dashboard.vercel.app` is Ready.
+
+Next exact step: the user must sign in to the production app in the in-app
+browser, then visually test the migrations-backed screens with live household
+data. Never ask them to paste credentials or secret keys into chat. No requested
+feature from the 2026-06-25 backlog remains intentionally unimplemented.
