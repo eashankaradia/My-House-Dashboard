@@ -93,7 +93,32 @@ async function recordContribution(
 
 /** Quick adjust a pot balance (the + / − buttons on a pot card). */
 export async function adjustPot(id: string, delta: number): Promise<ActionResult> {
-  return recordContribution(id, delta, { note: delta >= 0 ? "Quick add" : "Quick withdrawal" });
+  const { supabase, user } = await getActionContext();
+  // Update the balance first so the buttons always work, even if the
+  // contributions ledger table isn't present yet.
+  const { data: pot, error: readErr } = await supabase
+    .from("savings_pots")
+    .select("current_amount")
+    .eq("id", id)
+    .single();
+  if (readErr) return { error: readErr.message };
+  const next = Math.max(0, Number(pot.current_amount) + delta);
+  const { error: updErr } = await supabase.from("savings_pots").update({ current_amount: next }).eq("id", id);
+  if (updErr) return { error: updErr.message };
+
+  // Best-effort: record it in the ledger for history. Don't fail the action
+  // if this errors (e.g. the savings_contributions table hasn't been added).
+  await supabase.from("savings_contributions").insert({
+    user_id: user.id,
+    pot_id: id,
+    amount: delta,
+    occurred_on: new Date().toISOString().slice(0, 10),
+    note: delta >= 0 ? "Quick add" : "Quick withdrawal",
+  });
+
+  revalidatePath("/savings");
+  revalidatePath("/dashboard");
+  return {};
 }
 
 /** Add a contribution / withdrawal from the pot detail form (can be back-dated). */

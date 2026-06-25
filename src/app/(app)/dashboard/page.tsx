@@ -89,20 +89,20 @@ export default async function DashboardPage() {
   const openProjects = projects.filter((p) => p.status !== "Completed");
 
   // --- Renewal reminders (bills due, docs expiring, mortgage fix end) --------
-  type Reminder = { label: string; date: string | null; days: number };
+  type Reminder = { label: string; date: string | null; days: number; href: string };
   const reminders: Reminder[] = [];
   for (const b of bills) {
     const d = daysUntil(b.due_date);
-    if (d !== null && d <= 14) reminders.push({ label: `${b.name} bill`, date: b.due_date, days: d });
+    if (d !== null && d <= 14) reminders.push({ label: `${b.name} bill`, date: b.due_date, days: d, href: "/bills" });
   }
   for (const doc of documents) {
     const d = daysUntil(doc.expiry_date);
-    if (d !== null && d <= 60) reminders.push({ label: `${doc.name} expires`, date: doc.expiry_date, days: d });
+    if (d !== null && d <= 60) reminders.push({ label: `${doc.name} expires`, date: doc.expiry_date, days: d, href: "/documents" });
   }
   if (mortgage?.fixed_term_end_date) {
     const d = daysUntil(mortgage.fixed_term_end_date);
     if (d !== null && d <= 180)
-      reminders.push({ label: "Mortgage fixed term ends", date: mortgage.fixed_term_end_date, days: d });
+      reminders.push({ label: "Mortgage fixed term ends", date: mortgage.fixed_term_end_date, days: d, href: "/mortgage" });
   }
   reminders.sort((a, b) => a.days - b.days);
 
@@ -175,13 +175,13 @@ export default async function DashboardPage() {
                   {pots.slice(0, 4).map((p) => {
                     const pct = p.target_amount ? Math.min(100, (p.current_amount / p.target_amount) * 100) : 0;
                     return (
-                      <div key={p.id}>
+                      <RowLink key={p.id} href="/savings">
                         <div className="mb-1 flex justify-between text-sm">
                           <span className="truncate">{p.name}</span>
                           <span className="text-muted-foreground">{Math.round(pct)}%</span>
                         </div>
                         <Progress value={pct} className="h-1.5" />
-                      </div>
+                      </RowLink>
                     );
                   })}
                 </div>
@@ -203,13 +203,13 @@ export default async function DashboardPage() {
             ) : (
               <>
                 {openProjects.slice(0, 5).map((p) => (
-                  <div key={p.id} className="flex items-center justify-between gap-2 text-sm">
+                  <RowLink key={p.id} href="/projects" className="flex items-center justify-between gap-2 text-sm">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{p.name}</p>
                       <p className="text-xs text-muted-foreground">{p.status}</p>
                     </div>
                     <Badge variant={priorityVariant(p.priority)}>{p.priority}</Badge>
-                  </div>
+                  </RowLink>
                 ))}
                 <SeeAll href="/projects" />
               </>
@@ -228,7 +228,7 @@ export default async function DashboardPage() {
               <p className="py-6 text-center text-sm text-muted-foreground">Nothing needs attention. 🎉</p>
             ) : (
               reminders.slice(0, 6).map((r, i) => (
-                <div key={i} className="flex items-center justify-between gap-2 text-sm">
+                <RowLink key={i} href={r.href} className="flex items-center justify-between gap-2 text-sm">
                   <div className="min-w-0">
                     <p className="truncate font-medium">{r.label}</p>
                     <p className="text-xs text-muted-foreground">{formatDate(r.date)}</p>
@@ -238,7 +238,7 @@ export default async function DashboardPage() {
                   ) : (
                     <Badge variant={r.days <= 14 ? "warning" : "secondary"}>{r.days}d</Badge>
                   )}
-                </div>
+                </RowLink>
               ))
             )}
           </CardContent>
@@ -258,7 +258,7 @@ export default async function DashboardPage() {
             ) : (
               <>
                 {upcomingMaint.map(({ task, days }) => (
-                  <div key={task.id} className="flex items-center justify-between gap-2 text-sm">
+                  <RowLink key={task.id} href="/maintenance" className="flex items-center justify-between gap-2 text-sm">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{task.task}</p>
                       <p className="text-xs text-muted-foreground">{formatDate(task.next_due_date)}</p>
@@ -268,7 +268,7 @@ export default async function DashboardPage() {
                     ) : (
                       <Badge variant={days !== null && days <= 30 ? "warning" : "secondary"}>{days}d</Badge>
                     )}
-                  </div>
+                  </RowLink>
                 ))}
                 <SeeAll href="/maintenance" />
               </>
@@ -288,13 +288,13 @@ export default async function DashboardPage() {
             ) : (
               <>
                 {inspiration.map((i) => (
-                  <div key={i.id} className="flex items-center justify-between gap-2 text-sm">
+                  <RowLink key={i.id} href="/inspiration" className="flex items-center justify-between gap-2 text-sm">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{i.title}</p>
                       <p className="text-xs text-muted-foreground">{[i.source, i.room].filter(Boolean).join(" · ")}</p>
                     </div>
                     <Badge variant="secondary">{i.status}</Badge>
-                  </div>
+                  </RowLink>
                 ))}
                 <SeeAll href="/inspiration" />
               </>
@@ -314,13 +314,13 @@ export default async function DashboardPage() {
             ) : (
               <>
                 {purchases.slice(0, 5).map((p) => (
-                  <div key={p.id} className="flex items-center justify-between gap-2 text-sm">
+                  <RowLink key={p.id} href="/purchases" className="flex items-center justify-between gap-2 text-sm">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{p.name}</p>
                       <p className="text-xs text-muted-foreground">{p.status}</p>
                     </div>
                     <span className="text-sm font-medium">{formatCurrency(p.price)}</span>
-                  </div>
+                  </RowLink>
                 ))}
                 <SeeAll href="/purchases" />
               </>
@@ -337,6 +337,26 @@ function getGreeting() {
   if (h < 12) return "Good morning";
   if (h < 18) return "Good afternoon";
   return "Good evening";
+}
+
+/** A dashboard list row that links to its section, with a tappable hover state. */
+function RowLink({
+  href,
+  className,
+  children,
+}: {
+  href: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`-mx-2 block rounded-md px-2 py-1.5 transition-colors hover:bg-accent active:bg-accent ${className ?? ""}`}
+    >
+      {children}
+    </Link>
+  );
 }
 
 function SeeAll({ href }: { href: string }) {
