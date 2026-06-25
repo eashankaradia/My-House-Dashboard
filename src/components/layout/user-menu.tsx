@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Moon, Settings, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -22,6 +23,10 @@ type Props = {
 
 export function UserMenu({ name, email, avatarUrl }: Props) {
   const formRef = React.useRef<HTMLFormElement>(null);
+  const { setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+  const isDark = mounted && resolvedTheme === "dark";
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring">
@@ -41,6 +46,15 @@ export function UserMenu({ name, email, avatarUrl }: Props) {
             <Settings className="h-4 w-4" />
             Settings
           </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={(e) => {
+            e.preventDefault();
+            setTheme(isDark ? "light" : "dark");
+          }}
+        >
+          {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {isDark ? "Light mode" : "Dark mode"}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <form ref={formRef} action="/auth/signout" method="post" />

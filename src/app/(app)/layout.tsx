@@ -8,7 +8,7 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { FloatingAdd } from "@/components/layout/floating-add";
 import { AutoRefresh } from "@/components/layout/auto-refresh";
 import { UserMenu } from "@/components/layout/user-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { GlobalSearch } from "@/components/layout/global-search";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -57,6 +57,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </Link>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
+            <GlobalSearch />
             <Link
               href="/notifications"
               className="relative rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -69,7 +70,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 </span>
               ) : null}
             </Link>
-            <ThemeToggle />
             <UserMenu
               name={name}
               email={user.email}
