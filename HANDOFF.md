@@ -148,9 +148,23 @@ User submitted a third list of ~19 requests. Working through in batches.
   project, assignee, due.
 - Settings → **Default views** card to set each section's default.
 
-STILL TODO:
-- Comments on the remaining detail dialogs (bills, savings, maintenance, tasks).
-- Bill payments auto-log/mark-paid (#2); calendar email sync (external).
+### Batch W (done) — bill payments auto-log + mark-paid (#2) — **needs migration 0024**
+- `0024_payment_status.sql` adds `bill_payments.is_paid` (existing logged
+  payments set paid). RUN THIS LIVE.
+- `bills/actions.ts`: `syncBillPayments()` generates each recurring bill's next
+  occurrence + up to 12 months of history as unpaid rows (idempotent);
+  `setPaymentPaid`, `markHistoryPaid(billId?)` (bulk past-due → paid),
+  `updateBillPaymentDetail`. Manual `createBillPayment` now sets is_paid=true.
+- `bill-payments.tsx` reworked: auto-syncs on open (then router.refresh);
+  each payment has a paid toggle, an "Upcoming"/"Due" tag, click-to-expand detail
+  (actual/account/note), a per-bill "Mark all paid (N)" button, and manual Log.
+- Analytics now counts only `is_paid` payments so auto-generated due rows don't
+  skew the "actually paid" figures.
+
+STILL TODO (lower priority / optional):
+- Comments on the remaining detail dialogs (savings, maintenance, tasks, docs).
+- Calendar email sync — needs an external integration (ICS feed / Google OAuth);
+  flagged for the user as out-of-scope for the sandbox.
 
 Still TODO from third list: #2 payments auto-log/mark-paid/detail,
 #7 editable rooms, #12 options-at-create-time (card now collapses

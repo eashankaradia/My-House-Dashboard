@@ -48,6 +48,7 @@ export type BillPayment = Timestamps & {
   expected_amount: number;
   actual_amount: number | null;
   notes: string | null;
+  is_paid: boolean;
 };
 
 export type NotificationPreference = Timestamps & {
