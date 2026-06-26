@@ -15,11 +15,20 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
 import { StatCard } from "@/components/shared/stat-card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { DEFAULT_GLANCE, useGlancePrefs } from "@/hooks/use-glance-prefs";
 import { cn } from "@/lib/utils";
 
-export type GlanceValue = { value: string; hint?: string };
+export type GlanceItem = { label: string; sub?: string; href: string };
+export type GlanceValue = { value: string; hint?: string; items?: GlanceItem[] };
 
 /** Catalog of stats a user can show. Values are computed on the dashboard. */
 export const GLANCE_CATALOG: { id: string; label: string; icon: LucideIcon }[] = [
@@ -48,9 +57,8 @@ export function GlanceStats({ values }: { values: Record<string, GlanceValue> })
         const v = values[id];
         const meta = GLANCE_CATALOG.find((c) => c.id === id);
         const Icon = ICONS[id];
-        return (
+        const card = (
           <StatCard
-            key={id}
             label={meta?.label ?? id}
             value={v.value}
             hint={v.hint}
@@ -58,6 +66,36 @@ export function GlanceStats({ values }: { values: Record<string, GlanceValue> })
             accent={i % 2 === 1 ? "muted" : undefined}
           />
         );
+        // If we have related items, the card opens a popup listing them.
+        if (v.items && v.items.length > 0) {
+          return (
+            <Dialog key={id}>
+              <DialogTrigger asChild>
+                <button type="button" className="rounded-xl text-left transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  {card}
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[80vh] max-w-md overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>{meta?.label ?? id}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-1.5">
+                  {v.items.map((it, j) => (
+                    <Link
+                      key={j}
+                      href={it.href}
+                      className="flex items-center justify-between gap-3 rounded-lg border p-2.5 text-sm transition-colors hover:bg-accent"
+                    >
+                      <span className="min-w-0 truncate">{it.label}</span>
+                      {it.sub ? <span className="shrink-0 text-xs text-muted-foreground">{it.sub}</span> : null}
+                    </Link>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
+          );
+        }
+        return <div key={id}>{card}</div>;
       })}
     </div>
   );

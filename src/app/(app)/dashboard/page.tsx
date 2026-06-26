@@ -132,19 +132,56 @@ export default async function DashboardPage() {
     return d !== null && d <= 30;
   }).length;
 
+  // Related items shown when a glance stat is tapped.
+  const upcomingBills = bills
+    .filter((b) => b.due_date && (daysUntil(b.due_date) ?? -1) >= 0)
+    .sort((a, b) => (daysUntil(a.due_date) ?? 0) - (daysUntil(b.due_date) ?? 0));
   const glanceValues: Record<string, GlanceValue> = {
     nextBill: {
       value: nextBill ? formatDate(nextBill.due_date) : "—",
       hint: nextBill ? `${nextBill.name} · ${formatCurrency(nextBill.amount)}` : "Nothing scheduled",
+      items: upcomingBills.map((b) => ({ label: b.name, sub: `${formatDate(b.due_date)} · ${formatCurrency(b.amount)}`, href: `/bills?item=${b.id}` })),
     },
-    monthlyBills: { value: formatCurrency(monthlyBills), hint: `${formatCurrency(annualBills)}/yr` },
-    savingsBalance: { value: formatCurrency(savedTotal), hint: `Target ${formatCurrency(monthlyTarget)}/mo` },
-    readyToBuy: { value: formatCurrency(readyToBuyValue), hint: `${readyToBuy.length} item${readyToBuy.length === 1 ? "" : "s"}` },
-    wishlistItems: { value: String(wishlistCount), hint: "to buy" },
-    openTasks: { value: String(openTaskTotal), hint: "across projects" },
-    activeProjects: { value: String(activeProjectsCount), hint: "in progress" },
-    maintenanceDue: { value: String(maintenanceDueCount), hint: "next 30 days" },
-    dueThisWeek: { value: String(weekDays.reduce((s, d) => s + d.count, 0)), hint: "items in 7 days" },
+    monthlyBills: {
+      value: formatCurrency(monthlyBills),
+      hint: `${formatCurrency(annualBills)}/yr`,
+      items: bills.map((b) => ({ label: b.name, sub: `${formatCurrency(toMonthly(b.amount, b.frequency))}/mo`, href: `/bills?item=${b.id}` })),
+    },
+    savingsBalance: {
+      value: formatCurrency(savedTotal),
+      hint: `Target ${formatCurrency(monthlyTarget)}/mo`,
+      items: pots.map((p) => ({ label: p.name, sub: formatCurrency(Number(p.current_amount)), href: `/savings?item=${p.id}` })),
+    },
+    readyToBuy: {
+      value: formatCurrency(readyToBuyValue),
+      hint: `${readyToBuy.length} item${readyToBuy.length === 1 ? "" : "s"}`,
+      items: readyToBuy.map((p) => ({ label: p.name, sub: formatCurrency(Number(p.price)), href: `/purchases?item=${p.id}` })),
+    },
+    wishlistItems: {
+      value: String(wishlistCount),
+      hint: "to buy",
+      items: purchases.filter((p) => p.status !== "Purchased").map((p) => ({ label: p.name, sub: p.status, href: `/purchases?item=${p.id}` })),
+    },
+    openTasks: {
+      value: String(openTaskTotal),
+      hint: "across projects",
+      items: allTasks.filter((t) => !t.is_done).map((t) => ({ label: t.title, sub: t.due_date ? formatDate(t.due_date) : undefined, href: `/projects?task=${t.id}` })),
+    },
+    activeProjects: {
+      value: String(activeProjectsCount),
+      hint: "in progress",
+      items: projects.filter((p) => p.status !== "Completed").map((p) => ({ label: p.name, sub: p.status, href: `/projects?project=${p.id}` })),
+    },
+    maintenanceDue: {
+      value: String(maintenanceDueCount),
+      hint: "next 30 days",
+      items: maintenance.filter((m) => { const d = daysUntil(m.next_due_date); return d !== null && d <= 30; }).map((m) => ({ label: m.task, sub: m.next_due_date ? formatDate(m.next_due_date) : undefined, href: `/maintenance?item=${m.id}` })),
+    },
+    dueThisWeek: {
+      value: String(weekDays.reduce((s, d) => s + d.count, 0)),
+      hint: "items in 7 days",
+      items: weekDays.flatMap((d) => d.items.map((it) => ({ label: it.label, sub: `${d.weekday} · ${it.sub}`, href: it.href }))),
+    },
   };
 
   // --- Open projects (one line each) + the tasks due soonest ----------------
