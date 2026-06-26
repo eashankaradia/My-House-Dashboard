@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch H: bottom tab bar).
+> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch I: board full screen).
 
 ## 0. Latest session (Claude, after Codex continuation)
 
@@ -92,10 +92,16 @@ Working through it in build+lint-verified batches.
 - Settings: new **Bottom bar tabs** card (`settings/bottom-tabs.tsx`) to pick up
   to 4 tabs and order them.
 
-### Batch I+ — STILL TODO from the second list (pick up here)
-- **Projects board**: an **expandable full-page, mobile-optimised** board view.
+### Batch I (done, no DB): full-screen project board
+- Projects → Board tab has a **Full screen** button opening `BoardFullScreen`
+  (a `fixed inset-0` overlay) that stacks statuses **vertically** with their
+  project cards — mobile-friendly "where are we at" view. Cards keep their
+  status select so you can move projects from the overview.
+
+### Batch J — STILL TODO from the second list (last item)
 - **Analytics**: rebuild around actionable insight — monthly payment **trends**
-  and **expected vs actual** (Codex's `bill_payments`).
+  (recurring outgoings over time) and **expected vs actual** spend using
+  Codex's `bill_payments` ledger. This is the only remaining second-list item.
 5. **Admin actions** (e.g. add payment account) as a **small button at the bottom
    of the page** rather than inline.
 6. Dashboard: a **small week-ahead calendar** strip.
