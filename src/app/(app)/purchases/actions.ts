@@ -136,6 +136,7 @@ export async function addOption(purchaseId: string, raw: PurchaseOptionInput): P
     image_url: parsed.data.image_url ?? null,
     notes: parsed.data.notes ?? null,
     rating: parsed.data.rating ?? null,
+    frequency: parsed.data.frequency,
   });
   if (error) return { error: error.message };
   revalidatePath("/purchases");
@@ -157,6 +158,7 @@ export async function updateOption(id: string, raw: PurchaseOptionInput): Promis
       image_url: parsed.data.image_url ?? null,
       notes: parsed.data.notes ?? null,
       rating: parsed.data.rating ?? null,
+      frequency: parsed.data.frequency,
     })
     .eq("id", id);
   if (error) return { error: error.message };

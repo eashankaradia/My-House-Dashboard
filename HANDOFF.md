@@ -64,15 +64,25 @@ User submitted a third list of ~19 requests. Working through in batches.
 - `shopping/page.tsx` + `shopping-list.tsx`: add row (name + qty), tick off
   (sinks to bottom, struck through), delete, "Clear got" bulk. Shared list.
 
-NEW fourth/fifth lists arrived mid-batch (2026-06-26) — still TODO:
+### Batch O (done) — purchases revisions — **needs migration 0019**
+- `0019_option_frequency.sql` adds `purchase_options.frequency` (default
+  'one-off'). RUN THIS LIVE.
+- **Low priority by default** everywhere (#2): purchase / project / inspiration
+  forms default to "Low".
+- **Option payment frequency** (#4): options can be recurring (weekly…annually);
+  shown as a `/mo` etc. suffix. The option form's store/url/photo/rating/notes +
+  frequency now live behind a collapsible "More details" section; name + one-off
+  price are the only top-level fields.
+- **Rating placement** (#5): item star rating only shows when the item has NO
+  options; items with options are rated via their options. Rating sort/filter use
+  an item's best option rating when it has options.
+- **Removed the "Purchased" stat** (#6) from the purchases page.
+
+STILL TODO from fourth/fifth lists:
 - (inspiration) click-in icon that marks read + sinks to bottom; react + comment.
-- Low priority as the default everywhere.
-- Purchases: add bills to compare; payment-frequency options in a collapsible
-  "other options" section (default assume one-off); ratings only on items
-  WITHOUT options or on the options themselves; drop the "Purchased items" stat;
-  on purchase, capture who bought it / for how much / receipt photo (all optional).
+- Purchases #7: on purchase, capture who bought it / for how much / receipt photo
+  (all optional) — needs member list threaded into PurchaseForm + new columns.
 - Calendar: sync with email.
-- NEW "Groceries / shopping list" section: tick off or delete items.
 
 Still TODO from third list: #2 payments auto-log/mark-paid/detail,
 #7 editable rooms, #12 options-at-create-time (card now collapses

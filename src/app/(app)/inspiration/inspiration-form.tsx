@@ -64,7 +64,7 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
       room: inspiration?.room ?? "",
       tags: inspiration?.tags?.join(", ") ?? "",
       notes: inspiration?.notes ?? "",
-      priority: inspiration?.priority ?? "Medium",
+      priority: inspiration?.priority ?? "Low",
       status: inspiration?.status ?? "Saved",
       image_url: inspiration?.image_url ?? "",
       collection_id: inspiration?.collection_id ?? "",

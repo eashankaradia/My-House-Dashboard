@@ -130,6 +130,7 @@ export const purchaseOptionSchema = z.object({
   image_url: optionalString,
   notes: optionalString,
   rating,
+  frequency: z.enum(FREQUENCIES).default("one-off"),
 });
 export type PurchaseOptionInput = z.infer<typeof purchaseOptionSchema>;
 

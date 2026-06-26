@@ -195,6 +195,8 @@ export type PurchaseOption = Timestamps & {
   start_price: number;
   /** Out-of-5 star rating (null = unrated). */
   rating: number | null;
+  /** Payment frequency for recurring costs; 'one-off' for a single price. */
+  frequency: string;
 };
 
 /** A purchase with its compared options attached (used in list views). */

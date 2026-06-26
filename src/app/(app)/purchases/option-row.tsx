@@ -7,6 +7,7 @@ import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { FREQUENCY_SUFFIX } from "@/lib/constants";
 import type { PurchaseOption } from "@/lib/database.types";
 import { OptionForm } from "./option-form";
 import { chooseOption, deleteOption, moveOption, setOptionRating } from "./actions";
@@ -76,7 +77,12 @@ export function OptionRow({
         </p>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-0.5">
-        <span className="text-sm font-semibold">{formatCurrency(option.price)}</span>
+        <span className="text-sm font-semibold">
+          {formatCurrency(option.price)}
+          {FREQUENCY_SUFFIX[option.frequency] ? (
+            <span className="text-xs font-normal text-muted-foreground">{FREQUENCY_SUFFIX[option.frequency]}</span>
+          ) : null}
+        </span>
         {option.start_price > 0 && option.price < option.start_price ? (
           <span className="text-[11px] font-medium text-emerald-600">
             ↓ {formatCurrency(option.start_price - option.price)}

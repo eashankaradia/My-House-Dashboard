@@ -1,4 +1,4 @@
-import { CheckCircle2, ShoppingBag, Wallet } from "lucide-react";
+import { ShoppingBag, Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -42,7 +42,6 @@ export default async function PurchasesPage() {
   const archived = allPurchases.filter((p) => p.archived_at);
 
   const wishlist = purchases.filter((p) => p.status !== "Purchased");
-  const purchased = purchases.filter((p) => p.status === "Purchased");
   const readyToBuy = purchases.filter((p) => p.status === "Ready To Buy");
   const readyToBuyValue = readyToBuy.reduce((s, p) => s + effectivePrice(p), 0);
 
@@ -64,10 +63,9 @@ export default async function PurchasesPage() {
         <>
           {purchases.length > 0 ? (
             <>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <StatCard label="Wishlist items" value={String(wishlist.length)} icon={ShoppingBag} />
                 <StatCard label="Ready to buy" value={formatCurrency(readyToBuyValue)} hint={`${readyToBuy.length} item${readyToBuy.length === 1 ? "" : "s"}`} icon={Wallet} />
-                <StatCard label="Purchased" value={String(purchased.length)} hint="items bought" icon={CheckCircle2} accent="muted" />
               </div>
               <PurchasesGrid purchases={purchases} memberMap={memberMap} currentUserId={user?.id} />
             </>
