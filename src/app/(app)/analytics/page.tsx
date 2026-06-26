@@ -35,7 +35,8 @@ export default async function AnalyticsPage() {
   const projectRows = (projects.data ?? []) as Project[];
   const maintRows = (maintenance.data ?? []) as MaintenanceTask[];
   const purchaseRows = (purchases.data ?? []) as Purchase[];
-  const payments = (paymentsRes.data ?? []) as BillPayment[];
+  // Only count payments actually marked paid — auto-generated due rows are unpaid.
+  const payments = ((paymentsRes.data ?? []) as BillPayment[]).filter((p) => p.is_paid);
 
   const hasData =
     billRows.length + potRows.length + projectRows.length + maintRows.length + purchaseRows.length >
