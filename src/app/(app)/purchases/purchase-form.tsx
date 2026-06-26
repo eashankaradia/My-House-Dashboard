@@ -25,8 +25,8 @@ import {
   PRIORITIES,
   PURCHASE_CATEGORIES,
   PURCHASE_STATUSES,
-  ROOMS,
 } from "@/lib/constants";
+import { useRooms } from "@/hooks/use-rooms";
 import { purchaseSchema, type PurchaseInput } from "@/lib/schemas";
 import type { Purchase } from "@/lib/database.types";
 import { createPurchase, deletePurchase, setPurchaseArchived, updatePurchase } from "./actions";
@@ -44,6 +44,7 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [] }: Prop
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
   const editing = Boolean(purchase);
+  const rooms = useRooms();
 
   const {
     register,
@@ -222,7 +223,7 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [] }: Prop
           <Field label="Room" tooltip="Which room this is for. Helps you sort and plan room by room.">
             <NativeSelect {...register("room")}>
               <option value="">—</option>
-              {ROOMS.map((r) => (
+              {rooms.map((r) => (
                 <option key={r} value={r}>{r}</option>
               ))}
             </NativeSelect>
