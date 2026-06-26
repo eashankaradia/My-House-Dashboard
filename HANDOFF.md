@@ -179,8 +179,15 @@ User submitted a third list of ~19 requests. Working through in batches.
   expiring ≤14d — colour-coded (rose=overdue, amber=soon), one tap to the record.
   Calm "You're all caught up" state when empty.
 
+### Batch Z (done, no DB) — mobile bottom-sheets
+- `components/ui/dialog.tsx` `DialogContent` is now responsive: a bottom sheet
+  that slides up on phones (`max-sm:` — full width, rounded top, grab handle,
+  slide-in/out-from-bottom) and the centred modal on `sm+`. One change cascades
+  to every dialog (details, forms, confirms) across the app — feels native on
+  mobile. Caller `max-w-*` caps exceed phone widths so sheets stay full-width.
+
 STILL TODO (optional polish):
-- Mobile bottom-sheets for detail/edit dialogs (next).
+- Sticky dialog footer so Save sits above the keyboard in long forms.
 - Move per-device prefs to cookies (kill SSR→client flash); consolidate the 5
   pref hooks; generate Supabase types; trim dashboard/settings queries.
 - Comments on the remaining detail dialogs (savings, maintenance, tasks, docs).
