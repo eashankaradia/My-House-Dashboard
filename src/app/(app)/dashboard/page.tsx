@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { ColoredName } from "@/components/providers/household-colors";
 import { Badge } from "@/components/ui/badge";
 import { priorityVariant } from "@/lib/ui";
 import { daysUntil, formatCurrency, formatDate, toAnnual, toMonthly } from "@/lib/utils";
@@ -197,7 +198,7 @@ export default async function DashboardPage() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            {greeting}, {myName}
+            {greeting}, <ColoredName name={myName} />
           </h1>
           <p className="text-muted-foreground">Here&apos;s what needs your attention.</p>
         </div>

@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { initialsFromName } from "@/lib/utils";
+import { MEMBER_COLOR_TEXT } from "@/lib/constants";
 import { getHouseholdMap } from "@/lib/household";
 import type { Bill, HouseholdMember, MaintenanceTask, NotificationPreference, Project, Purchase } from "@/lib/database.types";
 import { DisplayNameForm } from "./display-name-form";
+import { ColorPicker } from "./color-picker";
 import { TabVisibilitySettings } from "./tab-visibility";
 import { NotificationPreferences } from "./notification-preferences";
 import { ExportSettings } from "./export-settings";
@@ -43,6 +45,7 @@ export default async function SettingsPage() {
 
   const members = (memberData ?? []) as HouseholdMember[];
   const myName = (user && memberMap[user.id]) || "";
+  const myColor = members.find((m) => m.user_id === user?.id)?.color ?? null;
   const preferences = (preferenceData ?? []) as NotificationPreference[];
   const bills = (billData ?? []) as Bill[];
   const purchases = (purchaseData ?? []) as Purchase[];
@@ -61,10 +64,14 @@ export default async function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Profile</CardTitle>
-          <CardDescription>This is the name shown on items you add.</CardDescription>
+          <CardDescription>This is the name shown on items you add, and the colour it appears in.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-5">
           <DisplayNameForm initial={myName} />
+          <div className="space-y-2 border-t pt-4">
+            <p className="text-sm font-medium">Your colour</p>
+            <ColorPicker initial={myColor} name={myName} />
+          </div>
         </CardContent>
       </Card>
 
@@ -175,7 +182,9 @@ export default async function SettingsPage() {
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>{initialsFromName(m.display_name)}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium">{m.display_name}</span>
+                <span className={`text-sm font-medium ${m.color ? MEMBER_COLOR_TEXT[m.color] ?? "" : ""}`}>
+                  {m.display_name}
+                </span>
                 {user?.id === m.user_id ? (
                   <span className="ml-auto text-xs text-muted-foreground">You</span>
                 ) : null}

@@ -23,3 +23,17 @@ export function addedByLabel(map: MemberMap, userId: string | null): string | nu
   if (!userId) return null;
   return map[userId] ?? null;
 }
+
+/**
+ * Map of display name → colour key for everyone in the household, so a
+ * member's name can be shown in their chosen colour wherever it appears.
+ */
+export async function getHouseholdColors(): Promise<Record<string, string>> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("household_members").select("display_name, color");
+  const map: Record<string, string> = {};
+  for (const m of (data ?? []) as Pick<HouseholdMember, "display_name" | "color">[]) {
+    if (m.color) map[m.display_name] = m.color;
+  }
+  return map;
+}

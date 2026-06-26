@@ -111,6 +111,29 @@ export const POT_COLORS = [
   "emerald", "sky", "violet", "amber", "rose", "teal", "indigo", "orange",
 ] as const;
 
+/**
+ * Personal colours a household member can pick for their name. Class strings
+ * are listed literally so Tailwind keeps them in the build.
+ */
+export const MEMBER_COLORS: { key: string; label: string; text: string; dot: string }[] = [
+  { key: "blue", label: "Blue", text: "text-blue-600 dark:text-blue-400", dot: "bg-blue-500" },
+  { key: "emerald", label: "Green", text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" },
+  { key: "violet", label: "Violet", text: "text-violet-600 dark:text-violet-400", dot: "bg-violet-500" },
+  { key: "rose", label: "Rose", text: "text-rose-600 dark:text-rose-400", dot: "bg-rose-500" },
+  { key: "amber", label: "Amber", text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
+  { key: "teal", label: "Teal", text: "text-teal-600 dark:text-teal-400", dot: "bg-teal-500" },
+  { key: "orange", label: "Orange", text: "text-orange-600 dark:text-orange-400", dot: "bg-orange-500" },
+  { key: "pink", label: "Pink", text: "text-pink-600 dark:text-pink-400", dot: "bg-pink-500" },
+  { key: "indigo", label: "Indigo", text: "text-indigo-600 dark:text-indigo-400", dot: "bg-indigo-500" },
+];
+
+export const MEMBER_COLOR_TEXT: Record<string, string> = Object.fromEntries(
+  MEMBER_COLORS.map((c) => [c.key, c.text]),
+);
+export const MEMBER_COLOR_DOT: Record<string, string> = Object.fromEntries(
+  MEMBER_COLORS.map((c) => [c.key, c.dot]),
+);
+
 export const FREQUENCY_LABELS: Record<string, string> = {
   weekly: "Weekly",
   monthly: "Monthly",
