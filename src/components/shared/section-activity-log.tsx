@@ -5,23 +5,30 @@ import { getHouseholdMap } from "@/lib/household";
 import { formatDate } from "@/lib/utils";
 import type { ActivityLog } from "@/lib/database.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ACTION_VERB, activityHref, ENTITY_LABEL } from "@/app/(app)/activity/activity-meta";
+import { ACTION_VERB, activityHref, ENTITY_LABEL, ENTITY_TAG } from "@/app/(app)/activity/activity-meta";
 
 export async function SectionActivityLog({
   entityTypes,
   title = "Recent updates",
   limit = 20,
+  excludeSelf = false,
 }: {
   /** Filter to these entity types. Omit to show all household activity. */
   entityTypes?: string[];
   title?: string;
   limit?: number;
+  /** When true, hide the current user's own activity (show what others did). */
+  excludeSelf?: boolean;
 }) {
   const supabase = await createClient();
-  const base = supabase.from("activity_log").select("*");
-  const filtered = entityTypes && entityTypes.length ? base.in("entity_type", entityTypes) : base;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  let query = supabase.from("activity_log").select("*");
+  if (entityTypes && entityTypes.length) query = query.in("entity_type", entityTypes);
+  if (excludeSelf && user) query = query.neq("user_id", user.id);
   const [{ data }, memberMap] = await Promise.all([
-    filtered.order("created_at", { ascending: false }).limit(limit),
+    query.order("created_at", { ascending: false }).limit(limit),
     getHouseholdMap(),
   ]);
   const activity = (data ?? []) as ActivityLog[];
@@ -42,6 +49,11 @@ export async function SectionActivityLog({
             const content = (
               <>
                 <span className="min-w-0 truncate">
+                  {ENTITY_TAG[item.entity_type] ? (
+                    <span className={`mr-1.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ENTITY_TAG[item.entity_type].className}`}>
+                      {ENTITY_TAG[item.entity_type].label}
+                    </span>
+                  ) : null}
                   <span className="font-medium">{(item.user_id && memberMap[item.user_id]) || "Someone"}</span>{" "}
                   {ACTION_VERB[item.action] ?? item.action} {ENTITY_LABEL[item.entity_type] ?? item.entity_type}
                   {item.entity_label ? <span className="text-muted-foreground"> “{item.entity_label}”</span> : null}

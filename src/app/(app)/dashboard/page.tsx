@@ -91,15 +91,22 @@ export default async function DashboardPage() {
     const d = new Date(today0);
     d.setDate(d.getDate() + i);
     const key = ymd(d);
-    let count = 0;
-    count += bills.filter((b) => b.due_date === key).length;
-    count += allTasks.filter((t) => !t.is_done && t.due_date === key).length;
-    count += maintenance.filter((m) => m.next_due_date === key).length;
-    count += documents.filter((doc) => doc.expiry_date === key).length;
-    count += projects.filter((p) => p.target_completion_date === key).length;
-    count += pots.filter((p) => p.target_date === key).length;
-    count += calEvents.filter((ev) => eventOccursOn(ev, d)).length;
-    return { key, dayNum: d.getDate(), weekday: WD[d.getDay()], isToday: i === 0, count };
+    const items: { label: string; sub: string; href: string }[] = [];
+    for (const b of bills.filter((x) => x.due_date === key))
+      items.push({ label: b.name, sub: `Bill · ${formatCurrency(b.amount)}`, href: `/bills?item=${b.id}` });
+    for (const t of allTasks.filter((x) => !x.is_done && x.due_date === key))
+      items.push({ label: t.title, sub: "Task", href: `/projects?task=${t.id}` });
+    for (const m of maintenance.filter((x) => x.next_due_date === key))
+      items.push({ label: m.task, sub: "Maintenance", href: `/maintenance?item=${m.id}` });
+    for (const doc of documents.filter((x) => x.expiry_date === key))
+      items.push({ label: `${doc.name} expires`, sub: "Document", href: `/documents?item=${doc.id}` });
+    for (const p of projects.filter((x) => x.target_completion_date === key))
+      items.push({ label: p.name, sub: "Project target", href: `/projects?project=${p.id}` });
+    for (const p of pots.filter((x) => x.target_date === key))
+      items.push({ label: p.name, sub: "Savings target", href: `/savings?item=${p.id}` });
+    for (const ev of calEvents.filter((x) => eventOccursOn(x, d)))
+      items.push({ label: ev.title, sub: "Event", href: `/calendar?item=${ev.id}` });
+    return { key, dayNum: d.getDate(), weekday: WD[d.getDay()], isToday: i === 0, count: items.length, items };
   });
 
   // --- Headline numbers worth a glance -------------------------------------
@@ -340,7 +347,7 @@ export default async function DashboardPage() {
 
       {/* What everyone in the household has been doing */}
       <DashboardWidget id="activity">
-        <SectionActivityLog title="Activity by household" limit={12} />
+        <SectionActivityLog title="Activity by household" limit={12} excludeSelf />
       </DashboardWidget>
     </div>
   );

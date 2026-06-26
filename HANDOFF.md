@@ -2,7 +2,33 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch J: analytics. SECOND LIST COMPLETE).
+> after **every** change. Last updated: 2026-06-26 (Claude — THIRD LIST batch K: quick wins).
+
+## -1. THIRD LIST in progress (Claude, 2026-06-26)
+
+User submitted a third list of ~19 requests. Working through in batches.
+
+### Batch K (done, no DB): quick wins
+- **Activity by household shows others, not me** (#1): `SectionActivityLog` now
+  takes `excludeSelf` (filters `user_id != me`); dashboard widget passes it.
+- **Short bottom-tab titles** (#3): `NavItem.short` added in `constants.ts`
+  (Home/Bills/Savings/Projects/Purchases/Upkeep/Docs/Log); `bottom-nav.tsx`
+  uses `item.short ?? item.title`.
+- **Search everything incl. settings + pages** (#4): `search/actions.ts` now
+  appends `pageMatches()` — NAV_ITEMS + Settings sections — as `type: "Page"`.
+- **Mini calendar expands inline** (#6): `week-ahead.tsx` is now a client
+  component; tapping a day toggles an inline list of that day's items (bills,
+  tasks, maintenance, docs, project/savings targets, events). Dashboard builds
+  per-day `items[]` (label/sub/href) instead of just a count.
+- **Activity option-vs-item distinction** (#10): `ENTITY_TAG` in
+  `activity-meta.ts` (Item=sky, Option=violet badge); shown in both
+  `activity-list.tsx` and `section-activity-log.tsx`.
+
+Still TODO from third list: #2 payments auto-log/mark-paid/detail, #5 calendar
+legend click, #7 editable rooms, #8/#9/#12 purchases revamp, #11 remove
+sub-categories, #13 comments system, #14 tasks recently-completed, #15 change-log
+delete, #16 table views + default, #17 glance-stat click popup, #18 per-user
+colour, #19 documents+notes.
 
 ## 0. Latest session (Claude, after Codex continuation)
 

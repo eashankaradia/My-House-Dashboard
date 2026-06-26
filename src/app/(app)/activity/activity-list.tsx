@@ -7,7 +7,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { ActivityLog } from "@/lib/database.types";
-import { ACTION_VERB, activityHref, ENTITY_LABEL } from "./activity-meta";
+import { ACTION_VERB, activityHref, ENTITY_LABEL, ENTITY_TAG } from "./activity-meta";
 
 export function ActivityList({
   activity,
@@ -54,6 +54,11 @@ export function ActivityList({
               const content = (
                 <>
                   <span className="min-w-0">
+                    {ENTITY_TAG[item.entity_type] ? (
+                      <span className={`mr-1.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ENTITY_TAG[item.entity_type].className}`}>
+                        {ENTITY_TAG[item.entity_type].label}
+                      </span>
+                    ) : null}
                     <span className="font-medium">{(item.user_id && memberMap[item.user_id]) || "Someone"}</span>{" "}
                     {ACTION_VERB[item.action] ?? item.action} {ENTITY_LABEL[item.entity_type] ?? item.entity_type}
                     {item.entity_label ? <span className="text-muted-foreground"> “{item.entity_label}”</span> : null}
