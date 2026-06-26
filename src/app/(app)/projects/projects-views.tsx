@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { Maximize2, Pencil, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -35,6 +36,7 @@ export function ProjectsViews({
   currentUserId: string;
 }) {
   const [compact, setCompact] = React.useState(true);
+  const [boardFull, setBoardFull] = React.useState(false);
   // A ?project= deep-link opens a project detail dialog, which only mounts in
   // the List tab — so start there when one is present (otherwise default tab).
   const searchParams = useSearchParams();
@@ -53,6 +55,11 @@ export function ProjectsViews({
       </TabsContent>
 
       <TabsContent value="kanban">
+        <div className="mb-3 flex justify-end">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setBoardFull(true)}>
+            <Maximize2 className="h-4 w-4" /> Full screen
+          </Button>
+        </div>
         <div className="grid grid-flow-col auto-cols-[minmax(260px,1fr)] gap-4 overflow-x-auto pb-2">
           {PROJECT_STATUSES.map((status) => {
             const items = projects.filter((p) => p.status === status);
@@ -77,6 +84,9 @@ export function ProjectsViews({
             );
           })}
         </div>
+        {boardFull ? (
+          <BoardFullScreen projects={projects} memberMap={memberMap} onClose={() => setBoardFull(false)} />
+        ) : null}
       </TabsContent>
 
       <TabsContent value="list">
@@ -234,3 +244,53 @@ function ProjectCard({
   );
 }
 
+
+/** A full-screen, mobile-friendly board: statuses stacked vertically. */
+function BoardFullScreen({
+  projects,
+  memberMap,
+  onClose,
+}: {
+  projects: ProjectWithTasks[];
+  memberMap: MemberMap;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-background">
+      <div className="flex items-center justify-between border-b px-4 py-3">
+        <h2 className="text-base font-semibold">Project board</h2>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close full screen"
+          className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+      <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        {PROJECT_STATUSES.map((status) => {
+          const items = projects.filter((p) => p.status === status);
+          return (
+            <section key={status}>
+              <div className="mb-2 flex items-center gap-2">
+                <span className={`h-2.5 w-2.5 rounded-full ${STATUS_ACCENT[status]}`} />
+                <h3 className="text-sm font-medium">{status}</h3>
+                <span className="text-xs text-muted-foreground">{items.length}</span>
+              </div>
+              <div className="space-y-2">
+                {items.length ? (
+                  items.map((project) => (
+                    <ProjectCard key={project.id} project={project} memberMap={memberMap} compact />
+                  ))
+                ) : (
+                  <p className="px-1 py-2 text-xs text-muted-foreground">Nothing here</p>
+                )}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
