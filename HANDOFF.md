@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch I: board full screen).
+> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch J: analytics. SECOND LIST COMPLETE).
 
 ## 0. Latest session (Claude, after Codex continuation)
 
@@ -98,10 +98,20 @@ Working through it in build+lint-verified batches.
   project cards — mobile-friendly "where are we at" view. Cards keep their
   status select so you can move projects from the overview.
 
-### Batch J — STILL TODO from the second list (last item)
-- **Analytics**: rebuild around actionable insight — monthly payment **trends**
-  (recurring outgoings over time) and **expected vs actual** spend using
-  Codex's `bill_payments` ledger. This is the only remaining second-list item.
+### Batch J (done, no DB): analytics — payments trend + expected vs actual
+- Analytics page now leads with the **bill payments** ledger: 6-month
+  Expected / Actually-paid / variance stat cards, an **Actually paid by month**
+  area chart, and a **Biggest differences vs expected** list (over = red,
+  under = green). Falls back to a hint when no payments are logged. Existing
+  category breakdowns remain below.
+
+### ✅ SECOND LIST COMPLETE
+Every item from the user's 2026-06-25 "do my stuff" list is implemented and
+merged to `main` (PRs #26–#34). No outstanding feature work from that list.
+Migrations the user must have run live: 0009–0015 (0014 task notes, 0015
+calendar events are the newest — confirm they were applied). Next ideas if the
+user wants more: email reminders, richer per-category trends, drag-and-drop
+reordering for prefs, assignee avatars.
 5. **Admin actions** (e.g. add payment account) as a **small button at the bottom
    of the page** rather than inline.
 6. Dashboard: a **small week-ahead calendar** strip.
