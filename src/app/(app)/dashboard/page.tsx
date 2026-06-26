@@ -13,6 +13,7 @@ import { daysUntil, formatCurrency, formatDate } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
 import type {
   Bill,
+  CalendarEvent,
   Document,
   Inspiration,
   MaintenanceTask,
@@ -24,9 +25,25 @@ import type {
 } from "@/lib/database.types";
 import { DashboardWidget, EditDashboardButton } from "./dashboard-customize";
 import { CollapsibleSection } from "./collapsible-section";
+import { WeekAhead } from "./week-ahead";
 import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
 export const metadata = { title: "Dashboard" };
+
+function ymd(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Does a (maybe recurring) calendar event fall on date d? */
+function eventOccursOn(ev: CalendarEvent, d: Date): boolean {
+  const base = new Date(`${ev.event_date}T00:00:00`);
+  if (ev.recurrence === "none") return ymd(base) === ymd(d);
+  if (d < base) return false;
+  if (ev.recurrence === "weekly") return d.getDay() === base.getDay();
+  if (ev.recurrence === "monthly") return d.getDate() === base.getDate();
+  if (ev.recurrence === "yearly") return d.getDate() === base.getDate() && d.getMonth() === base.getMonth();
+  return false;
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -45,6 +62,7 @@ export default async function DashboardPage() {
     docsRes,
     mortgageRes,
     memberMap,
+    calEventsRes,
   ] = await Promise.all([
     supabase.from("bills").select("*"),
     supabase.from("savings_pots").select("*"),
@@ -56,6 +74,7 @@ export default async function DashboardPage() {
     supabase.from("documents").select("*"),
     supabase.from("mortgages").select("*").limit(1),
     getHouseholdMap(),
+    supabase.from("calendar_events").select("*"),
   ]);
 
   const bills = (billsRes.data ?? []) as Bill[];
@@ -67,6 +86,26 @@ export default async function DashboardPage() {
   const maintenance = (maintRes.data ?? []) as MaintenanceTask[];
   const documents = (docsRes.data ?? []) as Document[];
   const mortgage = (mortgageRes.data?.[0] as Mortgage | undefined) ?? undefined;
+  const calEvents = (calEventsRes.data ?? []) as CalendarEvent[];
+
+  // --- Week ahead: how much is on each of the next 7 days -------------------
+  const today0 = new Date();
+  today0.setHours(0, 0, 0, 0);
+  const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today0);
+    d.setDate(d.getDate() + i);
+    const key = ymd(d);
+    let count = 0;
+    count += bills.filter((b) => b.due_date === key).length;
+    count += allTasks.filter((t) => !t.is_done && t.due_date === key).length;
+    count += maintenance.filter((m) => m.next_due_date === key).length;
+    count += documents.filter((doc) => doc.expiry_date === key).length;
+    count += projects.filter((p) => p.target_completion_date === key).length;
+    count += pots.filter((p) => p.target_date === key).length;
+    count += calEvents.filter((ev) => eventOccursOn(ev, d)).length;
+    return { key, dayNum: d.getDate(), weekday: WD[d.getDay()], isToday: i === 0, count };
+  });
 
   // --- Headline numbers worth a glance -------------------------------------
   const savedTotal = pots.reduce((s, p) => s + Number(p.current_amount), 0);
@@ -154,6 +193,11 @@ export default async function DashboardPage() {
             icon={ShoppingBag}
           />
         </div>
+      </DashboardWidget>
+
+      {/* Week ahead */}
+      <DashboardWidget id="week">
+        <WeekAhead days={weekDays} />
       </DashboardWidget>
 
       {/* Renewal reminders */}

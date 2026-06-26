@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch D: search + dark-mode move).
+> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch F: week-ahead + admin button).
 
 ## 0. Latest session (Claude, after Codex continuation)
 
@@ -64,7 +64,17 @@ Working through it in build+lint-verified batches.
   look: …", href)`. Added next to ShareButton in all 7 detail dialogs (bill,
   document, inspiration, maintenance, project, purchase, savings pot).
 
-### Batch F+ — STILL TODO from the second list (pick up here)
+### Batch F (done, no DB): week-ahead strip + admin button
+- `dashboard/week-ahead.tsx` (`WeekAhead`): compact next-7-days strip with a
+  badge per day for how much is on it (bills due, tasks due, maintenance,
+  doc expiries, project/savings targets, and calendar_events incl. recurrence
+  via `eventOccursOn`). New dashboard widget id `week`; links each day to
+  `/calendar`. Dashboard fetches `calendar_events` for this.
+- `components/shared/bottom-admin.tsx` (`BottomAdmin`): small collapsed-by-
+  default disclosure for admin actions. Bills page now renders the
+  **Payment accounts** manager inside it at the **bottom** instead of mid-page.
+
+### Batch G+ — STILL TODO from the second list (pick up here)
 5. **Admin actions** (e.g. add payment account) as a **small button at the bottom
    of the page** rather than inline.
 6. Dashboard: a **small week-ahead calendar** strip.
