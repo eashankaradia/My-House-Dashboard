@@ -80,6 +80,25 @@ export function PurchaseDetailDialog({
               <p className="whitespace-pre-wrap text-sm">{purchase.non_negotiables}</p>
             </div>
           ) : null}
+          {purchase.status === "Purchased" &&
+          (purchase.purchased_by || purchase.purchased_price != null || purchase.receipt_url) ? (
+            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm">
+              <p className="mb-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">Purchased</p>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                {purchase.purchased_by ? (
+                  <span>By <span className="font-medium">{memberMap[purchase.purchased_by] ?? "someone"}</span></span>
+                ) : null}
+                {purchase.purchased_price != null ? (
+                  <span>Paid <span className="font-medium">{formatCurrency(purchase.purchased_price)}</span></span>
+                ) : null}
+                {purchase.receipt_url ? (
+                  <a href={purchase.receipt_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                    View receipt
+                  </a>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
           <ItemTimestamps createdAt={purchase.created_at} updatedAt={purchase.updated_at} />
 
           <div>
@@ -115,7 +134,7 @@ export function PurchaseDetailDialog({
             <div className="flex items-center gap-2">
               <ShareButton title={purchase.name} text={`${purchase.status} · ${purchase.category}`} />
               <PointOutButton label={purchase.name} href={`/purchases?item=${purchase.id}`} />
-              <PurchaseForm purchase={purchase} />
+              <PurchaseForm purchase={purchase} members={Object.entries(memberMap).map(([id, name]) => ({ id, name }))} />
               <ConfirmDelete itemLabel="item" action={deletePurchase.bind(null, purchase.id)} variant="menu" />
             </div>
           </div>

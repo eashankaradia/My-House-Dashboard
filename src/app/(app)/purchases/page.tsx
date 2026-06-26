@@ -44,11 +44,12 @@ export default async function PurchasesPage() {
   const wishlist = purchases.filter((p) => p.status !== "Purchased");
   const readyToBuy = purchases.filter((p) => p.status === "Ready To Buy");
   const readyToBuyValue = readyToBuy.reduce((s, p) => s + effectivePrice(p), 0);
+  const members = Object.entries(memberMap).map(([id, name]) => ({ id, name }));
 
   return (
     <div className="space-y-6">
       <PageHeader title="Future Purchases" description="A wishlist for everything your home needs." info="Add the thing you want (e.g. a Sofa), then add several Options under it — specific products from different shops with their own prices, links and photos — to compare them side by side. Give items and options an out-of-5 star rating, then filter and sort by it. The card view keeps your top-rated item open and the rest collapsed.">
-        <PurchaseForm />
+        <PurchaseForm members={members} />
       </PageHeader>
 
       {purchases.length === 0 && archived.length === 0 ? (
@@ -57,7 +58,7 @@ export default async function PurchasesPage() {
           title="Your wishlist is empty"
           description="Save items you're considering — sofas, appliances, decor — with prices, links and priority."
         >
-          <PurchaseForm />
+          <PurchaseForm members={members} />
         </EmptyState>
       ) : (
         <>
