@@ -17,6 +17,7 @@ import { ExportSettings } from "./export-settings";
 import { GlanceStatsSettings } from "@/app/(app)/dashboard/glance-stats";
 import { BottomTabsSettings } from "./bottom-tabs";
 import { RoomsSettings } from "./rooms-settings";
+import { ViewDefaultsSettings } from "./view-defaults";
 import { getRooms } from "@/app/(app)/rooms/actions";
 
 export const metadata = { title: "Settings" };
@@ -133,6 +134,21 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <GlanceStatsSettings />
+        </CardContent>
+      </Card>
+
+      {/* Default views */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <LayoutGrid className="h-4 w-4" /> Default views
+          </CardTitle>
+          <CardDescription>
+            Choose how Purchases and Tasks open by default (saved on this device).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ViewDefaultsSettings />
         </CardContent>
       </Card>
 

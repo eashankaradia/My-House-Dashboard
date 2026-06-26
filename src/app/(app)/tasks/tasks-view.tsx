@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Archive, Plus, Trash2, X } from "lucide-react";
+import { Archive, LayoutList, Plus, Table2, Trash2, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
 import { useToast } from "@/hooks/use-toast";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
+import { useViewPref } from "@/hooks/use-view-prefs";
 import { LinkedItems } from "@/app/(app)/links/linked-items";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { ShareButton } from "@/components/shared/share-button";
@@ -46,6 +47,7 @@ export function TasksView({
   currentUserId: string;
 }) {
   const [onlyMine, setOnlyMine] = React.useState(false);
+  const [view, setView] = useViewPref("tasks");
 
   const members: Member[] = React.useMemo(
     () => Object.entries(memberMap).map(([id, name]) => ({ id, name })),
@@ -71,8 +73,8 @@ export function TasksView({
     <div className="space-y-6">
       <AddTaskForm projects={projects} members={members} />
 
-      {members.length > 1 ? (
-        <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end gap-2">
+        {members.length > 1 ? (
           <div className="flex items-center rounded-lg border p-0.5 text-xs">
             <button onClick={() => setOnlyMine(false)} className={cn("rounded-md px-2.5 py-1", !onlyMine && "bg-accent")}>
               All tasks
@@ -81,38 +83,152 @@ export function TasksView({
               Mine
             </button>
           </div>
+        ) : null}
+        <div className="flex items-center rounded-lg border p-0.5">
+          <button
+            onClick={() => setView("detailed")}
+            aria-label="List view"
+            className={cn("rounded-md p-1.5 text-muted-foreground", view !== "table" && "bg-accent text-foreground")}
+          >
+            <LayoutList className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setView("table")}
+            aria-label="Table view"
+            className={cn("rounded-md p-1.5 text-muted-foreground", view === "table" && "bg-accent text-foreground")}
+          >
+            <Table2 className="h-4 w-4" />
+          </button>
         </div>
-      ) : null}
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">To do ({outstanding.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-1.5">
-          {outstanding.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">Nothing outstanding 🎉</p>
-          ) : (
-            outstanding.map((task) => (
-              <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} />
-            ))
-          )}
-        </CardContent>
-      </Card>
+      {view === "table" ? (
+        <TaskTable
+          outstanding={outstanding}
+          done={done}
+          projects={projects}
+          members={members}
+          projectName={projectName}
+          memberMap={memberMap}
+        />
+      ) : (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">To do ({outstanding.length})</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1.5">
+              {outstanding.length === 0 ? (
+                <p className="py-4 text-center text-sm text-muted-foreground">Nothing outstanding 🎉</p>
+              ) : (
+                outstanding.map((task) => (
+                  <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} />
+                ))
+              )}
+            </CardContent>
+          </Card>
 
-      {done.length > 0 ? (
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base text-muted-foreground">Done ({done.length})</CardTitle>
-            <ClearCompletedButton />
-          </CardHeader>
-          <CardContent className="space-y-1.5">
-            {done.map((task) => (
-              <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} />
-            ))}
-          </CardContent>
-        </Card>
-      ) : null}
+          {done.length > 0 ? (
+            <Card>
+              <CardHeader className="flex-row items-center justify-between space-y-0">
+                <CardTitle className="text-base text-muted-foreground">Done ({done.length})</CardTitle>
+                <ClearCompletedButton />
+              </CardHeader>
+              <CardContent className="space-y-1.5">
+                {done.map((task) => (
+                  <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} />
+                ))}
+              </CardContent>
+            </Card>
+          ) : null}
+        </>
+      )}
     </div>
+  );
+}
+
+function TaskTable({
+  outstanding,
+  done,
+  projects,
+  members,
+  projectName,
+  memberMap,
+}: {
+  outstanding: ProjectTask[];
+  done: ProjectTask[];
+  projects: ProjectOption[];
+  members: Member[];
+  projectName: (id: string | null) => string | null;
+  memberMap: MemberMap;
+}) {
+  const rows = [...outstanding, ...done];
+  return (
+    <Card>
+      <CardContent className="overflow-x-auto p-0">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b text-left text-xs text-muted-foreground">
+              <th className="px-3 py-2"></th>
+              <th className="px-3 py-2 font-medium">Task</th>
+              <th className="px-3 py-2 font-medium">Project</th>
+              <th className="px-3 py-2 font-medium">Assignee</th>
+              <th className="px-3 py-2 font-medium">Due</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((task) => (
+              <TaskTableRow
+                key={task.id}
+                task={task}
+                projects={projects}
+                members={members}
+                project={projectName(task.project_id)}
+                memberMap={memberMap}
+              />
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+}
+
+function TaskTableRow({
+  task,
+  projects,
+  members,
+  project,
+  memberMap,
+}: {
+  task: ProjectTask;
+  projects: ProjectOption[];
+  members: Member[];
+  project: string | null;
+  memberMap: MemberMap;
+}) {
+  const [pending, startTransition] = React.useTransition();
+  const assignee = task.assigned_to ? memberMap[task.assigned_to] : null;
+  return (
+    <tr className="border-b last:border-b-0">
+      <td className="px-3 py-2">
+        <Checkbox
+          checked={task.is_done}
+          onCheckedChange={() => startTransition(async () => void (await toggleTask(task.id, !task.is_done)))}
+          disabled={pending}
+        />
+      </td>
+      <td className="px-3 py-2">
+        <TaskEditDialog task={task} projects={projects} members={members}>
+          <CardTrigger className={cn("rounded hover:underline", task.is_done && "text-muted-foreground line-through")}>
+            {task.title}
+          </CardTrigger>
+        </TaskEditDialog>
+      </td>
+      <td className="px-3 py-2 text-muted-foreground">{project ?? "—"}</td>
+      <td className="px-3 py-2 text-muted-foreground">{assignee ?? "Anyone"}</td>
+      <td className="px-3 py-2 text-muted-foreground">{task.due_date ? formatDate(task.due_date) : "—"}</td>
+    </tr>
   );
 }
 
