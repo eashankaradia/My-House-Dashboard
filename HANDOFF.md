@@ -115,12 +115,20 @@ User submitted a third list of ~19 requests. Working through in batches.
   the page passes `seenIds` to the hub which sinks seen ideas to the bottom and
   dims them; an Eye icon hints "click to open". (#4-list inspiration item)
 
+### Batch S (done, no DB) — Documents & notes (#19)
+- Section renamed to **Documents & notes** (nav + page + metadata).
+- New `note-form.tsx`: a quick note = a `documents` row with category "Note" and
+  no file (reuses `createDocument`). "Note" added to `DOCUMENT_CATEGORIES` and the
+  `DocumentCategory` union; excluded from the document form's category dropdown.
+- Notes render in a dedicated amber "Notes" card at the top (title + body +
+  delete); document groups/stats only show when real documents exist.
+
 STILL TODO:
 - Comments on the remaining detail dialogs (bills, savings, maintenance,
   documents, tasks) — drop in `<ItemComments>`.
 - Tasks "recently completed" (#14); table views + default (#16); glance-stat
-  click popup (#17); Documents → "Documents & notes" (#19); editable rooms (#7);
-  bill payments auto-log/mark-paid (#2); calendar email sync.
+  click popup (#17); editable rooms (#7); bill payments auto-log/mark-paid (#2);
+  calendar email sync.
 
 Still TODO from third list: #2 payments auto-log/mark-paid/detail,
 #7 editable rooms, #12 options-at-create-time (card now collapses

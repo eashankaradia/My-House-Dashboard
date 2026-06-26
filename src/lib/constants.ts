@@ -35,7 +35,7 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Groceries", short: "Shop", href: "/shopping", icon: ShoppingCart, description: "Shared shopping list" },
   { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Ideas & link collections" },
   { title: "Maintenance", short: "Upkeep", href: "/maintenance", icon: Wrench, description: "Reminders & servicing" },
-  { title: "Documents", short: "Docs", href: "/documents", icon: FolderArchive, description: "Warranties, insurance & more" },
+  { title: "Documents & notes", short: "Docs", href: "/documents", icon: FolderArchive, description: "Warranties, insurance, notes & more" },
   { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance" },
   { title: "Analytics", href: "/analytics", icon: BarChart3, description: "Trends & breakdowns" },
   { title: "Change log", short: "Log", href: "/activity", icon: History, description: "Who changed what, and when" },
@@ -98,7 +98,7 @@ export const MAINTENANCE_FREQUENCIES = [
 ] as const;
 
 export const DOCUMENT_CATEGORIES = [
-  "Mortgage", "Insurance", "Warranties", "Manuals", "Quotes", "Certificates", "Receipts", "Other",
+  "Mortgage", "Insurance", "Warranties", "Manuals", "Quotes", "Certificates", "Receipts", "Note", "Other",
 ] as const;
 
 export const ROOMS = [

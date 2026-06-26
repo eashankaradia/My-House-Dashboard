@@ -405,6 +405,7 @@ export type DocumentCategory =
   | "Quotes"
   | "Certificates"
   | "Receipts"
+  | "Note"
   | "Other";
 
 // --- Minimal Database shape for the Supabase client generic ------------------
