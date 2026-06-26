@@ -55,6 +55,15 @@ User submitted a third list of ~19 requests. Working through in batches.
   dialog listing all Upcoming + Recent records of that type (links through, or
   opens the day for events).
 
+### Batch N (done) — Groceries / shopping list — **needs migration 0018**
+- `0018_shopping_list.sql` adds `shopping_items` (name, quantity, category,
+  is_got, got_at) + household RLS. RUN THIS LIVE.
+- New nav tab **Groceries** (`/shopping`, ShoppingCart, short "Shop") in
+  `constants.ts`; `ShoppingItem` type + Database registry entry.
+- `shopping/actions.ts`: add / setShoppingItemGot / delete / clearGotItems.
+- `shopping/page.tsx` + `shopping-list.tsx`: add row (name + qty), tick off
+  (sinks to bottom, struck through), delete, "Clear got" bulk. Shared list.
+
 NEW fourth/fifth lists arrived mid-batch (2026-06-26) — still TODO:
 - (inspiration) click-in icon that marks read + sinks to bottom; react + comment.
 - Low priority as the default everywhere.
