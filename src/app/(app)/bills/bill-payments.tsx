@@ -35,12 +35,23 @@ export function BillPayments({
   const { toast } = useToast();
   const synced = React.useRef(false);
 
-  // First time this bill's payments are shown, fill in any missing due dates.
+  // Fill in any missing due dates for THIS bill — at most once per day per
+  // device, and only refresh the page if rows were actually created.
   React.useEffect(() => {
     if (synced.current) return;
     synced.current = true;
-    syncBillPayments().then(() => router.refresh());
-  }, [router]);
+    const key = `mhd:bill-synced:${bill.id}`;
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+      if (localStorage.getItem(key) === today) return;
+    } catch {}
+    syncBillPayments(bill.id).then((res) => {
+      try {
+        localStorage.setItem(key, today);
+      } catch {}
+      if (res?.inserted) router.refresh();
+    });
+  }, [router, bill.id]);
 
   const today = new Date().toISOString().slice(0, 10);
   const sorted = [...payments].sort((a, b) => b.payment_date.localeCompare(a.payment_date));

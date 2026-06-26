@@ -148,14 +148,20 @@ function stepDate(date: Date, freq: string, dir: 1 | -1): Date {
 }
 
 /**
- * Generate the schedule of due payments for every recurring bill — the next
- * occurrence plus up to 12 months of history — inserting any that don't exist
- * yet as unpaid. Idempotent and safe to call on every visit.
+ * Generate the schedule of due payments — the next occurrence plus up to 12
+ * months of history — inserting any that don't exist yet as unpaid. Pass a
+ * `billId` to sync just one bill (cheap, used when opening a bill). Returns how
+ * many rows were created so callers only refresh when something changed.
+ * Idempotent and safe to call repeatedly.
  */
-export async function syncBillPayments(): Promise<ActionResult> {
+export async function syncBillPayments(billId?: string): Promise<ActionResult & { inserted?: number }> {
   const { supabase, user } = await getActionContext();
-  const { data: billRows } = await supabase.from("bills").select("*");
-  const { data: existing } = await supabase.from("bill_payments").select("bill_id, payment_date");
+  let billsQuery = supabase.from("bills").select("*");
+  if (billId) billsQuery = billsQuery.eq("id", billId);
+  const { data: billRows } = await billsQuery;
+  let existingQuery = supabase.from("bill_payments").select("bill_id, payment_date");
+  if (billId) existingQuery = existingQuery.eq("bill_id", billId);
+  const { data: existing } = await existingQuery;
   const have = new Set((existing ?? []).map((p) => `${p.bill_id}|${p.payment_date}`));
 
   const today = new Date();
@@ -201,9 +207,9 @@ export async function syncBillPayments(): Promise<ActionResult> {
   if (toInsert.length) {
     const { error } = await supabase.from("bill_payments").insert(toInsert);
     if (error) return { error: error.message };
+    revalidatePath("/bills");
   }
-  revalidatePath("/bills");
-  return {};
+  return { inserted: toInsert.length };
 }
 
 /** Mark a single payment paid/unpaid (defaults actual to expected when paid). */
