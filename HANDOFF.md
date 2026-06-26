@@ -170,7 +170,19 @@ User submitted a third list of ~19 requests. Working through in batches.
   it needs a public token-protected endpoint + a Supabase service-role key (not
   present). Flagged to the user for a decision.
 
+## UX polish pass (post-feature, "feel like an app")
+
+### Batch Y (done, no DB) — "Needs attention" dashboard strip
+- `dashboard/needs-attention.tsx`: action-driving strip at the very top of the
+  dashboard. Aggregates overdue/due-today items — unpaid due bill payments
+  (fetched `is_paid=false`), overdue/today tasks, overdue maintenance, documents
+  expiring ≤14d — colour-coded (rose=overdue, amber=soon), one tap to the record.
+  Calm "You're all caught up" state when empty.
+
 STILL TODO (optional polish):
+- Mobile bottom-sheets for detail/edit dialogs (next).
+- Move per-device prefs to cookies (kill SSR→client flash); consolidate the 5
+  pref hooks; generate Supabase types; trim dashboard/settings queries.
 - Comments on the remaining detail dialogs (savings, maintenance, tasks, docs).
 - Optional: live calendar subscribe feed (needs service-role key + token table).
 
