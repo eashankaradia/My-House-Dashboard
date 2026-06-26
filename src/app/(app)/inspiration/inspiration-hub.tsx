@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   ExternalLink,
+  Eye,
   Hammer,
   LayoutGrid,
   List,
@@ -39,30 +40,36 @@ type View = "feed" | "masonry" | "cards" | "list";
 export function InspirationHub({
   items,
   collections,
+  seenIds = [],
 }: {
   items: Inspiration[];
   collections: Collection[];
+  seenIds?: string[];
 }) {
   const [view, setView] = React.useState<View>("feed");
   const [query, setQuery] = React.useState("");
   const [room, setRoom] = React.useState("All");
   const [collection, setCollection] = React.useState("All");
+  const seen = React.useMemo(() => new Set(seenIds), [seenIds]);
 
   const rooms = Array.from(new Set(items.map((i) => i.room).filter(Boolean))) as string[];
 
-  const filtered = items.filter((i) => {
-    if (room !== "All" && i.room !== room) return false;
-    if (collection !== "All" && i.collection_id !== collection) return false;
-    if (query) {
-      const q = query.toLowerCase();
-      const hay = [i.title, i.notes, i.category, i.source, ...(i.tags ?? [])]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
-    return true;
-  });
+  const filtered = items
+    .filter((i) => {
+      if (room !== "All" && i.room !== room) return false;
+      if (collection !== "All" && i.collection_id !== collection) return false;
+      if (query) {
+        const q = query.toLowerCase();
+        const hay = [i.title, i.notes, i.category, i.source, ...(i.tags ?? [])]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    })
+    // Ideas you've already opened sink to the bottom.
+    .sort((a, b) => Number(seen.has(a.id)) - Number(seen.has(b.id)));
 
   return (
     <div className="space-y-4">
@@ -107,25 +114,25 @@ export function InspirationHub({
       ) : view === "feed" ? (
         <div className="mx-auto max-w-2xl space-y-5">
           {filtered.map((item) => (
-            <InspirationFeedItem key={item.id} item={item} collections={collections} />
+            <InspirationFeedItem key={item.id} item={item} collections={collections} seen={seen.has(item.id)} />
           ))}
         </div>
       ) : view === "masonry" ? (
         <div className="masonry">
           {filtered.map((item) => (
-            <InspirationCard key={item.id} item={item} collections={collections} masonry />
+            <InspirationCard key={item.id} item={item} collections={collections} seen={seen.has(item.id)} masonry />
           ))}
         </div>
       ) : view === "cards" ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((item) => (
-            <InspirationCard key={item.id} item={item} collections={collections} />
+            <InspirationCard key={item.id} item={item} collections={collections} seen={seen.has(item.id)} />
           ))}
         </div>
       ) : (
         <div className="space-y-2">
           {filtered.map((item) => (
-            <InspirationRow key={item.id} item={item} collections={collections} />
+            <InspirationRow key={item.id} item={item} collections={collections} seen={seen.has(item.id)} />
           ))}
         </div>
       )}
@@ -133,19 +140,23 @@ export function InspirationHub({
   );
 }
 
-function InspirationFeedItem({ item, collections }: { item: Inspiration; collections: Collection[] }) {
+function InspirationFeedItem({ item, collections, seen }: { item: Inspiration; collections: Collection[]; seen?: boolean }) {
   return (
-    <Card className="overflow-hidden">
+    <Card className={cn("overflow-hidden", seen && "opacity-70")}>
       <CardContent className="space-y-3 p-4">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
             {item.source.slice(0, 2).toUpperCase()}
           </div>
           <InspirationDetailDialog item={item} collections={collections}>
-            <CardTrigger className="min-w-0 flex-1 rounded-md">
-              <span className="block font-semibold hover:underline">{item.title}</span>
+            <CardTrigger className="group min-w-0 flex-1 rounded-md">
+              <span className="flex items-center gap-1.5 font-semibold hover:underline">
+                {item.title}
+                <Eye className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+              </span>
               <span className="text-xs text-muted-foreground">
                 {item.source} · updated {formatDate(item.updated_at)}
+                {seen ? " · seen" : ""}
               </span>
             </CardTrigger>
           </InspirationDetailDialog>
@@ -259,13 +270,15 @@ function InspirationCard({
   item,
   collections,
   masonry = false,
+  seen = false,
 }: {
   item: Inspiration;
   collections: Collection[];
   masonry?: boolean;
+  seen?: boolean;
 }) {
   return (
-    <Card className={cn("overflow-hidden", masonry && "inline-block w-full")}>
+    <Card className={cn("overflow-hidden", masonry && "inline-block w-full", seen && "opacity-70")}>
       {item.image_url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={item.image_url} alt={item.title} className="w-full object-cover" />
@@ -275,8 +288,11 @@ function InspirationCard({
           <ActionsMenu item={item} collections={collections} />
         </div>
         <InspirationDetailDialog item={item} collections={collections}>
-          <CardTrigger className="space-y-2 rounded-md pr-8">
-            <span className="block font-medium leading-snug hover:underline">{item.title}</span>
+          <CardTrigger className="group space-y-2 rounded-md pr-8">
+            <span className="flex items-center gap-1.5 font-medium leading-snug hover:underline">
+              {item.title}
+              <Eye className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+            </span>
             <div className="flex flex-wrap gap-1.5">
               <Badge variant="secondary">{item.source}</Badge>
               {item.category ? <Badge variant="outline">{item.category}</Badge> : null}
@@ -304,9 +320,9 @@ function InspirationCard({
   );
 }
 
-function InspirationRow({ item, collections }: { item: Inspiration; collections: Collection[] }) {
+function InspirationRow({ item, collections, seen }: { item: Inspiration; collections: Collection[]; seen?: boolean }) {
   return (
-    <Card className="shadow-none">
+    <Card className={cn("shadow-none", seen && "opacity-70")}>
       <CardContent className="flex items-center gap-3 p-3">
         {item.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element

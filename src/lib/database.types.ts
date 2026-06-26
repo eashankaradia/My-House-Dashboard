@@ -303,6 +303,31 @@ export type PurchaseStar = {
   created_at: string;
 };
 
+export type Comment = {
+  id: string;
+  user_id: string;
+  entity_type: string;
+  entity_id: string;
+  body: string;
+  created_at: string;
+};
+
+export type CommentRead = {
+  user_id: string;
+  entity_type: string;
+  entity_id: string;
+  last_read_at: string;
+};
+
+export type Reaction = {
+  id: string;
+  user_id: string;
+  entity_type: string;
+  entity_id: string;
+  emoji: string;
+  created_at: string;
+};
+
 export type ShoppingItem = Timestamps & {
   id: string;
   user_id: string;
@@ -413,6 +438,9 @@ export type Database = {
       maintenance_tasks: Row<MaintenanceTask>;
       documents: Row<Document>;
       shopping_items: Row<ShoppingItem>;
+      comments: Row<Comment>;
+      comment_reads: Row<CommentRead>;
+      reactions: Row<Reaction>;
     };
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };

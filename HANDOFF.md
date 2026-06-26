@@ -100,10 +100,27 @@ User submitted a third list of ~19 requests. Working through in batches.
 - Dashboard greeting uses `<ColoredName>`; Settings → Profile has a colour
   picker (`updateMemberColor` action); the household list shows coloured names.
 
-STILL TODO from fourth/fifth lists:
-- (inspiration) click-in icon that marks read + sinks to bottom; react + comment.
-- Calendar: sync with email.
-- #13 generic comments on every item (unread counts, notify creator).
+### Batch R (done) — comments + reactions + inspiration read/sink — **needs migration 0022**
+- `0022_comments_reactions.sql` adds `comments`, `comment_reads`, `reactions`
+  (polymorphic entity_type/entity_id) + household RLS. RUN THIS LIVE.
+- `comments/actions.ts`: loadThread / addComment (notifies owner) / deleteComment
+  / toggleReaction / markThreadRead.
+- `components/shared/item-comments.tsx`: reusable `<ItemComments>` — reaction
+  chips + quick emoji, collapsible comment thread with an unread "N new" badge,
+  opening marks read; commenter names use their member colour. Notifies the item
+  owner via the notifications table.
+- Wired into inspiration, purchase and project detail dialogs (#13 begun — "every
+  item" can reuse `<ItemComments>`).
+- Inspiration read/sink: opening an idea calls `markThreadRead("inspiration")`;
+  the page passes `seenIds` to the hub which sinks seen ideas to the bottom and
+  dims them; an Eye icon hints "click to open". (#4-list inspiration item)
+
+STILL TODO:
+- Comments on the remaining detail dialogs (bills, savings, maintenance,
+  documents, tasks) — drop in `<ItemComments>`.
+- Tasks "recently completed" (#14); table views + default (#16); glance-stat
+  click popup (#17); Documents → "Documents & notes" (#19); editable rooms (#7);
+  bill payments auto-log/mark-paid (#2); calendar email sync.
 
 Still TODO from third list: #2 payments auto-log/mark-paid/detail,
 #7 editable rooms, #12 options-at-create-time (card now collapses

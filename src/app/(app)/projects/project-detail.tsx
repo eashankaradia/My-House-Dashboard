@@ -14,6 +14,7 @@ import { AddedBy } from "@/components/shared/added-by";
 import { ShareButton } from "@/components/shared/share-button";
 import { PointOutButton } from "@/components/shared/point-out-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
+import { ItemComments } from "@/components/shared/item-comments";
 import { priorityVariant } from "@/lib/ui";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -77,6 +78,10 @@ export function ProjectDetailDialog({
           <div>
             <p className="mb-1.5 text-xs font-medium text-muted-foreground">Sub-tasks</p>
             <Subtasks project={project} />
+          </div>
+
+          <div className="border-t pt-3">
+            <ItemComments entityType="projects" entityId={project.id} ownerId={project.user_id} href={`/projects?project=${project.id}`} label={project.name} />
           </div>
 
           <div className="border-t pt-3">
