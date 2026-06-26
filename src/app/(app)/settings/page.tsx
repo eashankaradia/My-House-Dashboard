@@ -13,6 +13,7 @@ import { TabVisibilitySettings } from "./tab-visibility";
 import { NotificationPreferences } from "./notification-preferences";
 import { ExportSettings } from "./export-settings";
 import { GlanceStatsSettings } from "@/app/(app)/dashboard/glance-stats";
+import { BottomTabsSettings } from "./bottom-tabs";
 
 export const metadata = { title: "Settings" };
 
@@ -91,6 +92,21 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <TabVisibilitySettings />
+        </CardContent>
+      </Card>
+
+      {/* Bottom bar tabs (mobile) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <LayoutGrid className="h-4 w-4" /> Bottom bar tabs
+          </CardTitle>
+          <CardDescription>
+            Choose which tabs (up to 4) appear in the phone bottom bar, around the + button, and their order.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BottomTabsSettings />
         </CardContent>
       </Card>
 
