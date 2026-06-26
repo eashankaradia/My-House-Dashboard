@@ -16,6 +16,8 @@ import {
 
 export type NavItem = {
   title: string;
+  /** Short label for tight spaces like the phone bottom bar. Falls back to title. */
+  short?: string;
   href: string;
   icon: LucideIcon;
   description: string;
@@ -23,18 +25,18 @@ export type NavItem = {
 
 /** Primary navigation — drives both the desktop sidebar and mobile menu. */
 export const NAV_ITEMS: NavItem[] = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, description: "Your home command centre" },
-  { title: "Bills & Expenses", href: "/bills", icon: Receipt, description: "Recurring household costs" },
+  { title: "Dashboard", short: "Home", href: "/dashboard", icon: LayoutDashboard, description: "Your home command centre" },
+  { title: "Bills & Expenses", short: "Bills", href: "/bills", icon: Receipt, description: "Recurring household costs" },
   { title: "Mortgage", href: "/mortgage", icon: Home, description: "Balance, equity & payoff" },
-  { title: "Savings Pots", href: "/savings", icon: PiggyBank, description: "Goals & contributions" },
-  { title: "Projects & Tasks", href: "/projects", icon: Hammer, description: "Plan projects and track to-dos" },
-  { title: "Future Purchases", href: "/purchases", icon: ShoppingBag, description: "Your home wishlist" },
+  { title: "Savings Pots", short: "Savings", href: "/savings", icon: PiggyBank, description: "Goals & contributions" },
+  { title: "Projects & Tasks", short: "Projects", href: "/projects", icon: Hammer, description: "Plan projects and track to-dos" },
+  { title: "Future Purchases", short: "Purchases", href: "/purchases", icon: ShoppingBag, description: "Your home wishlist" },
   { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Ideas & link collections" },
-  { title: "Maintenance", href: "/maintenance", icon: Wrench, description: "Reminders & servicing" },
-  { title: "Documents", href: "/documents", icon: FolderArchive, description: "Warranties, insurance & more" },
+  { title: "Maintenance", short: "Upkeep", href: "/maintenance", icon: Wrench, description: "Reminders & servicing" },
+  { title: "Documents", short: "Docs", href: "/documents", icon: FolderArchive, description: "Warranties, insurance & more" },
   { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance" },
   { title: "Analytics", href: "/analytics", icon: BarChart3, description: "Trends & breakdowns" },
-  { title: "Change log", href: "/activity", icon: History, description: "Who changed what, and when" },
+  { title: "Change log", short: "Log", href: "/activity", icon: History, description: "Who changed what, and when" },
 ];
 
 /** Tabs that can never be hidden from the sidebar. */

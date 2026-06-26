@@ -41,7 +41,7 @@ export function BottomNav() {
         )}
       >
         <Icon className="h-5 w-5" />
-        <span className="max-w-full truncate">{item.title}</span>
+        <span className="max-w-full truncate">{item.short ?? item.title}</span>
       </Link>
     );
   }

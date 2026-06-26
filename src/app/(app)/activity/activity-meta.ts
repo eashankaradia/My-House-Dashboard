@@ -22,6 +22,21 @@ export const ACTION_VERB: Record<string, string> = {
   delete: "removed",
 };
 
+/**
+ * A short, colour-coded tag shown next to an activity row so it's instantly
+ * clear whether a change was to a purchase item itself or to one of its options.
+ */
+export const ENTITY_TAG: Record<string, { label: string; className: string }> = {
+  purchases: {
+    label: "Item",
+    className: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
+  },
+  purchase_options: {
+    label: "Option",
+    className: "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300",
+  },
+};
+
 export const ENTITY_BASE: Record<string, string> = {
   bills: "/bills",
   mortgages: "/mortgage",

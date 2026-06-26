@@ -1,8 +1,35 @@
 "use server";
 
 import { getActionContext } from "@/lib/action-utils";
+import { NAV_ITEMS } from "@/lib/constants";
 
 export type SearchResult = { type: string; id: string; label: string; href: string };
+
+/**
+ * Static destinations (pages + settings sections) so search can take you
+ * anywhere in the app, not just to data records.
+ */
+const PAGES: { label: string; href: string; keywords?: string }[] = [
+  ...NAV_ITEMS.map((n) => ({ label: n.title, href: n.href, keywords: `${n.short ?? ""} ${n.description}` })),
+  { label: "Settings", href: "/settings", keywords: "preferences account" },
+  { label: "Settings · Profile & display name", href: "/settings", keywords: "name colour theme" },
+  { label: "Settings · Appearance & dark mode", href: "/settings", keywords: "theme dark light mode" },
+  { label: "Settings · Sidebar tabs", href: "/settings", keywords: "hide show tabs" },
+  { label: "Settings · Bottom bar tabs", href: "/settings", keywords: "phone mobile tabs" },
+  { label: "Settings · Dashboard glance stats", href: "/settings", keywords: "stats headline" },
+  { label: "Settings · Rooms", href: "/settings", keywords: "rooms add remove" },
+  { label: "Settings · Default views", href: "/settings", keywords: "table compact detailed default" },
+  { label: "Settings · Notifications", href: "/settings", keywords: "notification preferences inbox" },
+  { label: "Settings · Export data", href: "/settings", keywords: "csv download export" },
+  { label: "Settings · Household members", href: "/settings", keywords: "members people sharing" },
+];
+
+function pageMatches(q: string): SearchResult[] {
+  const ql = q.toLowerCase();
+  return PAGES.filter(
+    (p) => p.label.toLowerCase().includes(ql) || (p.keywords ?? "").toLowerCase().includes(ql),
+  ).map((p, i) => ({ type: "Page", id: `page-${i}`, label: p.label, href: p.href }));
+}
 
 /** Search the main entities by name/title and return deep-linkable results. */
 export async function searchItems(query: string): Promise<SearchResult[]> {
@@ -31,5 +58,7 @@ export async function searchItems(query: string): Promise<SearchResult[]> {
   for (const m of maint.data ?? []) out.push({ type: "Maintenance", id: m.id, label: m.task, href: `/maintenance?item=${m.id}` });
   for (const d of docs.data ?? []) out.push({ type: "Document", id: d.id, label: d.name, href: `/documents?item=${d.id}` });
   for (const s of pots.data ?? []) out.push({ type: "Savings", id: s.id, label: s.name, href: `/savings?item=${s.id}` });
+  // Pages and settings sections, so search can navigate anywhere.
+  out.push(...pageMatches(q));
   return out;
 }
