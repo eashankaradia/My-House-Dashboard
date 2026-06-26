@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch F: week-ahead + admin button).
+> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch G: glance-stat customisation).
 
 ## 0. Latest session (Claude, after Codex continuation)
 
@@ -74,7 +74,21 @@ Working through it in build+lint-verified batches.
   default disclosure for admin actions. Bills page now renders the
   **Payment accounts** manager inside it at the **bottom** instead of mid-page.
 
-### Batch G+ — STILL TODO from the second list (pick up here)
+### Batch G (done, no DB): per-user glance-stat customisation
+- `hooks/use-glance-prefs.ts` (localStorage `mhd:glance-stats`, ordered ids,
+  `DEFAULT_GLANCE`).
+- `dashboard/glance-stats.tsx`: `GLANCE_CATALOG` (9 stats), `GlanceStats`
+  (renders chosen stats in order from values passed by the page) and
+  `GlanceStatsSettings` (pick + reorder + add/remove). Dashboard computes
+  `glanceValues` for all catalog ids and renders `<GlanceStats>` in the
+  `finance` widget. Settings has a new **Dashboard glance stats** card.
+
+### Batch H+ — STILL TODO from the second list (pick up here)
+- **Bottom tab bar**: centre the **+ (FAB)**; add an **Inspiration** tab; let
+  users choose **which bottom tabs show and their order** in Settings.
+- **Projects board**: an **expandable full-page, mobile-optimised** board view.
+- **Analytics**: rebuild around actionable insight — monthly payment **trends**
+  and **expected vs actual** (Codex's `bill_payments`).
 5. **Admin actions** (e.g. add payment account) as a **small button at the bottom
    of the page** rather than inline.
 6. Dashboard: a **small week-ahead calendar** strip.

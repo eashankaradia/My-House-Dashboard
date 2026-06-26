@@ -1,4 +1,4 @@
-import { Bell, Download, Eye, LayoutGrid, LogOut, Users } from "lucide-react";
+import { Bell, Download, Eye, Gauge, LayoutGrid, LogOut, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import { DisplayNameForm } from "./display-name-form";
 import { TabVisibilitySettings } from "./tab-visibility";
 import { NotificationPreferences } from "./notification-preferences";
 import { ExportSettings } from "./export-settings";
+import { GlanceStatsSettings } from "@/app/(app)/dashboard/glance-stats";
 
 export const metadata = { title: "Settings" };
 
@@ -90,6 +91,21 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <TabVisibilitySettings />
+        </CardContent>
+      </Card>
+
+      {/* Glance stats */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Gauge className="h-4 w-4" /> Dashboard glance stats
+          </CardTitle>
+          <CardDescription>
+            Pick which headline stats appear at the top of your dashboard, and their order (saved on this device).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <GlanceStatsSettings />
         </CardContent>
       </Card>
 
