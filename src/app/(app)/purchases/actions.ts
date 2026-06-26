@@ -24,6 +24,10 @@ function toRow(values: PurchaseInput) {
     notes: values.notes ?? null,
     rating: values.rating ?? null,
     purchased_at: values.status === "Purchased" ? new Date().toISOString().slice(0, 10) : null,
+    // Completion details only make sense once it's actually been bought.
+    purchased_by: values.status === "Purchased" ? values.purchased_by ?? null : null,
+    purchased_price: values.status === "Purchased" ? values.purchased_price ?? null : null,
+    receipt_url: values.status === "Purchased" ? values.receipt_url ?? null : null,
   };
 }
 

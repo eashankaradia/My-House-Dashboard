@@ -78,10 +78,18 @@ User submitted a third list of ~19 requests. Working through in batches.
   an item's best option rating when it has options.
 - **Removed the "Purchased" stat** (#6) from the purchases page.
 
+### Batch P (done) — purchase completion details — **needs migration 0020**
+- `0020_purchase_completion.sql` adds `purchases.purchased_by`,
+  `purchased_price`, `receipt_url`. RUN THIS LIVE.
+- Purchases #7: when status is **Purchased**, the form shows an optional block —
+  who bought it (household member select), how much they paid, and a receipt
+  photo (ImageUpload). `PurchaseForm` now takes a `members` prop, threaded from
+  `memberMap` at every call site (page header/empty, grid rows, detail).
+- Detail dialog shows a "Purchased — by X · paid £Y · View receipt" block.
+- `toRow` only persists these when status is Purchased (cleared otherwise).
+
 STILL TODO from fourth/fifth lists:
 - (inspiration) click-in icon that marks read + sinks to bottom; react + comment.
-- Purchases #7: on purchase, capture who bought it / for how much / receipt photo
-  (all optional) — needs member list threaded into PurchaseForm + new columns.
 - Calendar: sync with email.
 
 Still TODO from third list: #2 payments auto-log/mark-paid/detail,

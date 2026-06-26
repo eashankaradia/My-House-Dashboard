@@ -119,6 +119,9 @@ export const purchaseSchema = z.object({
   non_negotiables: optionalString,
   notes: optionalString,
   rating,
+  purchased_by: optionalString,
+  purchased_price: z.coerce.number().min(0).max(1_000_000_000).optional(),
+  receipt_url: optionalString,
 });
 export type PurchaseInput = z.infer<typeof purchaseSchema>;
 

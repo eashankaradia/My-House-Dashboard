@@ -178,6 +178,10 @@ export type Purchase = Timestamps & {
   archived_at: string | null;
   /** Out-of-5 star rating (null = unrated). */
   rating: number | null;
+  /** Set when marked Purchased — all optional. */
+  purchased_by: string | null;
+  purchased_price: number | null;
+  receipt_url: string | null;
 };
 
 export type PurchaseOption = Timestamps & {

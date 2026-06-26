@@ -216,6 +216,7 @@ function CompactRow({
   memberMap: MemberMap;
 }) {
   const opts = sortedOptions(purchase);
+  const members = Object.entries(memberMap).map(([id, name]) => ({ id, name }));
   return (
     <div className={cn("flex items-center gap-3 border-l-4 px-4 py-2.5 text-sm", PRIORITY_ACCENT[purchase.priority])}>
       <PurchaseDetailDialog purchase={purchase} memberMap={memberMap}>
@@ -240,6 +241,7 @@ function CompactRow({
       <div className="flex shrink-0 items-center">
         <PurchaseForm
           purchase={purchase}
+          members={members}
           trigger={
             <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
               <Pencil className="h-4 w-4" />
@@ -264,6 +266,7 @@ function PurchaseCard({
 }) {
   const [open, setOpen] = React.useState(defaultOpen);
   const options = sortedOptions(purchase);
+  const members = Object.entries(memberMap).map(([id, name]) => ({ id, name }));
   const prices = options.map((o) => Number(o.price));
   const min = prices.length ? Math.min(...prices) : 0;
   const max = prices.length ? Math.max(...prices) : 0;
@@ -344,6 +347,7 @@ function PurchaseCard({
             </div>
             <PurchaseForm
               purchase={purchase}
+              members={members}
               trigger={
                 <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
                   <Pencil className="h-4 w-4" />

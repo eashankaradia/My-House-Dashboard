@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
 import { StarRating } from "@/components/shared/star-rating";
+import { ImageUpload } from "@/components/shared/image-upload";
 import { useToast } from "@/hooks/use-toast";
 import {
   PRIORITIES,
@@ -34,9 +35,11 @@ type Props = {
   purchase?: Purchase;
   trigger?: React.ReactNode;
   defaults?: Partial<PurchaseInput>;
+  /** Household members, so a buyer can be chosen when marking Purchased. */
+  members?: { id: string; name: string }[];
 };
 
-export function PurchaseForm({ purchase, trigger, defaults }: Props) {
+export function PurchaseForm({ purchase, trigger, defaults, members = [] }: Props) {
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
@@ -63,8 +66,13 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
       non_negotiables: purchase?.non_negotiables ?? "",
       notes: purchase?.notes ?? "",
       rating: purchase?.rating ?? 0,
+      purchased_by: purchase?.purchased_by ?? "",
+      purchased_price: purchase?.purchased_price ?? undefined,
+      receipt_url: purchase?.receipt_url ?? "",
     },
   });
+
+  const currentStatus = watch("status");
 
   // "found" = a specific product (capture its price/link here); "compare" = a
   // type of thing you'll add options to compare later.
@@ -235,6 +243,29 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
               </NativeSelect>
             </Field>
           </div>
+          {currentStatus === "Purchased" ? (
+            <div className="space-y-4 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
+              <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Purchase details (all optional)</p>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Who bought it?" htmlFor="purchased_by">
+                  <NativeSelect id="purchased_by" {...register("purchased_by")}>
+                    <option value="">—</option>
+                    {members.map((m) => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+                <Field label="Paid (£)" htmlFor="purchased_price">
+                  <Input id="purchased_price" type="number" step="0.01" placeholder="0.00" {...register("purchased_price")} />
+                </Field>
+              </div>
+              <Field label="Receipt photo" hint="Upload a picture of the receipt">
+                <ImageUpload value={watch("receipt_url")} onChange={(url) => setValue("receipt_url", url ?? "")} />
+                <input type="hidden" {...register("receipt_url")} />
+              </Field>
+            </div>
+          ) : null}
+
           <Field label="Notes" htmlFor="notes">
             <Textarea id="notes" rows={2} {...register("notes")} />
           </Field>
