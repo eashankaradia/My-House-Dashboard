@@ -297,6 +297,16 @@ export type PurchaseStar = {
   created_at: string;
 };
 
+export type ShoppingItem = Timestamps & {
+  id: string;
+  user_id: string;
+  name: string;
+  quantity: string | null;
+  category: string | null;
+  is_got: boolean;
+  got_at: string | null;
+};
+
 export type CalendarEvent = Timestamps & {
   id: string;
   user_id: string;
@@ -395,6 +405,7 @@ export type Database = {
       activity_log: Row<ActivityLog>;
       maintenance_tasks: Row<MaintenanceTask>;
       documents: Row<Document>;
+      shopping_items: Row<ShoppingItem>;
     };
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };
