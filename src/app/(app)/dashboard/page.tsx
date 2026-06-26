@@ -8,6 +8,7 @@ import { daysUntil, formatCurrency, formatDate, toAnnual, toMonthly } from "@/li
 import { getHouseholdMap } from "@/lib/household";
 import type {
   Bill,
+  BillPayment,
   CalendarEvent,
   Document,
   Inspiration,
@@ -21,6 +22,7 @@ import type {
 import { DashboardWidget, EditDashboardButton } from "./dashboard-customize";
 import { CollapsibleSection } from "./collapsible-section";
 import { WeekAhead } from "./week-ahead";
+import { NeedsAttention, type AttentionItem } from "./needs-attention";
 import { GlanceStats, type GlanceValue } from "./glance-stats";
 import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
@@ -59,6 +61,7 @@ export default async function DashboardPage() {
     mortgageRes,
     memberMap,
     calEventsRes,
+    paymentsRes,
   ] = await Promise.all([
     supabase.from("bills").select("*"),
     supabase.from("savings_pots").select("*"),
@@ -71,6 +74,7 @@ export default async function DashboardPage() {
     supabase.from("mortgages").select("*").limit(1),
     getHouseholdMap(),
     supabase.from("calendar_events").select("*"),
+    supabase.from("bill_payments").select("*").eq("is_paid", false),
   ]);
 
   const bills = (billsRes.data ?? []) as Bill[];
@@ -83,6 +87,7 @@ export default async function DashboardPage() {
   const documents = (docsRes.data ?? []) as Document[];
   const mortgage = (mortgageRes.data?.[0] as Mortgage | undefined) ?? undefined;
   const calEvents = (calEventsRes.data ?? []) as CalendarEvent[];
+  const duePayments = (paymentsRes.data ?? []) as BillPayment[];
 
   // --- Week ahead: how much is on each of the next 7 days -------------------
   const today0 = new Date();
@@ -214,6 +219,58 @@ export default async function DashboardPage() {
   }
   reminders.sort((a, b) => a.days - b.days);
 
+  // --- Needs attention: the urgent, action-driving items at the top --------
+  const todayKey = ymd(today0);
+  const attention: AttentionItem[] = [];
+  const billName = new Map(bills.map((b) => [b.id, b.name]));
+  // Unpaid payments that are due now or overdue.
+  for (const p of duePayments) {
+    if (p.payment_date > todayKey) continue;
+    const d = daysUntil(p.payment_date) ?? 0;
+    attention.push({
+      label: `Pay ${billName.get(p.bill_id) ?? "bill"}`,
+      sub: d < 0 ? `${Math.abs(d)}d overdue · ${formatCurrency(p.expected_amount)}` : `Due today · ${formatCurrency(p.expected_amount)}`,
+      href: `/bills?item=${p.bill_id}`,
+      severity: d < 0 ? "overdue" : "soon",
+    });
+  }
+  // Overdue / today tasks.
+  for (const t of allTasks) {
+    if (t.is_done || !t.due_date) continue;
+    const d = daysUntil(t.due_date) ?? 0;
+    if (d > 0) continue;
+    attention.push({
+      label: t.title,
+      sub: d < 0 ? `${Math.abs(d)}d overdue` : "Due today",
+      href: `/projects?task=${t.id}`,
+      severity: d < 0 ? "overdue" : "soon",
+    });
+  }
+  // Overdue maintenance.
+  for (const m of maintenance) {
+    const d = daysUntil(m.next_due_date);
+    if (d === null || d > 0) continue;
+    attention.push({
+      label: m.task,
+      sub: d < 0 ? `${Math.abs(d)}d overdue` : "Due today",
+      href: `/maintenance?item=${m.id}`,
+      severity: d < 0 ? "overdue" : "soon",
+    });
+  }
+  // Documents expiring within 14 days (incl. expired).
+  for (const doc of documents) {
+    const d = daysUntil(doc.expiry_date);
+    if (d === null || d > 14) continue;
+    attention.push({
+      label: `${doc.name} expires`,
+      sub: d < 0 ? `${Math.abs(d)}d ago` : d === 0 ? "Today" : `in ${d}d`,
+      href: `/documents?item=${doc.id}`,
+      severity: d <= 3 ? "overdue" : "soon",
+    });
+  }
+  const severityRank = { overdue: 0, soon: 1 } as const;
+  attention.sort((a, b) => severityRank[a.severity] - severityRank[b.severity]);
+
   // --- Upcoming maintenance -------------------------------------------------
   const upcomingMaint = maintenance
     .map((m) => ({ task: m, days: daysUntil(m.next_due_date) }))
@@ -241,6 +298,9 @@ export default async function DashboardPage() {
         </div>
         <EditDashboardButton />
       </div>
+
+      {/* Needs attention — the urgent things, always first */}
+      <NeedsAttention items={attention} />
 
       {/* Glance stats (user-customisable in Settings) */}
       <DashboardWidget id="finance">
