@@ -1,4 +1,4 @@
-import { Bell, Download, Eye, Gauge, LayoutGrid, LogOut, Users } from "lucide-react";
+import { Bell, DoorOpen, Download, Eye, Gauge, LayoutGrid, LogOut, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,8 @@ import { NotificationPreferences } from "./notification-preferences";
 import { ExportSettings } from "./export-settings";
 import { GlanceStatsSettings } from "@/app/(app)/dashboard/glance-stats";
 import { BottomTabsSettings } from "./bottom-tabs";
+import { RoomsSettings } from "./rooms-settings";
+import { getRooms } from "@/app/(app)/rooms/actions";
 
 export const metadata = { title: "Settings" };
 
@@ -33,6 +35,7 @@ export default async function SettingsPage() {
     { data: projectData },
     { data: maintenanceData },
     memberMap,
+    rooms,
   ] = await Promise.all([
     supabase.from("household_members").select("*").order("display_name"),
     supabase.from("notification_preferences").select("*"),
@@ -41,6 +44,7 @@ export default async function SettingsPage() {
     supabase.from("projects").select("*").order("created_at", { ascending: false }),
     supabase.from("maintenance_tasks").select("*").order("next_due_date"),
     getHouseholdMap(),
+    getRooms(),
   ]);
 
   const members = (memberData ?? []) as HouseholdMember[];
@@ -129,6 +133,21 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <GlanceStatsSettings />
+        </CardContent>
+      </Card>
+
+      {/* Rooms */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <DoorOpen className="h-4 w-4" /> Rooms
+          </CardTitle>
+          <CardDescription>
+            Add or remove the rooms you can assign to purchases and inspiration (shared with your household).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RoomsSettings rooms={rooms} />
         </CardContent>
       </Card>
 

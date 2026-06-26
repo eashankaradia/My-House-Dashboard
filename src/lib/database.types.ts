@@ -328,6 +328,13 @@ export type Reaction = {
   created_at: string;
 };
 
+export type Room = {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+};
+
 export type ShoppingItem = Timestamps & {
   id: string;
   user_id: string;
@@ -442,6 +449,7 @@ export type Database = {
       comments: Row<Comment>;
       comment_reads: Row<CommentRead>;
       reactions: Row<Reaction>;
+      rooms: Row<Room>;
     };
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };

@@ -26,8 +26,8 @@ import {
   INSPIRATION_SOURCES,
   INSPIRATION_STATUSES,
   PRIORITIES,
-  ROOMS,
 } from "@/lib/constants";
+import { useRooms } from "@/hooks/use-rooms";
 import { inspirationSchema, type InspirationInput } from "@/lib/schemas";
 import type { Collection, Inspiration } from "@/lib/database.types";
 import { FormDeleteButton } from "@/components/shared/form-delete-button";
@@ -44,6 +44,7 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
   const editing = Boolean(inspiration);
+  const rooms = useRooms();
 
   const [fetching, setFetching] = React.useState(false);
   const {
@@ -153,7 +154,7 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
             <Field label="Room">
               <NativeSelect {...register("room")}>
                 <option value="">—</option>
-                {ROOMS.map((r) => (
+                {rooms.map((r) => (
                   <option key={r} value={r}>{r}</option>
                 ))}
               </NativeSelect>

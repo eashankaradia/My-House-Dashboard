@@ -123,12 +123,19 @@ User submitted a third list of ~19 requests. Working through in batches.
 - Notes render in a dedicated amber "Notes" card at the top (title + body +
   delete); document groups/stats only show when real documents exist.
 
+### Batch T (done) — editable rooms (#7) — **needs migration 0023**
+- `0023_rooms.sql` adds `rooms` (household RLS). RUN THIS LIVE.
+- `rooms/actions.ts`: `getRooms()` (falls back to the `ROOMS` constant while the
+  table is empty), `addRoom` / `removeRoom` (both seed the defaults into the
+  table on first edit so the dropdowns keep the defaults).
+- `hooks/use-rooms.ts`: client hook used by purchase + inspiration forms (fetches
+  on mount, defaults while loading) — replaced the static `ROOMS` import there.
+- Settings → **Rooms** card (`rooms-settings.tsx`) to add/remove rooms.
+
 STILL TODO:
-- Comments on the remaining detail dialogs (bills, savings, maintenance,
-  documents, tasks) — drop in `<ItemComments>`.
+- Comments on the remaining detail dialogs (bills, savings, maintenance, tasks).
 - Tasks "recently completed" (#14); table views + default (#16); glance-stat
-  click popup (#17); editable rooms (#7); bill payments auto-log/mark-paid (#2);
-  calendar email sync.
+  click popup (#17); bill payments auto-log/mark-paid (#2); calendar email sync.
 
 Still TODO from third list: #2 payments auto-log/mark-paid/detail,
 #7 editable rooms, #12 options-at-create-time (card now collapses
