@@ -9,7 +9,10 @@ import { FloatingAdd } from "@/components/layout/floating-add";
 import { AutoRefresh } from "@/components/layout/auto-refresh";
 import { UserMenu } from "@/components/layout/user-menu";
 import { GlobalSearch } from "@/components/layout/global-search";
+import { cookies } from "next/headers";
 import { HouseholdColorsProvider } from "@/components/providers/household-colors";
+import { PrefsProvider } from "@/components/providers/prefs";
+import { PREFS_COOKIE, parsePrefs } from "@/lib/prefs";
 import { getHouseholdColors } from "@/lib/household";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -31,9 +34,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .is("read_at", null);
 
   const memberColors = await getHouseholdColors();
+  const initialPrefs = parsePrefs((await cookies()).get(PREFS_COOKIE)?.value);
 
   return (
     <HouseholdColorsProvider colors={memberColors}>
+    <PrefsProvider initial={initialPrefs}>
     <div className="min-h-screen lg:grid lg:grid-cols-[16rem_1fr]">
       {/* Desktop sidebar */}
       <aside className="hidden border-r bg-card/40 lg:flex lg:flex-col">
@@ -92,6 +97,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <FloatingAdd />
       <AutoRefresh />
     </div>
+    </PrefsProvider>
     </HouseholdColorsProvider>
   );
 }

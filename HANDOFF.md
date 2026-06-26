@@ -186,10 +186,27 @@ User submitted a third list of ~19 requests. Working through in batches.
   to every dialog (details, forms, confirms) across the app — feels native on
   mobile. Caller `max-w-*` caps exceed phone widths so sheets stay full-width.
 
+### Batch AA (done) — payment sync made cheap
+- `syncBillPayments(billId?)` syncs just the opened bill and returns `inserted`;
+  the panel syncs ≤ once/day/device and only `router.refresh()`es when rows were
+  created. (No more all-bills scan + refresh on every dialog open.)
+
+### Batch BB (done, no DB) — prefs consolidated + cookie-backed (no SSR flash)
+- `lib/prefs.ts` (one `mhd_prefs` cookie holding all UI prefs as JSON) +
+  `components/providers/prefs.tsx` (`PrefsProvider` seeded server-side from the
+  cookie; `usePref(key, fallback)`; one-time localStorage→cookie migration).
+- `(app)/layout.tsx` reads the cookie via `next/headers` and wraps the app in
+  `PrefsProvider`, so the first paint already has the right tabs/widgets/views
+  (no default→stored flicker).
+- The five hooks (`use-hidden-tabs`, `use-dashboard-prefs`, `use-bottom-tabs`,
+  `use-glance-prefs`, `use-view-prefs`) are now thin wrappers over `usePref`
+  with identical public APIs — every ~100-line localStorage+custom-event hook
+  collapsed to a few lines; context keeps consumers in sync (no custom events).
+
 STILL TODO (optional polish):
 - Sticky dialog footer so Save sits above the keyboard in long forms.
-- Move per-device prefs to cookies (kill SSR→client flash); consolidate the 5
-  pref hooks; generate Supabase types; trim dashboard/settings queries.
+- Generate Supabase types instead of hand-writing `database.types.ts`.
+- Trim dashboard/settings queries to only needed columns.
 - Comments on the remaining detail dialogs (savings, maintenance, tasks, docs).
 - Optional: live calendar subscribe feed (needs service-role key + token table).
 
