@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, LayoutGrid, Pencil, Plus, Rows3, ShoppingBag } from "lucide-react";
+import { ChevronDown, LayoutGrid, Pencil, Plus, Rows3, ShoppingBag, Table2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -11,6 +11,7 @@ import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
 import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
+import { useViewPref } from "@/hooks/use-view-prefs";
 import { PURCHASE_STATUSES } from "@/lib/constants";
 import { PRIORITY_ACCENT } from "@/lib/ui";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -66,7 +67,7 @@ export function PurchasesGrid({
   const [room, setRoom] = React.useState<string>("All");
   const [minRating, setMinRating] = React.useState<number>(0);
   const [sort, setSort] = React.useState<keyof typeof SORTS>("rating");
-  const [compact, setCompact] = React.useState(true);
+  const [view, setView] = useViewPref("purchases");
   const [onlyMine, setOnlyMine] = React.useState(false);
 
   const rooms = Array.from(new Set(purchases.map((p) => p.room).filter(Boolean))) as string[];
@@ -147,18 +148,25 @@ export function PurchasesGrid({
           <span className="text-sm text-muted-foreground">{filtered.length} items</span>
           <div className="flex items-center rounded-lg border p-0.5">
             <button
-              onClick={() => setCompact(false)}
+              onClick={() => setView("detailed")}
               aria-label="Card view"
-              className={cn("rounded-md p-1.5 text-muted-foreground", !compact && "bg-accent text-foreground")}
+              className={cn("rounded-md p-1.5 text-muted-foreground", view === "detailed" && "bg-accent text-foreground")}
             >
               <LayoutGrid className="h-4 w-4" />
             </button>
             <button
-              onClick={() => setCompact(true)}
+              onClick={() => setView("compact")}
               aria-label="Compact list"
-              className={cn("rounded-md p-1.5 text-muted-foreground", compact && "bg-accent text-foreground")}
+              className={cn("rounded-md p-1.5 text-muted-foreground", view === "compact" && "bg-accent text-foreground")}
             >
               <Rows3 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setView("table")}
+              aria-label="Table view"
+              className={cn("rounded-md p-1.5 text-muted-foreground", view === "table" && "bg-accent text-foreground")}
+            >
+              <Table2 className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -166,7 +174,7 @@ export function PurchasesGrid({
 
       {filtered.length === 0 ? (
         <EmptyState icon={ShoppingBag} title="Nothing here" description="No items match this filter yet." />
-      ) : compact ? (
+      ) : view === "compact" ? (
         <Card>
           <CardContent className="divide-y p-0">
             {filtered.map((purchase) => (
@@ -174,6 +182,8 @@ export function PurchasesGrid({
             ))}
           </CardContent>
         </Card>
+      ) : view === "table" ? (
+        <PurchaseTable purchases={filtered} memberMap={memberMap} />
       ) : (
         <div className="grid items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((purchase, i) => (
@@ -183,6 +193,56 @@ export function PurchasesGrid({
         </div>
       )}
     </div>
+  );
+}
+
+function PurchaseTable({
+  purchases,
+  memberMap,
+}: {
+  purchases: PurchaseWithOptions[];
+  memberMap: MemberMap;
+}) {
+  return (
+    <Card>
+      <CardContent className="overflow-x-auto p-0">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b text-left text-xs text-muted-foreground">
+              <th className="px-3 py-2 font-medium">Item</th>
+              <th className="px-3 py-2 font-medium">Room</th>
+              <th className="px-3 py-2 font-medium">Category</th>
+              <th className="px-3 py-2 font-medium">Rating</th>
+              <th className="px-3 py-2 text-right font-medium">Price</th>
+              <th className="px-3 py-2 font-medium">Status</th>
+              <th className="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {purchases.map((p) => (
+              <tr key={p.id} className={cn("border-b border-l-4 last:border-b-0", PRIORITY_ACCENT[p.priority])}>
+                <td className="px-3 py-2">
+                  <PurchaseDetailDialog purchase={p} memberMap={memberMap}>
+                    <CardTrigger className="rounded font-medium hover:underline">{p.name}</CardTrigger>
+                  </PurchaseDetailDialog>
+                  {p.options.length ? <span className="ml-1 text-xs text-muted-foreground">({p.options.length})</span> : null}
+                </td>
+                <td className="px-3 py-2 text-muted-foreground">{p.room ?? "—"}</td>
+                <td className="px-3 py-2 text-muted-foreground">{p.category}</td>
+                <td className="px-3 py-2">
+                  <StarRating value={p.options.length ? effectiveRating(p) : p.rating} size="sm" />
+                </td>
+                <td className="px-3 py-2 text-right font-medium">{formatCurrency(effectivePrice(p))}</td>
+                <td className="px-3 py-2 text-muted-foreground">{p.status}</td>
+                <td className="px-3 py-2 text-right">
+                  <ConfirmDelete itemLabel="item" action={deletePurchase.bind(null, p.id)} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
   );
 }
 

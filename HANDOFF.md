@@ -139,11 +139,18 @@ User submitted a third list of ~19 requests. Working through in batches.
   nextBill / monthlyBills / savings / readyToBuy / wishlist / openTasks /
   activeProjects / maintenanceDue / dueThisWeek.
 
+### Batch V (done, no DB) — table views + default (#16)
+- `hooks/use-view-prefs.ts`: per-device `useViewPref(section)` (purchases/tasks);
+  the stored value is also the default, shared by the page toggle and Settings.
+- Purchases grid: third **Table** view (sortable-feel table: item/room/category/
+  rating/price/status/delete) alongside Detailed + Compact.
+- Tasks: **List**/**Table** toggle; table lists outstanding then done with a tick,
+  project, assignee, due.
+- Settings → **Default views** card to set each section's default.
+
 STILL TODO:
 - Comments on the remaining detail dialogs (bills, savings, maintenance, tasks).
-- Table views + default in settings (#16); bill payments auto-log/mark-paid (#2);
-  calendar email sync. (Tasks "recently completed" #14 already covered by the
-  existing Done card + archived section.)
+- Bill payments auto-log/mark-paid (#2); calendar email sync (external).
 
 Still TODO from third list: #2 payments auto-log/mark-paid/detail,
 #7 editable rooms, #12 options-at-create-time (card now collapses
