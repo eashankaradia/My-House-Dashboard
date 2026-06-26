@@ -17,12 +17,12 @@ function toRow(values: PurchaseInput) {
     store: values.store ?? null,
     price: values.price,
     category: values.category,
-    sub_category: values.sub_category ?? null,
     room: values.room ?? null,
     priority: values.priority,
     status: values.status,
     non_negotiables: values.non_negotiables ?? null,
     notes: values.notes ?? null,
+    rating: values.rating ?? null,
     purchased_at: values.status === "Purchased" ? new Date().toISOString().slice(0, 10) : null,
   };
 }
@@ -135,6 +135,7 @@ export async function addOption(purchaseId: string, raw: PurchaseOptionInput): P
     start_price: parsed.data.price,
     image_url: parsed.data.image_url ?? null,
     notes: parsed.data.notes ?? null,
+    rating: parsed.data.rating ?? null,
   });
   if (error) return { error: error.message };
   revalidatePath("/purchases");
@@ -155,7 +156,35 @@ export async function updateOption(id: string, raw: PurchaseOptionInput): Promis
       price: parsed.data.price,
       image_url: parsed.data.image_url ?? null,
       notes: parsed.data.notes ?? null,
+      rating: parsed.data.rating ?? null,
     })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/purchases");
+  return {};
+}
+
+/** Quick-set the out-of-5 star rating on a purchase item (0 = unrated). */
+export async function setPurchaseRating(id: string, rating: number): Promise<ActionResult> {
+  const value = Math.max(0, Math.min(5, Math.round(rating)));
+  const { supabase } = await getActionContext();
+  const { error } = await supabase
+    .from("purchases")
+    .update({ rating: value === 0 ? null : value })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/purchases");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+/** Quick-set the out-of-5 star rating on a purchase option (0 = unrated). */
+export async function setOptionRating(id: string, rating: number): Promise<ActionResult> {
+  const value = Math.max(0, Math.min(5, Math.round(rating)));
+  const { supabase } = await getActionContext();
+  const { error } = await supabase
+    .from("purchase_options")
+    .update({ rating: value === 0 ? null : value })
     .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/purchases");

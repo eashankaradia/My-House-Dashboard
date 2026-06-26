@@ -16,6 +16,7 @@ import { AddedBy } from "@/components/shared/added-by";
 import { ShareButton } from "@/components/shared/share-button";
 import { PointOutButton } from "@/components/shared/point-out-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
+import { StarRating } from "@/components/shared/star-rating";
 import { priorityVariant } from "@/lib/ui";
 import { formatCurrency } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -25,7 +26,7 @@ import { OptionForm } from "./option-form";
 import { OptionRow } from "./option-row";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { LinkedItems } from "@/app/(app)/links/linked-items";
-import { deletePurchase } from "./actions";
+import { deletePurchase, setPurchaseRating } from "./actions";
 
 export function PurchaseDetailDialog({
   purchase,
@@ -53,10 +54,13 @@ export function PurchaseDetailDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Your rating</span>
+            <StarRating value={purchase.rating} onRate={(n) => setPurchaseRating(purchase.id, n)} size="sm" />
+          </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Detail label="Status" value={purchase.status} />
             <Detail label="Category" value={purchase.category} />
-            {purchase.sub_category ? <Detail label="Sub-category" value={purchase.sub_category} /> : null}
             {purchase.room ? <Detail label="Room" value={purchase.room} /> : null}
             {options.length === 0 ? <Detail label="Price" value={formatCurrency(purchase.price)} /> : null}
             {purchase.store ? <Detail label="Store" value={purchase.store} /> : null}
