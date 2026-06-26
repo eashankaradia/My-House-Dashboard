@@ -132,10 +132,18 @@ User submitted a third list of ~19 requests. Working through in batches.
   on mount, defaults while loading) — replaced the static `ROOMS` import there.
 - Settings → **Rooms** card (`rooms-settings.tsx`) to add/remove rooms.
 
+### Batch U (done, no DB) — glance-stat popups (#17)
+- `GlanceValue` gained optional `items: { label, sub?, href }[]`.
+- `GlanceStats` wraps any stat that has items in a Dialog — tapping the stat
+  pops up the related records (each links through). Dashboard populates items for
+  nextBill / monthlyBills / savings / readyToBuy / wishlist / openTasks /
+  activeProjects / maintenanceDue / dueThisWeek.
+
 STILL TODO:
 - Comments on the remaining detail dialogs (bills, savings, maintenance, tasks).
-- Tasks "recently completed" (#14); table views + default (#16); glance-stat
-  click popup (#17); bill payments auto-log/mark-paid (#2); calendar email sync.
+- Table views + default in settings (#16); bill payments auto-log/mark-paid (#2);
+  calendar email sync. (Tasks "recently completed" #14 already covered by the
+  existing Done card + archived section.)
 
 Still TODO from third list: #2 payments auto-log/mark-paid/detail,
 #7 editable rooms, #12 options-at-create-time (card now collapses
