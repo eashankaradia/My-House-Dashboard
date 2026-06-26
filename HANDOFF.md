@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch G: glance-stat customisation).
+> after **every** change. Last updated: 2026-06-25 (Claude — new-list batch H: bottom tab bar).
 
 ## 0. Latest session (Claude, after Codex continuation)
 
@@ -83,9 +83,16 @@ Working through it in build+lint-verified batches.
   `glanceValues` for all catalog ids and renders `<GlanceStats>` in the
   `finance` widget. Settings has a new **Dashboard glance stats** card.
 
-### Batch H+ — STILL TODO from the second list (pick up here)
-- **Bottom tab bar**: centre the **+ (FAB)**; add an **Inspiration** tab; let
-  users choose **which bottom tabs show and their order** in Settings.
+### Batch H (done, no DB): bottom tab bar with centre +
+- Extracted the add-menu pills to `components/layout/add-menu.tsx` (`AddPills`,
+  `Pill`). `FloatingAdd` is now **desktop-only** (`hidden lg:flex`) and uses it.
+- `bottom-nav.tsx` rewritten: configurable tabs (from `use-bottom-tabs.ts`,
+  default dashboard/bills/projects/inspiration — Inspiration tab added) split
+  around a **centred + button** that opens the AddPills sheet on mobile.
+- Settings: new **Bottom bar tabs** card (`settings/bottom-tabs.tsx`) to pick up
+  to 4 tabs and order them.
+
+### Batch I+ — STILL TODO from the second list (pick up here)
 - **Projects board**: an **expandable full-page, mobile-optimised** board view.
 - **Analytics**: rebuild around actionable insight — monthly payment **trends**
   and **expected vs actual** (Codex's `bill_payments`).
