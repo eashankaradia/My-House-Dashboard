@@ -15,12 +15,17 @@ export const metadata = { title: "Inspiration" };
 
 export default async function InspirationPage() {
   const supabase = await createClient();
-  const [{ data: inspoData }, { data: collectionData }] = await Promise.all([
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const [{ data: inspoData }, { data: collectionData }, { data: readData }] = await Promise.all([
     supabase.from("inspiration").select("*").order("created_at", { ascending: false }),
     supabase.from("collections").select("*").order("name", { ascending: true }),
+    supabase.from("comment_reads").select("entity_id").eq("entity_type", "inspiration").eq("user_id", user?.id ?? ""),
   ]);
   const items = (inspoData ?? []) as Inspiration[];
   const collections = (collectionData ?? []) as Collection[];
+  const seenIds = ((readData ?? []) as { entity_id: string }[]).map((r) => r.entity_id);
 
   const countByCollection = new Map<string, number>();
   for (const i of items) {
@@ -67,7 +72,7 @@ export default async function InspirationPage() {
           <InspirationForm collections={collections} />
         </EmptyState>
       ) : (
-        <InspirationHub items={items} collections={collections} />
+        <InspirationHub items={items} collections={collections} seenIds={seenIds} />
       )}
       <SectionActivityLog entityTypes={["inspiration", "collections"]} />
     </div>

@@ -16,6 +16,7 @@ import { AddedBy } from "@/components/shared/added-by";
 import { ShareButton } from "@/components/shared/share-button";
 import { PointOutButton } from "@/components/shared/point-out-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
+import { ItemComments } from "@/components/shared/item-comments";
 import { StarRating } from "@/components/shared/star-rating";
 import { priorityVariant } from "@/lib/ui";
 import { formatCurrency } from "@/lib/utils";
@@ -124,6 +125,10 @@ export function PurchaseDetailDialog({
                 }
               />
             </div>
+          </div>
+
+          <div className="border-t pt-3">
+            <ItemComments entityType="purchases" entityId={purchase.id} ownerId={purchase.user_id} href={`/purchases?item=${purchase.id}`} label={purchase.name} />
           </div>
 
           <div className="border-t pt-3">

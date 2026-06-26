@@ -15,11 +15,13 @@ import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { ShareButton } from "@/components/shared/share-button";
 import { PointOutButton } from "@/components/shared/point-out-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
+import { ItemComments } from "@/components/shared/item-comments";
 import { useToast } from "@/hooks/use-toast";
 import { priorityVariant } from "@/lib/ui";
 import type { Collection, Inspiration } from "@/lib/database.types";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { LinkedItems } from "@/app/(app)/links/linked-items";
+import { markThreadRead } from "@/app/(app)/comments/actions";
 import { InspirationForm } from "./inspiration-form";
 import { convertInspiration, deleteInspiration } from "./actions";
 import { SocialEmbed } from "./social-embed";
@@ -36,6 +38,11 @@ export function InspirationDetailDialog({
   const { open, onOpenChange } = useOpenFromUrl(item.id);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
+
+  // Opening an idea marks it as seen (sinks it to the bottom of the board).
+  React.useEffect(() => {
+    if (open) markThreadRead("inspiration", item.id);
+  }, [open, item.id]);
 
   function convert(target: "project" | "purchase") {
     startTransition(async () => {
@@ -86,6 +93,10 @@ export function InspirationDetailDialog({
             </a>
           ) : null}
           <ItemTimestamps createdAt={item.created_at} updatedAt={item.updated_at} />
+
+          <div className="border-t pt-3">
+            <ItemComments entityType="inspiration" entityId={item.id} ownerId={item.user_id} href={`/inspiration?item=${item.id}`} label={item.title} />
+          </div>
 
           <div className="border-t pt-3">
             <LinkedItems type="inspiration" id={item.id} />
