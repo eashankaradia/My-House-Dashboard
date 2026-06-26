@@ -12,6 +12,7 @@ import type { Bill, BillPayment, PaymentAccount } from "@/lib/database.types";
 import { BillForm } from "./bill-form";
 import { BillsList } from "./bills-list";
 import { SectionActivityLog } from "@/components/shared/section-activity-log";
+import { BottomAdmin } from "@/components/shared/bottom-admin";
 import { PaymentAccounts } from "./payment-accounts";
 
 export const metadata = { title: "Bills & Expenses" };
@@ -125,8 +126,10 @@ export default async function BillsPage() {
             </Card>
           </div>
 
-          <PaymentAccounts accounts={accounts} memberMap={memberMap} />
           <BillsList bills={bills} accounts={accounts} payments={payments} memberMap={memberMap} />
+          <BottomAdmin label="Manage payment accounts">
+            <PaymentAccounts accounts={accounts} memberMap={memberMap} />
+          </BottomAdmin>
         </>
       )}
       <SectionActivityLog entityTypes={["bills", "payment_accounts", "bill_payments"]} />

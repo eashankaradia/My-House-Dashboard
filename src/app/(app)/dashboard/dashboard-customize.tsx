@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 /** The widgets a user can show/hide on their dashboard. */
 export const DASHBOARD_WIDGETS: { id: string; label: string }[] = [
   { id: "finance", label: "Glance stats" },
+  { id: "week", label: "Week ahead" },
   { id: "reminders", label: "Renewal reminders" },
   { id: "projects", label: "Open projects & tasks" },
   { id: "maintenance", label: "Upcoming maintenance" },
