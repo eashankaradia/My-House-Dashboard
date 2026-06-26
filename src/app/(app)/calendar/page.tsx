@@ -1,3 +1,4 @@
+import { Download } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import type {
@@ -107,8 +108,15 @@ export default async function CalendarPage() {
       <PageHeader
         title="Calendar"
         description="Every key date across your home in one view."
-        info="Shows your own events plus bill due dates, maintenance, project targets, document renewals, your mortgage fixed-term end and savings targets. Click a day to see details or add an event."
-      />
+        info="Shows your own events plus bill due dates, maintenance, project targets, document renewals, your mortgage fixed-term end and savings targets. Click a day to see details or add an event. Use Export to download an .ics file you can import into Gmail, Apple Calendar or Outlook."
+      >
+        <a
+          href="/api/calendar"
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors hover:bg-accent"
+        >
+          <Download className="h-4 w-4" /> Export to email/calendar
+        </a>
+      </PageHeader>
       <CalendarView events={events} onAdd={createCalendarEvent} onDelete={deleteCalendarEvent} />
     </div>
   );

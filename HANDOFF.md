@@ -161,10 +161,18 @@ User submitted a third list of ~19 requests. Working through in batches.
 - Analytics now counts only `is_paid` payments so auto-generated due rows don't
   skew the "actually paid" figures.
 
-STILL TODO (lower priority / optional):
+### Batch X (done, no DB) — calendar export (#calendar email sync)
+- `src/app/api/calendar/route.ts`: authenticated `.ics` export (VEVENTs for
+  events incl. RRULE, bills with RRULE by frequency, maintenance, project/savings
+  targets, document expiries, mortgage term end, open tasks). Download via
+  "Export to email/calendar" on the Calendar header (`/api/calendar`).
+- A LIVE subscribe feed (auto-updating URL in Gmail/Apple Calendar) was NOT built:
+  it needs a public token-protected endpoint + a Supabase service-role key (not
+  present). Flagged to the user for a decision.
+
+STILL TODO (optional polish):
 - Comments on the remaining detail dialogs (savings, maintenance, tasks, docs).
-- Calendar email sync — needs an external integration (ICS feed / Google OAuth);
-  flagged for the user as out-of-scope for the sandbox.
+- Optional: live calendar subscribe feed (needs service-role key + token table).
 
 Still TODO from third list: #2 payments auto-log/mark-paid/detail,
 #7 editable rooms, #12 options-at-create-time (card now collapses
