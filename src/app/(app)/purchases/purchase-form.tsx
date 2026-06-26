@@ -58,7 +58,7 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
       price: purchase?.price ?? 0,
       category: purchase?.category ?? defaults?.category ?? "Furniture",
       room: purchase?.room ?? defaults?.room ?? "",
-      priority: purchase?.priority ?? defaults?.priority ?? "Medium",
+      priority: purchase?.priority ?? defaults?.priority ?? "Low",
       status: purchase?.status ?? "Considering",
       non_negotiables: purchase?.non_negotiables ?? "",
       notes: purchase?.notes ?? "",

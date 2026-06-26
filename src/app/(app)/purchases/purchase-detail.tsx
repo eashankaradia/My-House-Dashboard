@@ -54,10 +54,12 @@ export function PurchaseDetailDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">Your rating</span>
-            <StarRating value={purchase.rating} onRate={(n) => setPurchaseRating(purchase.id, n)} size="sm" />
-          </div>
+          {options.length === 0 ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">Your rating</span>
+              <StarRating value={purchase.rating} onRate={(n) => setPurchaseRating(purchase.id, n)} size="sm" />
+            </div>
+          ) : null}
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Detail label="Status" value={purchase.status} />
             <Detail label="Category" value={purchase.category} />

@@ -46,6 +46,12 @@ function effectivePrice(p: PurchaseWithOptions): number {
   return Number(p.price);
 }
 
+/** Effective rating: items rate themselves; items with options use their best option. */
+function effectiveRating(p: PurchaseWithOptions): number {
+  if (p.options.length) return Math.max(0, ...p.options.map((o) => o.rating ?? 0));
+  return p.rating ?? 0;
+}
+
 export function PurchasesGrid({
   purchases,
   memberMap,
@@ -70,11 +76,11 @@ export function PurchasesGrid({
     .filter((p) => (!onlyMine ? true : p.user_id === currentUserId))
     .filter((p) => (status === "All" ? true : p.status === status))
     .filter((p) => (room === "All" ? true : p.room === room))
-    .filter((p) => (minRating === 0 ? true : (p.rating ?? 0) >= minRating))
+    .filter((p) => (minRating === 0 ? true : effectiveRating(p) >= minRating))
     .sort((a, b) => {
       switch (sort) {
         case "rating":
-          return (b.rating ?? 0) - (a.rating ?? 0) || rank[a.priority] - rank[b.priority];
+          return effectiveRating(b) - effectiveRating(a) || rank[a.priority] - rank[b.priority];
         case "price":
           return effectivePrice(b) - effectivePrice(a);
         case "room":
@@ -216,7 +222,7 @@ function CompactRow({
         <CardTrigger className="min-w-0 flex-1 rounded-md">
           <div className="flex items-center gap-2">
             <span className="truncate font-medium">{purchase.name}</span>
-            <StarRating value={purchase.rating} size="sm" />
+            {opts.length === 0 ? <StarRating value={purchase.rating} size="sm" /> : null}
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="truncate">
@@ -276,7 +282,9 @@ function PurchaseCard({
               </p>
             </CardTrigger>
           </PurchaseDetailDialog>
-          <StarRating value={purchase.rating} onRate={(n) => setPurchaseRating(purchase.id, n)} size="sm" />
+          {options.length === 0 ? (
+            <StarRating value={purchase.rating} onRate={(n) => setPurchaseRating(purchase.id, n)} size="sm" />
+          ) : null}
         </div>
 
         <div className="flex items-baseline justify-between gap-2">

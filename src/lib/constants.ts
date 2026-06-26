@@ -119,3 +119,13 @@ export const FREQUENCY_LABELS: Record<string, string> = {
   annually: "Annually",
   "one-off": "One-off",
 };
+
+/** Short suffix appended to a price, e.g. "£30/mo". Empty for one-off. */
+export const FREQUENCY_SUFFIX: Record<string, string> = {
+  weekly: "/wk",
+  monthly: "/mo",
+  quarterly: "/qtr",
+  biannually: "/6mo",
+  annually: "/yr",
+  "one-off": "",
+};

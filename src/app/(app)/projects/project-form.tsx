@@ -53,7 +53,7 @@ export function ProjectForm({ project, trigger, defaults }: Props) {
       description: project?.description ?? defaults?.description ?? "",
       estimated_cost: project?.estimated_cost ?? 0,
       actual_cost: project?.actual_cost ?? 0,
-      priority: project?.priority ?? defaults?.priority ?? "Medium",
+      priority: project?.priority ?? defaults?.priority ?? "Low",
       status: project?.status ?? "Idea",
       target_completion_date: project?.target_completion_date ?? "",
       notes: project?.notes ?? "",
