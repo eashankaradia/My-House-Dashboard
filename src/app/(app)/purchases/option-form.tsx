@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
 import { ImageUpload } from "@/components/shared/image-upload";
+import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
 import { purchaseOptionSchema, type PurchaseOptionInput } from "@/lib/schemas";
 import type { PurchaseOption } from "@/lib/database.types";
@@ -53,6 +54,7 @@ export function OptionForm({ purchaseId, option, trigger }: Props) {
       price: option?.price ?? 0,
       image_url: option?.image_url ?? "",
       notes: option?.notes ?? "",
+      rating: option?.rating ?? 0,
     },
   });
 
@@ -119,6 +121,12 @@ export function OptionForm({ purchaseId, option, trigger }: Props) {
           <Field label="Photo" hint="Upload a photo or it's filled from the link">
             <ImageUpload value={watch("image_url")} onChange={(url) => setValue("image_url", url ?? "")} />
             <input type="hidden" {...register("image_url")} />
+          </Field>
+          <Field label="Your rating" hint="How much you rate this option, out of 5.">
+            <div className="flex h-9 items-center">
+              <StarRating value={watch("rating")} onRate={async (n) => setValue("rating", n)} />
+            </div>
+            <input type="hidden" {...register("rating")} />
           </Field>
           <Field label="Notes" htmlFor="o-notes">
             <Textarea id="o-notes" rows={2} placeholder="Colour, size, delivery time…" {...register("notes")} />

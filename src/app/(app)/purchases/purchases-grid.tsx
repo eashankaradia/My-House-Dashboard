@@ -1,18 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { LayoutGrid, Pencil, Plus, Rows3, ShoppingBag } from "lucide-react";
+import { ChevronDown, LayoutGrid, Pencil, Plus, Rows3, ShoppingBag } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
+import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
 import { PURCHASE_STATUSES } from "@/lib/constants";
-import { priorityVariant } from "@/lib/ui";
+import { PRIORITY_ACCENT } from "@/lib/ui";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { PurchaseOption, PurchaseWithOptions } from "@/lib/database.types";
@@ -20,18 +20,17 @@ import { PurchaseForm } from "./purchase-form";
 import { OptionForm } from "./option-form";
 import { OptionRow } from "./option-row";
 import { PurchaseDetailDialog } from "./purchase-detail";
-import { StarButton } from "./star-button";
-import { deletePurchase, updatePurchaseStatus } from "./actions";
+import { deletePurchase, setPurchaseRating, updatePurchaseStatus } from "./actions";
 
+// Kept for backwards compatibility with the page's import; stars are gone.
 export type StarInfo = { mine: boolean; names: string[] };
-const noStar: StarInfo = { mine: false, names: [] };
 
 const SORTS = {
+  rating: "Rating (high → low)",
   priority: "Priority",
   price: "Price (high → low)",
   room: "Room",
   category: "Category",
-  sub_category: "Sub-category",
 } as const;
 
 function sortedOptions(p: PurchaseWithOptions): PurchaseOption[] {
@@ -50,17 +49,17 @@ function effectivePrice(p: PurchaseWithOptions): number {
 export function PurchasesGrid({
   purchases,
   memberMap,
-  starInfo,
   currentUserId,
 }: {
   purchases: PurchaseWithOptions[];
   memberMap: MemberMap;
-  starInfo: Record<string, StarInfo>;
+  starInfo?: Record<string, StarInfo>;
   currentUserId?: string;
 }) {
   const [status, setStatus] = React.useState<string>("All");
   const [room, setRoom] = React.useState<string>("All");
-  const [sort, setSort] = React.useState<keyof typeof SORTS>("priority");
+  const [minRating, setMinRating] = React.useState<number>(0);
+  const [sort, setSort] = React.useState<keyof typeof SORTS>("rating");
   const [compact, setCompact] = React.useState(true);
   const [onlyMine, setOnlyMine] = React.useState(false);
 
@@ -71,16 +70,17 @@ export function PurchasesGrid({
     .filter((p) => (!onlyMine ? true : p.user_id === currentUserId))
     .filter((p) => (status === "All" ? true : p.status === status))
     .filter((p) => (room === "All" ? true : p.room === room))
+    .filter((p) => (minRating === 0 ? true : (p.rating ?? 0) >= minRating))
     .sort((a, b) => {
       switch (sort) {
+        case "rating":
+          return (b.rating ?? 0) - (a.rating ?? 0) || rank[a.priority] - rank[b.priority];
         case "price":
           return effectivePrice(b) - effectivePrice(a);
         case "room":
           return (a.room ?? "~").localeCompare(b.room ?? "~");
         case "category":
           return a.category.localeCompare(b.category);
-        case "sub_category":
-          return (a.sub_category ?? "~").localeCompare(b.sub_category ?? "~");
         default:
           return rank[a.priority] - rank[b.priority];
       }
@@ -115,6 +115,16 @@ export function PurchasesGrid({
           <option value="All">All rooms</option>
           {rooms.map((r) => (
             <option key={r} value={r}>{r}</option>
+          ))}
+        </NativeSelect>
+        <NativeSelect
+          value={String(minRating)}
+          onChange={(e) => setMinRating(Number(e.target.value))}
+          className="h-9 w-auto text-sm"
+        >
+          <option value="0">Any rating</option>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <option key={n} value={n}>{n}★ and up</option>
           ))}
         </NativeSelect>
         <NativeSelect
@@ -154,14 +164,15 @@ export function PurchasesGrid({
         <Card>
           <CardContent className="divide-y p-0">
             {filtered.map((purchase) => (
-              <CompactRow key={purchase.id} purchase={purchase} memberMap={memberMap} star={starInfo[purchase.id] ?? noStar} />
+              <CompactRow key={purchase.id} purchase={purchase} memberMap={memberMap} />
             ))}
           </CardContent>
         </Card>
       ) : (
         <div className="grid items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((purchase) => (
-            <PurchaseCard key={purchase.id} purchase={purchase} memberMap={memberMap} star={starInfo[purchase.id] ?? noStar} />
+          {filtered.map((purchase, i) => (
+            // Only the top-rated item starts expanded; the rest are pre-collapsed.
+            <PurchaseCard key={purchase.id} purchase={purchase} memberMap={memberMap} defaultOpen={i === 0} />
           ))}
         </div>
       )}
@@ -194,25 +205,22 @@ function StatusSelect({ purchase }: { purchase: PurchaseWithOptions }) {
 function CompactRow({
   purchase,
   memberMap,
-  star,
 }: {
   purchase: PurchaseWithOptions;
   memberMap: MemberMap;
-  star: StarInfo;
 }) {
   const opts = sortedOptions(purchase);
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 text-sm">
-      <StarButton purchaseId={purchase.id} mine={star.mine} names={star.names} />
+    <div className={cn("flex items-center gap-3 border-l-4 px-4 py-2.5 text-sm", PRIORITY_ACCENT[purchase.priority])}>
       <PurchaseDetailDialog purchase={purchase} memberMap={memberMap}>
         <CardTrigger className="min-w-0 flex-1 rounded-md">
           <div className="flex items-center gap-2">
             <span className="truncate font-medium">{purchase.name}</span>
-            <Badge variant={priorityVariant(purchase.priority)}>{purchase.priority}</Badge>
+            <StarRating value={purchase.rating} size="sm" />
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="truncate">
-              {[purchase.sub_category || purchase.category, purchase.room].filter(Boolean).join(" · ")}
+              {[purchase.category, purchase.room].filter(Boolean).join(" · ")}
               {opts.length ? ` · ${opts.length} option${opts.length === 1 ? "" : "s"}` : ""}
             </span>
             <AddedBy name={memberMap[purchase.user_id]} />
@@ -242,12 +250,13 @@ function CompactRow({
 function PurchaseCard({
   purchase,
   memberMap,
-  star,
+  defaultOpen = false,
 }: {
   purchase: PurchaseWithOptions;
   memberMap: MemberMap;
-  star: StarInfo;
+  defaultOpen?: boolean;
 }) {
+  const [open, setOpen] = React.useState(defaultOpen);
   const options = sortedOptions(purchase);
   const prices = options.map((o) => Number(o.price));
   const min = prices.length ? Math.min(...prices) : 0;
@@ -255,22 +264,19 @@ function PurchaseCard({
   const chosen = options.find((o) => o.is_chosen);
 
   return (
-    <Card className="flex flex-col">
+    <Card className={cn("flex flex-col border-l-4", PRIORITY_ACCENT[purchase.priority])}>
       <CardContent className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex items-start justify-between gap-2">
           <PurchaseDetailDialog purchase={purchase} memberMap={memberMap}>
             <CardTrigger className="min-w-0 flex-1 rounded-md">
               <span className="truncate font-medium hover:underline">{purchase.name}</span>
               <p className="text-xs text-muted-foreground">
-                {purchase.sub_category ? `${purchase.category} · ${purchase.sub_category}` : purchase.category}
+                {purchase.category}
                 {purchase.room ? ` · ${purchase.room}` : ""}
               </p>
             </CardTrigger>
           </PurchaseDetailDialog>
-          <div className="flex shrink-0 items-center gap-1">
-            <StarButton purchaseId={purchase.id} mine={star.mine} names={star.names} />
-            <Badge variant={priorityVariant(purchase.priority)}>{purchase.priority}</Badge>
-          </div>
+          <StarRating value={purchase.rating} onRate={(n) => setPurchaseRating(purchase.id, n)} size="sm" />
         </div>
 
         <div className="flex items-baseline justify-between gap-2">
@@ -285,32 +291,42 @@ function PurchaseCard({
               {min === max ? formatCurrency(min) : `${formatCurrency(min)} – ${formatCurrency(max)}`}
             </span>
           )}
-          <span className="text-xs text-muted-foreground">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          >
             {options.length} option{options.length === 1 ? "" : "s"}
-          </span>
+            <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
+          </button>
         </div>
 
-        {purchase.notes ? <p className="line-clamp-2 text-sm text-muted-foreground">{purchase.notes}</p> : null}
+        {open ? (
+          <>
+            {purchase.notes ? <p className="line-clamp-2 text-sm text-muted-foreground">{purchase.notes}</p> : null}
 
-        <div className="space-y-2">
-          {options.map((opt, i) => (
-            <OptionRow
-              key={opt.id}
-              purchaseId={purchase.id}
-              option={opt}
-              isFirst={i === 0}
-              isLast={i === options.length - 1}
-            />
-          ))}
-          <OptionForm
-            purchaseId={purchase.id}
-            trigger={
-              <Button variant="outline" size="sm" className="w-full gap-1 border-dashed">
-                <Plus className="h-4 w-4" /> Add option
-              </Button>
-            }
-          />
-        </div>
+            <div className="space-y-2">
+              {options.map((opt, i) => (
+                <OptionRow
+                  key={opt.id}
+                  purchaseId={purchase.id}
+                  option={opt}
+                  isFirst={i === 0}
+                  isLast={i === options.length - 1}
+                />
+              ))}
+              <OptionForm
+                purchaseId={purchase.id}
+                trigger={
+                  <Button variant="outline" size="sm" className="w-full gap-1 border-dashed">
+                    <Plus className="h-4 w-4" /> Add option
+                  </Button>
+                }
+              />
+            </div>
+          </>
+        ) : null}
 
         <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
           <AddedBy name={memberMap[purchase.user_id]} />
@@ -334,4 +350,3 @@ function PurchaseCard({
     </Card>
   );
 }
-

@@ -18,12 +18,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
+import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
 import {
   PRIORITIES,
   PURCHASE_CATEGORIES,
   PURCHASE_STATUSES,
-  PURCHASE_SUBCATEGORIES,
   ROOMS,
 } from "@/lib/constants";
 import { purchaseSchema, type PurchaseInput } from "@/lib/schemas";
@@ -47,6 +47,7 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<PurchaseInput>({
     resolver: zodResolver(purchaseSchema),
@@ -56,18 +57,14 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
       store: purchase?.store ?? "",
       price: purchase?.price ?? 0,
       category: purchase?.category ?? defaults?.category ?? "Furniture",
-      sub_category: purchase?.sub_category ?? defaults?.sub_category ?? "",
       room: purchase?.room ?? defaults?.room ?? "",
       priority: purchase?.priority ?? defaults?.priority ?? "Medium",
       status: purchase?.status ?? "Considering",
       non_negotiables: purchase?.non_negotiables ?? "",
       notes: purchase?.notes ?? "",
+      rating: purchase?.rating ?? 0,
     },
   });
-
-  // Suggestions update to match the currently-selected category.
-  const selectedCategory = watch("category");
-  const subSuggestions = PURCHASE_SUBCATEGORIES[selectedCategory] ?? [];
 
   // "found" = a specific product (capture its price/link here); "compare" = a
   // type of thing you'll add options to compare later.
@@ -188,29 +185,18 @@ export function PurchaseForm({ purchase, trigger, defaults }: Props) {
             </p>
           )}
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Category" tooltip="The broad type of item. Choosing a category updates the sub-category suggestions below.">
+            <Field label="Category" tooltip="The broad type of item.">
               <NativeSelect {...register("category")}>
                 {PURCHASE_CATEGORIES.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </NativeSelect>
             </Field>
-            <Field
-              label="Sub-category"
-              htmlFor="sub_category"
-              tooltip="A more specific type, e.g. Sofa, Bed or Wardrobe. Pick a suggestion or type your own."
-            >
-              <Input
-                id="sub_category"
-                list="subcategory-options"
-                placeholder={subSuggestions[0] ? `e.g. ${subSuggestions[0]}` : "e.g. Sofa"}
-                {...register("sub_category")}
-              />
-              <datalist id="subcategory-options">
-                {subSuggestions.map((s) => (
-                  <option key={s} value={s} />
-                ))}
-              </datalist>
+            <Field label="Your rating" tooltip="How much you rate this item, out of 5. You can also rate it later from the list.">
+              <div className="flex h-9 items-center">
+                <StarRating value={watch("rating")} onRate={async (n) => setValue("rating", n)} />
+              </div>
+              <input type="hidden" {...register("rating")} />
             </Field>
           </div>
           <Field

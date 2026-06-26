@@ -148,7 +148,7 @@ export default async function SettingsPage() {
           <ExportSettings
             sets={{
               bills: { label: "Bills & expenses", filename: "bills", rows: bills, columns: ["name", "category", "amount", "frequency", "due_date", "end_date", "account_id", "is_fixed", "notes"] },
-              purchases: { label: "Future purchases", filename: "purchases", rows: purchases, columns: ["name", "category", "sub_category", "room", "priority", "status", "price", "non_negotiables", "notes"] },
+              purchases: { label: "Future purchases", filename: "purchases", rows: purchases, columns: ["name", "category", "room", "priority", "status", "price", "rating", "non_negotiables", "notes"] },
               projects: { label: "Projects", filename: "projects", rows: projects, columns: ["name", "category", "status", "priority", "estimated_cost", "actual_cost", "target_completion_date", "notes"] },
               maintenance: { label: "Maintenance", filename: "maintenance", rows: maintenance, columns: ["task", "frequency", "last_completed_date", "next_due_date", "cost", "notes"] },
             }}

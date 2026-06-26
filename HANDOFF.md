@@ -24,11 +24,32 @@ User submitted a third list of ~19 requests. Working through in batches.
   `activity-meta.ts` (Item=sky, Option=violet badge); shown in both
   `activity-list.tsx` and `section-activity-log.tsx`.
 
+### Batch L (done) — Purchases revamp — **needs migration 0016**
+- `0016_purchase_ratings.sql` adds `purchases.rating` + `purchase_options.rating`
+  (smallint, null=unrated). RUN THIS LIVE.
+- New reusable `components/shared/star-rating.tsx` (out-of-5, read-only or
+  interactive `onRate`).
+- **Removed top-level favourite stars** (#8): `star-button.tsx` deleted; page no
+  longer queries `purchase_stars`; `toggleStar` action left in place (unused).
+- **Out-of-5 rating** on items + options (#8/#9): quick-rate stars in the grid
+  cards, compact rows (read-only), detail dialog, option rows, and both forms.
+  Actions `setPurchaseRating` / `setOptionRating`.
+- **Filter + sort by rating** (#8): new "Any rating / N★ and up" filter; default
+  sort is now Rating (high→low); removed the sub-category sort.
+- **Priority → coloured left accent** (#8): `PRIORITY_ACCENT` in `lib/ui.ts`
+  (rose/amber/slate `border-l-*`); applied to cards and compact rows. Badge gone
+  from the row, room back on the line.
+- **Top-rated open, rest pre-collapsed** (#8): card view passes `defaultOpen` to
+  the first (highest-rated) card; others collapse their options (chevron toggle).
+- **Removed sub-categories** (#11): dropped from purchase form, detail, grid
+  sort, export columns, and `PURCHASE_SUBCATEGORIES` deleted from constants.
+  (DB column `sub_category` left in place but unused.)
+
 Still TODO from third list: #2 payments auto-log/mark-paid/detail, #5 calendar
-legend click, #7 editable rooms, #8/#9/#12 purchases revamp, #11 remove
-sub-categories, #13 comments system, #14 tasks recently-completed, #15 change-log
-delete, #16 table views + default, #17 glance-stat click popup, #18 per-user
-colour, #19 documents+notes.
+legend click, #7 editable rooms, #12 options-at-create-time (card now collapses
+options pre-collapsed — partial), #13 comments system, #14 tasks
+recently-completed, #15 change-log delete, #16 table views + default, #17
+glance-stat click popup, #18 per-user colour, #19 documents+notes.
 
 ## 0. Latest session (Claude, after Codex continuation)
 

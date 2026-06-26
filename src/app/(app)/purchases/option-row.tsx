@@ -4,11 +4,12 @@ import * as React from "react";
 import { ChevronDown, ChevronUp, ExternalLink, Pencil, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
+import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import type { PurchaseOption } from "@/lib/database.types";
 import { OptionForm } from "./option-form";
-import { chooseOption, deleteOption, moveOption } from "./actions";
+import { chooseOption, deleteOption, moveOption, setOptionRating } from "./actions";
 
 export function OptionRow({
   purchaseId,
@@ -69,6 +70,7 @@ export function OptionRow({
         <p className="truncate text-xs text-muted-foreground">
           {[option.store, option.notes].filter(Boolean).join(" · ") || " "}
         </p>
+        <StarRating value={option.rating} onRate={(n) => setOptionRating(option.id, n)} size="sm" className="py-0.5" />
         <p className="text-[11px] text-muted-foreground">
           Added {formatDate(option.created_at)} · updated {formatDate(option.updated_at)}
         </p>

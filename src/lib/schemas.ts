@@ -105,18 +105,20 @@ export const projectSchema = z.object({
 });
 export type ProjectInput = z.infer<typeof projectSchema>;
 
+const rating = z.coerce.number().int().min(0).max(5).optional();
+
 export const purchaseSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
   url: optionalString,
   store: optionalString,
   price: money,
   category: z.enum(PURCHASE_CATEGORIES),
-  sub_category: optionalString,
   room: optionalString,
   priority: z.enum(PRIORITIES),
   status: z.enum(PURCHASE_STATUSES),
   non_negotiables: optionalString,
   notes: optionalString,
+  rating,
 });
 export type PurchaseInput = z.infer<typeof purchaseSchema>;
 
@@ -127,6 +129,7 @@ export const purchaseOptionSchema = z.object({
   price: money,
   image_url: optionalString,
   notes: optionalString,
+  rating,
 });
 export type PurchaseOptionInput = z.infer<typeof purchaseOptionSchema>;
 

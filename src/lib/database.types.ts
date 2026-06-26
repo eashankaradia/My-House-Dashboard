@@ -176,6 +176,8 @@ export type Purchase = Timestamps & {
   purchased_at: string | null;
   source_inspiration_id: string | null;
   archived_at: string | null;
+  /** Out-of-5 star rating (null = unrated). */
+  rating: number | null;
 };
 
 export type PurchaseOption = Timestamps & {
@@ -191,6 +193,8 @@ export type PurchaseOption = Timestamps & {
   is_chosen: boolean;
   rank: number;
   start_price: number;
+  /** Out-of-5 star rating (null = unrated). */
+  rating: number | null;
 };
 
 /** A purchase with its compared options attached (used in list views). */

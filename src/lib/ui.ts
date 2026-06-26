@@ -12,6 +12,13 @@ export function priorityVariant(priority: string): BadgeProps["variant"] {
   }
 }
 
+/** Left-border accent colour for a Low/Medium/High priority. */
+export const PRIORITY_ACCENT: Record<string, string> = {
+  High: "border-l-rose-500",
+  Medium: "border-l-amber-500",
+  Low: "border-l-slate-300 dark:border-l-slate-600",
+};
+
 /** Tailwind text/border accent for a project/purchase/inspiration status. */
 export const STATUS_ACCENT: Record<string, string> = {
   Idea: "bg-slate-400",

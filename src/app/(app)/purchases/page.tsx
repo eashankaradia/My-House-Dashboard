@@ -6,9 +6,9 @@ import { StatCard } from "@/components/shared/stat-card";
 import { formatCurrency } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
 import { ArchivedSection } from "@/components/shared/archived-section";
-import type { Purchase, PurchaseOption, PurchaseStar, PurchaseWithOptions } from "@/lib/database.types";
+import type { Purchase, PurchaseOption, PurchaseWithOptions } from "@/lib/database.types";
 import { PurchaseForm } from "./purchase-form";
-import { PurchasesGrid, type StarInfo } from "./purchases-grid";
+import { PurchasesGrid } from "./purchases-grid";
 import { deletePurchase, restorePurchase } from "./actions";
 import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
@@ -27,31 +27,19 @@ export default async function PurchasesPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [{ data: purchaseData }, { data: optionData }, { data: starData }, memberMap] = await Promise.all([
+  const [{ data: purchaseData }, { data: optionData }, memberMap] = await Promise.all([
     supabase.from("purchases").select("*").order("created_at", { ascending: false }),
     supabase.from("purchase_options").select("*").order("rank", { ascending: true }),
-    supabase.from("purchase_stars").select("*"),
     getHouseholdMap(),
   ]);
 
   const options = (optionData ?? []) as PurchaseOption[];
-  const stars = (starData ?? []) as PurchaseStar[];
   const allPurchases: PurchaseWithOptions[] = ((purchaseData ?? []) as Purchase[]).map((p) => ({
     ...p,
     options: options.filter((o) => o.purchase_id === p.id),
   }));
   const purchases = allPurchases.filter((p) => !p.archived_at);
   const archived = allPurchases.filter((p) => p.archived_at);
-
-  // Per-purchase star info: did I star it, and who in the household has.
-  const starInfo: Record<string, StarInfo> = {};
-  for (const p of purchases) {
-    const rows = stars.filter((s) => s.purchase_id === p.id);
-    starInfo[p.id] = {
-      mine: rows.some((s) => s.user_id === user?.id),
-      names: rows.map((s) => memberMap[s.user_id]).filter(Boolean) as string[],
-    };
-  }
 
   const wishlist = purchases.filter((p) => p.status !== "Purchased");
   const purchased = purchases.filter((p) => p.status === "Purchased");
@@ -60,7 +48,7 @@ export default async function PurchasesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Future Purchases" description="A wishlist for everything your home needs." info="Add the thing you want (e.g. a Sofa), then add several Options under it — specific products from different shops with their own prices, links and photos — to compare them side by side. Tap the star to pick your favourite. Use categories, sub-categories and the filter/sort controls to stay organised, and move each item from Considering → Purchased.">
+      <PageHeader title="Future Purchases" description="A wishlist for everything your home needs." info="Add the thing you want (e.g. a Sofa), then add several Options under it — specific products from different shops with their own prices, links and photos — to compare them side by side. Give items and options an out-of-5 star rating, then filter and sort by it. The card view keeps your top-rated item open and the rest collapsed.">
         <PurchaseForm />
       </PageHeader>
 
@@ -81,7 +69,7 @@ export default async function PurchasesPage() {
                 <StatCard label="Ready to buy" value={formatCurrency(readyToBuyValue)} hint={`${readyToBuy.length} item${readyToBuy.length === 1 ? "" : "s"}`} icon={Wallet} />
                 <StatCard label="Purchased" value={String(purchased.length)} hint="items bought" icon={CheckCircle2} accent="muted" />
               </div>
-              <PurchasesGrid purchases={purchases} memberMap={memberMap} starInfo={starInfo} currentUserId={user?.id} />
+              <PurchasesGrid purchases={purchases} memberMap={memberMap} currentUserId={user?.id} />
             </>
           ) : null}
           <ArchivedSection
