@@ -9,6 +9,8 @@ import { FloatingAdd } from "@/components/layout/floating-add";
 import { AutoRefresh } from "@/components/layout/auto-refresh";
 import { UserMenu } from "@/components/layout/user-menu";
 import { GlobalSearch } from "@/components/layout/global-search";
+import { HouseholdColorsProvider } from "@/components/providers/household-colors";
+import { getHouseholdColors } from "@/lib/household";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -28,7 +30,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .eq("recipient_user_id", user.id)
     .is("read_at", null);
 
+  const memberColors = await getHouseholdColors();
+
   return (
+    <HouseholdColorsProvider colors={memberColors}>
     <div className="min-h-screen lg:grid lg:grid-cols-[16rem_1fr]">
       {/* Desktop sidebar */}
       <aside className="hidden border-r bg-card/40 lg:flex lg:flex-col">
@@ -87,5 +92,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <FloatingAdd />
       <AutoRefresh />
     </div>
+    </HouseholdColorsProvider>
   );
 }

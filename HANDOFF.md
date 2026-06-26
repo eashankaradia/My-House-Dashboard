@@ -88,9 +88,22 @@ User submitted a third list of ~19 requests. Working through in batches.
 - Detail dialog shows a "Purchased — by X · paid £Y · View receipt" block.
 - `toRow` only persists these when status is Purchased (cleared otherwise).
 
+### Batch Q (done) — per-user dashboard colour (#18) — **needs migration 0021**
+- `0021_member_color.sql` adds `household_members.color`. RUN THIS LIVE.
+- `MEMBER_COLORS` palette in `constants.ts` (+ `MEMBER_COLOR_TEXT/DOT`).
+- `getHouseholdColors()` (name → colour key) in `household.ts`.
+- `components/providers/household-colors.tsx`: context provider +
+  `useMemberColorClass(name)` hook + `<ColoredName>`. Provider wraps the whole
+  `(app)/layout.tsx` (zero prop-threading — looks colour up by display name).
+- `AddedBy` is now a client component that colours the name from context, so
+  every "added by" label across the app shows the member's colour automatically.
+- Dashboard greeting uses `<ColoredName>`; Settings → Profile has a colour
+  picker (`updateMemberColor` action); the household list shows coloured names.
+
 STILL TODO from fourth/fifth lists:
 - (inspiration) click-in icon that marks read + sinks to bottom; react + comment.
 - Calendar: sync with email.
+- #13 generic comments on every item (unread counts, notify creator).
 
 Still TODO from third list: #2 payments auto-log/mark-paid/detail,
 #7 editable rooms, #12 options-at-create-time (card now collapses

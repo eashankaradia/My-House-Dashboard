@@ -16,3 +16,16 @@ export async function updateDisplayName(name: string): Promise<ActionResult> {
   revalidatePath("/", "layout");
   return {};
 }
+
+/** Set the current user's personal colour (their name shows in it everywhere). */
+export async function updateMemberColor(color: string): Promise<ActionResult> {
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase
+    .from("household_members")
+    .update({ color: color || null })
+    .eq("user_id", user.id);
+  if (error) return { error: error.message };
+  revalidatePath("/settings");
+  revalidatePath("/", "layout");
+  return {};
+}
