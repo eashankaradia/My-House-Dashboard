@@ -1,15 +1,9 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  CalendarClock,
-  PiggyBank,
-  ShoppingBag,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { StatCard } from "@/components/shared/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { priorityVariant } from "@/lib/ui";
-import { daysUntil, formatCurrency, formatDate } from "@/lib/utils";
+import { daysUntil, formatCurrency, formatDate, toAnnual, toMonthly } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
 import type {
   Bill,
@@ -26,6 +20,7 @@ import type {
 import { DashboardWidget, EditDashboardButton } from "./dashboard-customize";
 import { CollapsibleSection } from "./collapsible-section";
 import { WeekAhead } from "./week-ahead";
+import { GlanceStats, type GlanceValue } from "./glance-stats";
 import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
 export const metadata = { title: "Dashboard" };
@@ -118,6 +113,32 @@ export default async function DashboardPage() {
   const readyToBuy = purchases.filter((p) => p.status === "Ready To Buy");
   const readyToBuyValue = readyToBuy.reduce((s, p) => s + Number(p.price), 0);
 
+  // --- Values for every customisable glance stat ---------------------------
+  const monthlyBills = bills.reduce((s, b) => s + toMonthly(b.amount, b.frequency), 0);
+  const annualBills = bills.reduce((s, b) => s + toAnnual(b.amount, b.frequency), 0);
+  const openTaskTotal = allTasks.filter((t) => !t.is_done).length;
+  const activeProjectsCount = projects.filter((p) => p.status !== "Completed").length;
+  const wishlistCount = purchases.filter((p) => p.status !== "Purchased").length;
+  const maintenanceDueCount = maintenance.filter((m) => {
+    const d = daysUntil(m.next_due_date);
+    return d !== null && d <= 30;
+  }).length;
+
+  const glanceValues: Record<string, GlanceValue> = {
+    nextBill: {
+      value: nextBill ? formatDate(nextBill.due_date) : "—",
+      hint: nextBill ? `${nextBill.name} · ${formatCurrency(nextBill.amount)}` : "Nothing scheduled",
+    },
+    monthlyBills: { value: formatCurrency(monthlyBills), hint: `${formatCurrency(annualBills)}/yr` },
+    savingsBalance: { value: formatCurrency(savedTotal), hint: `Target ${formatCurrency(monthlyTarget)}/mo` },
+    readyToBuy: { value: formatCurrency(readyToBuyValue), hint: `${readyToBuy.length} item${readyToBuy.length === 1 ? "" : "s"}` },
+    wishlistItems: { value: String(wishlistCount), hint: "to buy" },
+    openTasks: { value: String(openTaskTotal), hint: "across projects" },
+    activeProjects: { value: String(activeProjectsCount), hint: "in progress" },
+    maintenanceDue: { value: String(maintenanceDueCount), hint: "next 30 days" },
+    dueThisWeek: { value: String(weekDays.reduce((s, d) => s + d.count, 0)), hint: "items in 7 days" },
+  };
+
   // --- Open projects (one line each) + the tasks due soonest ----------------
   const openProjects = projects.filter((p) => p.status !== "Completed");
   const openTaskCount = (projectId: string) =>
@@ -176,23 +197,9 @@ export default async function DashboardPage() {
         <EditDashboardButton />
       </div>
 
-      {/* Glance stats */}
+      {/* Glance stats (user-customisable in Settings) */}
       <DashboardWidget id="finance">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard
-            label="Next bill due"
-            value={nextBill ? formatDate(nextBill.due_date) : "—"}
-            hint={nextBill ? `${nextBill.name} · ${formatCurrency(nextBill.amount)}` : "Nothing scheduled"}
-            icon={CalendarClock}
-          />
-          <StatCard label="Savings balance" value={formatCurrency(savedTotal)} hint={`Target ${formatCurrency(monthlyTarget)}/mo`} icon={PiggyBank} accent="muted" />
-          <StatCard
-            label="Ready to buy"
-            value={formatCurrency(readyToBuyValue)}
-            hint={`${readyToBuy.length} item${readyToBuy.length === 1 ? "" : "s"}`}
-            icon={ShoppingBag}
-          />
-        </div>
+        <GlanceStats values={glanceValues} />
       </DashboardWidget>
 
       {/* Week ahead */}
