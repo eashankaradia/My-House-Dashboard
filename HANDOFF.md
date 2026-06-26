@@ -45,8 +45,28 @@ User submitted a third list of ~19 requests. Working through in batches.
   sort, export columns, and `PURCHASE_SUBCATEGORIES` deleted from constants.
   (DB column `sub_category` left in place but unused.)
 
-Still TODO from third list: #2 payments auto-log/mark-paid/detail, #5 calendar
-legend click, #7 editable rooms, #12 options-at-create-time (card now collapses
+### Batch M (done) — change-log delete + calendar legend — **needs migration 0017**
+- `0017_activity_log_delete.sql` adds a delete RLS policy on `activity_log`
+  (household members). RUN THIS LIVE.
+- **Change-log delete** (#15): `activity/actions.ts#deleteActivities(ids[])`;
+  `activity-list.tsx` has a "Delete entries" mode with per-row checkboxes, a
+  count, and a warning dialog before permanent bulk delete.
+- **Calendar legend click** (#5): legend chips are buttons; clicking one opens a
+  dialog listing all Upcoming + Recent records of that type (links through, or
+  opens the day for events).
+
+NEW fourth/fifth lists arrived mid-batch (2026-06-26) — still TODO:
+- (inspiration) click-in icon that marks read + sinks to bottom; react + comment.
+- Low priority as the default everywhere.
+- Purchases: add bills to compare; payment-frequency options in a collapsible
+  "other options" section (default assume one-off); ratings only on items
+  WITHOUT options or on the options themselves; drop the "Purchased items" stat;
+  on purchase, capture who bought it / for how much / receipt photo (all optional).
+- Calendar: sync with email.
+- NEW "Groceries / shopping list" section: tick off or delete items.
+
+Still TODO from third list: #2 payments auto-log/mark-paid/detail,
+#7 editable rooms, #12 options-at-create-time (card now collapses
 options pre-collapsed — partial), #13 comments system, #14 tasks
 recently-completed, #15 change-log delete, #16 table views + default, #17
 glance-stat click popup, #18 per-user colour, #19 documents+notes.

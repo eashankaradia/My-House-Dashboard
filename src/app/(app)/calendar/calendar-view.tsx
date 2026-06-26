@@ -61,6 +61,27 @@ export function CalendarView({
   const today = new Date();
   const [cursor, setCursor] = React.useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDate, setSelectedDate] = React.useState<string | null>(null);
+  const [legendType, setLegendType] = React.useState<keyof typeof TYPE_STYLES | null>(null);
+  const todayKey = ymd(today);
+
+  // For the legend dialog: every record of one type, split into upcoming/recent.
+  const legendLists = React.useMemo(() => {
+    if (!legendType) return { upcoming: [] as CalEvent[], recent: [] as CalEvent[] };
+    const ofType = events.filter((e) => e.type === legendType);
+    const upcoming = ofType
+      .filter((e) => e.date >= todayKey)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    const recent = ofType
+      .filter((e) => e.date < todayKey)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 20);
+    return { upcoming, recent };
+  }, [legendType, events, todayKey]);
+
+  function pickDayFromLegend(date: string) {
+    setLegendType(null);
+    setSelectedDate(date);
+  }
 
   const byDate = React.useMemo(() => {
     const map = new Map<string, CalEvent[]>();
@@ -148,12 +169,18 @@ export function CalendarView({
             })}
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
             {Object.entries(TYPE_LABEL).map(([k, label]) => (
-              <span key={k} className="flex items-center gap-1.5">
+              <button
+                key={k}
+                type="button"
+                onClick={() => setLegendType(k as keyof typeof TYPE_STYLES)}
+                className="flex items-center gap-1.5 rounded-md px-1.5 py-1 transition-colors hover:bg-accent hover:text-foreground"
+                aria-label={`List all ${label} records`}
+              >
                 <span className={cn("h-2 w-2 rounded-full", TYPE_STYLES[k as keyof typeof TYPE_STYLES])} />
                 {label}
-              </span>
+              </button>
             ))}
           </div>
         </CardContent>
@@ -236,6 +263,71 @@ export function CalendarView({
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={Boolean(legendType)} onOpenChange={(open) => !open && setLegendType(null)}>
+        <DialogContent className="max-h-[80vh] max-w-md overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {legendType ? (
+                <span className={cn("h-2.5 w-2.5 rounded-full", TYPE_STYLES[legendType])} />
+              ) : null}
+              {legendType ? TYPE_LABEL[legendType] : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <LegendGroup heading="Upcoming" events={legendLists.upcoming} emptyText="Nothing upcoming." onPickDay={pickDayFromLegend} />
+            <LegendGroup heading="Recent" events={legendLists.recent} emptyText="Nothing recent." onPickDay={pickDayFromLegend} />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function LegendGroup({
+  heading,
+  events,
+  emptyText,
+  onPickDay,
+}: {
+  heading: string;
+  events: CalEvent[];
+  emptyText: string;
+  onPickDay: (date: string) => void;
+}) {
+  return (
+    <div>
+      <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">{heading}</p>
+      {events.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{emptyText}</p>
+      ) : (
+        <div className="space-y-2">
+          {events.map((e, i) => {
+            const rowClass = "flex items-center gap-2 rounded-lg border p-2 text-sm";
+            const inner = (
+              <>
+                <span className={cn("h-2 w-2 shrink-0 rounded-full", TYPE_STYLES[e.type])} />
+                <span className="min-w-0 flex-1 truncate">{e.title}</span>
+                <span className="shrink-0 text-xs text-muted-foreground">{formatDate(e.date)}</span>
+              </>
+            );
+            return e.href ? (
+              <Link key={i} href={e.href} className={`${rowClass} transition-colors hover:bg-accent`}>
+                {inner}
+              </Link>
+            ) : (
+              <button
+                key={i}
+                type="button"
+                onClick={() => onPickDay(e.date)}
+                className={`${rowClass} w-full text-left transition-colors hover:bg-accent`}
+              >
+                {inner}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
