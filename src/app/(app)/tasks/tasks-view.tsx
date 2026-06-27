@@ -26,6 +26,7 @@ import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { useViewPref } from "@/hooks/use-view-prefs";
 import { LinkedItems } from "@/app/(app)/links/linked-items";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
+import { ItemComments } from "@/components/shared/item-comments";
 import { ShareButton } from "@/components/shared/share-button";
 import { cn, daysUntil, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -487,6 +488,9 @@ function TaskEditDialog({
             <Textarea id="te-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Progress, context, links…" />
           </Field>
           <ItemTimestamps createdAt={task.created_at} updatedAt={task.updated_at} />
+          <div className="border-t pt-3">
+            <ItemComments entityType="project_tasks" entityId={task.id} ownerId={task.user_id} href={`/projects?task=${task.id}`} label={task.title} />
+          </div>
           <div className="border-t pt-3">
             <LinkedItems type="task" id={task.id} />
           </div>

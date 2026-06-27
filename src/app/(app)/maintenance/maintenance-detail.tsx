@@ -14,6 +14,7 @@ import { AddedBy } from "@/components/shared/added-by";
 import { ShareButton } from "@/components/shared/share-button";
 import { PointOutButton } from "@/components/shared/point-out-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
+import { ItemComments } from "@/components/shared/item-comments";
 import { FREQUENCY_LABELS } from "@/lib/constants";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -56,6 +57,9 @@ export function MaintenanceDetailDialog({
             </div>
           ) : null}
           <ItemTimestamps createdAt={task.created_at} updatedAt={task.updated_at} />
+          <div className="border-t pt-3">
+            <ItemComments entityType="maintenance_tasks" entityId={task.id} ownerId={task.user_id} href={`/maintenance?item=${task.id}`} label={task.task} />
+          </div>
           <div className="flex items-center justify-between border-t pt-3">
             <AddedBy name={memberMap[task.user_id]} />
             <div className="flex items-center gap-2">

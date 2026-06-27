@@ -19,6 +19,7 @@ import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { ShareButton } from "@/components/shared/share-button";
 import { PointOutButton } from "@/components/shared/point-out-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
+import { ItemComments } from "@/components/shared/item-comments";
 import { AreaChart } from "@/components/charts/area-chart";
 import { useToast } from "@/hooks/use-toast";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
@@ -202,6 +203,10 @@ export function PotDetailDialog({
               </div>
             )}
           </section>
+
+          <div className="border-t pt-3">
+            <ItemComments entityType="savings_pots" entityId={pot.id} ownerId={pot.user_id} href={`/savings?item=${pot.id}`} label={pot.name} />
+          </div>
 
           {/* Footer actions */}
           <ItemTimestamps createdAt={pot.created_at} updatedAt={pot.updated_at} />

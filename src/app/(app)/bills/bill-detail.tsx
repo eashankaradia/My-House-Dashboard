@@ -14,6 +14,7 @@ import { AddedBy } from "@/components/shared/added-by";
 import { ShareButton } from "@/components/shared/share-button";
 import { PointOutButton } from "@/components/shared/point-out-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
+import { ItemComments } from "@/components/shared/item-comments";
 import { FREQUENCY_LABELS } from "@/lib/constants";
 import { formatCurrency, formatDate, toAnnual, toMonthly } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -73,6 +74,9 @@ export function BillDetailDialog({
           <ItemTimestamps createdAt={bill.created_at} updatedAt={bill.updated_at} />
           <div className="border-t pt-3">
             <BillPayments bill={bill} payments={payments} accounts={accounts} />
+          </div>
+          <div className="border-t pt-3">
+            <ItemComments entityType="bills" entityId={bill.id} ownerId={bill.user_id} href={`/bills?item=${bill.id}`} label={bill.name} />
           </div>
           <div className="border-t pt-3">
             <LinkedItems type="bill" id={bill.id} />

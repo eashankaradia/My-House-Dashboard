@@ -15,6 +15,7 @@ import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { ShareButton } from "@/components/shared/share-button";
 import { PointOutButton } from "@/components/shared/point-out-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
+import { ItemComments } from "@/components/shared/item-comments";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
 import type { Document } from "@/lib/database.types";
@@ -63,6 +64,9 @@ export function DocumentDetailDialog({ doc, children }: { doc: Document; childre
             </div>
           ) : null}
           <ItemTimestamps createdAt={doc.created_at} updatedAt={doc.updated_at} />
+          <div className="border-t pt-3">
+            <ItemComments entityType="documents" entityId={doc.id} ownerId={doc.user_id} href={`/documents?item=${doc.id}`} label={doc.name} />
+          </div>
           <div className="flex items-center justify-between border-t pt-3">
             <div className="flex items-center gap-2">
               {doc.file_path ? (
