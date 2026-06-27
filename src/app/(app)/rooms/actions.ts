@@ -329,3 +329,34 @@ export async function deleteSwatch(id: string): Promise<ActionResult> {
   revalidatePath("/rooms");
   return {};
 }
+
+// --- Layout item ↔ purchase bridge ----------------------------------------
+
+/** Create a wishlist purchase from a planned furniture item and link them. */
+export async function createPurchaseFromLayout(
+  itemId: string,
+  roomName: string,
+): Promise<ActionResult & { purchaseId?: string }> {
+  const { supabase, user } = await getActionContext();
+  const { data: item } = await supabase.from("room_design_layout_items").select("*").eq("id", itemId).single();
+  const it = item as RoomLayoutItem | null;
+  if (!it) return { error: "Item not found" };
+  const { data: created, error } = await supabase
+    .from("purchases")
+    .insert({
+      user_id: user.id,
+      name: it.name,
+      category: "Furniture",
+      price: it.cost ?? 0,
+      room: roomName || null,
+      priority: "Low",
+      status: "Considering",
+    })
+    .select("id")
+    .single();
+  if (error || !created) return { error: error?.message ?? "Couldn't create purchase" };
+  const purchaseId = (created as { id: string }).id;
+  await supabase.from("room_design_layout_items").update({ purchase_id: purchaseId, status: "planned" }).eq("id", itemId);
+  revalidatePath("/purchases");
+  return { purchaseId };
+}

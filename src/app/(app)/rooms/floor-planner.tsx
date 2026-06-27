@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Plus, RotateCw, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { ExternalLink, Plus, RotateCw, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,9 +19,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { Room, RoomDesignVersion, RoomLayoutItem } from "@/lib/database.types";
-import { addLayoutItem, deleteLayoutItem, updateLayoutItem } from "./actions";
+import { addLayoutItem, createPurchaseFromLayout, deleteLayoutItem, updateLayoutItem } from "./actions";
 
 const SNAP = 5; // cm
+const LAYOUT_STATUSES = ["idea", "planned", "ordered", "delivered", "installed"] as const;
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const PALETTE = ["#94a3b8", "#60a5fa", "#34d399", "#fbbf24", "#f87171", "#c084fc", "#f472b6", "#2dd4bf"];
 
 const PRESETS: { category: string; w: number; d: number }[] = [
@@ -136,6 +139,21 @@ export function FloorPlanner({
     setItems((prev) => prev.filter((i) => i.id !== id));
     if (selectedId === id) setSelectedId(null);
     deleteLayoutItem(id);
+  }
+
+  function linkPurchase(it: RoomLayoutItem) {
+    setStatus("saving");
+    createPurchaseFromLayout(it.id, room.name).then((res) => {
+      if (res?.error || !res.purchaseId) {
+        toast({ variant: "destructive", title: "Couldn't create purchase", description: res?.error });
+        setStatus("idle");
+        return;
+      }
+      setItems((prev) => prev.map((i) => (i.id === it.id ? { ...i, purchase_id: res.purchaseId!, status: "planned" } : i)));
+      setStatus("saved");
+      toast({ title: "Added to your wishlist", description: "Linked to this furniture item." });
+      setTimeout(() => setStatus("idle"), 1200);
+    });
   }
 
   async function add(data: { name: string; category: string; width_cm: number; depth_cm: number; color: string }) {
@@ -272,6 +290,24 @@ export function FloorPlanner({
                   onBlur={(e) => update(selected.id, { depth_cm: Number(e.target.value) || selected.depth_cm })}
                 />
               </Field>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Status">
+                <NativeSelect value={selected.status} onChange={(e) => update(selected.id, { status: e.target.value })}>
+                  {LAYOUT_STATUSES.map((s) => (
+                    <option key={s} value={s}>{cap(s)}</option>
+                  ))}
+                </NativeSelect>
+              </Field>
+              <div className="flex items-end">
+                {selected.purchase_id ? (
+                  <Link href={`/purchases?item=${selected.purchase_id}`} className="inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors hover:bg-accent">
+                    Linked purchase <ExternalLink className="h-3.5 w-3.5" />
+                  </Link>
+                ) : (
+                  <Button variant="outline" size="sm" className="h-9" onClick={() => linkPurchase(selected)}>Create purchase</Button>
+                )}
+              </div>
             </div>
             <div>
               <p className="mb-1.5 text-xs font-medium">Colour</p>
