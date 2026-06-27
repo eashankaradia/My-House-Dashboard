@@ -7,6 +7,8 @@ import type {
   Project,
   Purchase,
   Room,
+  RoomColourPalette,
+  RoomColourSwatch,
   RoomDesignVersion,
 } from "@/lib/database.types";
 import { RoomWorkspace } from "../room-workspace";
@@ -25,18 +27,23 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
   const room = roomData as Room | null;
   if (!room) notFound();
 
-  const [{ data: versionData }, { data: purchaseData }, { data: inspoData }, { data: projectData }] =
+  const [{ data: versionData }, { data: purchaseData }, { data: inspoData }, { data: projectData }, { data: paletteData }, { data: swatchData }] =
     await Promise.all([
       supabase.from("room_design_versions").select("*").eq("room_id", id).order("created_at", { ascending: true }),
       supabase.from("purchases").select("*").eq("room", room.name).is("archived_at", null),
       supabase.from("inspiration").select("*").eq("room", room.name),
       supabase.from("projects").select("id, name").is("archived_at", null).order("name"),
+      supabase.from("room_colour_palettes").select("*").eq("room_id", id).order("created_at"),
+      supabase.from("room_colour_swatches").select("*").order("position"),
     ]);
 
   const versions = (versionData ?? []) as RoomDesignVersion[];
   const purchases = (purchaseData ?? []) as Purchase[];
   const inspiration = (inspoData ?? []) as Inspiration[];
   const projects = (projectData ?? []) as Pick<Project, "id" | "name">[];
+  const palettes = (paletteData ?? []) as RoomColourPalette[];
+  const paletteIds = new Set(palettes.map((p) => p.id));
+  const swatches = ((swatchData ?? []) as RoomColourSwatch[]).filter((s) => paletteIds.has(s.palette_id));
 
   return (
     <div className="space-y-4">
@@ -49,6 +56,8 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
         purchases={purchases}
         inspiration={inspiration}
         projects={projects}
+        palettes={palettes}
+        swatches={swatches}
       />
     </div>
   );

@@ -285,3 +285,47 @@ export async function deleteLayoutItem(id: string): Promise<ActionResult> {
   if (error) return { error: error.message };
   return {};
 }
+
+// --- Colour palettes + swatches -------------------------------------------
+
+export async function createPalette(roomId: string, name: string): Promise<ActionResult> {
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase.from("room_colour_palettes").insert({
+    user_id: user.id,
+    room_id: roomId,
+    name: name.trim().slice(0, 80) || "Palette",
+  });
+  if (error) return { error: error.message };
+  revalidateRooms(roomId);
+  return {};
+}
+
+export async function deletePalette(id: string): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("room_colour_palettes").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/rooms");
+  return {};
+}
+
+export async function addSwatches(paletteId: string, hexes: string[], label?: string): Promise<ActionResult> {
+  const clean = hexes
+    .map((h) => h.trim().toLowerCase())
+    .filter((h) => /^#?[0-9a-f]{6}$/.test(h))
+    .map((h) => (h.startsWith("#") ? h : `#${h}`));
+  if (!clean.length) return { error: "No valid colours" };
+  const { supabase, user } = await getActionContext();
+  const rows = clean.map((hex, i) => ({ user_id: user.id, palette_id: paletteId, hex, label: label ?? null, position: i }));
+  const { error } = await supabase.from("room_colour_swatches").insert(rows);
+  if (error) return { error: error.message };
+  revalidatePath("/rooms");
+  return {};
+}
+
+export async function deleteSwatch(id: string): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("room_colour_swatches").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/rooms");
+  return {};
+}

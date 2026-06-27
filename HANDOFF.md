@@ -265,7 +265,20 @@ User submitted a third list of ~19 requests. Working through in batches.
   "% floor used" + red overlap warnings. Optimistic local state, autosaves per
   change (no full refresh). "Plan layout" button on each design version card.
 
+### Batch HH (done, no DB) — Phase 2a: Colour Studio + photo extraction
+- `lib/colour.ts`: `extractPalette(img, n)` (canvas average-bucket quantise),
+  `sampleColour(img, xRatio, yRatio)`, `rgbToHex` — no deps.
+- `rooms/actions.ts`: `createPalette`, `deletePalette`, `addSwatches(hexes[])`,
+  `deleteSwatch`.
+- `colour-studio.tsx` (new **Colours** tab in the room workspace): create
+  palettes, add colours by hand (`<input type=color>`), and **From photo** —
+  upload/take a photo, auto-extract up to 8 dominant colours, tap the image to
+  sample any pixel, pick which to keep, save into the palette. Delete swatches /
+  palettes. Room detail page now fetches `room_colour_palettes` + swatches.
+
 ### Room Designer — STILL TODO (next phases, schema already in place)
+- Phase 2b: mood boards; "create purchase from a furniture/layout item" + link
+  layout item ↔ purchase + install status; attach a palette to a design version.
 - Phase 2: Colour Studio + photo/camera colour extraction (canvas, no deps) →
   `room_colour_palettes`/`swatches`; mood boards; deeper purchase linking
   (create purchase from furniture, install status, layout position).
