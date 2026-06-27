@@ -235,7 +235,14 @@ function DesignTab({ room, versions }: { room: Room; versions: RoomDesignVersion
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">Try multiple ideas before committing — compare and pick a final.</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">Try multiple ideas before committing — compare and pick a final.</p>
+        {versions.filter((v) => v.status !== "archived").length >= 2 ? (
+          <Link href={`/rooms/${room.id}/compare`} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent">
+            <Layers className="h-3.5 w-3.5" /> Compare
+          </Link>
+        ) : null}
+      </div>
 
       <Card>
         <CardContent className="p-3">
