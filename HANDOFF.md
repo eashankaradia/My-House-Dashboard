@@ -222,6 +222,16 @@ User submitted a third list of ~19 requests. Working through in batches.
 - `?project=` deep-links open the Projects tab; empty-projects state added.
 - Refreshed the page description/help to match.
 
+### Batch EE (done, no DB) — small clarity fixes
+- Removed the **Project value** stat card from the projects page.
+- **Calendar:** opening a day no longer pops the keyboard — `onOpenAutoFocus`
+  prevented on the day + legend dialogs; keyboard only appears when you tap the
+  add-event input.
+- **Glance stats** now always open their popup when tapped (even when empty,
+  showing "Nothing here yet"), so e.g. "Ready to buy" reliably lists its items.
+- **Needs attention** empty state is now a single concise line ("All caught up —
+  nothing due.") that won't wrap on mobile.
+
 STILL TODO (optional, needs the user or external access):
 - Generate Supabase types instead of hand-writing `database.types.ts` (needs the
   Supabase CLI + DB connection — can't run from the sandbox).
