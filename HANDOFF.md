@@ -355,6 +355,12 @@ User submitted a third list of ~19 requests. Working through in batches.
 
 ### New request list — all items addressed (see batches A–G above).
 
+### Batch I (done, no DB) — grouped navigation
+- The sidebar/mobile menu (~16 items) is now grouped under headings:
+  Overview · Money · Planning · Home · Capture · Calendar (`NavItem.group` +
+  `NAV_GROUPS` in constants; `SidebarNav` renders sections, flat list while
+  searching). Much easier to scan than a flat list.
+
 ### Batch H (done, no DB) — manual room-shape editing on the grid
 - Floor planner gains an **Edit shape** mode: drag the outline's corners
   (snap to grid), tap **+** on an edge to add a point, **×** to remove (min 3).
