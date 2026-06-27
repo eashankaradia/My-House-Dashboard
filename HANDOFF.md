@@ -313,9 +313,14 @@ User submitted a third list of ~19 requests. Working through in batches.
   an item's best option rating (`effectiveRating`). `purchases.rating` column +
   `setPurchaseRating` action remain (unused) for back-compat; harmless.
 
+### Batch C (done, no DB) — simpler purchase add-form
+- Removed the "specific item / compare options" mode toggle. Every item is now
+  just "What do you want?" + category/room/priority/status, and you **add the
+  options up front** (name/price/store/link rows) when creating it.
+- New `createPurchaseWithOptions(input, options[])` action; the form posts the
+  item + its options in one go. Editing still manages options on the card.
+
 ### New request list — STILL TODO (next batches)
-- Purchases add-form: drop the specific/compare toggle; default to options, let
-  options be added when creating the record.
 - Click into sub-tasks from the projects menu.
 - Quick-add "take a photo to label later" → a Misc Photos section.
 - Drafts on everything + a Drafts tab.

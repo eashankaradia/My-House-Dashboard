@@ -42,6 +42,47 @@ export async function createPurchase(raw: PurchaseInput): Promise<ActionResult> 
   return {};
 }
 
+/** Create a wishlist item together with any options entered up front. */
+export async function createPurchaseWithOptions(
+  raw: PurchaseInput,
+  options: PurchaseOptionInput[],
+): Promise<ActionResult> {
+  const parsed = purchaseSchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.errors[0]?.message ?? "Invalid input" };
+  const { supabase, user } = await getActionContext();
+  const { data: created, error } = await supabase
+    .from("purchases")
+    .insert({ ...toRow(parsed.data), user_id: user.id })
+    .select("id")
+    .single();
+  if (error || !created) return { error: error?.message ?? "Couldn't add item" };
+  const purchaseId = (created as { id: string }).id;
+  const valid = options
+    .map((o) => purchaseOptionSchema.safeParse(o))
+    .filter((s) => s.success)
+    .map((s) => (s as { data: PurchaseOptionInput }).data);
+  if (valid.length) {
+    await supabase.from("purchase_options").insert(
+      valid.map((o) => ({
+        user_id: user.id,
+        purchase_id: purchaseId,
+        name: o.name,
+        store: o.store ?? null,
+        url: o.url ?? null,
+        price: o.price,
+        start_price: o.price,
+        image_url: o.image_url ?? null,
+        notes: o.notes ?? null,
+        rating: o.rating ?? null,
+        frequency: o.frequency,
+      })),
+    );
+  }
+  revalidatePath("/purchases");
+  revalidatePath("/dashboard");
+  return {};
+}
+
 export async function updatePurchase(id: string, raw: PurchaseInput): Promise<ActionResult> {
   const parsed = purchaseSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.errors[0]?.message ?? "Invalid input" };
