@@ -284,10 +284,22 @@ User submitted a third list of ~19 requests. Working through in batches.
 - Floor planner selected-item panel: **install Status** select
   (idea→installed) and **Create purchase** / **Linked purchase →** link.
 
+### Batch JJ (done, no DB) — Phase 3: version comparison
+- `/rooms/[id]/compare` — side-by-side columns (horizontal scroll on mobile) for
+  all non-archived versions: cost (estimate or summed item costs; cheapest
+  highlighted), furniture count, % floor used, colour chips, item list, link to
+  each plan. "Compare" button on the Design tab (shown once ≥2 versions).
+
 ### Room Designer — STILL TODO (next phases, schema already in place)
 - Phase 2c (optional): mood boards; attach a palette to a design version.
-- Phase 3: project budget rollups; **side-by-side version comparison**; timeline.
-- Phase 4: lightweight 3D (adds Three/R3F); export.
+- Phase 3 cont. (optional): per-category budget rollup; room timeline.
+- Phase 4 (optional): lightweight 3D (adds Three/R3F); PDF/PNG export.
+
+NOTE for whoever continues: Room Designer MVP (Phases 1–3 core) is shipped and
+working. All Room Designer SQL is in migration 0025 (already run). Remaining
+items above are enhancements; none need new SQL except possibly mood boards
+(could reuse room_design_inspiration_links + a notes field — no new table
+strictly required).
 - Phase 2: Colour Studio + photo/camera colour extraction (canvas, no deps) →
   `room_colour_palettes`/`swatches`; mood boards; deeper purchase linking
   (create purchase from furniture, install status, layout position).
