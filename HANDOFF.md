@@ -355,6 +355,15 @@ User submitted a third list of ~19 requests. Working through in batches.
 
 ### New request list — all items addressed (see batches A–G above).
 
+### Batch K (done, no DB) — three simplifications
+- **Room workspace 6 → 4 tabs**: Colours folded into Design (section below
+  versions), Ideas folded into Items (section below purchases).
+- **Settings grouped** under headings: Your profile · Layout & display · Data &
+  alerts · Household & account (`SettingsSection`).
+- **Leaner dashboard by default**: `DEFAULT_DASHBOARD_HIDDEN` hides reminders,
+  maintenance, inspiration, purchases & activity widgets by default, so it leads
+  with Needs attention + glance + week ahead. Re-enable any via Edit dashboard.
+
 ### Batch J (done, no DB) — grouped tab-visibility settings
 - Settings → Sidebar tabs now lists tabs under the same group headings as the
   nav, for consistency.

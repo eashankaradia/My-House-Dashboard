@@ -65,6 +65,7 @@ export default async function SettingsPage() {
         info="Change your display name, choose which tabs appear in the sidebar, and see who's in your household. The full change log lives in its own tab."
       />
 
+      <SettingsSection>Your profile</SettingsSection>
       {/* Profile */}
       <Card>
         <CardHeader>
@@ -92,6 +93,7 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
+      <SettingsSection>Layout &amp; display</SettingsSection>
       {/* Tabs */}
       <Card>
         <CardHeader>
@@ -167,6 +169,7 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
+      <SettingsSection>Data &amp; alerts</SettingsSection>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
@@ -198,6 +201,7 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
+      <SettingsSection>Household &amp; account</SettingsSection>
       {/* Household */}
       <Card>
         <CardHeader>
@@ -246,5 +250,13 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function SettingsSection({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="px-1 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground/70 first:pt-0">
+      {children}
+    </h2>
   );
 }
