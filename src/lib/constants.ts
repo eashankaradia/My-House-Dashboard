@@ -14,6 +14,7 @@ import {
   BarChart3,
   CalendarDays,
   History,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -40,6 +41,7 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Maintenance", short: "Upkeep", href: "/maintenance", icon: Wrench, description: "Reminders & servicing" },
   { title: "Documents & notes", short: "Docs", href: "/documents", icon: FolderArchive, description: "Warranties, insurance, notes & more" },
   { title: "Photos", short: "Photos", href: "/photos", icon: Camera, description: "Quick snaps to label later" },
+  { title: "Drafts", short: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later" },
   { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance" },
   { title: "Analytics", href: "/analytics", icon: BarChart3, description: "Trends & breakdowns" },
   { title: "Change log", short: "Log", href: "/activity", icon: History, description: "Who changed what, and when" },
