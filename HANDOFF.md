@@ -355,6 +355,10 @@ User submitted a third list of ~19 requests. Working through in batches.
 
 ### New request list — all items addressed (see batches A–G above).
 
+### Batch J (done, no DB) — grouped tab-visibility settings
+- Settings → Sidebar tabs now lists tabs under the same group headings as the
+  nav, for consistency.
+
 ### Batch I (done, no DB) — grouped navigation
 - The sidebar/mobile menu (~16 items) is now grouped under headings:
   Overview · Money · Planning · Home · Capture · Calendar (`NavItem.group` +
