@@ -23,7 +23,6 @@ function toRow(values: PurchaseInput) {
     status: values.status,
     non_negotiables: values.non_negotiables ?? null,
     notes: values.notes ?? null,
-    rating: values.rating ?? null,
     purchased_at: values.status === "Purchased" ? new Date().toISOString().slice(0, 10) : null,
     // Completion details only make sense once it's actually been bought.
     purchased_by: values.status === "Purchased" ? values.purchased_by ?? null : null,
@@ -217,20 +216,6 @@ export async function updateOption(id: string, raw: PurchaseOptionInput): Promis
     .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/purchases");
-  return {};
-}
-
-/** Quick-set the out-of-5 star rating on a purchase item (0 = unrated). */
-export async function setPurchaseRating(id: string, rating: number): Promise<ActionResult> {
-  const value = Math.max(0, Math.min(5, Math.round(rating)));
-  const { supabase } = await getActionContext();
-  const { error } = await supabase
-    .from("purchases")
-    .update({ rating: value === 0 ? null : value })
-    .eq("id", id);
-  if (error) return { error: error.message };
-  revalidatePath("/purchases");
-  revalidatePath("/dashboard");
   return {};
 }
 

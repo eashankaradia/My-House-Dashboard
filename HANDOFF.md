@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-27 (Claude — FOURTH LIST batch 5: react to comments).
+> after **every** change. Last updated: 2026-06-27 (Claude — FOURTH LIST batch 6: ratings on options only).
 
 ## -2. FOURTH LIST in progress (Claude, 2026-06-27)
 
@@ -14,7 +14,7 @@ Requests:
 2. Remove the "point out to a member" (PointOutButton) feature — **DONE batch 3** (no DB).
 3. Click into a purchase option to see its details (read-only) — **DONE batch 1**.
 4. Fix the rating system (too sensitive / not sticky) — **DONE batch 1**.
-5. Remove ratings from top-level purchase items — mostly done earlier; re-verify.
+5. Remove ratings from top-level purchase items — **DONE batch 6** (no DB).
 6. Categorise purchases as a big or small purchase — **DONE batch 4** (migration 0031).
 7. Let people react to individual comments — **DONE batch 5** (no DB).
 8. Truncate long option names so they don't widen the card — **DONE batch 1**.
@@ -76,14 +76,26 @@ Requests:
   quick-react picker (`reactToComment` → `toggleReaction("comment", id, emoji)`).
 - Verified: typecheck, lint, build all clean.
 
-**NEXT unfinished step:** Batch 6 — verify no top-level purchase *item* ratings
-remain in the UI (#5) — grep `setPurchaseRating`/item-level `StarRating` in
-purchases grid/detail/forms; if the quick-rate stars still show on the item
-card/detail (not options), remove them. Then the final big piece: wire option
-shape/dimensions into the Room Designer — an "Add from wishlist" picker in the
-planner that drops a chosen option onto the floor plan as furniture using its
-width/depth (round → ellipse), storing `purchase_id`/`option_id` on the placed
-item so the planner links back to the purchase (#9 part 2).
+### Batch 6 (done, no DB) — remove top-level item ratings (#5)
+- Item ratings were already un-settable (no form field, `setPurchaseRating` had
+  no callers). This batch finishes the cleanup so ratings live on options only:
+  - `effectiveRating` is now option-only (no `p.rating` fallback); an item's score
+    is its best option's rating, else 0.
+  - Removed the dead `setPurchaseRating` action.
+  - Removed `rating` from `purchaseSchema` and the purchases `toRow`.
+- `purchases.rating` column + `Purchase.rating` type left in place (legacy,
+  harmless; nothing reads it now). Verified: typecheck, lint, build clean.
+
+**NEXT unfinished step:** Batch 7 (final, the big one) — wire option
+shape/dimensions into the Room Designer (#9 part 2). Plan: in the floor planner
+(SVG, viewBox in cm — see `rooms/[id]/design/...` + the planner component) add an
+"Add from wishlist" picker that lists purchase options which have `width_cm` +
+`depth_cm`; selecting one drops a furniture item sized from those dims (round
+shape → ellipse) onto the plan, storing the `purchase_id`/`option_id` (and option
+name) on the placed item so it links back to the purchase. Check the
+planner/furniture data model first (how placed items + their dimensions are
+stored — likely a `furniture`/`design_items` table or a JSON column on the design
+version) to decide whether a migration is needed.
 
 ## -1. THIRD LIST in progress (Claude, 2026-06-26)
 
