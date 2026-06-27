@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   PRIORITIES,
   PURCHASE_CATEGORIES,
+  PURCHASE_SIZES,
   PURCHASE_STATUSES,
 } from "@/lib/constants";
 import { useRooms } from "@/hooks/use-rooms";
@@ -62,6 +63,7 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [] }: Prop
       store: purchase?.store ?? "",
       price: purchase?.price ?? 0,
       category: purchase?.category ?? defaults?.category ?? "Furniture",
+      size: (purchase?.size as PurchaseInput["size"]) ?? undefined,
       room: purchase?.room ?? defaults?.room ?? "",
       priority: purchase?.priority ?? defaults?.priority ?? "Low",
       status: purchase?.status ?? "Considering",
@@ -199,13 +201,23 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [] }: Prop
               Use <span className="font-medium text-foreground">Add option</span> on the card to add or edit products to compare.
             </p>
           )}
-          <Field label="Category" tooltip="The broad type of item.">
-            <NativeSelect {...register("category")}>
-              {PURCHASE_CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </NativeSelect>
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Category" tooltip="The broad type of item.">
+              <NativeSelect {...register("category")}>
+                {PURCHASE_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </NativeSelect>
+            </Field>
+            <Field label="Size" tooltip="Is this a big-ticket purchase or a small everyday buy?">
+              <NativeSelect {...register("size")}>
+                <option value="">—</option>
+                {PURCHASE_SIZES.map((s) => (
+                  <option key={s} value={s}>{s} purchase</option>
+                ))}
+              </NativeSelect>
+            </Field>
+          </div>
           <Field
             label="Non-negotiable features and qualities"
             htmlFor="non-negotiables"

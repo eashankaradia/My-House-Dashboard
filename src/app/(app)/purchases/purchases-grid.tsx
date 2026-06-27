@@ -12,7 +12,7 @@ import { CardTrigger } from "@/components/shared/card-trigger";
 import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
 import { useViewPref } from "@/hooks/use-view-prefs";
-import { PURCHASE_STATUSES } from "@/lib/constants";
+import { PURCHASE_SIZES, PURCHASE_STATUSES } from "@/lib/constants";
 import { PRIORITY_ACCENT } from "@/lib/ui";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -65,6 +65,7 @@ export function PurchasesGrid({
 }) {
   const [status, setStatus] = React.useState<string>("All");
   const [room, setRoom] = React.useState<string>("All");
+  const [size, setSize] = React.useState<string>("All");
   const [minRating, setMinRating] = React.useState<number>(0);
   const [sort, setSort] = React.useState<keyof typeof SORTS>("rating");
   const [view, setView] = useViewPref("purchases");
@@ -77,6 +78,7 @@ export function PurchasesGrid({
     .filter((p) => (!onlyMine ? true : p.user_id === currentUserId))
     .filter((p) => (status === "All" ? true : p.status === status))
     .filter((p) => (room === "All" ? true : p.room === room))
+    .filter((p) => (size === "All" ? true : (p.size ?? "") === size))
     .filter((p) => (minRating === 0 ? true : effectiveRating(p) >= minRating))
     .sort((a, b) => {
       switch (sort) {
@@ -122,6 +124,12 @@ export function PurchasesGrid({
           <option value="All">All rooms</option>
           {rooms.map((r) => (
             <option key={r} value={r}>{r}</option>
+          ))}
+        </NativeSelect>
+        <NativeSelect value={size} onChange={(e) => setSize(e.target.value)} className="h-9 w-auto text-sm">
+          <option value="All">Any size</option>
+          {PURCHASE_SIZES.map((s) => (
+            <option key={s} value={s}>{s} purchases</option>
           ))}
         </NativeSelect>
         <NativeSelect

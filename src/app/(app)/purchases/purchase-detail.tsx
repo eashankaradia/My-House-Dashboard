@@ -56,6 +56,7 @@ export function PurchaseDetailDialog({
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Detail label="Status" value={purchase.status} />
             <Detail label="Category" value={purchase.category} />
+            {purchase.size ? <Detail label="Size" value={`${purchase.size} purchase`} /> : null}
             {purchase.room ? <Detail label="Room" value={purchase.room} /> : null}
             {options.length === 0 ? <Detail label="Price" value={formatCurrency(purchase.price)} /> : null}
             {purchase.store ? <Detail label="Store" value={purchase.store} /> : null}
