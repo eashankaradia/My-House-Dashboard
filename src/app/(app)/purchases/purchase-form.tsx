@@ -26,9 +26,11 @@ import {
   PURCHASE_STATUSES,
 } from "@/lib/constants";
 import { useRooms } from "@/hooks/use-rooms";
-import { purchaseSchema, type PurchaseInput } from "@/lib/schemas";
+import { purchaseSchema, type PurchaseInput, type PurchaseOptionInput } from "@/lib/schemas";
 import type { Purchase } from "@/lib/database.types";
-import { createPurchase, deletePurchase, setPurchaseArchived, updatePurchase } from "./actions";
+import { createPurchaseWithOptions, deletePurchase, setPurchaseArchived, updatePurchase } from "./actions";
+
+type DraftOption = { name: string; price: string; store: string; url: string };
 
 type Props = {
   purchase?: Purchase;
@@ -73,24 +75,44 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [] }: Prop
 
   const currentStatus = watch("status");
 
-  // "found" = a specific product (capture its price/link here); "compare" = a
-  // type of thing you'll add options to compare later.
-  const [mode, setMode] = React.useState<"found" | "compare">(
-    editing && Number(purchase?.price) === 0 ? "compare" : "found",
-  );
+  // New items can have their comparison options entered up front.
+  const [options, setOptions] = React.useState<DraftOption[]>([]);
+  function addOptionRow() {
+    setOptions((prev) => [...prev, { name: "", price: "", store: "", url: "" }]);
+  }
+  function setOptionRow(i: number, patch: Partial<DraftOption>) {
+    setOptions((prev) => prev.map((o, j) => (j === i ? { ...o, ...patch } : o)));
+  }
+  function removeOptionRow(i: number) {
+    setOptions((prev) => prev.filter((_, j) => j !== i));
+  }
 
   function onSubmit(values: PurchaseInput) {
-    const payload =
-      mode === "compare" ? { ...values, price: 0, url: "", store: "" } : values;
+    // The item itself is just a thing to plan; its price/links live on options.
+    const payload = { ...values, price: 0, url: "", store: "" };
+    const optionInputs: PurchaseOptionInput[] = options
+      .filter((o) => o.name.trim())
+      .map((o) => ({
+        name: o.name.trim(),
+        price: Number(o.price) || 0,
+        store: o.store.trim() || undefined,
+        url: o.url.trim() || undefined,
+        frequency: "one-off",
+      }));
     startTransition(async () => {
-      const result = editing ? await updatePurchase(purchase!.id, payload) : await createPurchase(payload);
+      const result = editing
+        ? await updatePurchase(purchase!.id, payload)
+        : await createPurchaseWithOptions(payload, optionInputs);
       if (result?.error) {
         toast({ variant: "destructive", title: "Something went wrong", description: result.error });
         return;
       }
       toast({ title: editing ? "Purchase updated" : "Added to wishlist" });
       setOpen(false);
-      if (!editing) reset();
+      if (!editing) {
+        reset();
+        setOptions([]);
+      }
     });
   }
 
@@ -131,64 +153,50 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [] }: Prop
           <DialogDescription>Something you&apos;d love for the home — now or later.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Mode selector */}
-          <div className="grid grid-cols-2 gap-2 rounded-lg border bg-muted/40 p-1">
-            <button
-              type="button"
-              onClick={() => setMode("found")}
-              className={`rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
-                mode === "found" ? "bg-background shadow-sm" : "text-muted-foreground"
-              }`}
-            >
-              A specific item I&apos;ve found
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("compare")}
-              className={`rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
-                mode === "compare" ? "bg-background shadow-sm" : "text-muted-foreground"
-              }`}
-            >
-              A thing to compare options for
-            </button>
-          </div>
-
           <Field
-            label={mode === "compare" ? "What do you want?" : "Item name"}
+            label="What do you want?"
             htmlFor="name"
             required
             error={errors.name?.message}
-            tooltip={
-              mode === "compare"
-                ? "The thing you want (e.g. 'New sofa'). You'll add options to compare after saving."
-                : "The specific product you've found."
-            }
+            tooltip="The thing you want (e.g. 'New sofa'). Add the specific products you're comparing as options."
           >
-            <Input
-              id="name"
-              placeholder={mode === "compare" ? "e.g. New sofa" : "e.g. DFS Corner sofa"}
-              {...register("name")}
-            />
+            <Input id="name" placeholder="e.g. New sofa" {...register("name")} />
           </Field>
 
-          {mode === "found" ? (
-            <>
-              <Field label="Link (URL)" htmlFor="url">
-                <Input id="url" type="url" placeholder="https://…" {...register("url")} />
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Store" htmlFor="store">
-                  <Input id="store" placeholder="e.g. IKEA" {...register("store")} />
-                </Field>
-                <Field label="Price (£)" htmlFor="price" error={errors.price?.message}>
-                  <Input id="price" type="number" step="0.01" {...register("price")} />
-                </Field>
+          {!editing ? (
+            <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Options to compare</p>
+                <span className="text-xs text-muted-foreground">optional</span>
               </div>
-            </>
+              {options.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Add the specific products you&apos;re weighing up — each with its own price and link.</p>
+              ) : (
+                <div className="space-y-2">
+                  {options.map((o, i) => (
+                    <div key={i} className="space-y-1.5 rounded-md border bg-background p-2">
+                      <div className="flex items-center gap-2">
+                        <Input value={o.name} onChange={(e) => setOptionRow(i, { name: e.target.value })} placeholder="Option name (e.g. DFS Marlow)" className="h-9" />
+                        <button type="button" onClick={() => removeOptionRow(i)} aria-label="Remove option" className="rounded-md p-2 text-muted-foreground hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input value={o.price} onChange={(e) => setOptionRow(i, { price: e.target.value })} type="number" step="0.01" placeholder="Price £" className="h-9" />
+                        <Input value={o.store} onChange={(e) => setOptionRow(i, { store: e.target.value })} placeholder="Store" className="h-9" />
+                      </div>
+                      <Input value={o.url} onChange={(e) => setOptionRow(i, { url: e.target.value })} type="url" placeholder="Link (optional)" className="h-9" />
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button type="button" variant="outline" size="sm" className="w-full gap-1.5 border-dashed" onClick={addOptionRow}>
+                <Plus className="h-4 w-4" /> Add option
+              </Button>
+            </div>
           ) : (
             <p className="rounded-lg border border-dashed bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-              After saving, use <span className="font-medium text-foreground">Add option</span> on the
-              card to add products to compare — each with its own price, link and photo.
+              Use <span className="font-medium text-foreground">Add option</span> on the card to add or edit products to compare.
             </p>
           )}
           <Field label="Category" tooltip="The broad type of item.">
