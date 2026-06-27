@@ -22,7 +22,7 @@ import { ImageUpload } from "@/components/shared/image-upload";
 import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
 import { purchaseOptionSchema, type PurchaseOptionInput } from "@/lib/schemas";
-import { FREQUENCIES, FREQUENCY_LABELS } from "@/lib/constants";
+import { FREQUENCIES, FREQUENCY_LABELS, OPTION_SHAPES, OPTION_SHAPE_LABELS } from "@/lib/constants";
 import type { PurchaseOption } from "@/lib/database.types";
 import { fetchLinkPreview } from "@/app/actions/link-preview";
 import { addOption, updateOption } from "./actions";
@@ -59,12 +59,16 @@ export function OptionForm({ purchaseId, option, trigger }: Props) {
       notes: option?.notes ?? "",
       rating: option?.rating ?? 0,
       frequency: (option?.frequency as PurchaseOptionInput["frequency"]) ?? "one-off",
+      shape: option?.shape ?? "rectangle",
+      width_cm: option?.width_cm ?? undefined,
+      depth_cm: option?.depth_cm ?? undefined,
+      height_cm: option?.height_cm ?? undefined,
     },
   });
 
   // Optional extras live behind a collapsible section; one-off price is the default.
   const [showMore, setShowMore] = React.useState(
-    Boolean(option && (option.store || option.url || option.image_url || option.notes || option.rating || (option.frequency && option.frequency !== "one-off"))),
+    Boolean(option && (option.store || option.url || option.image_url || option.notes || option.rating || option.width_cm || option.depth_cm || option.height_cm || (option.frequency && option.frequency !== "one-off"))),
   );
 
   async function autofill() {
@@ -160,6 +164,30 @@ export function OptionForm({ purchaseId, option, trigger }: Props) {
               <Field label="Notes" htmlFor="o-notes">
                 <Textarea id="o-notes" rows={2} placeholder="Colour, size, delivery time…" {...register("notes")} />
               </Field>
+
+              <div className="space-y-3 rounded-lg border bg-background/60 p-3">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Size &amp; shape — used to drop this into the Room Designer
+                </p>
+                <Field label="Shape" htmlFor="o-shape">
+                  <NativeSelect id="o-shape" {...register("shape")}>
+                    {OPTION_SHAPES.map((s) => (
+                      <option key={s} value={s}>{OPTION_SHAPE_LABELS[s] ?? s}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+                <div className="grid grid-cols-3 gap-2">
+                  <Field label="Width (cm)" htmlFor="o-width" error={errors.width_cm?.message}>
+                    <Input id="o-width" type="number" step="1" min="0" placeholder="e.g. 180" {...register("width_cm")} />
+                  </Field>
+                  <Field label="Depth (cm)" htmlFor="o-depth" error={errors.depth_cm?.message}>
+                    <Input id="o-depth" type="number" step="1" min="0" placeholder="e.g. 90" {...register("depth_cm")} />
+                  </Field>
+                  <Field label="Height (cm)" htmlFor="o-height" error={errors.height_cm?.message}>
+                    <Input id="o-height" type="number" step="1" min="0" placeholder="e.g. 75" {...register("height_cm")} />
+                  </Field>
+                </div>
+              </div>
             </div>
           ) : (
             <>

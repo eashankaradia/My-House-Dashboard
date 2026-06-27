@@ -182,6 +182,10 @@ export async function addOption(purchaseId: string, raw: PurchaseOptionInput): P
     notes: parsed.data.notes ?? null,
     rating: parsed.data.rating ?? null,
     frequency: parsed.data.frequency,
+    shape: parsed.data.shape ?? null,
+    width_cm: parsed.data.width_cm ?? null,
+    depth_cm: parsed.data.depth_cm ?? null,
+    height_cm: parsed.data.height_cm ?? null,
   });
   if (error) return { error: error.message };
   revalidatePath("/purchases");
@@ -204,6 +208,10 @@ export async function updateOption(id: string, raw: PurchaseOptionInput): Promis
       notes: parsed.data.notes ?? null,
       rating: parsed.data.rating ?? null,
       frequency: parsed.data.frequency,
+      shape: parsed.data.shape ?? null,
+      width_cm: parsed.data.width_cm ?? null,
+      depth_cm: parsed.data.depth_cm ?? null,
+      height_cm: parsed.data.height_cm ?? null,
     })
     .eq("id", id);
   if (error) return { error: error.message };
