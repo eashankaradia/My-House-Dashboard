@@ -325,8 +325,14 @@ User submitted a third list of ~19 requests. Working through in batches.
   now optional). `Subtasks` wraps each sub-task title in it, so tapping a
   sub-task opens its full editor (notes, due date, comments, links).
 
+### Batch E (done) — quick photos / misc shoebox — **needs migration 0026**
+- `0026_quick_photos.sql`: `quick_photos` table (image_url, label) + household
+  RLS. RUN THIS LIVE.
+- New **Photos** nav + `/photos` page (grid, inline label, delete) and a
+  **Photo** action in the + quick-add menu. `QuickPhotoDialog` reuses
+  `ImageUpload` (camera or gallery). `photos/actions.ts`: add/update/delete.
+
 ### New request list — STILL TODO (next batches)
-- Quick-add "take a photo to label later" → a Misc Photos section.
 - Drafts on everything + a Drafts tab.
 - Room shapes beyond rectangle (L-shape/polygon from real plans) + door
   placement in the planner; broader "make the UI simpler".

@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { CheckSquare, FolderArchive, Hammer, Lightbulb, Receipt, ShoppingBag, Wrench } from "lucide-react";
+import { Camera, CheckSquare, FolderArchive, Hammer, Lightbulb, Receipt, ShoppingBag, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { QuickPhotoDialog } from "@/app/(app)/photos/quick-photo-dialog";
 import { BillForm } from "@/app/(app)/bills/bill-form";
 import { ProjectForm } from "@/app/(app)/projects/project-form";
 import { TaskQuickForm } from "@/app/(app)/projects/task-quick-form";
@@ -34,6 +35,7 @@ Pill.displayName = "Pill";
 export function AddPills({ className }: { className?: string }) {
   return (
     <div className={className}>
+      <QuickPhotoDialog trigger={<Pill icon={Camera} label="Photo" />} />
       <TaskQuickForm trigger={<Pill icon={CheckSquare} label="Task" />} />
       <BillForm trigger={<Pill icon={Receipt} label="Expense" />} />
       <ProjectForm trigger={<Pill icon={Hammer} label="Project" />} />

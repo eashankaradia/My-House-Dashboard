@@ -422,6 +422,13 @@ export type RoomDesignInspirationLink = {
   created_at: string;
 };
 
+export type QuickPhoto = Timestamps & {
+  id: string;
+  user_id: string;
+  image_url: string;
+  label: string | null;
+};
+
 export type ShoppingItem = Timestamps & {
   id: string;
   user_id: string;
@@ -533,6 +540,7 @@ export type Database = {
       maintenance_tasks: Row<MaintenanceTask>;
       documents: Row<Document>;
       shopping_items: Row<ShoppingItem>;
+      quick_photos: Row<QuickPhoto>;
       comments: Row<Comment>;
       comment_reads: Row<CommentRead>;
       reactions: Row<Reaction>;
