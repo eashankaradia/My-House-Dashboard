@@ -19,8 +19,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { outlinePoints, pointsToSvg } from "@/lib/room-shape";
-import type { Room, RoomDesignVersion, RoomLayoutItem } from "@/lib/database.types";
-import { addLayoutItem, createPurchaseFromLayout, deleteLayoutItem, updateLayoutItem } from "./actions";
+import type { Room, RoomDesignVersion, RoomLayoutItem, RoomPoint } from "@/lib/database.types";
+import { addLayoutItem, createPurchaseFromLayout, deleteLayoutItem, updateLayoutItem, updateRoomDetails } from "./actions";
 
 const SNAP = 5; // cm
 const LAYOUT_STATUSES = ["idea", "planned", "ordered", "delivered", "installed"] as const;
@@ -62,7 +62,61 @@ export function FloorPlanner({
   const drag = React.useRef<{ id: string; px: number; py: number; ox: number; oy: number } | null>(null);
   const { toast } = useToast();
 
+  // Manual room-shape editing: drag the outline's corners, add/remove points.
+  const [editShape, setEditShape] = React.useState(false);
+  const [outline, setOutline] = React.useState<RoomPoint[]>(() =>
+    outlinePoints({ outline: room.outline, width_cm: W, length_cm: L }),
+  );
+  const outlineRef = React.useRef(outline);
+  React.useEffect(() => {
+    outlineRef.current = outline;
+  }, [outline]);
+  const vertexDrag = React.useRef<number | null>(null);
+
   const selected = items.find((i) => i.id === selectedId) ?? null;
+  const handleR = Math.max(6, Math.min(W || 100, L || 100) / 18);
+
+  const persistOutline = React.useCallback(
+    (next: RoomPoint[]) => {
+      setStatus("saving");
+      updateRoomDetails(room.id, { outline: next, shape: "custom" }).then((res) => {
+        if (res?.error) {
+          toast({ variant: "destructive", title: "Couldn't save shape", description: res.error });
+          setStatus("idle");
+        } else {
+          setStatus("saved");
+          setTimeout(() => setStatus("idle"), 1200);
+        }
+      });
+    },
+    [room.id, toast],
+  );
+
+  function commitOutline(next: RoomPoint[]) {
+    setOutline(next);
+    outlineRef.current = next;
+    persistOutline(next);
+  }
+  function addVertex(i: number) {
+    const a = outline[i];
+    const b = outline[(i + 1) % outline.length];
+    const mid = { x: snap((a.x + b.x) / 2), y: snap((a.y + b.y) / 2) };
+    const next = [...outline];
+    next.splice(i + 1, 0, mid);
+    commitOutline(next);
+  }
+  function removeVertex(i: number) {
+    if (outline.length <= 3) return;
+    commitOutline(outline.filter((_, j) => j !== i));
+  }
+  function resetShape() {
+    commitOutline([
+      { x: 0, y: 0 },
+      { x: W, y: 0 },
+      { x: W, y: L },
+      { x: 0, y: L },
+    ]);
+  }
 
   const persist = React.useCallback(
     (id: string, patch: Record<string, unknown>) => {
@@ -87,6 +141,14 @@ export function FloorPlanner({
       return { x: ((clientX - r.left) / r.width) * W, y: ((clientY - r.top) / r.height) * L };
     }
     function onMove(e: PointerEvent) {
+      if (vertexDrag.current !== null) {
+        const p = toCm(e.clientX, e.clientY);
+        const idx = vertexDrag.current;
+        setOutline((prev) =>
+          prev.map((pt, j) => (j === idx ? { x: clamp(snap(p.x), 0, W), y: clamp(snap(p.y), 0, L) } : pt)),
+        );
+        return;
+      }
       const d = drag.current;
       if (!d) return;
       const p = toCm(e.clientX, e.clientY);
@@ -100,6 +162,11 @@ export function FloorPlanner({
       );
     }
     function onUp() {
+      if (vertexDrag.current !== null) {
+        vertexDrag.current = null;
+        persistOutline(outlineRef.current);
+        return;
+      }
       const d = drag.current;
       if (!d) return;
       drag.current = null;
@@ -112,7 +179,7 @@ export function FloorPlanner({
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
     };
-  }, [W, L, items, persist]);
+  }, [W, L, items, persist, persistOutline]);
 
   function startDrag(e: React.PointerEvent, it: RoomLayoutItem) {
     e.preventDefault();
@@ -191,9 +258,19 @@ export function FloorPlanner({
           <span className="text-xs text-muted-foreground">
             {status === "saving" ? "Saving…" : status === "saved" ? "Saved" : ""}
           </span>
-          <AddFurniture onAdd={add} />
+          <Button variant={editShape ? "default" : "outline"} size="sm" onClick={() => setEditShape((v) => !v)}>
+            {editShape ? "Done" : "Edit shape"}
+          </Button>
+          {!editShape ? <AddFurniture onAdd={add} /> : null}
         </div>
       </div>
+
+      {editShape ? (
+        <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          <span>Drag the blue corners. Tap + on an edge to add a point, red dot to remove.</span>
+          <button type="button" onClick={resetShape} className="shrink-0 font-medium text-foreground hover:underline">Reset to rectangle</button>
+        </div>
+      ) : null}
 
       <Card>
         <CardContent className="p-2">
@@ -215,8 +292,8 @@ export function FloorPlanner({
               {Array.from({ length: Math.floor(L / 50) + 1 }, (_, i) => (
                 <line key={`h${i}`} x1={0} y1={i * 50} x2={W} y2={i * 50} stroke="currentColor" className="text-border" strokeWidth={1} />
               ))}
-              {/* room outline (polygon supports L-shapes) */}
-              <polygon points={pointsToSvg(outlinePoints({ outline: room.outline, width_cm: W, length_cm: L }))} fill="none" stroke="currentColor" className="text-foreground" strokeWidth={3} />
+              {/* room outline (polygon supports L-shapes + manual editing) */}
+              <polygon points={pointsToSvg(outline)} fill={editShape ? "rgba(14,165,233,0.06)" : "none"} stroke="currentColor" className="text-foreground" strokeWidth={3} />
 
               {/* doors */}
               {(room.doors ?? []).map((d, i) => {
@@ -240,7 +317,12 @@ export function FloorPlanner({
                 const bad = overlapping.has(it.id);
                 const fill = it.color ?? "#94a3b8";
                 return (
-                  <g key={it.id} onPointerDown={(e) => startDrag(e, it)} className="cursor-move">
+                  <g
+                    key={it.id}
+                    onPointerDown={editShape ? undefined : (e) => startDrag(e, it)}
+                    className={editShape ? "" : "cursor-move"}
+                    style={editShape ? { pointerEvents: "none", opacity: 0.5 } : undefined}
+                  >
                     <rect
                       x={it.x_cm}
                       y={it.y_cm}
@@ -265,6 +347,25 @@ export function FloorPlanner({
                   </g>
                 );
               })}
+
+              {/* Manual shape editing: drag corners, add (+) / remove (×) points */}
+              {editShape
+                ? outline.map((pt, i) => {
+                    const nx = outline[(i + 1) % outline.length];
+                    const mx = (pt.x + nx.x) / 2;
+                    const my = (pt.y + nx.y) / 2;
+                    return (
+                      <g key={`vx${i}`}>
+                        <circle cx={mx} cy={my} r={handleR * 0.7} fill="#fff" stroke="#0ea5e9" strokeWidth={2} className="cursor-pointer" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); addVertex(i); }} />
+                        <text x={mx} y={my} textAnchor="middle" dominantBaseline="middle" className="pointer-events-none fill-sky-600" style={{ fontSize: handleR }}>+</text>
+                        <circle cx={pt.x} cy={pt.y} r={handleR} fill="#0ea5e9" fillOpacity={0.9} stroke="#fff" strokeWidth={2} className="cursor-move" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); vertexDrag.current = i; }} />
+                        {outline.length > 3 ? (
+                          <circle cx={pt.x + handleR * 1.4} cy={pt.y - handleR * 1.4} r={handleR * 0.6} fill="#ef4444" stroke="#fff" strokeWidth={2} className="cursor-pointer" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); removeVertex(i); }} />
+                        ) : null}
+                      </g>
+                    );
+                  })
+                : null}
             </svg>
           </div>
         </CardContent>

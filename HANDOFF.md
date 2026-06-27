@@ -354,6 +354,13 @@ User submitted a third list of ~19 requests. Working through in batches.
   was intentionally NOT built (large, touches every form) — candidate follow-up.
 
 ### New request list — all items addressed (see batches A–G above).
+
+### Batch H (done, no DB) — manual room-shape editing on the grid
+- Floor planner gains an **Edit shape** mode: drag the outline's corners
+  (snap to grid), tap **+** on an edge to add a point, **×** to remove (min 3).
+  Saves `rooms.outline` (+ shape="custom") via `updateRoomDetails`. Furniture is
+  dimmed/non-interactive while editing. "Reset to rectangle" restores the box.
+  (Furniture still clamps to the bounding box, not the custom polygon — noted.)
 - Room shapes beyond rectangle (L-shape/polygon from real plans) + door
   placement in the planner; broader "make the UI simpler".
 
