@@ -271,10 +271,18 @@ function DesignTab({ room, versions }: { room: Room; versions: RoomDesignVersion
                   </div>
                 </div>
                 {v.description ? <p className="text-sm text-muted-foreground">{v.description}</p> : null}
-                <div className="flex flex-wrap gap-1.5">
-                  {[v.wall_color, v.floor_color, v.trim_color, v.ceiling_color].filter(Boolean).map((c, i) => (
-                    <span key={i} className="h-5 w-5 rounded border" style={{ backgroundColor: c as string }} title={c as string} />
-                  ))}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap gap-1.5">
+                    {[v.wall_color, v.floor_color, v.trim_color, v.ceiling_color].filter(Boolean).map((c, i) => (
+                      <span key={i} className="h-5 w-5 rounded border" style={{ backgroundColor: c as string }} title={c as string} />
+                    ))}
+                  </div>
+                  <Link
+                    href={`/rooms/${room.id}/design/${v.id}`}
+                    className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
+                  >
+                    <SlidersHorizontal className="h-3.5 w-3.5" /> Plan layout
+                  </Link>
                 </div>
               </CardContent>
             </Card>

@@ -255,9 +255,17 @@ User submitted a third list of ~19 requests. Working through in batches.
   **Tasks** (one-tap create incl. suggestions, routed to the room's project).
 - Purchases/inspiration link by their existing `room` text field — no dup data.
 
+### Batch GG (done, no DB) — Phase 1: 2D floor planner
+- `rooms/actions.ts`: `addLayoutItem` (returns the row), `updateLayoutItem`,
+  `deleteLayoutItem`.
+- `/rooms/[id]/design/[versionId]` → `floor-planner.tsx`: SVG canvas scaled to
+  the room (viewBox in cm), 50cm grid, drag furniture (pointer events, snap 5cm,
+  clamped to walls), tap-to-select, rotate (swaps W/D), resize (cm inputs),
+  colour palette, delete, add-furniture dialog with category presets. Live
+  "% floor used" + red overlap warnings. Optimistic local state, autosaves per
+  change (no full refresh). "Plan layout" button on each design version card.
+
 ### Room Designer — STILL TODO (next phases, schema already in place)
-- Phase 1 cont.: **2D floor planner** (grid/snap/drag/rotate/resize furniture)
-  writing `room_design_layout_items`; furniture add/library.
 - Phase 2: Colour Studio + photo/camera colour extraction (canvas, no deps) →
   `room_colour_palettes`/`swatches`; mood boards; deeper purchase linking
   (create purchase from furniture, install status, layout position).

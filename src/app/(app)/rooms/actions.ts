@@ -5,6 +5,8 @@ import { getActionContext, type ActionResult } from "@/lib/action-utils";
 import { ROOMS } from "@/lib/constants";
 import type { Room, RoomDesignStatus, RoomDesignVersion, RoomLayoutItem } from "@/lib/database.types";
 
+type LayoutResult = ActionResult & { item?: RoomLayoutItem };
+
 function revalidateRooms(roomId?: string) {
   revalidatePath("/rooms");
   if (roomId) revalidatePath(`/rooms/${roomId}`);
@@ -225,5 +227,61 @@ export async function duplicateDesignVersion(id: string): Promise<ActionResult> 
     );
   }
   revalidateRooms(v.room_id);
+  return {};
+}
+
+// --- Layout items (2D floor planner furniture) ----------------------------
+
+export async function addLayoutItem(
+  versionId: string,
+  data: { name: string; category?: string; width_cm?: number; depth_cm?: number; height_cm?: number; color?: string; cost?: number },
+): Promise<LayoutResult> {
+  const { supabase, user } = await getActionContext();
+  const { data: created, error } = await supabase
+    .from("room_design_layout_items")
+    .insert({
+      user_id: user.id,
+      version_id: versionId,
+      name: data.name?.trim() || "Furniture",
+      category: data.category ?? null,
+      width_cm: data.width_cm ?? 100,
+      depth_cm: data.depth_cm ?? 60,
+      height_cm: data.height_cm ?? null,
+      color: data.color ?? null,
+      cost: data.cost ?? null,
+      x_cm: 10,
+      y_cm: 10,
+      rotation: 0,
+    })
+    .select("*")
+    .single();
+  if (error) return { error: error.message };
+  return { item: created as RoomLayoutItem };
+}
+
+const LAYOUT_FIELDS = [
+  "name", "category", "width_cm", "depth_cm", "height_cm", "x_cm", "y_cm",
+  "rotation", "color", "material", "notes", "cost", "priority", "status", "purchase_id", "image_url",
+] as const;
+const NUMERIC_LAYOUT_FIELDS = new Set(["width_cm", "depth_cm", "height_cm", "x_cm", "y_cm", "rotation", "cost"]);
+
+export async function updateLayoutItem(id: string, patch: Record<string, unknown>): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const clean: Record<string, unknown> = {};
+  for (const f of LAYOUT_FIELDS) {
+    if (!(f in patch)) continue;
+    const v = patch[f];
+    if (NUMERIC_LAYOUT_FIELDS.has(f)) clean[f] = v === "" || v == null ? null : Number(v);
+    else clean[f] = v === "" ? null : v;
+  }
+  const { error } = await supabase.from("room_design_layout_items").update(clean as Partial<RoomLayoutItem>).eq("id", id);
+  if (error) return { error: error.message };
+  return {};
+}
+
+export async function deleteLayoutItem(id: string): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("room_design_layout_items").delete().eq("id", id);
+  if (error) return { error: error.message };
   return {};
 }
