@@ -47,10 +47,10 @@ function effectivePrice(p: PurchaseWithOptions): number {
   return Number(p.price);
 }
 
-/** Effective rating: items rate themselves; items with options use their best option. */
+/** Effective rating: ratings live on options only — an item's score is its best option. */
 function effectiveRating(p: PurchaseWithOptions): number {
-  if (p.options.length) return Math.max(0, ...p.options.map((o) => o.rating ?? 0));
-  return p.rating ?? 0;
+  if (!p.options.length) return 0;
+  return Math.max(0, ...p.options.map((o) => o.rating ?? 0));
 }
 
 export function PurchasesGrid({
