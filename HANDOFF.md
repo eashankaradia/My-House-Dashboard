@@ -203,11 +203,19 @@ User submitted a third list of ~19 requests. Working through in batches.
   with identical public APIs — every ~100-line localStorage+custom-event hook
   collapsed to a few lines; context keeps consumers in sync (no custom events).
 
-STILL TODO (optional polish):
-- Sticky dialog footer so Save sits above the keyboard in long forms.
-- Generate Supabase types instead of hand-writing `database.types.ts`.
-- Trim dashboard/settings queries to only needed columns.
-- Comments on the remaining detail dialogs (savings, maintenance, tasks, docs).
+### Batch CC (done, no DB) — sticky dialog footer + comments everywhere
+- `DialogFooter` is now sticky to the bottom of the mobile sheet (bg + blur +
+  top border) so Save stays above the on-screen keyboard in long forms.
+- `<ItemComments>` added to the remaining detail dialogs: **bills, tasks,
+  maintenance, savings pots, documents** (already on inspiration/purchases/
+  projects). Comments + reactions are now on every item type. (Relies on the
+  comments tables from migration 0022.)
+
+STILL TODO (optional, needs the user or external access):
+- Generate Supabase types instead of hand-writing `database.types.ts` (needs the
+  Supabase CLI + DB connection — can't run from the sandbox).
+- Trim dashboard/settings queries to only needed columns (deferred — low gain,
+  some risk; left as-is).
 - Optional: live calendar subscribe feed (needs service-role key + token table).
 
 Still TODO from third list: #2 payments auto-log/mark-paid/detail,

@@ -64,7 +64,13 @@ function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)}
+      className={cn(
+        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        // On the mobile sheet, pin the actions to the bottom so Save stays
+        // reachable above the on-screen keyboard.
+        "max-sm:sticky max-sm:bottom-0 max-sm:z-10 max-sm:-mx-6 max-sm:-mb-8 max-sm:border-t max-sm:bg-background/95 max-sm:px-6 max-sm:pb-6 max-sm:pt-3 max-sm:backdrop-blur",
+        className,
+      )}
       {...props}
     />
   );
