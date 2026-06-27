@@ -23,7 +23,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import type { Inspiration, Project, Purchase, Room, RoomColourPalette, RoomColourSwatch, RoomDesignVersion } from "@/lib/database.types";
 import { createTask } from "@/app/(app)/projects/actions";
 import { ColourStudio } from "./colour-studio";
@@ -76,7 +76,7 @@ export function RoomWorkspace({
           <TabsTrigger value="tasks" className="gap-1.5"><ListChecks className="h-4 w-4" /> Tasks</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview"><OverviewTab room={room} projects={projects} /></TabsContent>
+        <TabsContent value="overview"><OverviewTab room={room} projects={projects} versions={versions} purchases={purchases} /></TabsContent>
         <TabsContent value="design"><DesignTab room={room} versions={versions} /></TabsContent>
         <TabsContent value="colours"><ColourStudio roomId={room.id} palettes={palettes} swatches={swatches} /></TabsContent>
         <TabsContent value="purchases"><PurchasesTab room={room} purchases={purchases} /></TabsContent>
@@ -89,7 +89,17 @@ export function RoomWorkspace({
 
 // --- Overview: dimensions, colours, notes (autosaves) ----------------------
 
-function OverviewTab({ room, projects }: { room: Room; projects: Pick<Project, "id" | "name">[] }) {
+function OverviewTab({
+  room,
+  projects,
+  versions,
+  purchases,
+}: {
+  room: Room;
+  projects: Pick<Project, "id" | "name">[];
+  versions: RoomDesignVersion[];
+  purchases: Purchase[];
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [status, setStatus] = React.useState<"idle" | "saving" | "saved">("idle");
@@ -159,7 +169,42 @@ function OverviewTab({ room, projects }: { room: Room; projects: Pick<Project, "
           </Field>
         </CardContent>
       </Card>
+
+      <Timeline room={room} versions={versions} purchases={purchases} />
     </div>
+  );
+}
+
+// --- Timeline: the room's journey -----------------------------------------
+
+function Timeline({ room, versions, purchases }: { room: Room; versions: RoomDesignVersion[]; purchases: Purchase[] }) {
+  type Ev = { date: string; label: string };
+  const events: Ev[] = [];
+  if (room.created_at) events.push({ date: room.created_at, label: "Room created" });
+  for (const v of versions) events.push({ date: v.created_at, label: `Design “${v.name}” added` });
+  for (const p of purchases) {
+    events.push({ date: p.created_at, label: `Planned “${p.name}”` });
+    if (p.status === "Purchased" && p.purchased_at) events.push({ date: p.purchased_at, label: `Bought “${p.name}”` });
+  }
+  events.sort((a, b) => b.date.localeCompare(a.date));
+
+  if (events.length === 0) return null;
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <p className="mb-3 text-sm font-medium">Timeline</p>
+        <ol className="space-y-2">
+          {events.slice(0, 20).map((e, i) => (
+            <li key={i} className="flex items-center gap-3 text-sm">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-primary/60" />
+              <span className="min-w-0 flex-1 truncate">{e.label}</span>
+              <span className="shrink-0 text-xs text-muted-foreground">{formatDate(e.date)}</span>
+            </li>
+          ))}
+        </ol>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -390,12 +435,49 @@ function PurchasesTab({ room, purchases }: { room: Room; purchases: Purchase[] }
   const plannedCost = planned.reduce((s, p) => s + Number(p.price), 0);
   const spent = bought.reduce((s, p) => s + Number(p.purchased_price ?? p.price), 0);
 
+  // Per-category budget rollup (planned vs spent).
+  const byCategory = new Map<string, { planned: number; spent: number }>();
+  for (const p of purchases) {
+    const cat = p.category || "Other";
+    const row = byCategory.get(cat) ?? { planned: 0, spent: 0 };
+    if (p.status === "Purchased") row.spent += Number(p.purchased_price ?? p.price);
+    else row.planned += Number(p.price);
+    byCategory.set(cat, row);
+  }
+  const categoryRows = Array.from(byCategory.entries()).sort((a, b) => (b[1].planned + b[1].spent) - (a[1].planned + a[1].spent));
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Planned</p><p className="text-xl font-semibold">{formatCurrency(plannedCost)}</p><p className="text-xs text-muted-foreground">{planned.length} item{planned.length === 1 ? "" : "s"}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Spent</p><p className="text-xl font-semibold">{formatCurrency(spent)}</p><p className="text-xs text-muted-foreground">{bought.length} bought</p></CardContent></Card>
       </div>
+
+      {categoryRows.length > 0 ? (
+        <Card>
+          <CardContent className="p-4">
+            <p className="mb-2 text-sm font-medium">Budget by category</p>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-muted-foreground">
+                  <th className="pb-1 font-medium">Category</th>
+                  <th className="pb-1 text-right font-medium">Planned</th>
+                  <th className="pb-1 text-right font-medium">Spent</th>
+                </tr>
+              </thead>
+              <tbody>
+                {categoryRows.map(([cat, r]) => (
+                  <tr key={cat} className="border-t">
+                    <td className="py-1.5">{cat}</td>
+                    <td className="py-1.5 text-right text-muted-foreground">{formatCurrency(r.planned)}</td>
+                    <td className="py-1.5 text-right font-medium">{formatCurrency(r.spent)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {purchases.length === 0 ? (
         <EmptyState icon={ShoppingBag} title="No items for this room yet" description={`Tag a purchase's room as "${room.name}" to see it here.`}>

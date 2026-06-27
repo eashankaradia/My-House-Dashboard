@@ -290,10 +290,16 @@ User submitted a third list of ~19 requests. Working through in batches.
   highlighted), furniture count, % floor used, colour chips, item list, link to
   each plan. "Compare" button on the Design tab (shown once ≥2 versions).
 
-### Room Designer — STILL TODO (next phases, schema already in place)
-- Phase 2c (optional): mood boards; attach a palette to a design version.
-- Phase 3 cont. (optional): per-category budget rollup; room timeline.
-- Phase 4 (optional): lightweight 3D (adds Three/R3F); PDF/PNG export.
+### Batch KK (done, no DB) — Phase 3 cont.: budget rollup + timeline
+- Items tab: **Budget by category** table (planned vs spent, from the room's
+  purchases grouped by category).
+- Overview tab: **Timeline** card — room created, each design version added,
+  items planned, items bought (most recent first, from existing data).
+
+### Room Designer — STILL TODO (optional, schema already in place)
+- Mood boards; attach a palette to a design version (Ideas tab already acts as a
+  room mood board via inspiration tagged to the room).
+- Phase 4: lightweight 3D (adds Three/R3F); PDF/PNG export.
 
 NOTE for whoever continues: Room Designer MVP (Phases 1–3 core) is shipped and
 working. All Room Designer SQL is in migration 0025 (already run). Remaining
