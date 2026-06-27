@@ -2,18 +2,20 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { Maximize2, Pencil, X } from "lucide-react";
+import { CheckSquare, Columns3, Hammer, List, Maximize2, Pencil, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
+import { EmptyState } from "@/components/shared/empty-state";
 import { useToast } from "@/hooks/use-toast";
 import { PROJECT_STATUSES } from "@/lib/constants";
-import { priorityVariant, STATUS_ACCENT } from "@/lib/ui";
+import { priorityVariant, STATUS_ACCENT, STATUS_BORDER } from "@/lib/ui";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { ProjectTask, ProjectWithTasks } from "@/lib/database.types";
@@ -35,126 +37,98 @@ export function ProjectsViews({
   memberMap: MemberMap;
   currentUserId: string;
 }) {
-  const [compact, setCompact] = React.useState(true);
+  const [projectView, setProjectView] = React.useState<"list" | "board">("list");
   const [boardFull, setBoardFull] = React.useState(false);
-  // A ?project= deep-link opens a project detail dialog, which only mounts in
-  // the List tab — so start there when one is present (otherwise default tab).
+  // A ?project= deep-link opens a project detail dialog (which mounts in the
+  // Projects tab), so start there when one is present.
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get("project") ? "list" : "tasks";
+  const initialTab = searchParams.get("project") ? "projects" : "tasks";
+  const openTasks = tasks.filter((t) => !t.is_done).length;
 
   return (
-    <Tabs defaultValue={initialTab}>
+    <Tabs defaultValue={initialTab} className="space-y-4">
       <TabsList>
-        <TabsTrigger value="tasks">Tasks</TabsTrigger>
-        <TabsTrigger value="kanban">Board</TabsTrigger>
-        <TabsTrigger value="list">List</TabsTrigger>
+        <TabsTrigger value="tasks" className="gap-1.5">
+          <CheckSquare className="h-4 w-4" /> Tasks{openTasks ? ` (${openTasks})` : ""}
+        </TabsTrigger>
+        <TabsTrigger value="projects" className="gap-1.5">
+          <Hammer className="h-4 w-4" /> Projects{projects.length ? ` (${projects.length})` : ""}
+        </TabsTrigger>
       </TabsList>
 
+      {/* Tasks — every to-do, standalone or under a project */}
       <TabsContent value="tasks">
+        <p className="mb-3 text-sm text-muted-foreground">
+          Quick to-dos and anything tied to a project. Tick them off as you go.
+        </p>
         <TasksView tasks={tasks} projects={projectOptions} memberMap={memberMap} currentUserId={currentUserId} />
       </TabsContent>
 
-      <TabsContent value="kanban">
-        <div className="mb-3 flex justify-end">
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setBoardFull(true)}>
-            <Maximize2 className="h-4 w-4" /> Full screen
-          </Button>
-        </div>
-        <div className="grid grid-flow-col auto-cols-[minmax(260px,1fr)] gap-4 overflow-x-auto pb-2">
-          {PROJECT_STATUSES.map((status) => {
-            const items = projects.filter((p) => p.status === status);
-            return (
-              <div key={status} className="rounded-xl border bg-card/40">
-                <div className="flex items-center justify-between border-b px-3 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className={`h-2.5 w-2.5 rounded-full ${STATUS_ACCENT[status]}`} />
-                    <span className="text-sm font-medium">{status}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{items.length}</span>
-                </div>
-                <div className="space-y-2 p-2">
-                  {items.map((project) => (
-                    <ProjectCard key={project.id} project={project} memberMap={memberMap} compact />
-                  ))}
-                  {items.length === 0 ? (
-                    <p className="px-2 py-6 text-center text-xs text-muted-foreground">Nothing here</p>
-                  ) : null}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        {boardFull ? (
-          <BoardFullScreen projects={projects} memberMap={memberMap} onClose={() => setBoardFull(false)} />
-        ) : null}
-      </TabsContent>
-
-      <TabsContent value="list">
-        <div className="mb-3 flex items-center justify-end gap-2">
-          <span className="text-xs text-muted-foreground">View</span>
-          <div className="flex items-center rounded-lg border p-0.5 text-xs">
-            <button
-              onClick={() => setCompact(false)}
-              className={cn("rounded-md px-2 py-1", !compact && "bg-accent")}
-            >
-              Detailed
-            </button>
-            <button
-              onClick={() => setCompact(true)}
-              className={cn("rounded-md px-2 py-1", compact && "bg-accent")}
-            >
-              Compact
-            </button>
+      {/* Projects — bigger pieces of work, each with its own tasks */}
+      <TabsContent value="projects">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <p className="text-sm text-muted-foreground">Bigger work, each with its own tasks and budget.</p>
+          <div className="flex items-center gap-2">
+            {projectView === "board" ? (
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setBoardFull(true)}>
+                <Maximize2 className="h-4 w-4" /> Full screen
+              </Button>
+            ) : null}
+            <div className="flex items-center rounded-lg border p-0.5">
+              <button
+                onClick={() => setProjectView("list")}
+                aria-label="List view"
+                className={cn("rounded-md p-1.5 text-muted-foreground", projectView === "list" && "bg-accent text-foreground")}
+              >
+                <List className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setProjectView("board")}
+                aria-label="Board view"
+                className={cn("rounded-md p-1.5 text-muted-foreground", projectView === "board" && "bg-accent text-foreground")}
+              >
+                <Columns3 className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
 
-        {compact ? (
-          <Card>
-            <CardContent className="divide-y p-0">
-              {projects.map((project) => {
-                const done = project.tasks.filter((t) => t.is_done).length;
+        {projects.length === 0 ? (
+          <EmptyState icon={Hammer} title="No projects yet" description="Add a project to plan bigger work and break it into tasks.">
+            <ProjectForm />
+          </EmptyState>
+        ) : projectView === "board" ? (
+          <>
+            <div className="grid grid-flow-col auto-cols-[minmax(260px,1fr)] gap-4 overflow-x-auto pb-2">
+              {PROJECT_STATUSES.map((status) => {
+                const items = projects.filter((p) => p.status === status);
                 return (
-                  <div key={project.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
-                    <ProjectDetailDialog project={project} memberMap={memberMap}>
-                      <CardTrigger className="flex min-w-0 flex-1 items-center gap-3 rounded-md">
-                        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATUS_ACCENT[project.status]}`} />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="truncate font-medium">{project.name}</span>
-                            <Badge variant={priorityVariant(project.priority)}>{project.priority}</Badge>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>
-                              {project.status} · {project.category}
-                              {project.tasks.length ? ` · ${done}/${project.tasks.length} tasks` : ""}
-                            </span>
-                            <AddedBy name={memberMap[project.user_id]} />
-                          </div>
-                        </div>
-                        <span className="shrink-0 font-medium">
-                          {formatCurrency(project.actual_cost || project.estimated_cost)}
-                        </span>
-                      </CardTrigger>
-                    </ProjectDetailDialog>
-                    <div className="flex shrink-0 items-center">
-                      <ProjectForm
-                        project={project}
-                        trigger={
-                          <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
-                            <Pencil className="h-4 w-4" />
-                            Edit
-                          </button>
-                        }
-                      />
-                      <ConfirmDelete itemLabel="project" action={deleteProject.bind(null, project.id)} />
+                  <div key={status} className="rounded-xl border bg-card/40">
+                    <div className="flex items-center justify-between border-b px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2.5 w-2.5 rounded-full ${STATUS_ACCENT[status]}`} />
+                        <span className="text-sm font-medium">{status}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">{items.length}</span>
+                    </div>
+                    <div className="space-y-2 p-2">
+                      {items.map((project) => (
+                        <ProjectCard key={project.id} project={project} memberMap={memberMap} compact />
+                      ))}
+                      {items.length === 0 ? (
+                        <p className="px-2 py-6 text-center text-xs text-muted-foreground">Nothing here</p>
+                      ) : null}
                     </div>
                   </div>
                 );
               })}
-            </CardContent>
-          </Card>
+            </div>
+            {boardFull ? (
+              <BoardFullScreen projects={projects} memberMap={memberMap} onClose={() => setBoardFull(false)} />
+            ) : null}
+          </>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {projects.map((project) => (
               <ProjectCard key={project.id} project={project} memberMap={memberMap} />
             ))}
@@ -176,7 +150,9 @@ function ProjectCard({
 }) {
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
+  const total = project.tasks.length;
   const done = project.tasks.filter((t) => t.is_done).length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
   function move(status: string) {
     startTransition(async () => {
@@ -186,7 +162,7 @@ function ProjectCard({
   }
 
   return (
-    <Card className="shadow-none">
+    <Card className={cn("shadow-none", !compact && `border-l-4 ${STATUS_BORDER[project.status] ?? ""}`)}>
       <CardContent className={compact ? "space-y-2 p-3" : "space-y-3 p-4"}>
         <ProjectDetailDialog project={project} memberMap={memberMap}>
           <CardTrigger className={compact ? "space-y-2 rounded-md" : "space-y-3 rounded-md"}>
@@ -197,9 +173,8 @@ function ProjectCard({
                   <Badge variant={priorityVariant(project.priority)}>{project.priority}</Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {project.category}
+                  {project.status} · {project.category}
                   {project.target_completion_date ? ` · ${formatDate(project.target_completion_date)}` : ""}
-                  {project.tasks.length ? ` · ${done}/${project.tasks.length} tasks` : ""}
                 </p>
               </div>
               <div className="text-right text-sm">
@@ -207,6 +182,16 @@ function ProjectCard({
                 <p className="text-xs text-muted-foreground">{project.actual_cost ? "actual" : "est."}</p>
               </div>
             </div>
+
+            {/* Task progress — the at-a-glance "how far along is this" */}
+            {total > 0 ? (
+              <div className="space-y-1">
+                <Progress value={pct} />
+                <p className="text-xs text-muted-foreground">{done}/{total} tasks done</p>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">No tasks yet</p>
+            )}
 
             {!compact && project.description ? (
               <p className="line-clamp-2 text-sm text-muted-foreground">{project.description}</p>
@@ -243,7 +228,6 @@ function ProjectCard({
     </Card>
   );
 }
-
 
 /** A full-screen, mobile-friendly board: statuses stacked vertically. */
 function BoardFullScreen({

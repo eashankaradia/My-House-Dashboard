@@ -19,6 +19,16 @@ export const PRIORITY_ACCENT: Record<string, string> = {
   Low: "border-l-slate-300 dark:border-l-slate-600",
 };
 
+/** Left-border accent per status (literal classes so Tailwind keeps them). */
+export const STATUS_BORDER: Record<string, string> = {
+  Idea: "border-l-slate-400",
+  Planning: "border-l-sky-500",
+  Quoting: "border-l-violet-500",
+  Scheduled: "border-l-amber-500",
+  "In Progress": "border-l-blue-500",
+  Completed: "border-l-emerald-500",
+};
+
 /** Tailwind text/border accent for a project/purchase/inspiration status. */
 export const STATUS_ACCENT: Record<string, string> = {
   Idea: "bg-slate-400",
