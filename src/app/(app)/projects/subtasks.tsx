@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { ProjectTask, ProjectWithTasks } from "@/lib/database.types";
+import { TaskEditDialog } from "../tasks/tasks-view";
 import { addTask, deleteTask, toggleTask } from "./actions";
 
 export function Subtasks({ project }: { project: ProjectWithTasks }) {
@@ -45,9 +46,14 @@ export function Subtasks({ project }: { project: ProjectWithTasks }) {
         active.map((task) => (
           <div key={task.id} className="flex items-center gap-2">
             <Checkbox checked={task.is_done} onCheckedChange={() => toggle(task)} className="h-4 w-4" />
-            <span className={cn("flex-1 text-sm", task.is_done && "text-muted-foreground line-through")}>
-              {task.title}
-            </span>
+            <TaskEditDialog task={task}>
+              <button
+                type="button"
+                className={cn("flex-1 truncate text-left text-sm hover:underline", task.is_done && "text-muted-foreground line-through")}
+              >
+                {task.title}
+              </button>
+            </TaskEditDialog>
             <button
               onClick={() => startTransition(async () => void (await deleteTask(task.id)))}
               className="text-muted-foreground hover:text-destructive"
