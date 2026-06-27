@@ -103,6 +103,14 @@ Requests:
   selected-item editor so any piece can be reshaped.
 - Verified: typecheck, lint, build all clean.
 
+### Batch 8 (done, no DB) — option name overflow on mobile (follow-up)
+- Opening an item's options on a narrow phone scrolled sideways: the option name
+  `truncate` span sat in a nested flex without `min-w-0`, so it kept full intrinsic
+  width and overflowed instead of ellipsing. Fixed in `option-row.tsx`: name span
+  is now `min-w-0 flex-1 truncate`, inner flex is `min-w-0`, Picked badge is
+  `shrink-0`, button is `w-full min-w-0`. Also hid the "Edit" label on mobile
+  (`hidden sm:inline`, icon kept) to free width. Typecheck/lint/build clean.
+
 **FOURTH LIST COMPLETE** — all 9 requests shipped. Migrations the user still needs
 to run live: 0029 (option dims), 0030 (bill start_date), 0031 (purchase size),
 0032 (layout item shape/option_id). Each was provided inline in chat.

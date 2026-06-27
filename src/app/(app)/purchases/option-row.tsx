@@ -68,10 +68,10 @@ export function OptionRow({
       ) : null}
       <div className="min-w-0 flex-1">
         <OptionDetailDialog purchaseId={purchaseId} option={option}>
-          <button className="block min-w-0 max-w-full rounded text-left hover:underline">
-            <span className="flex items-center gap-1.5">
-              <span className="truncate text-sm font-medium">{option.name}</span>
-              {option.is_chosen ? <Badge variant="success">Picked</Badge> : null}
+          <button className="block w-full min-w-0 rounded text-left hover:underline">
+            <span className="flex min-w-0 items-center gap-1.5">
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">{option.name}</span>
+              {option.is_chosen ? <Badge variant="success" className="shrink-0">Picked</Badge> : null}
             </span>
             <span className="block truncate text-xs text-muted-foreground">
               {[option.store, option.notes].filter(Boolean).join(" · ") || " "}
@@ -128,7 +128,7 @@ export function OptionRow({
           trigger={
             <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
               <Pencil className="h-4 w-4" />
-              Edit
+              <span className="hidden sm:inline">Edit</span>
             </button>
           }
         />
