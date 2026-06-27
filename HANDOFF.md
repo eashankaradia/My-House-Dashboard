@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-27 (Claude — FOURTH LIST batch 4: big/small purchase size).
+> after **every** change. Last updated: 2026-06-27 (Claude — FOURTH LIST batch 5: react to comments).
 
 ## -2. FOURTH LIST in progress (Claude, 2026-06-27)
 
@@ -16,7 +16,7 @@ Requests:
 4. Fix the rating system (too sensitive / not sticky) — **DONE batch 1**.
 5. Remove ratings from top-level purchase items — mostly done earlier; re-verify.
 6. Categorise purchases as a big or small purchase — **DONE batch 4** (migration 0031).
-7. Let people react to individual comments — **pending** (reuse reactions table).
+7. Let people react to individual comments — **DONE batch 5** (no DB).
 8. Truncate long option names so they don't widen the card — **DONE batch 1**.
 9. Furniture options: pick shape + dimensions, then use them in the Room Designer —
    **dimensions/shape capture DONE batch 1**; Room Designer wiring still pending.
@@ -65,13 +65,25 @@ Requests:
 - NOTE: zod input-vs-output — the form default must be `undefined` (not `""`)
   for `size`, else TS2322. (Pattern to remember for enum-with-empty fields.)
 
-**NEXT unfinished step:** Batch 5 — comment reactions (#7): reuse the `reactions`
-table with `entity_type="comment"`, `entity_id=comment.id`; add the reaction
-picker/list to each comment row in `components/shared/item-comments.tsx` (check
-whether the existing item-level reaction RLS/insert path already accepts a
-"comment" entity_type — likely yes, no migration). Then verify no top-level item
-ratings remain (#5), and finally wire option dimensions into the Room Designer
-"add from wishlist" placement (#9 part 2).
+### Batch 5 (done, no DB) — react to individual comments (#7)
+- Reuses the polymorphic `reactions` table with `entity_type="comment"`,
+  `entity_id=comment.id` — no migration (existing RLS/insert path accepts it).
+- `comments/actions.ts#loadThread` now fetches comment-level reactions in one
+  `.in("entity_id", commentIds)` query and attaches `reactions[]` to each
+  `CommentView`. `deleteComment` also clears that comment's reactions (no FK
+  cascade on the polymorphic table).
+- `item-comments.tsx`: each comment row shows its reaction pills + a SmilePlus
+  quick-react picker (`reactToComment` → `toggleReaction("comment", id, emoji)`).
+- Verified: typecheck, lint, build all clean.
+
+**NEXT unfinished step:** Batch 6 — verify no top-level purchase *item* ratings
+remain in the UI (#5) — grep `setPurchaseRating`/item-level `StarRating` in
+purchases grid/detail/forms; if the quick-rate stars still show on the item
+card/detail (not options), remove them. Then the final big piece: wire option
+shape/dimensions into the Room Designer — an "Add from wishlist" picker in the
+planner that drops a chosen option onto the floor plan as furniture using its
+width/depth (round → ellipse), storing `purchase_id`/`option_id` on the placed
+item so the planner links back to the purchase (#9 part 2).
 
 ## -1. THIRD LIST in progress (Claude, 2026-06-26)
 

@@ -5,8 +5,15 @@ import { getActionContext, type ActionResult } from "@/lib/action-utils";
 import { getHouseholdMap } from "@/lib/household";
 import type { Comment, CommentRead, Reaction } from "@/lib/database.types";
 
-export type CommentView = { id: string; user_id: string; name: string | null; body: string; created_at: string };
 export type ReactionView = { emoji: string; count: number; mine: boolean };
+export type CommentView = {
+  id: string;
+  user_id: string;
+  name: string | null;
+  body: string;
+  created_at: string;
+  reactions: ReactionView[];
+};
 
 export type ThreadData = {
   comments: CommentView[];
@@ -25,12 +32,32 @@ export async function loadThread(entityType: string, entityId: string): Promise<
     getHouseholdMap(),
   ]);
 
-  const comments = ((commentRows ?? []) as Comment[]).map((c) => ({
+  const commentList = (commentRows ?? []) as Comment[];
+
+  // Per-comment reactions (entity_type="comment", entity_id=comment id).
+  const commentIds = commentList.map((c) => c.id);
+  const { data: commentReactionRows } = commentIds.length
+    ? await supabase.from("reactions").select("*").eq("entity_type", "comment").in("entity_id", commentIds)
+    : { data: [] };
+  const reactionsByComment = new Map<string, Map<string, { count: number; mine: boolean }>>();
+  for (const r of (commentReactionRows ?? []) as Reaction[]) {
+    const byEmoji = reactionsByComment.get(r.entity_id) ?? new Map();
+    const cur = byEmoji.get(r.emoji) ?? { count: 0, mine: false };
+    cur.count += 1;
+    if (r.user_id === user.id) cur.mine = true;
+    byEmoji.set(r.emoji, cur);
+    reactionsByComment.set(r.entity_id, byEmoji);
+  }
+
+  const comments = commentList.map((c) => ({
     id: c.id,
     user_id: c.user_id,
     name: memberMap[c.user_id] ?? null,
     body: c.body,
     created_at: c.created_at,
+    reactions: Array.from((reactionsByComment.get(c.id) ?? new Map()).entries()).map(
+      ([emoji, v]) => ({ emoji, ...(v as { count: number; mine: boolean }) }),
+    ),
   }));
 
   const lastRead = (readRow as CommentRead | null)?.last_read_at ?? null;
@@ -88,6 +115,8 @@ export async function deleteComment(id: string): Promise<ActionResult> {
   const { supabase } = await getActionContext();
   const { error } = await supabase.from("comments").delete().eq("id", id);
   if (error) return { error: error.message };
+  // Clean up this comment's reactions (polymorphic table, no FK cascade).
+  await supabase.from("reactions").delete().eq("entity_type", "comment").eq("entity_id", id);
   return {};
 }
 

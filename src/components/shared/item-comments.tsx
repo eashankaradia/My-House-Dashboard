@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { MessageCircle, Send, Trash2 } from "lucide-react";
+import { MessageCircle, Send, SmilePlus, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -62,6 +62,14 @@ export function ItemComments({
   function react(emoji: string) {
     startTransition(async () => {
       const res = await toggleReaction(entityType, entityId, emoji);
+      if (res?.error) toast({ variant: "destructive", title: "Couldn't react", description: res.error });
+      else refresh();
+    });
+  }
+
+  function reactToComment(commentId: string, emoji: string) {
+    startTransition(async () => {
+      const res = await toggleReaction("comment", commentId, emoji);
       if (res?.error) toast({ variant: "destructive", title: "Couldn't react", description: res.error });
       else refresh();
     });
@@ -146,7 +154,16 @@ export function ItemComments({
       {open ? (
         <div className="space-y-2 rounded-lg border bg-muted/20 p-2.5">
           {data?.comments.length ? (
-            data.comments.map((c) => <CommentRow key={c.id} comment={c} mine={c.user_id === data.currentUserId} onDelete={() => remove(c.id)} disabled={pending} />)
+            data.comments.map((c) => (
+              <CommentRow
+                key={c.id}
+                comment={c}
+                mine={c.user_id === data.currentUserId}
+                onDelete={() => remove(c.id)}
+                onReact={(emoji) => reactToComment(c.id, emoji)}
+                disabled={pending}
+              />
+            ))
           ) : (
             <p className="px-1 py-1 text-xs text-muted-foreground">No comments yet. Start the conversation.</p>
           )}
@@ -166,14 +183,22 @@ function CommentRow({
   comment,
   mine,
   onDelete,
+  onReact,
   disabled,
 }: {
-  comment: { name: string | null; body: string; created_at: string };
+  comment: {
+    name: string | null;
+    body: string;
+    created_at: string;
+    reactions: { emoji: string; count: number; mine: boolean }[];
+  };
   mine: boolean;
   onDelete: () => void;
+  onReact: (emoji: string) => void;
   disabled: boolean;
 }) {
   const colorClass = useMemberColorClass(comment.name);
+  const [pickerOpen, setPickerOpen] = React.useState(false);
   return (
     <div className="group flex items-start gap-2 rounded-md px-1 py-1 text-sm">
       <div className="min-w-0 flex-1">
@@ -182,18 +207,65 @@ function CommentRow({
         </span>
         <span className="text-[11px] text-muted-foreground">{formatDate(comment.created_at)}</span>
         <p className="whitespace-pre-wrap break-words">{comment.body}</p>
+        {comment.reactions.length || pickerOpen ? (
+          <div className="mt-1 flex flex-wrap items-center gap-1">
+            {comment.reactions.map((r) => (
+              <button
+                key={r.emoji}
+                type="button"
+                disabled={disabled}
+                onClick={() => onReact(r.emoji)}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[11px] transition-colors",
+                  r.mine ? "border-primary bg-primary/10" : "hover:bg-accent",
+                )}
+              >
+                <span>{r.emoji}</span>
+                <span className="text-muted-foreground">{r.count}</span>
+              </button>
+            ))}
+            {pickerOpen
+              ? QUICK_EMOJI.filter((e) => !comment.reactions.some((r) => r.emoji === e)).map((e) => (
+                  <button
+                    key={e}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => {
+                      onReact(e);
+                      setPickerOpen(false);
+                    }}
+                    aria-label={`React ${e}`}
+                    className="rounded-full px-1 text-sm opacity-70 transition-opacity hover:opacity-100"
+                  >
+                    {e}
+                  </button>
+                ))
+              : null}
+          </div>
+        ) : null}
       </div>
-      {mine ? (
+      <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
         <button
           type="button"
           disabled={disabled}
-          onClick={onDelete}
-          aria-label="Delete comment"
-          className="shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+          onClick={() => setPickerOpen((v) => !v)}
+          aria-label="React to comment"
+          className="text-muted-foreground hover:text-foreground"
         >
-          <Trash2 className="h-3.5 w-3.5" />
+          <SmilePlus className="h-3.5 w-3.5" />
         </button>
-      ) : null}
+        {mine ? (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={onDelete}
+            aria-label="Delete comment"
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
