@@ -23,6 +23,7 @@ export type Bill = Timestamps & {
   category: BillCategory;
   amount: number;
   frequency: Frequency;
+  start_date: string | null;
   due_date: string | null;
   end_date: string | null;
   payment_account: string | null;

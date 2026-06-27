@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-27 (Claude — FOURTH LIST batch 1: option dimensions + detail + sticky rating).
+> after **every** change. Last updated: 2026-06-27 (Claude — FOURTH LIST batch 2: bills start date).
 
 ## -2. FOURTH LIST in progress (Claude, 2026-06-27)
 
@@ -10,7 +10,7 @@ User's latest request list, shipped as small PR-per-batch. SQL is always pasted
 inline in chat for the user to run (user runs all SQL themselves).
 
 Requests:
-1. Bills: add a start date — **pending** (needs migration).
+1. Bills: add a start date — **DONE batch 2** (migration 0030).
 2. Remove the "point out to a member" (PointOutButton) feature — **pending** (no DB).
 3. Click into a purchase option to see its details (read-only) — **DONE batch 1**.
 4. Fix the rating system (too sensitive / not sticky) — **DONE batch 1**.
@@ -41,11 +41,18 @@ Requests:
   widen the card.
 - Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
 
-**NEXT unfinished step:** Batch 2 — Bills start date (#1): add migration
-`0030_bill_start_date.sql` (`bills.start_date date`), `start_date` to `billSchema`
-+ bill form + display; OR PointOutButton removal (#2, no DB). Then big/small
-purchase category (#6), comment reactions (#7), and finally wire option
-dimensions into the Room Designer "add from wishlist" placement.
+### Batch 2 (done) — Bills start date (#1) — **needs migration 0030**
+- `0030_bill_start_date.sql` adds `bills.start_date date`. **RUN THIS LIVE.**
+- `start_date` added to `billSchema` (optionalDate), `Bill` type, `toRow` in
+  bills `actions.ts`, the bill form (new "Start date (optional)" field paired with
+  End date), and `bill-detail.tsx` (shown only when set).
+- Verified: typecheck, lint, build all clean.
+
+**NEXT unfinished step:** Batch 3 — remove PointOutButton (#2, no DB): delete the
+`point-out-button.tsx` usages from every detail dialog. Then big/small purchase
+category (#6, needs migration), comment reactions (#7), verify no top-level item
+ratings remain (#5), and finally wire option dimensions into the Room Designer
+"add from wishlist" placement (#9 part 2).
 
 ## -1. THIRD LIST in progress (Claude, 2026-06-26)
 

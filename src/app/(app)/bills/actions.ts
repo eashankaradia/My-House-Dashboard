@@ -18,6 +18,7 @@ function toRow(values: BillInput) {
     category: values.category,
     amount: values.amount,
     frequency: values.frequency,
+    start_date: values.start_date ?? null,
     due_date: values.due_date ?? null,
     end_date: values.end_date ?? null,
     account_id: values.account_id ?? null,
