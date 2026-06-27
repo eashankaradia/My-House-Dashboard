@@ -232,6 +232,38 @@ User submitted a third list of ~19 requests. Working through in batches.
 - **Needs attention** empty state is now a single concise line ("All caught up —
   nothing due.") that won't wrap on mobile.
 
+## Room Designer (new platform feature) — multi-phase
+
+### Batch FF (done) — Phase 1 foundation — **needs migration 0025**
+- `0025_room_designer.sql`: extends `rooms` (shape, width/length/height_cm,
+  wall/ceiling/floor/trim colours, flooring, doors/windows jsonb, notes,
+  project_id, updated_at + the missing UPDATE policy + set_updated_at trigger);
+  new tables `room_design_versions`, `room_design_layout_items`,
+  `room_colour_palettes`, `room_colour_swatches`,
+  `room_design_inspiration_links` — all household RLS. RUN THIS LIVE.
+- Rooms are now first-class entities (no second system): nav item **Room
+  Designer** (`/rooms`, Sofa icon). `rooms/actions.ts` gained `getRoomEntities`
+  (seeds defaults, dedupes by name), `updateRoomDetails`, and design-version CRUD
+  (`createDesignVersion`, `updateDesignVersion`, `duplicate`, `delete`,
+  `setStatus`, `markFinal` — snapshots room dims/colours).
+- `/rooms` list (cards: dims + design/item/idea counts, final badge).
+- `/rooms/[id]` workspace (`room-workspace.tsx`) with tabs: **Overview**
+  (autosaving dimensions in metres + colour pickers + flooring + project link +
+  notes), **Design** (version cards: status, cost, colour chips; add / edit /
+  duplicate / mark-final / delete), **Items** (purchases tagged to the room with
+  planned/spent totals, link out), **Ideas** (inspiration tagged to the room),
+  **Tasks** (one-tap create incl. suggestions, routed to the room's project).
+- Purchases/inspiration link by their existing `room` text field — no dup data.
+
+### Room Designer — STILL TODO (next phases, schema already in place)
+- Phase 1 cont.: **2D floor planner** (grid/snap/drag/rotate/resize furniture)
+  writing `room_design_layout_items`; furniture add/library.
+- Phase 2: Colour Studio + photo/camera colour extraction (canvas, no deps) →
+  `room_colour_palettes`/`swatches`; mood boards; deeper purchase linking
+  (create purchase from furniture, install status, layout position).
+- Phase 3: project budget rollup, version comparison (side-by-side), timeline.
+- Phase 4: lightweight 3D (R3F/Three — would add deps), validation, export.
+
 STILL TODO (optional, needs the user or external access):
 - Generate Supabase types instead of hand-writing `database.types.ts` (needs the
   Supabase CLI + DB connection — can't run from the sandbox).

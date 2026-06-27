@@ -329,10 +329,96 @@ export type Reaction = {
   created_at: string;
 };
 
+export type RoomOpening = { position: number; width: number; height?: number; label?: string };
+
 export type Room = {
   id: string;
   user_id: string;
   name: string;
+  created_at: string;
+  updated_at?: string;
+  shape: string;
+  width_cm: number | null;
+  length_cm: number | null;
+  height_cm: number | null;
+  wall_color: string | null;
+  ceiling_color: string | null;
+  floor_color: string | null;
+  trim_color: string | null;
+  flooring: string | null;
+  doors: RoomOpening[];
+  windows: RoomOpening[];
+  notes: string | null;
+  project_id: string | null;
+};
+
+export type RoomDesignStatus = "draft" | "comparing" | "chosen" | "archived";
+
+export type RoomDesignVersion = Timestamps & {
+  id: string;
+  user_id: string;
+  room_id: string;
+  name: string;
+  description: string | null;
+  status: RoomDesignStatus;
+  is_final: boolean;
+  cost_estimate: number | null;
+  width_cm: number | null;
+  length_cm: number | null;
+  height_cm: number | null;
+  wall_color: string | null;
+  ceiling_color: string | null;
+  floor_color: string | null;
+  trim_color: string | null;
+  notes: string | null;
+};
+
+export type RoomLayoutItem = Timestamps & {
+  id: string;
+  user_id: string;
+  version_id: string;
+  name: string;
+  category: string | null;
+  width_cm: number;
+  depth_cm: number;
+  height_cm: number | null;
+  x_cm: number;
+  y_cm: number;
+  rotation: number;
+  color: string | null;
+  material: string | null;
+  notes: string | null;
+  cost: number | null;
+  priority: string | null;
+  status: string;
+  purchase_id: string | null;
+  image_url: string | null;
+};
+
+export type RoomColourPalette = {
+  id: string;
+  user_id: string;
+  room_id: string;
+  version_id: string | null;
+  name: string;
+  created_at: string;
+};
+
+export type RoomColourSwatch = {
+  id: string;
+  user_id: string;
+  palette_id: string;
+  hex: string;
+  label: string | null;
+  position: number;
+  created_at: string;
+};
+
+export type RoomDesignInspirationLink = {
+  id: string;
+  user_id: string;
+  version_id: string;
+  inspiration_id: string;
   created_at: string;
 };
 
@@ -451,6 +537,11 @@ export type Database = {
       comment_reads: Row<CommentRead>;
       reactions: Row<Reaction>;
       rooms: Row<Room>;
+      room_design_versions: Row<RoomDesignVersion>;
+      room_design_layout_items: Row<RoomLayoutItem>;
+      room_colour_palettes: Row<RoomColourPalette>;
+      room_colour_swatches: Row<RoomColourSwatch>;
+      room_design_inspiration_links: Row<RoomDesignInspirationLink>;
     };
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };
