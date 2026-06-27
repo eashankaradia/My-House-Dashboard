@@ -376,15 +376,15 @@ function TaskRow({
   );
 }
 
-function TaskEditDialog({
+export function TaskEditDialog({
   task,
-  projects,
-  members,
+  projects = [],
+  members = [],
   children,
 }: {
   task: ProjectTask;
-  projects: ProjectOption[];
-  members: Member[];
+  projects?: ProjectOption[];
+  members?: Member[];
   children: React.ReactNode;
 }) {
   const { open, onOpenChange } = useOpenFromUrl(task.id, "task");

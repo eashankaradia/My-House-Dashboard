@@ -320,8 +320,12 @@ User submitted a third list of ~19 requests. Working through in batches.
 - New `createPurchaseWithOptions(input, options[])` action; the form posts the
   item + its options in one go. Editing still manages options on the card.
 
+### Batch D (done, no DB) — clickable sub-tasks
+- `TaskEditDialog` exported from `tasks/tasks-view.tsx` (projects/members props
+  now optional). `Subtasks` wraps each sub-task title in it, so tapping a
+  sub-task opens its full editor (notes, due date, comments, links).
+
 ### New request list — STILL TODO (next batches)
-- Click into sub-tasks from the projects menu.
 - Quick-add "take a photo to label later" → a Misc Photos section.
 - Drafts on everything + a Drafts tab.
 - Room shapes beyond rectangle (L-shape/polygon from real plans) + door
