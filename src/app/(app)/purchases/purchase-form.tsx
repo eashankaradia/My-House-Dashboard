@@ -18,7 +18,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
-import { StarRating } from "@/components/shared/star-rating";
 import { ImageUpload } from "@/components/shared/image-upload";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -66,7 +65,6 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [] }: Prop
       status: purchase?.status ?? "Considering",
       non_negotiables: purchase?.non_negotiables ?? "",
       notes: purchase?.notes ?? "",
-      rating: purchase?.rating ?? 0,
       purchased_by: purchase?.purchased_by ?? "",
       purchased_price: purchase?.purchased_price ?? undefined,
       receipt_url: purchase?.receipt_url ?? "",
@@ -193,21 +191,13 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [] }: Prop
               card to add products to compare — each with its own price, link and photo.
             </p>
           )}
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Category" tooltip="The broad type of item.">
-              <NativeSelect {...register("category")}>
-                {PURCHASE_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </NativeSelect>
-            </Field>
-            <Field label="Your rating" tooltip="How much you rate this item, out of 5. You can also rate it later from the list.">
-              <div className="flex h-9 items-center">
-                <StarRating value={watch("rating")} onRate={async (n) => setValue("rating", n)} />
-              </div>
-              <input type="hidden" {...register("rating")} />
-            </Field>
-          </div>
+          <Field label="Category" tooltip="The broad type of item.">
+            <NativeSelect {...register("category")}>
+              {PURCHASE_CATEGORIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </NativeSelect>
+          </Field>
           <Field
             label="Non-negotiable features and qualities"
             htmlFor="non-negotiables"

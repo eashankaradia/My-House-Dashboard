@@ -21,7 +21,7 @@ import { PurchaseForm } from "./purchase-form";
 import { OptionForm } from "./option-form";
 import { OptionRow } from "./option-row";
 import { PurchaseDetailDialog } from "./purchase-detail";
-import { deletePurchase, setPurchaseRating, updatePurchaseStatus } from "./actions";
+import { deletePurchase, updatePurchaseStatus } from "./actions";
 
 // Kept for backwards compatibility with the page's import; stars are gone.
 export type StarInfo = { mine: boolean; names: string[] };
@@ -230,7 +230,7 @@ function PurchaseTable({
                 <td className="px-3 py-2 text-muted-foreground">{p.room ?? "—"}</td>
                 <td className="px-3 py-2 text-muted-foreground">{p.category}</td>
                 <td className="px-3 py-2">
-                  <StarRating value={p.options.length ? effectiveRating(p) : p.rating} size="sm" />
+                  <StarRating value={effectiveRating(p)} size="sm" />
                 </td>
                 <td className="px-3 py-2 text-right font-medium">{formatCurrency(effectivePrice(p))}</td>
                 <td className="px-3 py-2 text-muted-foreground">{p.status}</td>
@@ -283,7 +283,6 @@ function CompactRow({
         <CardTrigger className="min-w-0 flex-1 rounded-md">
           <div className="flex items-center gap-2">
             <span className="truncate font-medium">{purchase.name}</span>
-            {opts.length === 0 ? <StarRating value={purchase.rating} size="sm" /> : null}
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="truncate">
@@ -345,9 +344,6 @@ function PurchaseCard({
               </p>
             </CardTrigger>
           </PurchaseDetailDialog>
-          {options.length === 0 ? (
-            <StarRating value={purchase.rating} onRate={(n) => setPurchaseRating(purchase.id, n)} size="sm" />
-          ) : null}
         </div>
 
         <div className="flex items-baseline justify-between gap-2">

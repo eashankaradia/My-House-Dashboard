@@ -307,8 +307,13 @@ User submitted a third list of ~19 requests. Working through in batches.
 - `ImageUpload` now offers **Take photo** (camera, `capture=environment`) and
   **Gallery** — used everywhere images are uploaded.
 
+### Batch B (done, no DB) — ratings only on options
+- Removed the item-level star rating from the purchase form, detail dialog and
+  grid (compact + card). Ratings now live only on **options**. Table view shows
+  an item's best option rating (`effectiveRating`). `purchases.rating` column +
+  `setPurchaseRating` action remain (unused) for back-compat; harmless.
+
 ### New request list — STILL TODO (next batches)
-- Remove ratings from purchase ITEMS (keep on options only).
 - Purchases add-form: drop the specific/compare toggle; default to options, let
   options be added when creating the record.
 - Click into sub-tasks from the projects menu.
