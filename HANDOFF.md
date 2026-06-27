@@ -276,9 +276,18 @@ User submitted a third list of ~19 requests. Working through in batches.
   sample any pixel, pick which to keep, save into the palette. Delete swatches /
   palettes. Room detail page now fetches `room_colour_palettes` + swatches.
 
+### Batch II (done, no DB) — Phase 2b: planner ↔ purchases
+- `rooms/actions.ts` `createPurchaseFromLayout(itemId, roomName)`: creates a
+  wishlist purchase (category Furniture, room = room name, price = item cost) and
+  links it back via `layout_item.purchase_id` (status → planned). No duplicate
+  data — the purchase lives in Purchases, the planner just references it.
+- Floor planner selected-item panel: **install Status** select
+  (idea→installed) and **Create purchase** / **Linked purchase →** link.
+
 ### Room Designer — STILL TODO (next phases, schema already in place)
-- Phase 2b: mood boards; "create purchase from a furniture/layout item" + link
-  layout item ↔ purchase + install status; attach a palette to a design version.
+- Phase 2c (optional): mood boards; attach a palette to a design version.
+- Phase 3: project budget rollups; **side-by-side version comparison**; timeline.
+- Phase 4: lightweight 3D (adds Three/R3F); export.
 - Phase 2: Colour Studio + photo/camera colour extraction (canvas, no deps) →
   `room_colour_palettes`/`swatches`; mood boards; deeper purchase linking
   (create purchase from furniture, install status, layout position).
