@@ -10,6 +10,7 @@ import {
   PROJECT_CATEGORIES,
   PROJECT_STATUSES,
   PURCHASE_CATEGORIES,
+  PURCHASE_SIZES,
   PURCHASE_STATUSES,
 } from "@/lib/constants";
 
@@ -114,6 +115,7 @@ export const purchaseSchema = z.object({
   store: optionalString,
   price: money,
   category: z.enum(PURCHASE_CATEGORIES),
+  size: z.enum(PURCHASE_SIZES).optional().or(z.literal("")).transform((v) => v || undefined),
   room: optionalString,
   priority: z.enum(PRIORITIES),
   status: z.enum(PURCHASE_STATUSES),

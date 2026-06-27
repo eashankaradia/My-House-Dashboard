@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-27 (Claude — FOURTH LIST batch 3: remove PointOutButton).
+> after **every** change. Last updated: 2026-06-27 (Claude — FOURTH LIST batch 4: big/small purchase size).
 
 ## -2. FOURTH LIST in progress (Claude, 2026-06-27)
 
@@ -15,7 +15,7 @@ Requests:
 3. Click into a purchase option to see its details (read-only) — **DONE batch 1**.
 4. Fix the rating system (too sensitive / not sticky) — **DONE batch 1**.
 5. Remove ratings from top-level purchase items — mostly done earlier; re-verify.
-6. Categorise purchases as a big or small purchase — **pending** (needs migration).
+6. Categorise purchases as a big or small purchase — **DONE batch 4** (migration 0031).
 7. Let people react to individual comments — **pending** (reuse reactions table).
 8. Truncate long option names so they don't widen the card — **DONE batch 1**.
 9. Furniture options: pick shape + dimensions, then use them in the Room Designer —
@@ -55,9 +55,21 @@ Requests:
 - `sendNotification`/`listOtherMembers` in `notifications/actions.ts` are left in
   place (harmless if otherwise unused).
 
-**NEXT unfinished step:** Batch 4 — big/small purchase category (#6, needs
-migration `0031`: `purchases.size text`): add to schema + purchase form + a
-display badge/filter. Then comment reactions (#7), verify no top-level item
+### Batch 4 (done) — big/small purchase category (#6) — **needs migration 0031**
+- `0031_purchase_size.sql` adds `purchases.size text` (null = unspecified).
+  **RUN THIS LIVE.**
+- `PURCHASE_SIZES = ["Small","Big"]` in constants; `size` added to `Purchase`
+  type, `purchaseSchema` (enum, "" → undefined), and `toRow` in purchases actions.
+- Purchase form: new "Size" select paired with Category ("Small/Big purchase").
+- Detail dialog shows the size; grid gains an "Any size / Small / Big" filter.
+- NOTE: zod input-vs-output — the form default must be `undefined` (not `""`)
+  for `size`, else TS2322. (Pattern to remember for enum-with-empty fields.)
+
+**NEXT unfinished step:** Batch 5 — comment reactions (#7): reuse the `reactions`
+table with `entity_type="comment"`, `entity_id=comment.id`; add the reaction
+picker/list to each comment row in `components/shared/item-comments.tsx` (check
+whether the existing item-level reaction RLS/insert path already accepts a
+"comment" entity_type — likely yes, no migration). Then verify no top-level item
 ratings remain (#5), and finally wire option dimensions into the Room Designer
 "add from wishlist" placement (#9 part 2).
 

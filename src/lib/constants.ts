@@ -102,6 +102,9 @@ export const PURCHASE_STATUSES = [
   "Interesting", "Considering", "Shortlisted", "Ready To Buy", "Purchased",
 ] as const;
 
+/** Whether a purchase is a big-ticket or a small everyday buy. */
+export const PURCHASE_SIZES = ["Small", "Big"] as const;
+
 export const INSPIRATION_SOURCES = [
   "Instagram", "TikTok", "Pinterest", "YouTube", "Blog", "Store", "Other",
 ] as const;

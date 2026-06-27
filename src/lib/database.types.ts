@@ -169,6 +169,8 @@ export type Purchase = Timestamps & {
   price: number;
   category: PurchaseCategory;
   sub_category: string | null;
+  /** "Small" | "Big" | null — big-ticket vs everyday purchase. */
+  size: string | null;
   room: string | null;
   priority: Priority;
   non_negotiables: string | null;
