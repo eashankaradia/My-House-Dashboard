@@ -45,6 +45,7 @@ export function BillForm({ bill, accounts = [], trigger }: Props) {
       category: bill?.category ?? "Utilities",
       amount: bill?.amount ?? 0,
       frequency: bill?.frequency ?? "monthly",
+      start_date: bill?.start_date ?? "",
       due_date: bill?.due_date ?? "",
       end_date: bill?.end_date ?? "",
       account_id: bill?.account_id ?? "",
@@ -117,9 +118,16 @@ export function BillForm({ bill, accounts = [], trigger }: Props) {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
+            <Field label="Start date (optional)" htmlFor="start_date" error={errors.start_date?.message}
+              hint="When this bill or contract began.">
+              <Input id="start_date" type="date" {...register("start_date")} />
+            </Field>
             <Field label="End date (optional)" htmlFor="end_date" error={errors.end_date?.message}>
               <Input id="end_date" type="date" {...register("end_date")} />
             </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <Field label="Payment account">
               <NativeSelect {...register("account_id")}>
                 <option value="">No account selected</option>

@@ -55,6 +55,7 @@ export function BillDetailDialog({
             <Detail label="Frequency" value={FREQUENCY_LABELS[bill.frequency] ?? bill.frequency} />
             <Detail label="Monthly" value={formatCurrency(toMonthly(bill.amount, bill.frequency))} />
             <Detail label="Annual" value={formatCurrency(toAnnual(bill.amount, bill.frequency))} />
+            {bill.start_date ? <Detail label="Start date" value={formatDate(bill.start_date)} /> : null}
             <Detail label="Next due" value={formatDate(bill.due_date)} />
             <Detail label="End date" value={formatDate(bill.end_date)} />
             <Detail label="Type" value={bill.is_fixed ? "Fixed" : "Variable"} />

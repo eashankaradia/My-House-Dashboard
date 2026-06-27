@@ -23,6 +23,7 @@ export const billSchema = z.object({
   category: z.enum(BILL_CATEGORIES),
   amount: money,
   frequency: z.enum(FREQUENCIES),
+  start_date: optionalDate,
   due_date: optionalDate,
   end_date: optionalDate,
   account_id: optionalString,
