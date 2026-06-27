@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
 import { ShareButton } from "@/components/shared/share-button";
-import { PointOutButton } from "@/components/shared/point-out-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { ItemComments } from "@/components/shared/item-comments";
 import { FREQUENCY_LABELS } from "@/lib/constants";
@@ -64,7 +63,6 @@ export function MaintenanceDetailDialog({
             <AddedBy name={memberMap[task.user_id]} />
             <div className="flex items-center gap-2">
               <ShareButton title={task.task} text={`Next due ${formatDate(task.next_due_date)}`} />
-              <PointOutButton label={task.task} href={`/maintenance?item=${task.id}`} />
               <MaintenanceForm task={task} />
               <ConfirmDelete itemLabel="task" action={deleteMaintenance.bind(null, task.id)} variant="menu" />
             </div>

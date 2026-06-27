@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-27 (Claude — FOURTH LIST batch 2: bills start date).
+> after **every** change. Last updated: 2026-06-27 (Claude — FOURTH LIST batch 3: remove PointOutButton).
 
 ## -2. FOURTH LIST in progress (Claude, 2026-06-27)
 
@@ -11,7 +11,7 @@ inline in chat for the user to run (user runs all SQL themselves).
 
 Requests:
 1. Bills: add a start date — **DONE batch 2** (migration 0030).
-2. Remove the "point out to a member" (PointOutButton) feature — **pending** (no DB).
+2. Remove the "point out to a member" (PointOutButton) feature — **DONE batch 3** (no DB).
 3. Click into a purchase option to see its details (read-only) — **DONE batch 1**.
 4. Fix the rating system (too sensitive / not sticky) — **DONE batch 1**.
 5. Remove ratings from top-level purchase items — mostly done earlier; re-verify.
@@ -48,9 +48,16 @@ Requests:
   End date), and `bill-detail.tsx` (shown only when set).
 - Verified: typecheck, lint, build all clean.
 
-**NEXT unfinished step:** Batch 3 — remove PointOutButton (#2, no DB): delete the
-`point-out-button.tsx` usages from every detail dialog. Then big/small purchase
-category (#6, needs migration), comment reactions (#7), verify no top-level item
+### Batch 3 (done, no DB) — remove PointOutButton (#2)
+- Deleted `components/shared/point-out-button.tsx` and removed its import + usage
+  from all 7 detail dialogs (inspiration, bills, purchases, projects, maintenance,
+  savings pot, documents). Verified no references remain; typecheck/lint/build clean.
+- `sendNotification`/`listOtherMembers` in `notifications/actions.ts` are left in
+  place (harmless if otherwise unused).
+
+**NEXT unfinished step:** Batch 4 — big/small purchase category (#6, needs
+migration `0031`: `purchases.size text`): add to schema + purchase form + a
+display badge/filter. Then comment reactions (#7), verify no top-level item
 ratings remain (#5), and finally wire option dimensions into the Room Designer
 "add from wishlist" placement (#9 part 2).
 
