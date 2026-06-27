@@ -67,14 +67,16 @@ export function RoomWorkspace({
       <h1 className="text-2xl font-semibold tracking-tight">{room.name}</h1>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="overview" className="gap-1.5"><SlidersHorizontal className="h-4 w-4" /> Overview</TabsTrigger>
-          <TabsTrigger value="design" className="gap-1.5"><Layers className="h-4 w-4" /> Design{activeVersions.length ? ` (${activeVersions.length})` : ""}</TabsTrigger>
-          <TabsTrigger value="colours" className="gap-1.5"><Palette className="h-4 w-4" /> Colours{palettes.length ? ` (${palettes.length})` : ""}</TabsTrigger>
-          <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-4 w-4" /> Items{purchases.length ? ` (${purchases.length})` : ""}</TabsTrigger>
-          <TabsTrigger value="inspiration" className="gap-1.5"><Lightbulb className="h-4 w-4" /> Ideas{inspiration.length ? ` (${inspiration.length})` : ""}</TabsTrigger>
-          <TabsTrigger value="tasks" className="gap-1.5"><ListChecks className="h-4 w-4" /> Tasks</TabsTrigger>
-        </TabsList>
+        <div className="-mx-1 overflow-x-auto px-1 pb-1">
+          <TabsList className="w-max">
+            <TabsTrigger value="overview" className="gap-1.5"><SlidersHorizontal className="h-4 w-4" /> Overview</TabsTrigger>
+            <TabsTrigger value="design" className="gap-1.5"><Layers className="h-4 w-4" /> Design{activeVersions.length ? ` (${activeVersions.length})` : ""}</TabsTrigger>
+            <TabsTrigger value="colours" className="gap-1.5"><Palette className="h-4 w-4" /> Colours{palettes.length ? ` (${palettes.length})` : ""}</TabsTrigger>
+            <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-4 w-4" /> Items{purchases.length ? ` (${purchases.length})` : ""}</TabsTrigger>
+            <TabsTrigger value="inspiration" className="gap-1.5"><Lightbulb className="h-4 w-4" /> Ideas{inspiration.length ? ` (${inspiration.length})` : ""}</TabsTrigger>
+            <TabsTrigger value="tasks" className="gap-1.5"><ListChecks className="h-4 w-4" /> Tasks</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview"><OverviewTab room={room} projects={projects} versions={versions} purchases={purchases} /></TabsContent>
         <TabsContent value="design"><DesignTab room={room} versions={versions} /></TabsContent>
@@ -123,9 +125,9 @@ function OverviewTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Capture the room so designs and 2D plans are to scale.</p>
-        <SaveStatus status={status} />
+      <div className="flex items-center justify-between gap-3">
+        <p className="min-w-0 text-sm text-muted-foreground">Capture the room to scale.</p>
+        <span className="shrink-0"><SaveStatus status={status} /></span>
       </div>
 
       <Card>

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ImagePlus, Loader2, X } from "lucide-react";
+import { Camera, ImagePlus, Loader2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,6 +20,7 @@ export function ImageUpload({
   const { toast } = useToast();
   const [uploading, setUploading] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const cameraRef = React.useRef<HTMLInputElement>(null);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -69,13 +70,23 @@ export function ImageUpload({
       ) : null}
       <button
         type="button"
+        onClick={() => cameraRef.current?.click()}
+        disabled={uploading}
+        className="flex h-16 w-16 flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-xs text-muted-foreground hover:bg-accent"
+      >
+        {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
+        Photo
+      </button>
+      <button
+        type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
         className="flex h-16 w-16 flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-xs text-muted-foreground hover:bg-accent"
       >
-        {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
-        {value ? "Change" : "Upload"}
+        <ImagePlus className="h-5 w-5" />
+        Gallery
       </button>
+      <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFile} />
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
     </div>
   );

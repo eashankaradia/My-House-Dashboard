@@ -360,3 +360,21 @@ export async function createPurchaseFromLayout(
   revalidatePath("/purchases");
   return { purchaseId };
 }
+
+/** Rename a room and keep its tagged purchases/inspiration pointing at it. */
+export async function renameRoom(oldName: string, newName: string): Promise<ActionResult> {
+  const clean = newName.trim().slice(0, 60);
+  if (!clean) return { error: "Enter a room name" };
+  if (clean.toLowerCase() === oldName.toLowerCase()) return {};
+  await ensureSeeded();
+  const { supabase } = await getActionContext();
+  const existing = await getRooms();
+  if (existing.some((r) => r.toLowerCase() === clean.toLowerCase())) return { error: "That room already exists" };
+  const { error } = await supabase.from("rooms").update({ name: clean }).eq("name", oldName);
+  if (error) return { error: error.message };
+  await supabase.from("purchases").update({ room: clean }).eq("room", oldName);
+  await supabase.from("inspiration").update({ room: clean }).eq("room", oldName);
+  revalidatePath("/settings");
+  revalidateRooms();
+  return {};
+}
