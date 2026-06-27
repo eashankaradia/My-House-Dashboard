@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
-import { formatCurrency } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
 import { ArchivedSection } from "@/components/shared/archived-section";
 import type { Project, ProjectTask, ProjectWithTasks } from "@/lib/database.types";
@@ -45,7 +44,6 @@ export default async function ProjectsPage() {
   const currentUserId = user?.id ?? "";
 
   const active = projects.filter((p) => p.status !== "Completed");
-  const totalEstimated = projects.reduce((s, p) => s + Number(p.estimated_cost), 0);
   const openTasks = tasks.filter((t) => !t.is_done).length;
   const hasContent =
     projects.length > 0 || tasks.length > 0 || archivedProjects.length > 0 || archivedTasks.length > 0;
@@ -70,10 +68,9 @@ export default async function ProjectsPage() {
         </EmptyState>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <StatCard label="Active projects" value={String(active.length)} icon={Hammer} />
             <StatCard label="Open tasks" value={String(openTasks)} accent="muted" />
-            <StatCard label="Project value" value={formatCurrency(totalEstimated)} accent="muted" />
           </div>
           <ProjectsViews
             projects={projects}

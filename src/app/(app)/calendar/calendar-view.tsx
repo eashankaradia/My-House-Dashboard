@@ -223,7 +223,7 @@ export function CalendarView({
       </Card>
 
       <Dialog open={Boolean(selectedDate)} onOpenChange={(open) => !open && setSelectedDate(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>{selectedDate ? formatDate(selectedDate) : "Day details"}</DialogTitle>
           </DialogHeader>

@@ -20,9 +20,8 @@ export function NeedsAttention({ items }: { items: AttentionItem[] }) {
     return (
       <Card className="border-emerald-500/30 bg-emerald-500/5">
         <CardContent className="flex items-center gap-2.5 p-3.5 text-sm">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-          <span className="font-medium">You&apos;re all caught up.</span>
-          <span className="text-muted-foreground">Nothing overdue or due today.</span>
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <span className="truncate font-medium">All caught up — nothing due.</span>
         </CardContent>
       </Card>
     );

@@ -66,8 +66,9 @@ export function GlanceStats({ values }: { values: Record<string, GlanceValue> })
             accent={i % 2 === 1 ? "muted" : undefined}
           />
         );
-        // If we have related items, the card opens a popup listing them.
-        if (v.items && v.items.length > 0) {
+        // Stats with a related-items list open a popup when tapped.
+        if (v.items) {
+          const items = v.items;
           return (
             <Dialog key={id}>
               <DialogTrigger asChild>
@@ -75,22 +76,26 @@ export function GlanceStats({ values }: { values: Record<string, GlanceValue> })
                   {card}
                 </button>
               </DialogTrigger>
-              <DialogContent className="max-h-[80vh] max-w-md overflow-y-auto">
+              <DialogContent className="max-h-[80vh] max-w-md overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                   <DialogTitle>{meta?.label ?? id}</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-1.5">
-                  {v.items.map((it, j) => (
-                    <Link
-                      key={j}
-                      href={it.href}
-                      className="flex items-center justify-between gap-3 rounded-lg border p-2.5 text-sm transition-colors hover:bg-accent"
-                    >
-                      <span className="min-w-0 truncate">{it.label}</span>
-                      {it.sub ? <span className="shrink-0 text-xs text-muted-foreground">{it.sub}</span> : null}
-                    </Link>
-                  ))}
-                </div>
+                {items.length === 0 ? (
+                  <p className="py-4 text-center text-sm text-muted-foreground">Nothing here yet.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {items.map((it, j) => (
+                      <Link
+                        key={j}
+                        href={it.href}
+                        className="flex items-center justify-between gap-3 rounded-lg border p-2.5 text-sm transition-colors hover:bg-accent"
+                      >
+                        <span className="min-w-0 truncate">{it.label}</span>
+                        {it.sub ? <span className="shrink-0 text-xs text-muted-foreground">{it.sub}</span> : null}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </DialogContent>
             </Dialog>
           );
