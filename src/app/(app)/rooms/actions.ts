@@ -76,6 +76,7 @@ export async function getRoomEntities(): Promise<Room[]> {
 const ROOM_FIELDS = [
   "name", "shape", "width_cm", "length_cm", "height_cm", "wall_color",
   "ceiling_color", "floor_color", "trim_color", "flooring", "notes", "project_id",
+  "outline", "doors",
 ] as const;
 const NUMERIC_ROOM_FIELDS = new Set(["width_cm", "length_cm", "height_cm"]);
 

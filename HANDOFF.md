@@ -332,8 +332,19 @@ User submitted a third list of ~19 requests. Working through in batches.
   **Photo** action in the + quick-add menu. `QuickPhotoDialog` reuses
   `ImageUpload` (camera or gallery). `photos/actions.ts`: add/update/delete.
 
+### Batch F (done) — room shapes + doors — **needs migration 0027**
+- `0027_room_outline.sql`: `rooms.outline jsonb` (polygon points in cm). RUN LIVE.
+- `lib/room-shape.ts`: rect/L-shape outline builders + `outlinePoints`/`pointsToSvg`.
+- `room-shape-doors.tsx` (Overview): **Shape** (rectangle/square/**L-shape**/custom);
+  L-shape exposes cut-out width/depth (m) and stores the polygon outline.
+  **Doors** editor — add doors with wall + offset-from-corner + width.
+  `updateRoomDetails` now accepts `outline` + `doors` (jsonb).
+- Floor planner draws the **polygon outline** (L-shapes) and **door gaps** on the
+  walls. NOTE: furniture still clamps to the bounding box, not the polygon — a
+  future refinement could clamp to the actual outline.
+
 ### New request list — STILL TODO (next batches)
-- Drafts on everything + a Drafts tab.
+- Drafts on everything + a Drafts tab (large cross-cutting; not started).
 - Room shapes beyond rectangle (L-shape/polygon from real plans) + door
   placement in the planner; broader "make the UI simpler".
 
