@@ -403,6 +403,9 @@ export type RoomLayoutItem = Timestamps & {
   priority: string | null;
   status: string;
   purchase_id: string | null;
+  option_id: string | null;
+  /** Footprint shape: "rectangle" | "square" | "round" | null. */
+  shape: string | null;
   image_url: string | null;
 };
 
