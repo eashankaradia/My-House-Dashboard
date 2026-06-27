@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ExternalLink, Plus, RotateCw, Trash2 } from "lucide-react";
+import { ExternalLink, Heart, Plus, RotateCw, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,14 +44,29 @@ const PRESETS: { category: string; w: number; d: number }[] = [
 
 const snap = (n: number) => Math.round(n / SNAP) * SNAP;
 
+/** A saved purchase option with a footprint, placeable on the plan. */
+export type WishlistOption = {
+  id: string;
+  purchase_id: string;
+  purchase_name: string | null;
+  name: string;
+  width_cm: number;
+  depth_cm: number;
+  height_cm: number | null;
+  shape: string | null;
+  image_url: string | null;
+};
+
 export function FloorPlanner({
   room,
   version,
   initialItems,
+  wishlist = [],
 }: {
   room: Room;
   version: RoomDesignVersion;
   initialItems: RoomLayoutItem[];
+  wishlist?: WishlistOption[];
 }) {
   const W = version.width_cm ?? room.width_cm ?? 0;
   const L = version.length_cm ?? room.length_cm ?? 0;
@@ -234,6 +249,27 @@ export function FloorPlanner({
     setSelectedId(res.item.id);
   }
 
+  async function addFromOption(opt: WishlistOption) {
+    const res = await addLayoutItem(version.id, {
+      name: opt.name,
+      category: opt.purchase_name ?? "Wishlist",
+      width_cm: opt.width_cm,
+      depth_cm: opt.depth_cm,
+      height_cm: opt.height_cm ?? undefined,
+      shape: opt.shape ?? "rectangle",
+      purchase_id: opt.purchase_id,
+      option_id: opt.id,
+      color: PALETTE[1],
+    });
+    if (res?.error || !res.item) {
+      toast({ variant: "destructive", title: "Couldn't add", description: res?.error });
+      return;
+    }
+    setItems((prev) => [...prev, res.item!]);
+    setSelectedId(res.item.id);
+    toast({ title: "Placed on the plan", description: `${opt.name} — drag it into position.` });
+  }
+
   if (!W || !L) {
     return (
       <Card>
@@ -261,6 +297,7 @@ export function FloorPlanner({
           <Button variant={editShape ? "default" : "outline"} size="sm" onClick={() => setEditShape((v) => !v)}>
             {editShape ? "Done" : "Edit shape"}
           </Button>
+          {!editShape && wishlist.length ? <AddFromWishlist options={wishlist} onPlace={addFromOption} /> : null}
           {!editShape ? <AddFurniture onAdd={add} /> : null}
         </div>
       </div>
@@ -323,17 +360,30 @@ export function FloorPlanner({
                     className={editShape ? "" : "cursor-move"}
                     style={editShape ? { pointerEvents: "none", opacity: 0.5 } : undefined}
                   >
-                    <rect
-                      x={it.x_cm}
-                      y={it.y_cm}
-                      width={it.width_cm}
-                      height={it.depth_cm}
-                      rx={4}
-                      fill={fill}
-                      fillOpacity={0.85}
-                      stroke={bad ? "#ef4444" : isSel ? "#0ea5e9" : "#1f2937"}
-                      strokeWidth={isSel || bad ? 4 : 2}
-                    />
+                    {it.shape === "round" ? (
+                      <ellipse
+                        cx={it.x_cm + it.width_cm / 2}
+                        cy={it.y_cm + it.depth_cm / 2}
+                        rx={it.width_cm / 2}
+                        ry={it.depth_cm / 2}
+                        fill={fill}
+                        fillOpacity={0.85}
+                        stroke={bad ? "#ef4444" : isSel ? "#0ea5e9" : "#1f2937"}
+                        strokeWidth={isSel || bad ? 4 : 2}
+                      />
+                    ) : (
+                      <rect
+                        x={it.x_cm}
+                        y={it.y_cm}
+                        width={it.width_cm}
+                        height={it.depth_cm}
+                        rx={4}
+                        fill={fill}
+                        fillOpacity={0.85}
+                        stroke={bad ? "#ef4444" : isSel ? "#0ea5e9" : "#1f2937"}
+                        strokeWidth={isSel || bad ? 4 : 2}
+                      />
+                    )}
                     <text
                       x={it.x_cm + it.width_cm / 2}
                       y={it.y_cm + it.depth_cm / 2}
@@ -411,6 +461,16 @@ export function FloorPlanner({
               </Field>
             </div>
             <div className="grid grid-cols-2 gap-3">
+              <Field label="Shape">
+                <NativeSelect
+                  value={selected.shape ?? "rectangle"}
+                  onChange={(e) => update(selected.id, { shape: e.target.value })}
+                >
+                  <option value="rectangle">Rectangle</option>
+                  <option value="square">Square</option>
+                  <option value="round">Round / Oval</option>
+                </NativeSelect>
+              </Field>
               <Field label="Status">
                 <NativeSelect value={selected.status} onChange={(e) => update(selected.id, { status: e.target.value })}>
                   {LAYOUT_STATUSES.map((s) => (
@@ -473,6 +533,74 @@ function findOverlaps(items: RoomLayoutItem[]): Set<string> {
     }
   }
   return bad;
+}
+
+function AddFromWishlist({
+  options,
+  onPlace,
+}: {
+  options: WishlistOption[];
+  onPlace: (opt: WishlistOption) => Promise<void>;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [pending, startTransition] = React.useTransition();
+
+  function place(opt: WishlistOption) {
+    startTransition(async () => {
+      await onPlace(opt);
+      setOpen(false);
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5">
+          <Heart className="h-4 w-4" /> From wishlist
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Place a saved option</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          Purchase options with a shape and size show up here. Pick one to drop it onto the plan to scale.
+        </p>
+        <div className="max-h-[55vh] space-y-1.5 overflow-y-auto">
+          {options.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              disabled={pending}
+              onClick={() => place(opt)}
+              className="flex w-full items-center gap-3 rounded-lg border p-2 text-left transition-colors hover:bg-accent disabled:opacity-50"
+            >
+              {opt.image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={opt.image_url} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover" />
+              ) : (
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <Heart className="h-4 w-4" />
+                </span>
+              )}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">{opt.name}</span>
+                <span className="block truncate text-xs text-muted-foreground">
+                  {[
+                    opt.purchase_name,
+                    `${Math.round(opt.width_cm)}×${Math.round(opt.depth_cm)} cm`,
+                    opt.shape ? cap(opt.shape) : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function AddFurniture({

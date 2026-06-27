@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-27 (Claude — FOURTH LIST batch 6: ratings on options only).
+> after **every** change. Last updated: 2026-06-27 (Claude — FOURTH LIST batch 7: option dimensions in the Room Designer; list complete).
 
 ## -2. FOURTH LIST in progress (Claude, 2026-06-27)
 
@@ -19,7 +19,7 @@ Requests:
 7. Let people react to individual comments — **DONE batch 5** (no DB).
 8. Truncate long option names so they don't widen the card — **DONE batch 1**.
 9. Furniture options: pick shape + dimensions, then use them in the Room Designer —
-   **dimensions/shape capture DONE batch 1**; Room Designer wiring still pending.
+   **DONE** (capture batch 1, Room Designer wiring batch 7).
 
 ### Batch 1 (done) — option shape/dimensions + detail + sticky rating — **needs migration 0029**
 - `0029_option_dimensions.sql` adds `purchase_options.shape` (text) +
@@ -86,16 +86,26 @@ Requests:
 - `purchases.rating` column + `Purchase.rating` type left in place (legacy,
   harmless; nothing reads it now). Verified: typecheck, lint, build clean.
 
-**NEXT unfinished step:** Batch 7 (final, the big one) — wire option
-shape/dimensions into the Room Designer (#9 part 2). Plan: in the floor planner
-(SVG, viewBox in cm — see `rooms/[id]/design/...` + the planner component) add an
-"Add from wishlist" picker that lists purchase options which have `width_cm` +
-`depth_cm`; selecting one drops a furniture item sized from those dims (round
-shape → ellipse) onto the plan, storing the `purchase_id`/`option_id` (and option
-name) on the placed item so it links back to the purchase. Check the
-planner/furniture data model first (how placed items + their dimensions are
-stored — likely a `furniture`/`design_items` table or a JSON column on the design
-version) to decide whether a migration is needed.
+### Batch 7 (done) — option dimensions in the Room Designer (#9 part 2) — **needs migration 0032**
+- `0032_layout_item_shape.sql` adds `room_design_layout_items.shape` (text) +
+  `option_id` (uuid). **RUN THIS LIVE.**
+- `RoomLayoutItem` type gains `shape` + `option_id`. `addLayoutItem` now accepts
+  `shape`/`purchase_id`/`option_id`; `LAYOUT_FIELDS` + `duplicateDesignVersion`
+  carry them.
+- Design page (`rooms/[id]/design/[versionId]/page.tsx`) loads purchase options
+  that have a footprint (`width_cm`+`depth_cm` not null) and their parent purchase
+  names, passing them to `FloorPlanner` as `wishlist: WishlistOption[]`.
+- Floor planner: new **"From wishlist"** picker (`AddFromWishlist`) lists those
+  options (image, name, purchase, size, shape); picking one drops a layout item to
+  scale via `addLayoutItem`, linked by `purchase_id`/`option_id` (so the selected-
+  item panel's "Linked purchase" link works). Round options render as an
+  `<ellipse>`; a Shape selector (Rectangle/Square/Round) was added to the
+  selected-item editor so any piece can be reshaped.
+- Verified: typecheck, lint, build all clean.
+
+**FOURTH LIST COMPLETE** — all 9 requests shipped. Migrations the user still needs
+to run live: 0029 (option dims), 0030 (bill start_date), 0031 (purchase size),
+0032 (layout item shape/option_id). Each was provided inline in chat.
 
 ## -1. THIRD LIST in progress (Claude, 2026-06-26)
 
