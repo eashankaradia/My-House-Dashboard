@@ -211,6 +211,17 @@ User submitted a third list of ~19 requests. Working through in batches.
   projects). Comments + reactions are now on every item type. (Relies on the
   comments tables from migration 0022.)
 
+### Batch DD (done, no DB) — simpler Projects & Tasks
+- Collapsed the confusing 3-tab layout (Tasks / Board / List) into **two clear
+  tabs: Tasks and Projects** (with counts + icons). Board vs List is now a small
+  toggle inside the Projects tab; the old compact/detailed list toggle is gone.
+- Each tab has a one-line explainer of the model (Tasks = to-dos; Projects =
+  bigger work with their own tasks).
+- Project cards now show a **task progress bar** (done/total) and a status-coloured
+  left accent (`STATUS_BORDER` in `lib/ui.ts`), so progress is obvious at a glance.
+- `?project=` deep-links open the Projects tab; empty-projects state added.
+- Refreshed the page description/help to match.
+
 STILL TODO (optional, needs the user or external access):
 - Generate Supabase types instead of hand-writing `database.types.ts` (needs the
   Supabase CLI + DB connection — can't run from the sandbox).

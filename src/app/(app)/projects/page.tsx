@@ -54,8 +54,8 @@ export default async function ProjectsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Projects & Tasks"
-        description="Plan home projects and track every to-do in one place."
-        info="The Tasks tab lists everything to do — standalone or tied to a project — with due dates and an add-to-calendar option. The Board, List and Costs tabs manage projects; move a project through Idea → Completed and record estimated vs actual cost."
+        description="Track your to-dos, and plan bigger projects that hold their own tasks."
+        info="Two tabs: Tasks is every to-do (standalone or under a project) — tick them off as you go. Projects is bigger work you can view as a list or a status board, each project showing its task progress and budget. Add a task to a project to see it count towards that project's progress."
       >
         <ProjectForm />
       </PageHeader>
