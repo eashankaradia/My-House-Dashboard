@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Copy, Layers, Lightbulb, ListChecks, Plus, ShoppingBag, SlidersHorizontal, Star } from "lucide-react";
+import { CheckCircle2, Copy, Layers, Lightbulb, ListChecks, Palette, Plus, ShoppingBag, SlidersHorizontal, Star } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,9 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn, formatCurrency } from "@/lib/utils";
-import type { Inspiration, Project, Purchase, Room, RoomDesignVersion } from "@/lib/database.types";
+import type { Inspiration, Project, Purchase, Room, RoomColourPalette, RoomColourSwatch, RoomDesignVersion } from "@/lib/database.types";
 import { createTask } from "@/app/(app)/projects/actions";
+import { ColourStudio } from "./colour-studio";
 import {
   createDesignVersion,
   deleteDesignVersion,
@@ -48,12 +49,16 @@ export function RoomWorkspace({
   purchases,
   inspiration,
   projects,
+  palettes,
+  swatches,
 }: {
   room: Room;
   versions: RoomDesignVersion[];
   purchases: Purchase[];
   inspiration: Inspiration[];
   projects: Pick<Project, "id" | "name">[];
+  palettes: RoomColourPalette[];
+  swatches: RoomColourSwatch[];
 }) {
   const activeVersions = versions.filter((v) => v.status !== "archived");
 
@@ -65,6 +70,7 @@ export function RoomWorkspace({
         <TabsList className="flex-wrap">
           <TabsTrigger value="overview" className="gap-1.5"><SlidersHorizontal className="h-4 w-4" /> Overview</TabsTrigger>
           <TabsTrigger value="design" className="gap-1.5"><Layers className="h-4 w-4" /> Design{activeVersions.length ? ` (${activeVersions.length})` : ""}</TabsTrigger>
+          <TabsTrigger value="colours" className="gap-1.5"><Palette className="h-4 w-4" /> Colours{palettes.length ? ` (${palettes.length})` : ""}</TabsTrigger>
           <TabsTrigger value="purchases" className="gap-1.5"><ShoppingBag className="h-4 w-4" /> Items{purchases.length ? ` (${purchases.length})` : ""}</TabsTrigger>
           <TabsTrigger value="inspiration" className="gap-1.5"><Lightbulb className="h-4 w-4" /> Ideas{inspiration.length ? ` (${inspiration.length})` : ""}</TabsTrigger>
           <TabsTrigger value="tasks" className="gap-1.5"><ListChecks className="h-4 w-4" /> Tasks</TabsTrigger>
@@ -72,6 +78,7 @@ export function RoomWorkspace({
 
         <TabsContent value="overview"><OverviewTab room={room} projects={projects} /></TabsContent>
         <TabsContent value="design"><DesignTab room={room} versions={versions} /></TabsContent>
+        <TabsContent value="colours"><ColourStudio roomId={room.id} palettes={palettes} swatches={swatches} /></TabsContent>
         <TabsContent value="purchases"><PurchasesTab room={room} purchases={purchases} /></TabsContent>
         <TabsContent value="inspiration"><InspirationTab room={room} inspiration={inspiration} /></TabsContent>
         <TabsContent value="tasks"><TasksTab room={room} /></TabsContent>
