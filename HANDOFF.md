@@ -296,6 +296,27 @@ User submitted a third list of ~19 requests. Working through in batches.
 - Overview tab: **Timeline** card — room created, each design version added,
   items planned, items bought (most recent first, from existing data).
 
+## New request list (2026-06, big batch) — in progress, small shippable batches
+
+### Batch A (done, no DB) — room rename + cramped tabs + camera capture
+- Settings → Rooms: **rename rooms inline** (`renameRoom` also updates the
+  `room` field on tagged purchases/inspiration so links survive).
+- Room workspace tabs no longer wrap/overlap the description — single
+  horizontally-scrollable row (`overflow-x-auto` + `TabsList w-max`); Overview
+  header row fixed.
+- `ImageUpload` now offers **Take photo** (camera, `capture=environment`) and
+  **Gallery** — used everywhere images are uploaded.
+
+### New request list — STILL TODO (next batches)
+- Remove ratings from purchase ITEMS (keep on options only).
+- Purchases add-form: drop the specific/compare toggle; default to options, let
+  options be added when creating the record.
+- Click into sub-tasks from the projects menu.
+- Quick-add "take a photo to label later" → a Misc Photos section.
+- Drafts on everything + a Drafts tab.
+- Room shapes beyond rectangle (L-shape/polygon from real plans) + door
+  placement in the planner; broader "make the UI simpler".
+
 ### Room Designer — STILL TODO (optional, schema already in place)
 - Mood boards; attach a palette to a design version (Ideas tab already acts as a
   room mood board via inspiration tagged to the room).
