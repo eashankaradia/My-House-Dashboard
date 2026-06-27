@@ -78,6 +78,14 @@ export const FREQUENCIES = ["weekly", "monthly", "quarterly", "annually", "one-o
 
 export const PRIORITIES = ["Low", "Medium", "High"] as const;
 
+/** Footprint shapes a furniture option can be placed as in the Room Designer. */
+export const OPTION_SHAPES = ["rectangle", "square", "round"] as const;
+export const OPTION_SHAPE_LABELS: Record<string, string> = {
+  rectangle: "Rectangle",
+  square: "Square",
+  round: "Round / Oval",
+};
+
 export const PROJECT_CATEGORIES = [
   "Garden", "Kitchen", "Bathroom", "Bedroom", "Living Room", "Exterior", "Storage", "General",
 ] as const;

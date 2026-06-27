@@ -10,6 +10,7 @@ import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { FREQUENCY_SUFFIX } from "@/lib/constants";
 import type { PurchaseOption } from "@/lib/database.types";
 import { OptionForm } from "./option-form";
+import { OptionDetailDialog } from "./option-detail";
 import { chooseOption, deleteOption, moveOption, setOptionRating } from "./actions";
 
 export function OptionRow({
@@ -36,7 +37,7 @@ export function OptionRow({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-lg border p-2",
+        "flex w-full min-w-0 items-center gap-2 rounded-lg border p-2",
         option.is_chosen ? "border-primary/40 bg-primary/5" : "bg-card",
       )}
     >
@@ -60,17 +61,23 @@ export function OptionRow({
       </div>
 
       {option.image_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={option.image_url} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover" />
+        <OptionDetailDialog purchaseId={purchaseId} option={option}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={option.image_url} alt="" className="h-10 w-10 shrink-0 cursor-pointer rounded-md object-cover hover:opacity-80" />
+        </OptionDetailDialog>
       ) : null}
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <p className="truncate text-sm font-medium">{option.name}</p>
-          {option.is_chosen ? <Badge variant="success">Picked</Badge> : null}
-        </div>
-        <p className="truncate text-xs text-muted-foreground">
-          {[option.store, option.notes].filter(Boolean).join(" · ") || " "}
-        </p>
+        <OptionDetailDialog purchaseId={purchaseId} option={option}>
+          <button className="block min-w-0 max-w-full rounded text-left hover:underline">
+            <span className="flex items-center gap-1.5">
+              <span className="truncate text-sm font-medium">{option.name}</span>
+              {option.is_chosen ? <Badge variant="success">Picked</Badge> : null}
+            </span>
+            <span className="block truncate text-xs text-muted-foreground">
+              {[option.store, option.notes].filter(Boolean).join(" · ") || " "}
+            </span>
+          </button>
+        </OptionDetailDialog>
         <StarRating value={option.rating} onRate={(n) => setOptionRating(option.id, n)} size="sm" className="py-0.5" />
         <p className="text-[11px] text-muted-foreground">
           Added {formatDate(option.created_at)} · updated {formatDate(option.updated_at)}

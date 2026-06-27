@@ -2,7 +2,50 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-26 (Claude — THIRD LIST batch K: quick wins).
+> after **every** change. Last updated: 2026-06-27 (Claude — FOURTH LIST batch 1: option dimensions + detail + sticky rating).
+
+## -2. FOURTH LIST in progress (Claude, 2026-06-27)
+
+User's latest request list, shipped as small PR-per-batch. SQL is always pasted
+inline in chat for the user to run (user runs all SQL themselves).
+
+Requests:
+1. Bills: add a start date — **pending** (needs migration).
+2. Remove the "point out to a member" (PointOutButton) feature — **pending** (no DB).
+3. Click into a purchase option to see its details (read-only) — **DONE batch 1**.
+4. Fix the rating system (too sensitive / not sticky) — **DONE batch 1**.
+5. Remove ratings from top-level purchase items — mostly done earlier; re-verify.
+6. Categorise purchases as a big or small purchase — **pending** (needs migration).
+7. Let people react to individual comments — **pending** (reuse reactions table).
+8. Truncate long option names so they don't widen the card — **DONE batch 1**.
+9. Furniture options: pick shape + dimensions, then use them in the Room Designer —
+   **dimensions/shape capture DONE batch 1**; Room Designer wiring still pending.
+
+### Batch 1 (done) — option shape/dimensions + detail + sticky rating — **needs migration 0029**
+- `0029_option_dimensions.sql` adds `purchase_options.shape` (text) +
+  `width_cm`/`depth_cm`/`height_cm` (numeric). **RUN THIS LIVE** (SQL given inline).
+- **Shape + dimensions capture (#9, part 1):** `option-form.tsx` "More details"
+  section gains a "Size & shape" block — shape `NativeSelect`
+  (Rectangle/Square/Round, `OPTION_SHAPES`/`OPTION_SHAPE_LABELS` in constants) and
+  W/D/H cm number inputs. Schema (`purchaseOptionSchema`) + `addOption`/`updateOption`
+  persist them; `PurchaseOption` type extended. (Room Designer placement still TODO.)
+- **Click into an option for details (#3):** new `option-detail.tsx`
+  (`OptionDetailDialog`) — read-only view (image, price + price-change, rating,
+  store, shape, size, notes, link, Edit button). `option-row.tsx` image + name
+  now open it.
+- **Sticky / less-sensitive rating (#4):** `star-rating.tsx` rewritten — tapping a
+  star always *sets* that value (no clear-on-reclick), bigger touch targets, no
+  hover preview; a separate `×` clears. Read-only when no `onRate`.
+- **Truncate option names (#8):** `option-row.tsx` row is `w-full min-w-0`; name
+  is a truncating trigger button inside `min-w-0 flex-1` so long names no longer
+  widen the card.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+**NEXT unfinished step:** Batch 2 — Bills start date (#1): add migration
+`0030_bill_start_date.sql` (`bills.start_date date`), `start_date` to `billSchema`
++ bill form + display; OR PointOutButton removal (#2, no DB). Then big/small
+purchase category (#6), comment reactions (#7), and finally wire option
+dimensions into the Room Designer "add from wishlist" placement.
 
 ## -1. THIRD LIST in progress (Claude, 2026-06-26)
 

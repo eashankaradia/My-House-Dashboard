@@ -125,6 +125,8 @@ export const purchaseSchema = z.object({
 });
 export type PurchaseInput = z.infer<typeof purchaseSchema>;
 
+const dimension = z.coerce.number().min(0).max(2000).optional();
+
 export const purchaseOptionSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(160),
   store: optionalString,
@@ -134,6 +136,10 @@ export const purchaseOptionSchema = z.object({
   notes: optionalString,
   rating,
   frequency: z.enum(FREQUENCIES).default("one-off"),
+  shape: optionalString,
+  width_cm: dimension,
+  depth_cm: dimension,
+  height_cm: dimension,
 });
 export type PurchaseOptionInput = z.infer<typeof purchaseOptionSchema>;
 

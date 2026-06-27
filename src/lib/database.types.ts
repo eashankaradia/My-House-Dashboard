@@ -202,6 +202,11 @@ export type PurchaseOption = Timestamps & {
   rating: number | null;
   /** Payment frequency for recurring costs; 'one-off' for a single price. */
   frequency: string;
+  /** Furniture footprint, for dropping into the Room Designer. */
+  shape: string | null;
+  width_cm: number | null;
+  depth_cm: number | null;
+  height_cm: number | null;
 };
 
 /** A purchase with its compared options attached (used in list views). */
