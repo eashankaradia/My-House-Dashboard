@@ -25,26 +25,31 @@ export type NavItem = {
   href: string;
   icon: LucideIcon;
   description: string;
+  /** Sidebar section this item belongs to. */
+  group: string;
 };
+
+/** Order the sidebar groups appear in. */
+export const NAV_GROUPS = ["Overview", "Money", "Planning", "Home", "Capture", "Calendar"] as const;
 
 /** Primary navigation — drives both the desktop sidebar and mobile menu. */
 export const NAV_ITEMS: NavItem[] = [
-  { title: "Dashboard", short: "Home", href: "/dashboard", icon: LayoutDashboard, description: "Your home command centre" },
-  { title: "Bills & Expenses", short: "Bills", href: "/bills", icon: Receipt, description: "Recurring household costs" },
-  { title: "Mortgage", href: "/mortgage", icon: Home, description: "Balance, equity & payoff" },
-  { title: "Savings Pots", short: "Savings", href: "/savings", icon: PiggyBank, description: "Goals & contributions" },
-  { title: "Projects & Tasks", short: "Projects", href: "/projects", icon: Hammer, description: "Plan projects and track to-dos" },
-  { title: "Room Designer", short: "Rooms", href: "/rooms", icon: Sofa, description: "Design each room before you buy" },
-  { title: "Future Purchases", short: "Purchases", href: "/purchases", icon: ShoppingBag, description: "Your home wishlist" },
-  { title: "Groceries", short: "Shop", href: "/shopping", icon: ShoppingCart, description: "Shared shopping list" },
-  { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Ideas & link collections" },
-  { title: "Maintenance", short: "Upkeep", href: "/maintenance", icon: Wrench, description: "Reminders & servicing" },
-  { title: "Documents & notes", short: "Docs", href: "/documents", icon: FolderArchive, description: "Warranties, insurance, notes & more" },
-  { title: "Photos", short: "Photos", href: "/photos", icon: Camera, description: "Quick snaps to label later" },
-  { title: "Drafts", short: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later" },
-  { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance" },
-  { title: "Analytics", href: "/analytics", icon: BarChart3, description: "Trends & breakdowns" },
-  { title: "Change log", short: "Log", href: "/activity", icon: History, description: "Who changed what, and when" },
+  { title: "Dashboard", short: "Home", href: "/dashboard", icon: LayoutDashboard, description: "Your home command centre", group: "Overview" },
+  { title: "Bills & Expenses", short: "Bills", href: "/bills", icon: Receipt, description: "Recurring household costs", group: "Money" },
+  { title: "Mortgage", href: "/mortgage", icon: Home, description: "Balance, equity & payoff", group: "Money" },
+  { title: "Savings Pots", short: "Savings", href: "/savings", icon: PiggyBank, description: "Goals & contributions", group: "Money" },
+  { title: "Analytics", href: "/analytics", icon: BarChart3, description: "Trends & breakdowns", group: "Money" },
+  { title: "Projects & Tasks", short: "Projects", href: "/projects", icon: Hammer, description: "Plan projects and track to-dos", group: "Planning" },
+  { title: "Room Designer", short: "Rooms", href: "/rooms", icon: Sofa, description: "Design each room before you buy", group: "Planning" },
+  { title: "Future Purchases", short: "Purchases", href: "/purchases", icon: ShoppingBag, description: "Your home wishlist", group: "Planning" },
+  { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Ideas & link collections", group: "Planning" },
+  { title: "Groceries", short: "Shop", href: "/shopping", icon: ShoppingCart, description: "Shared shopping list", group: "Home" },
+  { title: "Maintenance", short: "Upkeep", href: "/maintenance", icon: Wrench, description: "Reminders & servicing", group: "Home" },
+  { title: "Documents & notes", short: "Docs", href: "/documents", icon: FolderArchive, description: "Warranties, insurance, notes & more", group: "Home" },
+  { title: "Photos", short: "Photos", href: "/photos", icon: Camera, description: "Quick snaps to label later", group: "Capture" },
+  { title: "Drafts", short: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later", group: "Capture" },
+  { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance", group: "Calendar" },
+  { title: "Change log", short: "Log", href: "/activity", icon: History, description: "Who changed what, and when", group: "Calendar" },
 ];
 
 /** Tabs that can never be hidden from the sidebar. */
