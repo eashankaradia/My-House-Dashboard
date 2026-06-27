@@ -330,6 +330,8 @@ export type Reaction = {
 };
 
 export type RoomOpening = { position: number; width: number; height?: number; label?: string };
+export type RoomPoint = { x: number; y: number };
+export type RoomDoor = { wall: "top" | "bottom" | "left" | "right"; offset: number; width: number };
 
 export type Room = {
   id: string;
@@ -346,8 +348,9 @@ export type Room = {
   floor_color: string | null;
   trim_color: string | null;
   flooring: string | null;
-  doors: RoomOpening[];
+  doors: RoomDoor[];
   windows: RoomOpening[];
+  outline: RoomPoint[] | null;
   notes: string | null;
   project_id: string | null;
 };

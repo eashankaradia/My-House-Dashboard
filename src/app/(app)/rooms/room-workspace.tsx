@@ -27,6 +27,7 @@ import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import type { Inspiration, Project, Purchase, Room, RoomColourPalette, RoomColourSwatch, RoomDesignVersion } from "@/lib/database.types";
 import { createTask } from "@/app/(app)/projects/actions";
 import { ColourStudio } from "./colour-studio";
+import { RoomShapeDoors } from "./room-shape-doors";
 import {
   createDesignVersion,
   deleteDesignVersion,
@@ -132,15 +133,7 @@ function OverviewTab({
 
       <Card>
         <CardContent className="space-y-4 p-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Field label="Shape">
-              <NativeSelect defaultValue={room.shape} onChange={(e) => save({ shape: e.target.value })}>
-                <option value="rectangle">Rectangle</option>
-                <option value="square">Square</option>
-                <option value="l-shape">L-shape</option>
-                <option value="custom">Custom</option>
-              </NativeSelect>
-            </Field>
+          <div className="grid grid-cols-3 gap-3">
             <MetreField label="Width (m)" cm={room.width_cm} onSave={(cm) => save({ width_cm: cm })} />
             <MetreField label="Length (m)" cm={room.length_cm} onSave={(cm) => save({ length_cm: cm })} />
             <MetreField label="Height (m)" cm={room.height_cm} onSave={(cm) => save({ height_cm: cm })} />
@@ -171,6 +164,8 @@ function OverviewTab({
           </Field>
         </CardContent>
       </Card>
+
+      <RoomShapeDoors room={room} save={save} />
 
       <Timeline room={room} versions={versions} purchases={purchases} />
     </div>

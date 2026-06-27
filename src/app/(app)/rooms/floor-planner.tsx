@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { outlinePoints, pointsToSvg } from "@/lib/room-shape";
 import type { Room, RoomDesignVersion, RoomLayoutItem } from "@/lib/database.types";
 import { addLayoutItem, createPurchaseFromLayout, deleteLayoutItem, updateLayoutItem } from "./actions";
 
@@ -214,8 +215,25 @@ export function FloorPlanner({
               {Array.from({ length: Math.floor(L / 50) + 1 }, (_, i) => (
                 <line key={`h${i}`} x1={0} y1={i * 50} x2={W} y2={i * 50} stroke="currentColor" className="text-border" strokeWidth={1} />
               ))}
-              {/* room outline */}
-              <rect x={0} y={0} width={W} height={L} fill="none" stroke="currentColor" className="text-foreground" strokeWidth={3} />
+              {/* room outline (polygon supports L-shapes) */}
+              <polygon points={pointsToSvg(outlinePoints({ outline: room.outline, width_cm: W, length_cm: L }))} fill="none" stroke="currentColor" className="text-foreground" strokeWidth={3} />
+
+              {/* doors */}
+              {(room.doors ?? []).map((d, i) => {
+                const off = Math.max(0, d.offset);
+                const wd = Math.max(20, d.width);
+                let x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+                if (d.wall === "top") { x1 = off; y1 = 0; x2 = off + wd; y2 = 0; }
+                else if (d.wall === "bottom") { x1 = off; y1 = L; x2 = off + wd; y2 = L; }
+                else if (d.wall === "left") { x1 = 0; y1 = off; x2 = 0; y2 = off + wd; }
+                else { x1 = W; y1 = off; x2 = W; y2 = off + wd; }
+                return (
+                  <g key={`door${i}`}>
+                    <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#fff" strokeWidth={6} />
+                    <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#0ea5e9" strokeWidth={3} strokeDasharray="8 6" />
+                  </g>
+                );
+              })}
 
               {items.map((it) => {
                 const isSel = it.id === selectedId;
