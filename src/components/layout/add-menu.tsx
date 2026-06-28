@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Camera, CheckSquare, FileText, FolderArchive, Hammer, Lightbulb, Receipt, ShoppingBag, Wrench } from "lucide-react";
+import { Camera, CheckSquare, FileText, FolderArchive, Hammer, Lightbulb, ListPlus, Receipt, ShoppingBag, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { QuickPhotoDialog } from "@/app/(app)/photos/quick-photo-dialog";
 import { DraftDialog } from "@/app/(app)/drafts/draft-dialog";
@@ -9,6 +9,7 @@ import { BillForm } from "@/app/(app)/bills/bill-form";
 import { ProjectForm } from "@/app/(app)/projects/project-form";
 import { TaskQuickForm } from "@/app/(app)/projects/task-quick-form";
 import { PurchaseForm } from "@/app/(app)/purchases/purchase-form";
+import { QuickOptionForm } from "@/app/(app)/purchases/quick-option-form";
 import { InspirationForm } from "@/app/(app)/inspiration/inspiration-form";
 import { MaintenanceForm } from "@/app/(app)/maintenance/maintenance-form";
 import { DocumentForm } from "@/app/(app)/documents/document-form";
@@ -44,6 +45,7 @@ export function AddPills({ className }: { className?: string }) {
       <AddGroup label="Money">
         <BillForm trigger={<Pill icon={Receipt} label="Expense" />} />
         <PurchaseForm trigger={<Pill icon={ShoppingBag} label="Purchase" />} />
+        <QuickOptionForm trigger={<Pill icon={ListPlus} label="Option" />} />
         <DocumentForm trigger={<Pill icon={FolderArchive} label="Document" />} />
       </AddGroup>
       <AddGroup label="Work">

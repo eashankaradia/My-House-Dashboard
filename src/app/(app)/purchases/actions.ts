@@ -10,6 +10,14 @@ import {
 import { PURCHASE_STATUSES } from "@/lib/constants";
 import { getActionContext, type ActionResult } from "@/lib/action-utils";
 
+export type FuturePurchaseChoice = {
+  id: string;
+  name: string;
+  category: string;
+  room: string | null;
+  status: string;
+};
+
 function toRow(values: PurchaseInput) {
   return {
     name: values.name,
@@ -137,6 +145,20 @@ export async function setPurchaseArchived(id: string, archived: boolean): Promis
 /** Restore an archived purchase (single-arg form for passing to UI). */
 export async function restorePurchase(id: string): Promise<ActionResult> {
   return setPurchaseArchived(id, false);
+}
+
+/** Active future purchases used by the global + menu when adding an option. */
+export async function getFuturePurchaseChoices(): Promise<FuturePurchaseChoice[]> {
+  const { supabase } = await getActionContext();
+  const { data, error } = await supabase
+    .from("purchases")
+    .select("id, name, category, room, status")
+    .is("archived_at", null)
+    .neq("status", "Purchased")
+    .order("status", { ascending: true })
+    .order("name", { ascending: true });
+  if (error) return [];
+  return (data ?? []) as FuturePurchaseChoice[];
 }
 
 /** Toggle the current user's favourite "star" on a purchase. */
