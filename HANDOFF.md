@@ -111,6 +111,22 @@ Requests:
   `shrink-0`, button is `w-full min-w-0`. Also hid the "Edit" label on mobile
   (`hidden sm:inline`, icon kept) to free width. Typecheck/lint/build clean.
 
+### Batch 9 (done, no DB) — notifications + options UX follow-ups
+- **Removed "Push to someone"** (notifications page): dropped the manual send-note
+  form from `notification-controls.tsx` (now just the list); `sendNotification`
+  action kept for internal use.
+- **Comments on options**: `OptionDetailDialog` now renders `ItemComments`
+  (`entityType="purchase_option"`, `entityId=option.id`) — reactions + threaded
+  comments per option, same as items.
+- **Option row no longer overflows on mobile**: `option-row.tsx` redesigned into
+  two lines (rank·image·name/meta·price, then rating·actions) with `overflow-hidden`
+  + robust `min-w-0`/`truncate`; actions are icon-only; timestamps moved to the
+  detail view.
+- **Slimmer option form**: "More details" reorganised (Link, Photo, Rating, then
+  Store + price-frequency in a 2-col row, Notes); the furniture-only Size & shape
+  block is now behind its own nested toggle (`showSize`).
+- Verified: typecheck, lint, build all clean.
+
 **FOURTH LIST COMPLETE** — all 9 requests shipped. Migrations the user still needs
 to run live: 0029 (option dims), 0030 (bill start_date), 0031 (purchase size),
 0032 (layout item shape/option_id). Each was provided inline in chat.
