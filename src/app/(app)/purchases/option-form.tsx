@@ -70,6 +70,10 @@ export function OptionForm({ purchaseId, option, trigger }: Props) {
   const [showMore, setShowMore] = React.useState(
     Boolean(option && (option.store || option.url || option.image_url || option.notes || option.rating || option.width_cm || option.depth_cm || option.height_cm || (option.frequency && option.frequency !== "one-off"))),
   );
+  // Furniture size/shape is furniture-only, so it's tucked behind its own toggle.
+  const [showSize, setShowSize] = React.useState(
+    Boolean(option && (option.width_cm || option.depth_cm || option.height_cm || (option.shape && option.shape !== "rectangle"))),
+  );
 
   async function autofill() {
     const url = getValues("url");
@@ -126,23 +130,12 @@ export function OptionForm({ purchaseId, option, trigger }: Props) {
             aria-expanded={showMore}
             className="flex w-full items-center justify-between rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
           >
-            More details (store, link, photo, rating, recurring price)
+            More details
             <ChevronDown className={`h-4 w-4 transition-transform ${showMore ? "rotate-180" : ""}`} />
           </button>
 
           {showMore ? (
             <div className="space-y-4 rounded-lg border bg-muted/20 p-3">
-              <Field label="Payment frequency" htmlFor="o-frequency"
-                tooltip="For recurring costs like broadband or insurance. Leave as one-off for a single price.">
-                <NativeSelect id="o-frequency" {...register("frequency")}>
-                  {FREQUENCIES.map((f) => (
-                    <option key={f} value={f}>{FREQUENCY_LABELS[f] ?? f}</option>
-                  ))}
-                </NativeSelect>
-              </Field>
-              <Field label="Store" htmlFor="o-store">
-                <Input id="o-store" placeholder="e.g. DFS" {...register("store")} />
-              </Field>
               <Field label="Link (URL)" htmlFor="o-url" tooltip="Paste the product page, then tap Auto-fill to pull the name, price and photo.">
                 <div className="flex gap-2">
                   <Input id="o-url" type="url" placeholder="https://…" {...register("url")} />
@@ -161,33 +154,55 @@ export function OptionForm({ purchaseId, option, trigger }: Props) {
                 </div>
                 <input type="hidden" {...register("rating")} />
               </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Store" htmlFor="o-store">
+                  <Input id="o-store" placeholder="e.g. DFS" {...register("store")} />
+                </Field>
+                <Field label="Price is…" htmlFor="o-frequency"
+                  tooltip="Leave as one-off for a single price; pick a frequency for recurring costs.">
+                  <NativeSelect id="o-frequency" {...register("frequency")}>
+                    {FREQUENCIES.map((f) => (
+                      <option key={f} value={f}>{FREQUENCY_LABELS[f] ?? f}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+              </div>
               <Field label="Notes" htmlFor="o-notes">
                 <Textarea id="o-notes" rows={2} placeholder="Colour, size, delivery time…" {...register("notes")} />
               </Field>
 
-              <div className="space-y-3 rounded-lg border bg-background/60 p-3">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Size &amp; shape — used to drop this into the Room Designer
-                </p>
-                <Field label="Shape" htmlFor="o-shape">
-                  <NativeSelect id="o-shape" {...register("shape")}>
-                    {OPTION_SHAPES.map((s) => (
-                      <option key={s} value={s}>{OPTION_SHAPE_LABELS[s] ?? s}</option>
-                    ))}
-                  </NativeSelect>
-                </Field>
-                <div className="grid grid-cols-3 gap-2">
-                  <Field label="Width (cm)" htmlFor="o-width" error={errors.width_cm?.message}>
-                    <Input id="o-width" type="number" step="1" min="0" placeholder="e.g. 180" {...register("width_cm")} />
+              {/* Furniture-only: tucked behind its own toggle to keep the form light. */}
+              <button
+                type="button"
+                onClick={() => setShowSize((v) => !v)}
+                aria-expanded={showSize}
+                className="flex w-full items-center justify-between rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground hover:bg-accent"
+              >
+                Size &amp; shape (to place in the Room Designer)
+                <ChevronDown className={`h-4 w-4 transition-transform ${showSize ? "rotate-180" : ""}`} />
+              </button>
+              {showSize ? (
+                <div className="space-y-3 rounded-lg border bg-background/60 p-3">
+                  <Field label="Shape" htmlFor="o-shape">
+                    <NativeSelect id="o-shape" {...register("shape")}>
+                      {OPTION_SHAPES.map((s) => (
+                        <option key={s} value={s}>{OPTION_SHAPE_LABELS[s] ?? s}</option>
+                      ))}
+                    </NativeSelect>
                   </Field>
-                  <Field label="Depth (cm)" htmlFor="o-depth" error={errors.depth_cm?.message}>
-                    <Input id="o-depth" type="number" step="1" min="0" placeholder="e.g. 90" {...register("depth_cm")} />
-                  </Field>
-                  <Field label="Height (cm)" htmlFor="o-height" error={errors.height_cm?.message}>
-                    <Input id="o-height" type="number" step="1" min="0" placeholder="e.g. 75" {...register("height_cm")} />
-                  </Field>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Field label="Width (cm)" htmlFor="o-width" error={errors.width_cm?.message}>
+                      <Input id="o-width" type="number" step="1" min="0" placeholder="180" {...register("width_cm")} />
+                    </Field>
+                    <Field label="Depth (cm)" htmlFor="o-depth" error={errors.depth_cm?.message}>
+                      <Input id="o-depth" type="number" step="1" min="0" placeholder="90" {...register("depth_cm")} />
+                    </Field>
+                    <Field label="Height (cm)" htmlFor="o-height" error={errors.height_cm?.message}>
+                      <Input id="o-height" type="number" step="1" min="0" placeholder="75" {...register("height_cm")} />
+                    </Field>
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </div>
           ) : (
             <>

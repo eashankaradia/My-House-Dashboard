@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/shared/star-rating";
+import { ItemComments } from "@/components/shared/item-comments";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { FREQUENCY_SUFFIX, OPTION_SHAPE_LABELS } from "@/lib/constants";
 import type { PurchaseOption } from "@/lib/database.types";
@@ -90,6 +91,16 @@ export function OptionDetailDialog({
           <p className="text-[11px] text-muted-foreground">
             Added {formatDate(option.created_at)} · updated {formatDate(option.updated_at)}
           </p>
+
+          <div className="border-t pt-3">
+            <ItemComments
+              entityType="purchase_option"
+              entityId={option.id}
+              ownerId={option.user_id}
+              href={`/purchases?item=${option.purchase_id}`}
+              label={option.name}
+            />
+          </div>
 
           <div className="flex items-center justify-end gap-2 border-t pt-3">
             {option.url ? (
