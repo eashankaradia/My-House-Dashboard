@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, X } from "lucide-react";
+import { FlipHorizontal2, Plus, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,6 +88,9 @@ export function RoomShapeDoors({ room, save }: { room: Room; save: (patch: Recor
                 <Field label="Width (m)" className="w-24">
                   <Input type="number" step="0.01" defaultValue={(d.width / 100).toString()} onBlur={(e) => updateDoor(i, { width: Math.round(Number(e.target.value) * 100) || 80 })} />
                 </Field>
+                <button type="button" onClick={() => updateDoor(i, { flipped: !d.flipped })} aria-label="Flip door" className="mb-1 rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground">
+                  <FlipHorizontal2 className="h-4 w-4" />
+                </button>
                 <button type="button" onClick={() => saveDoors(doors.filter((_, j) => j !== i))} aria-label="Remove door" className="mb-1 rounded-md p-2 text-muted-foreground hover:text-destructive">
                   <X className="h-4 w-4" />
                 </button>

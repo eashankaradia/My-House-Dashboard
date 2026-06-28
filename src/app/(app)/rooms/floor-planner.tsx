@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { DoorOpen, ExternalLink, Heart, Plus, Ruler, RotateCw, Trash2 } from "lucide-react";
+import { DoorOpen, ExternalLink, FlipHorizontal2, Heart, Plus, Ruler, RotateCw, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,7 +97,7 @@ export function FloorPlanner({
   const [selectedDoor, setSelectedDoor] = React.useState<number | null>(null);
   const doorDrag = React.useRef<number | null>(null);
 
-  // Toggle on-plan measurements (wall lengths + selected item's gaps to walls).
+  // Toggle on-plan measurements (wall lengths + furniture gaps to nearby walls).
   const [showDims, setShowDims] = React.useState(false);
 
   const selected = items.find((i) => i.id === selectedId) ?? null;
@@ -153,17 +153,19 @@ export function FloorPlanner({
       const wd = Math.max(20, d.width);
       const span = d.wall === "left" || d.wall === "right" ? L : W;
       const off = clamp(d.offset, 0, Math.max(0, span - wd));
-      // A = hinge jamb, B = latch jamb (along the wall), n = inward normal.
+      // A/B are the two jambs along the wall; flipping swaps which side is the hinge.
       let A: RoomPoint, B: RoomPoint, n: RoomPoint;
       if (d.wall === "top") { A = { x: off, y: 0 }; B = { x: off + wd, y: 0 }; n = { x: 0, y: 1 }; }
       else if (d.wall === "bottom") { A = { x: off, y: L }; B = { x: off + wd, y: L }; n = { x: 0, y: -1 }; }
       else if (d.wall === "left") { A = { x: 0, y: off }; B = { x: 0, y: off + wd }; n = { x: 1, y: 0 }; }
       else { A = { x: W, y: off }; B = { x: W, y: off + wd }; n = { x: -1, y: 0 }; }
-      const leafEnd = { x: A.x + n.x * wd, y: A.y + n.y * wd };
-      const t = { x: (B.x - A.x) / wd, y: (B.y - A.y) / wd };
+      const hinge = d.flipped ? B : A;
+      const latch = d.flipped ? A : B;
+      const leafEnd = { x: hinge.x + n.x * wd, y: hinge.y + n.y * wd };
+      const t = { x: (latch.x - hinge.x) / wd, y: (latch.y - hinge.y) / wd };
       const sweep = t.x * n.y - t.y * n.x > 0 ? 1 : 0;
       const mid = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
-      return { wd, A, B, n, leafEnd, sweep, mid };
+      return { wd, A, B, hinge, latch, n, leafEnd, sweep, mid };
     },
     [W, L],
   );
@@ -421,7 +423,13 @@ export function FloorPlanner({
           <span>Drag the blue corners. Tap + on an edge to add a point, red dot to remove.</span>
           <button type="button" onClick={resetShape} className="shrink-0 font-medium text-foreground hover:underline">Reset to rectangle</button>
         </div>
-      ) : null}
+      ) : (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          <span>Drag furniture or doors to move them.</span>
+          <span>Tap an item to edit size, colour, status or linked purchase.</span>
+          <span>Turn on Distances to see each item&apos;s nearest wall gaps.</span>
+        </div>
+      )}
 
       <Card>
         <CardContent className="p-2">
@@ -465,13 +473,13 @@ export function FloorPlanner({
                     <line x1={g.A.x} y1={g.A.y} x2={g.B.x} y2={g.B.y} stroke="#fff" strokeWidth={7} />
                     {/* swing arc + leaf */}
                     <path
-                      d={`M ${g.B.x} ${g.B.y} A ${g.wd} ${g.wd} 0 0 ${g.sweep} ${g.leafEnd.x} ${g.leafEnd.y}`}
+                      d={`M ${g.latch.x} ${g.latch.y} A ${g.wd} ${g.wd} 0 0 ${g.sweep} ${g.leafEnd.x} ${g.leafEnd.y}`}
                       fill="none"
                       stroke={stroke}
                       strokeWidth={isSel ? 3 : 2}
                       strokeDasharray="6 5"
                     />
-                    <line x1={g.A.x} y1={g.A.y} x2={g.leafEnd.x} y2={g.leafEnd.y} stroke={stroke} strokeWidth={isSel ? 4 : 3} />
+                    <line x1={g.hinge.x} y1={g.hinge.y} x2={g.leafEnd.x} y2={g.leafEnd.y} stroke={stroke} strokeWidth={isSel ? 4 : 3} />
                     {/* jamb dots so the doorway is obvious */}
                     <circle cx={g.A.x} cy={g.A.y} r={handleR * 0.4} fill={stroke} />
                     <circle cx={g.B.x} cy={g.B.y} r={handleR * 0.4} fill={stroke} />
@@ -547,31 +555,39 @@ export function FloorPlanner({
                     );
                   })}
 
-                  {selected
-                    ? (() => {
-                        const cx = selected.x_cm + selected.width_cm / 2;
-                        const cy = selected.y_cm + selected.depth_cm / 2;
-                        const left = selected.x_cm;
-                        const right = W - (selected.x_cm + selected.width_cm);
-                        const top = selected.y_cm;
-                        const bottom = L - (selected.y_cm + selected.depth_cm);
-                        const line = (x1: number, y1: number, x2: number, y2: number, key: string) => (
-                          <line key={key} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#0ea5e9" strokeWidth={1.5} strokeDasharray="5 4" />
-                        );
-                        return (
-                          <g>
-                            {left > 1 ? line(0, cy, selected.x_cm, cy, "gl") : null}
-                            {left > 1 ? <DimLabel x={left / 2} y={cy} text={fmtDist(left)} size={labelSize} /> : null}
-                            {right > 1 ? line(selected.x_cm + selected.width_cm, cy, W, cy, "gr") : null}
-                            {right > 1 ? <DimLabel x={W - right / 2} y={cy} text={fmtDist(right)} size={labelSize} /> : null}
-                            {top > 1 ? line(cx, 0, cx, selected.y_cm, "gt") : null}
-                            {top > 1 ? <DimLabel x={cx} y={top / 2} text={fmtDist(top)} size={labelSize} /> : null}
-                            {bottom > 1 ? line(cx, selected.y_cm + selected.depth_cm, cx, L, "gb") : null}
-                            {bottom > 1 ? <DimLabel x={cx} y={L - bottom / 2} text={fmtDist(bottom)} size={labelSize} /> : null}
-                          </g>
-                        );
-                      })()
-                    : null}
+                  {items.map((it) => {
+                    const cx = it.x_cm + it.width_cm / 2;
+                    const cy = it.y_cm + it.depth_cm / 2;
+                    const left = it.x_cm;
+                    const right = W - (it.x_cm + it.width_cm);
+                    const top = it.y_cm;
+                    const bottom = L - (it.y_cm + it.depth_cm);
+                    const horizontal =
+                      left <= right
+                        ? { gap: left, x1: 0, y1: cy, x2: it.x_cm, y2: cy, labelX: left / 2, labelY: cy }
+                        : { gap: right, x1: it.x_cm + it.width_cm, y1: cy, x2: W, y2: cy, labelX: W - right / 2, labelY: cy };
+                    const vertical =
+                      top <= bottom
+                        ? { gap: top, x1: cx, y1: 0, x2: cx, y2: it.y_cm, labelX: cx, labelY: top / 2 }
+                        : { gap: bottom, x1: cx, y1: it.y_cm + it.depth_cm, x2: cx, y2: L, labelX: cx, labelY: L - bottom / 2 };
+
+                    return (
+                      <g key={`gaps-${it.id}`} opacity={it.id === selectedId ? 1 : 0.74}>
+                        {horizontal.gap > 1 ? (
+                          <>
+                            <line x1={horizontal.x1} y1={horizontal.y1} x2={horizontal.x2} y2={horizontal.y2} stroke="#0ea5e9" strokeWidth={1.5} strokeDasharray="5 4" />
+                            <DimLabel x={horizontal.labelX} y={horizontal.labelY} text={fmtDist(horizontal.gap)} size={labelSize * 0.88} />
+                          </>
+                        ) : null}
+                        {vertical.gap > 1 ? (
+                          <>
+                            <line x1={vertical.x1} y1={vertical.y1} x2={vertical.x2} y2={vertical.y2} stroke="#0ea5e9" strokeWidth={1.5} strokeDasharray="5 4" />
+                            <DimLabel x={vertical.labelX} y={vertical.labelY} text={fmtDist(vertical.gap)} size={labelSize * 0.88} />
+                          </>
+                        ) : null}
+                      </g>
+                    );
+                  })}
                 </g>
               ) : null}
 
@@ -609,9 +625,20 @@ export function FloorPlanner({
               <p className="flex items-center gap-1.5 text-sm font-medium">
                 <DoorOpen className="h-4 w-4" /> Door
               </p>
-              <button onClick={() => removeDoor(selectedDoor)} aria-label="Delete door" className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-destructive">
-                <Trash2 className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => updateDoor(selectedDoor, { flipped: !doors[selectedDoor].flipped })}
+                >
+                  <FlipHorizontal2 className="h-4 w-4" /> Flip
+                </Button>
+                <button onClick={() => removeDoor(selectedDoor)} aria-label="Delete door" className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Wall">

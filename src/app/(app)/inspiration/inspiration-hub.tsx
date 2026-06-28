@@ -195,7 +195,28 @@ function InspirationFeedItem({
   addedBy?: string;
 }) {
   const [manuallyExpanded, setManuallyExpanded] = React.useState(false);
-  const embedCollapsed = Boolean(seen && collapseSeenEmbeds && !manuallyExpanded);
+  const cardCollapsed = Boolean(seen && collapseSeenEmbeds && !manuallyExpanded);
+
+  if (cardCollapsed) {
+    return (
+      <Card className="overflow-hidden rounded-full shadow-sm">
+        <button
+          type="button"
+          onClick={() => setManuallyExpanded(true)}
+          className="flex h-11 w-full items-center justify-between gap-3 px-3 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          aria-label={`Expand ${item.title}`}
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
+              {item.source.slice(0, 2).toUpperCase()}
+            </span>
+            <span className="min-w-0 truncate font-medium">{item.title}</span>
+          </span>
+          <ChevronDown className="h-4 w-4 shrink-0" aria-hidden="true" />
+        </button>
+      </Card>
+    );
+  }
 
   return (
     <Card className={cn("overflow-hidden rounded-3xl shadow-sm", seen && "opacity-80")}>
@@ -220,35 +241,22 @@ function InspirationFeedItem({
           <ActionsMenu item={item} collections={collections} />
         </div>
         {item.notes ? <p className="line-clamp-3 whitespace-pre-wrap text-sm">{item.notes}</p> : null}
-        {embedCollapsed ? (
+        {seen && collapseSeenEmbeds ? (
           <button
             type="button"
-            onClick={() => setManuallyExpanded(true)}
-            className="flex h-9 w-full items-center justify-between gap-3 rounded-full border bg-muted/30 px-3 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            onClick={() => setManuallyExpanded(false)}
+            aria-label="Collapse reel"
+            className="ml-auto flex h-8 w-8 items-center justify-center rounded-full border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <span className="min-w-0 truncate">{item.title}</span>
-            <ChevronDown className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <ChevronUp className="h-4 w-4" aria-hidden="true" />
           </button>
-        ) : (
-          <>
-            {seen && collapseSeenEmbeds ? (
-              <button
-                type="button"
-                onClick={() => setManuallyExpanded(false)}
-                aria-label="Collapse reel"
-                className="ml-auto flex h-8 w-8 items-center justify-center rounded-full border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <ChevronUp className="h-4 w-4" aria-hidden="true" />
-              </button>
-            ) : null}
-            {item.link ? (
-              <SocialEmbed link={item.link} title={item.title} />
-            ) : item.image_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={item.image_url} alt={item.title} className="max-h-[680px] w-full rounded-lg object-cover" />
-            ) : null}
-          </>
-        )}
+        ) : null}
+        {item.link ? (
+          <SocialEmbed link={item.link} title={item.title} />
+        ) : item.image_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={item.image_url} alt={item.title} className="max-h-[680px] w-full rounded-lg object-cover" />
+        ) : null}
         <div className="flex flex-wrap gap-1.5">
           {item.category ? <Badge variant="outline">{item.category}</Badge> : null}
           {item.room ? <Badge variant="outline">{item.room}</Badge> : null}

@@ -339,7 +339,13 @@ export type Reaction = {
 
 export type RoomOpening = { position: number; width: number; height?: number; label?: string };
 export type RoomPoint = { x: number; y: number };
-export type RoomDoor = { wall: "top" | "bottom" | "left" | "right"; offset: number; width: number };
+export type RoomDoor = {
+  wall: "top" | "bottom" | "left" | "right";
+  offset: number;
+  width: number;
+  /** When true, the hinge is on the opposite jamb, flipping the door swing. */
+  flipped?: boolean;
+};
 
 export type Room = {
   id: string;

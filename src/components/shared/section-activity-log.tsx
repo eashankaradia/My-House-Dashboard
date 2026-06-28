@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { History } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getHouseholdMap } from "@/lib/household";
 import { formatDate } from "@/lib/utils";
 import type { ActivityLog } from "@/lib/database.types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ActivityLogCard } from "@/components/shared/activity-log-card";
 import { ACTION_VERB, activityHref, ENTITY_LABEL, ENTITY_TAG } from "@/app/(app)/activity/activity-meta";
 
 export async function SectionActivityLog({
@@ -28,19 +27,14 @@ export async function SectionActivityLog({
   if (entityTypes && entityTypes.length) query = query.in("entity_type", entityTypes);
   if (excludeSelf && user) query = query.neq("user_id", user.id);
   const [{ data }, memberMap] = await Promise.all([
-    query.order("created_at", { ascending: false }).limit(limit),
+    query.order("created_at", { ascending: false }).limit(Math.max(limit, 2)),
     getHouseholdMap(),
   ]);
-  const activity = (data ?? []) as ActivityLog[];
+  const activity = ((data ?? []) as ActivityLog[]).slice(0, 2);
+  const total = (data ?? []).length;
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <History className="h-4 w-4 text-muted-foreground" /> {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="divide-y p-0">
+    <ActivityLogCard title={title} count={total}>
         {activity.length === 0 ? (
           <p className="px-4 pb-5 text-sm text-muted-foreground">No updates recorded for this section yet.</p>
         ) : (
@@ -71,7 +65,6 @@ export async function SectionActivityLog({
             );
           })
         )}
-      </CardContent>
-    </Card>
+    </ActivityLogCard>
   );
 }

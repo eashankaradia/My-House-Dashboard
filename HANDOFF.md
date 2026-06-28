@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-28 (Codex — inspiration reels UI follow-up).
+> after **every** change. Last updated: 2026-06-28 (Codex — reels/activity/room-designer follow-up).
 
 ## -2. FOURTH LIST in progress (Claude, 2026-06-27)
 
@@ -173,6 +173,29 @@ Requests:
   cards are rounder with less padding/chrome, notes clamp to three lines, and
   `social-embed.tsx` uses a taller 9:14 reel aspect with black media framing.
 - No migration.
+
+### Batch 13 (done, no DB) — reel-card collapse, recent updates, room designer
+- **Whole seen reel cards collapse:** `inspiration-hub.tsx` now collapses the
+  entire seen feed card into a slim one-line pill with source initials, title and
+  a right-side expand chevron. Expanding restores the full card; the full card
+  keeps the icon-only collapse chevron.
+- **Recent updates are collapsed everywhere:** `SectionActivityLog` now renders
+  through new client component `activity-log-card.tsx`; every section log is
+  collapsed by default and shows a badge count in the header.
+- **Recent updates show two max when expanded:** `SectionActivityLog` slices the
+  loaded activity to the two newest entries when open, keeping per-tab bottoms
+  tidy.
+- **Room Designer door flipping:** `RoomDoor` gained optional `flipped` (stored
+  inside existing `rooms.doors` JSON, no migration). `floor-planner.tsx` swaps
+  the hinge/latch geometry when flipped and adds a selected-door "Flip" button;
+  `room-shape-doors.tsx` exposes the same flip icon in the overview door list.
+- **Room Designer is more self-explanatory:** planner now shows a short guidance
+  strip explaining drag/select/distances when not editing the room outline.
+- **Distances apply to all furniture:** distance mode now shows each layout
+  item's nearest horizontal and vertical wall gaps, instead of only measuring
+  the selected item.
+- Verified: `npm.cmd run typecheck`, `npm.cmd run lint`, and `npm.cmd run build`
+  clean. No migration.
 
 **FOURTH LIST COMPLETE** — all 9 requests shipped. Migrations the user still needs
 to run live: 0029 (option dims), 0030 (bill start_date), 0031 (purchase size),
