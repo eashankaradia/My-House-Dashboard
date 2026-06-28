@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-27 (Claude — FOURTH LIST batch 7: option dimensions in the Room Designer; list complete).
+> after **every** change. Last updated: 2026-06-28 (Claude — Room Designer: doors on the plan + distances toggle).
 
 ## -2. FOURTH LIST in progress (Claude, 2026-06-27)
 
@@ -110,6 +110,20 @@ Requests:
   is now `min-w-0 flex-1 truncate`, inner flex is `min-w-0`, Picked badge is
   `shrink-0`, button is `w-full min-w-0`. Also hid the "Edit" label on mobile
   (`hidden sm:inline`, icon kept) to free width. Typecheck/lint/build clean.
+
+### Batch 10 (done, no DB) — Room Designer: doors on the plan + distances
+- **Doors are now placed/dragged on the floor plan** (`floor-planner.tsx`), not just
+  via the number-input form: a "Door" toolbar button drops a door on the bottom wall;
+  doors render as a white wall-gap + a sky swing arc + leaf + jamb dots; drag a door
+  along its wall to position it; selecting one opens a panel (Wall select, Width,
+  delete). Persisted to `room.doors` via `updateRoomDetails` (already whitelisted).
+  Door geometry/swing in `doorGeom` (inward normal per wall; SVG arc sweep =
+  sign of `t × n`). The old `RoomShapeDoors` form on the room overview still works.
+- **Distances toggle** (Ruler button, `showDims`): overlays each room wall's length
+  (per outline edge, label nudged inward toward the centroid) and, for the selected
+  furniture item, dashed measure lines + labels for its gap to each wall. Helpers
+  `fmtDist` (m/cm) and `DimLabel` (translucent backing). No DB.
+- Verified: typecheck, lint, build all clean.
 
 ### Batch 9 (done, no DB) — notifications + options UX follow-ups
 - **Removed "Push to someone"** (notifications page): dropped the manual send-note
