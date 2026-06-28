@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-28 (Codex — purchases/inspiration polish follow-up).
+> after **every** change. Last updated: 2026-06-28 (Codex — inspiration reels UI follow-up).
 
 ## -2. FOURTH LIST in progress (Claude, 2026-06-27)
 
@@ -158,6 +158,21 @@ Requests:
   toggle. Items already marked seen (via existing `comment_reads`) show a compact
   placeholder instead of loading the embed, with a one-click "show it again" reveal.
 - Verified: `npm.cmd run typecheck` and `npm.cmd run lint` clean. No migration.
+
+### Batch 12 (done, no DB) — inspiration reels UI follow-up
+- **Collapsed seen reels are now single-line:** `inspiration-hub.tsx` replaced the
+  large dashed explainer placeholder with a slim 36px pill row containing the item
+  title and a right-side expand chevron.
+- **Expanded seen reels can be tucked away again:** when a seen reel is manually
+  expanded, it shows a small icon-only collapse chevron above the media.
+- **Collections are collapsible:** new `collections-strip.tsx` replaces the always-
+  visible collection chips on `inspiration/page.tsx` with a compact "Collections"
+  row showing collection count + saved idea count; expanding reveals the chips and
+  delete controls.
+- **Feed feels more like reels:** feed column narrowed to a phone-like reel width,
+  cards are rounder with less padding/chrome, notes clamp to three lines, and
+  `social-embed.tsx` uses a taller 9:14 reel aspect with black media framing.
+- No migration.
 
 **FOURTH LIST COMPLETE** — all 9 requests shipped. Migrations the user still needs
 to run live: 0029 (option dims), 0030 (bill start_date), 0031 (purchase size),
