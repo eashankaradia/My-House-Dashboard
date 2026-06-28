@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { collectionSchema, type CollectionInput } from "@/lib/schemas";
 import { createCollection } from "./actions";
 
-export function CollectionForm() {
+export function CollectionForm({ trigger }: { trigger?: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
@@ -52,9 +52,11 @@ export function CollectionForm() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <FolderPlus className="h-4 w-4" /> New collection
-        </Button>
+        {trigger ?? (
+          <Button variant="outline">
+            <FolderPlus className="h-4 w-4" /> New collection
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>

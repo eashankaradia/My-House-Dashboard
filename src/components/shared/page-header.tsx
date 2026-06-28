@@ -26,7 +26,7 @@ export function PageHeader({ title, description, info, children, className }: Pr
         </div>
         {description ? <p className="max-w-3xl text-sm text-muted-foreground">{description}</p> : null}
       </div>
-      {children ? <div className="flex shrink-0 items-center gap-2">{children}</div> : null}
+      {children ? <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">{children}</div> : null}
     </div>
   );
 }

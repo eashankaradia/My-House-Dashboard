@@ -17,7 +17,7 @@ import { Field } from "@/components/shared/form-field";
 import { useToast } from "@/hooks/use-toast";
 import { importPinterestBoard } from "./actions";
 
-export function PinterestBoardImport() {
+export function PinterestBoardImport({ trigger }: { trigger?: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
   const [name, setName] = React.useState("");
   const [url, setUrl] = React.useState("");
@@ -42,9 +42,11 @@ export function PinterestBoardImport() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
-          <PanelTop className="h-4 w-4" /> Pinterest board
-        </Button>
+        {trigger ?? (
+          <Button variant="outline" className="gap-2">
+            <PanelTop className="h-4 w-4" /> Pinterest board
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
