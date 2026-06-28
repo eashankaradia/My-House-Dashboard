@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
+import { getHouseholdMap } from "@/lib/household";
 import type { Collection, Inspiration } from "@/lib/database.types";
 import { InspirationForm } from "./inspiration-form";
 import { CollectionForm } from "./collection-form";
@@ -18,10 +19,11 @@ export default async function InspirationPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [{ data: inspoData }, { data: collectionData }, { data: readData }] = await Promise.all([
+  const [{ data: inspoData }, { data: collectionData }, { data: readData }, memberMap] = await Promise.all([
     supabase.from("inspiration").select("*").order("created_at", { ascending: false }),
     supabase.from("collections").select("*").order("name", { ascending: true }),
     supabase.from("comment_reads").select("entity_id").eq("entity_type", "inspiration").eq("user_id", user?.id ?? ""),
+    getHouseholdMap(),
   ]);
   const items = (inspoData ?? []) as Inspiration[];
   const collections = (collectionData ?? []) as Collection[];
@@ -72,7 +74,7 @@ export default async function InspirationPage() {
           <InspirationForm collections={collections} />
         </EmptyState>
       ) : (
-        <InspirationHub items={items} collections={collections} seenIds={seenIds} />
+        <InspirationHub items={items} collections={collections} seenIds={seenIds} memberMap={memberMap} />
       )}
       <SectionActivityLog entityTypes={["inspiration", "collections"]} />
     </div>

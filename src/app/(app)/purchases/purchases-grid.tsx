@@ -70,17 +70,21 @@ export function PurchasesGrid({
   const [sort, setSort] = React.useState<keyof typeof SORTS>("rating");
   const [view, setView] = useViewPref("purchases");
   const [onlyMine, setOnlyMine] = React.useState(false);
+  const [hideNoOptions, setHideNoOptions] = React.useState(false);
 
   const rooms = Array.from(new Set(purchases.map((p) => p.room).filter(Boolean))) as string[];
   const rank = { High: 0, Medium: 1, Low: 2 } as const;
 
   const filtered = purchases
     .filter((p) => (!onlyMine ? true : p.user_id === currentUserId))
+    .filter((p) => (!hideNoOptions ? true : p.options.length > 0))
     .filter((p) => (status === "All" ? true : p.status === status))
     .filter((p) => (room === "All" ? true : p.room === room))
     .filter((p) => (size === "All" ? true : (p.size ?? "") === size))
     .filter((p) => (minRating === 0 ? true : effectiveRating(p) >= minRating))
     .sort((a, b) => {
+      const optionless = Number(a.options.length === 0) - Number(b.options.length === 0);
+      if (optionless !== 0) return optionless;
       switch (sort) {
         case "rating":
           return effectiveRating(b) - effectiveRating(a) || rank[a.priority] - rank[b.priority];
@@ -114,6 +118,16 @@ export function PurchasesGrid({
             Mine
           </button>
         </div>
+        <button
+          type="button"
+          onClick={() => setHideNoOptions((v) => !v)}
+          className={cn(
+            "rounded-lg border px-3 py-2 text-sm transition-colors",
+            hideNoOptions && "bg-accent text-foreground",
+          )}
+        >
+          {hideNoOptions ? "Showing items with options" : "Hide items with no options"}
+        </button>
         <NativeSelect value={status} onChange={(e) => setStatus(e.target.value)} className="h-9 w-auto text-sm">
           <option value="All">All statuses</option>
           {PURCHASE_STATUSES.map((s) => (
@@ -193,7 +207,7 @@ export function PurchasesGrid({
       ) : view === "table" ? (
         <PurchaseTable purchases={filtered} memberMap={memberMap} />
       ) : (
-        <div className="grid items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid min-w-0 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
           {filtered.map((purchase, i) => (
             // Only the top-rated item starts expanded; the rest are pre-collapsed.
             <PurchaseCard key={purchase.id} purchase={purchase} memberMap={memberMap} defaultOpen={i === 0} />
@@ -286,7 +300,7 @@ function CompactRow({
   const opts = sortedOptions(purchase);
   const members = Object.entries(memberMap).map(([id, name]) => ({ id, name }));
   return (
-    <div className={cn("flex items-center gap-3 border-l-4 px-4 py-2.5 text-sm", PRIORITY_ACCENT[purchase.priority])}>
+    <div className={cn("flex min-w-0 items-center gap-3 border-l-4 px-4 py-2.5 text-sm", PRIORITY_ACCENT[purchase.priority])}>
       <PurchaseDetailDialog purchase={purchase} memberMap={memberMap}>
         <CardTrigger className="min-w-0 flex-1 rounded-md">
           <div className="flex items-center gap-2">
@@ -340,13 +354,15 @@ function PurchaseCard({
   const chosen = options.find((o) => o.is_chosen);
 
   return (
-    <Card className={cn("flex flex-col border-l-4", PRIORITY_ACCENT[purchase.priority])}>
-      <CardContent className="flex flex-1 flex-col gap-3 p-4">
+    <Card className={cn("flex min-w-0 max-w-full flex-col overflow-hidden border-l-4", PRIORITY_ACCENT[purchase.priority])}>
+      <CardContent className="flex min-w-0 flex-1 flex-col gap-3 p-4">
         <div className="flex items-start justify-between gap-2">
           <PurchaseDetailDialog purchase={purchase} memberMap={memberMap}>
-            <CardTrigger className="min-w-0 flex-1 rounded-md">
-              <span className="truncate font-medium hover:underline">{purchase.name}</span>
-              <p className="text-xs text-muted-foreground">
+            <CardTrigger className="block min-w-0 flex-1 rounded-md text-left">
+              <span className="block min-w-0 whitespace-normal break-words font-medium leading-snug [overflow-wrap:anywhere] hover:underline">
+                {purchase.name}
+              </span>
+              <p className="min-w-0 break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">
                 {purchase.category}
                 {purchase.room ? ` · ${purchase.room}` : ""}
               </p>
@@ -379,7 +395,11 @@ function PurchaseCard({
 
         {open ? (
           <>
-            {purchase.notes ? <p className="line-clamp-2 text-sm text-muted-foreground">{purchase.notes}</p> : null}
+            {purchase.notes ? (
+              <p className="line-clamp-3 min-w-0 whitespace-pre-wrap break-words text-sm text-muted-foreground [overflow-wrap:anywhere]">
+                {purchase.notes}
+              </p>
+            ) : null}
 
             <div className="space-y-2">
               {options.map((opt, i) => (
@@ -403,7 +423,7 @@ function PurchaseCard({
           </>
         ) : null}
 
-        <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
+        <div className="mt-auto flex min-w-0 flex-wrap items-center justify-between gap-2 border-t pt-3">
           <AddedBy name={memberMap[purchase.user_id]} />
           <div className="flex items-center gap-2">
             <div className="w-32">

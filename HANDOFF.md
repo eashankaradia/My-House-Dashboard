@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-28 (Claude — Room Designer: doors on the plan + distances toggle).
+> after **every** change. Last updated: 2026-06-28 (Codex — purchases/inspiration polish follow-up).
 
 ## -2. FOURTH LIST in progress (Claude, 2026-06-27)
 
@@ -140,6 +140,24 @@ Requests:
   Store + price-frequency in a 2-col row, Notes); the furniture-only Size & shape
   block is now behind its own nested toggle (`showSize`).
 - Verified: typecheck, lint, build all clean.
+
+### Batch 11 (done, no DB) — purchases/inspiration polish follow-up
+- **Purchases long text no longer widens cards:** `purchases-grid.tsx` purchase
+  cards now force `min-w-0`/`max-w-full`/`overflow-hidden`; purchase names and
+  notes wrap with `overflow-wrap:anywhere` so very long appliance/item names or
+  descriptions stay inside the card instead of causing sideways scrolling.
+- **Purchase option rows wrap safely too:** `option-row.tsx` changed option
+  names/meta from single-line truncation to wrapping with `overflow-wrap:anywhere`,
+  while preserving the image/rank/price/actions layout.
+- **Items with no options are de-prioritised:** purchases with one or more options
+  always sort above purchases with zero options, regardless of the selected sort.
+  Added a "Hide items with no options" toggle in the purchases filter bar.
+- **Inspiration can filter by creator:** `inspiration/page.tsx` now passes
+  `memberMap`; `inspiration-hub.tsx` adds an "Added by anyone/member" filter.
+- **Seen inspiration reels can collapse:** feed view has a "Seen reels collapsed"
+  toggle. Items already marked seen (via existing `comment_reads`) show a compact
+  placeholder instead of loading the embed, with a one-click "show it again" reveal.
+- Verified: `npm.cmd run typecheck` and `npm.cmd run lint` clean. No migration.
 
 **FOURTH LIST COMPLETE** — all 9 requests shipped. Migrations the user still needs
 to run live: 0029 (option dims), 0030 (bill start_date), 0031 (purchase size),

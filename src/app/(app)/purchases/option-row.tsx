@@ -45,7 +45,7 @@ export function OptionRow({
       )}
     >
       {/* Line 1: rank · image · name/meta · price */}
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-start gap-2">
         <div className="flex shrink-0 flex-col">
           <button
             onClick={() => run(() => moveOption(purchaseId, option.id, "up"))}
@@ -74,17 +74,19 @@ export function OptionRow({
 
         <OptionDetailDialog purchaseId={purchaseId} option={option}>
           <button className="block min-w-0 flex-1 rounded text-left hover:underline">
-            <span className="flex min-w-0 items-center gap-1.5">
-              <span className="min-w-0 flex-1 truncate text-sm font-medium">{option.name}</span>
+            <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+              <span className="min-w-0 flex-1 whitespace-normal break-words text-sm font-medium leading-snug [overflow-wrap:anywhere]">
+                {option.name}
+              </span>
               {option.is_chosen ? <Badge variant="success" className="shrink-0">Picked</Badge> : null}
             </span>
-            <span className="block truncate text-xs text-muted-foreground">
+            <span className="block min-w-0 whitespace-normal break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">
               {[option.store, option.notes].filter(Boolean).join(" · ") || " "}
             </span>
           </button>
         </OptionDetailDialog>
 
-        <div className="flex shrink-0 flex-col items-end">
+        <div className="flex shrink-0 flex-col items-end pt-0.5">
           <span className="text-sm font-semibold">
             {formatCurrency(option.price)}
             {FREQUENCY_SUFFIX[option.frequency] ? (
@@ -100,7 +102,7 @@ export function OptionRow({
       </div>
 
       {/* Line 2: rating · actions */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
         <StarRating value={option.rating} onRate={(n) => setOptionRating(option.id, n)} size="sm" />
         <div className="flex shrink-0 items-center">
           {option.url ? (

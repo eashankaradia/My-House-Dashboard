@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   ExternalLink,
   Eye,
+  EyeOff,
   Hammer,
   LayoutGrid,
   List,
@@ -29,6 +30,7 @@ import { CardTrigger } from "@/components/shared/card-trigger";
 import { useToast } from "@/hooks/use-toast";
 import { cn, formatDate } from "@/lib/utils";
 import { priorityVariant } from "@/lib/ui";
+import type { MemberMap } from "@/lib/household";
 import type { Collection, Inspiration } from "@/lib/database.types";
 import { InspirationForm } from "./inspiration-form";
 import { InspirationDetailDialog } from "./inspiration-detail";
@@ -41,23 +43,32 @@ export function InspirationHub({
   items,
   collections,
   seenIds = [],
+  memberMap,
 }: {
   items: Inspiration[];
   collections: Collection[];
   seenIds?: string[];
+  memberMap: MemberMap;
 }) {
   const [view, setView] = React.useState<View>("feed");
   const [query, setQuery] = React.useState("");
   const [room, setRoom] = React.useState("All");
   const [collection, setCollection] = React.useState("All");
+  const [addedBy, setAddedBy] = React.useState("All");
+  const [collapseSeenEmbeds, setCollapseSeenEmbeds] = React.useState(true);
   const seen = React.useMemo(() => new Set(seenIds), [seenIds]);
 
   const rooms = Array.from(new Set(items.map((i) => i.room).filter(Boolean))) as string[];
+  const creators = Array.from(new Set(items.map((i) => i.user_id))).map((id) => ({
+    id,
+    name: memberMap[id] ?? "Unknown",
+  }));
 
   const filtered = items
     .filter((i) => {
       if (room !== "All" && i.room !== room) return false;
       if (collection !== "All" && i.collection_id !== collection) return false;
+      if (addedBy !== "All" && i.user_id !== addedBy) return false;
       if (query) {
         const q = query.toLowerCase();
         const hay = [i.title, i.notes, i.category, i.source, ...(i.tags ?? [])]
@@ -100,6 +111,27 @@ export function InspirationHub({
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
+        <select
+          value={addedBy}
+          onChange={(e) => setAddedBy(e.target.value)}
+          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+        >
+          <option value="All">Added by anyone</option>
+          {creators.map((creator) => (
+            <option key={creator.id} value={creator.id}>{creator.name}</option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={() => setCollapseSeenEmbeds((v) => !v)}
+          className={cn(
+            "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm transition-colors",
+            collapseSeenEmbeds && "bg-accent text-foreground",
+          )}
+        >
+          {collapseSeenEmbeds ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {collapseSeenEmbeds ? "Seen reels collapsed" : "Show seen reels"}
+        </button>
 
         <div className="ml-auto flex items-center rounded-lg border p-0.5">
           <ViewButton active={view === "feed"} onClick={() => setView("feed")} icon={Newspaper} label="Feed" />
@@ -114,7 +146,14 @@ export function InspirationHub({
       ) : view === "feed" ? (
         <div className="mx-auto max-w-2xl space-y-5">
           {filtered.map((item) => (
-            <InspirationFeedItem key={item.id} item={item} collections={collections} seen={seen.has(item.id)} />
+            <InspirationFeedItem
+              key={item.id}
+              item={item}
+              collections={collections}
+              seen={seen.has(item.id)}
+              collapseSeenEmbeds={collapseSeenEmbeds}
+              addedBy={memberMap[item.user_id]}
+            />
           ))}
         </div>
       ) : view === "masonry" ? (
@@ -140,7 +179,22 @@ export function InspirationHub({
   );
 }
 
-function InspirationFeedItem({ item, collections, seen }: { item: Inspiration; collections: Collection[]; seen?: boolean }) {
+function InspirationFeedItem({
+  item,
+  collections,
+  seen,
+  collapseSeenEmbeds,
+  addedBy,
+}: {
+  item: Inspiration;
+  collections: Collection[];
+  seen?: boolean;
+  collapseSeenEmbeds: boolean;
+  addedBy?: string;
+}) {
+  const [manuallyExpanded, setManuallyExpanded] = React.useState(false);
+  const embedCollapsed = Boolean(seen && collapseSeenEmbeds && !manuallyExpanded);
+
   return (
     <Card className={cn("overflow-hidden", seen && "opacity-70")}>
       <CardContent className="space-y-3 p-4">
@@ -156,6 +210,7 @@ function InspirationFeedItem({ item, collections, seen }: { item: Inspiration; c
               </span>
               <span className="text-xs text-muted-foreground">
                 {item.source} · updated {formatDate(item.updated_at)}
+                {addedBy ? ` · added by ${addedBy}` : ""}
                 {seen ? " · seen" : ""}
               </span>
             </CardTrigger>
@@ -163,7 +218,16 @@ function InspirationFeedItem({ item, collections, seen }: { item: Inspiration; c
           <ActionsMenu item={item} collections={collections} />
         </div>
         {item.notes ? <p className="whitespace-pre-wrap text-sm">{item.notes}</p> : null}
-        {item.link ? (
+        {embedCollapsed ? (
+          <button
+            type="button"
+            onClick={() => setManuallyExpanded(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/40 px-3 py-6 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <Eye className="h-4 w-4" />
+            Reel collapsed because you have seen it — show it again
+          </button>
+        ) : item.link ? (
           <SocialEmbed link={item.link} title={item.title} />
         ) : item.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
