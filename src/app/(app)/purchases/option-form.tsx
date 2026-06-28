@@ -29,11 +29,12 @@ import { addOption, updateOption } from "./actions";
 
 type Props = {
   purchaseId: string;
+  purchaseCategory?: string;
   option?: PurchaseOption;
   trigger: React.ReactNode;
 };
 
-export function OptionForm({ purchaseId, option, trigger }: Props) {
+export function OptionForm({ purchaseId, purchaseCategory = "Furniture", option, trigger }: Props) {
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
@@ -74,6 +75,7 @@ export function OptionForm({ purchaseId, option, trigger }: Props) {
   const [showSize, setShowSize] = React.useState(
     Boolean(option && (option.width_cm || option.depth_cm || option.height_cm || (option.shape && option.shape !== "rectangle"))),
   );
+  const isFurniture = purchaseCategory === "Furniture";
 
   async function autofill() {
     const url = getValues("url");
@@ -92,8 +94,11 @@ export function OptionForm({ purchaseId, option, trigger }: Props) {
   }
 
   function onSubmit(values: PurchaseOptionInput) {
+    const payload = isFurniture
+      ? values
+      : { ...values, shape: undefined, width_cm: undefined, depth_cm: undefined, height_cm: undefined };
     startTransition(async () => {
-      const result = editing ? await updateOption(option!.id, values) : await addOption(purchaseId, values);
+      const result = editing ? await updateOption(option!.id, payload) : await addOption(purchaseId, payload);
       if (result?.error) {
         toast({ variant: "destructive", title: "Something went wrong", description: result.error });
         return;
@@ -171,37 +176,40 @@ export function OptionForm({ purchaseId, option, trigger }: Props) {
                 <Textarea id="o-notes" rows={2} placeholder="Colour, size, delivery time…" {...register("notes")} />
               </Field>
 
-              {/* Furniture-only: tucked behind its own toggle to keep the form light. */}
-              <button
-                type="button"
-                onClick={() => setShowSize((v) => !v)}
-                aria-expanded={showSize}
-                className="flex w-full items-center justify-between rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground hover:bg-accent"
-              >
-                Size &amp; shape (to place in the Room Designer)
-                <ChevronDown className={`h-4 w-4 transition-transform ${showSize ? "rotate-180" : ""}`} />
-              </button>
-              {showSize ? (
-                <div className="space-y-3 rounded-lg border bg-background/60 p-3">
-                  <Field label="Shape" htmlFor="o-shape">
-                    <NativeSelect id="o-shape" {...register("shape")}>
-                      {OPTION_SHAPES.map((s) => (
-                        <option key={s} value={s}>{OPTION_SHAPE_LABELS[s] ?? s}</option>
-                      ))}
-                    </NativeSelect>
-                  </Field>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Field label="Width (cm)" htmlFor="o-width" error={errors.width_cm?.message}>
-                      <Input id="o-width" type="number" step="1" min="0" placeholder="180" {...register("width_cm")} />
-                    </Field>
-                    <Field label="Depth (cm)" htmlFor="o-depth" error={errors.depth_cm?.message}>
-                      <Input id="o-depth" type="number" step="1" min="0" placeholder="90" {...register("depth_cm")} />
-                    </Field>
-                    <Field label="Height (cm)" htmlFor="o-height" error={errors.height_cm?.message}>
-                      <Input id="o-height" type="number" step="1" min="0" placeholder="75" {...register("height_cm")} />
-                    </Field>
-                  </div>
-                </div>
+              {isFurniture ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowSize((v) => !v)}
+                    aria-expanded={showSize}
+                    className="flex w-full items-center justify-between rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground hover:bg-accent"
+                  >
+                    Size &amp; shape (to place in the Room Designer)
+                    <ChevronDown className={`h-4 w-4 transition-transform ${showSize ? "rotate-180" : ""}`} />
+                  </button>
+                  {showSize ? (
+                    <div className="space-y-3 rounded-lg border bg-background/60 p-3">
+                      <Field label="Shape" htmlFor="o-shape">
+                        <NativeSelect id="o-shape" {...register("shape")}>
+                          {OPTION_SHAPES.map((s) => (
+                            <option key={s} value={s}>{OPTION_SHAPE_LABELS[s] ?? s}</option>
+                          ))}
+                        </NativeSelect>
+                      </Field>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Field label="Width (cm)" htmlFor="o-width" error={errors.width_cm?.message}>
+                          <Input id="o-width" type="number" step="1" min="0" placeholder="180" {...register("width_cm")} />
+                        </Field>
+                        <Field label="Depth (cm)" htmlFor="o-depth" error={errors.depth_cm?.message}>
+                          <Input id="o-depth" type="number" step="1" min="0" placeholder="90" {...register("depth_cm")} />
+                        </Field>
+                        <Field label="Height (cm)" htmlFor="o-height" error={errors.height_cm?.message}>
+                          <Input id="o-height" type="number" step="1" min="0" placeholder="75" {...register("height_cm")} />
+                        </Field>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
               ) : null}
             </div>
           ) : (

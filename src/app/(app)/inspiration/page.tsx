@@ -6,6 +6,7 @@ import { getHouseholdMap } from "@/lib/household";
 import type { Collection, Inspiration } from "@/lib/database.types";
 import { InspirationForm } from "./inspiration-form";
 import { CollectionForm } from "./collection-form";
+import { PinterestBoardImport } from "./pinterest-board-import";
 import { CollectionsStrip } from "./collections-strip";
 import { InspirationHub } from "./inspiration-hub";
 import { SectionActivityLog } from "@/components/shared/section-activity-log";
@@ -36,6 +37,7 @@ export default async function InspirationPage() {
     <div className="space-y-6">
       <PageHeader title="Inspiration" description="Your personal board for every home idea." info="Save links and images from Instagram, Pinterest, TikTok and the web. Group them into collections, tag and filter them, and switch between masonry, card and list views. Use the ⋯ menu on any idea to convert it into a Project or a Purchase.">
         <CollectionForm />
+        <PinterestBoardImport />
         <InspirationForm collections={collections} />
       </PageHeader>
 

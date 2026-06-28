@@ -226,6 +226,7 @@ export async function duplicateDesignVersion(id: string): Promise<ActionResult> 
         option_id: it.option_id,
         shape: it.shape,
         image_url: it.image_url,
+        locked: it.locked,
       })),
     );
   }
@@ -279,7 +280,7 @@ export async function addLayoutItem(
 const LAYOUT_FIELDS = [
   "name", "category", "width_cm", "depth_cm", "height_cm", "x_cm", "y_cm",
   "rotation", "color", "material", "notes", "cost", "priority", "status",
-  "purchase_id", "option_id", "shape", "image_url",
+  "purchase_id", "option_id", "shape", "image_url", "locked",
 ] as const;
 const NUMERIC_LAYOUT_FIELDS = new Set(["width_cm", "depth_cm", "height_cm", "x_cm", "y_cm", "rotation", "cost"]);
 

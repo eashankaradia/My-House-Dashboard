@@ -8,8 +8,10 @@ import {
   Eye,
   Filter,
   Hammer,
+  Heart,
   LayoutGrid,
   List,
+  MessageCircle,
   MoreVertical,
   Newspaper,
   Pencil,
@@ -156,7 +158,7 @@ export function InspirationHub({
             <option key={creator.id} value={creator.id}>{creator.name}</option>
           ))}
         </select>
-        <div className="ml-auto flex items-center rounded-lg border p-0.5">
+        <div className="ml-auto flex items-center rounded-full border bg-background/80 p-0.5 shadow-sm">
           <ViewButton active={view === "feed"} onClick={() => setView("feed")} icon={Newspaper} label="Feed" />
           <ViewButton active={view === "masonry"} onClick={() => setView("masonry")} icon={LayoutGrid} label="Masonry" />
           <ViewButton active={view === "cards"} onClick={() => setView("cards")} icon={Rows3} label="Cards" />
@@ -167,7 +169,7 @@ export function InspirationHub({
       {filtered.length === 0 ? (
         <p className="py-12 text-center text-sm text-muted-foreground">No ideas match your filters.</p>
       ) : view === "feed" ? (
-        <div className="mx-auto max-w-[430px] space-y-4">
+        <div className="mx-auto max-w-[430px] space-y-5">
           {filtered.map((item) => (
             <InspirationFeedItem
               key={item.id}
@@ -237,48 +239,68 @@ function InspirationFeedItem({
   }
 
   return (
-    <Card className={cn("overflow-hidden rounded-3xl shadow-sm", seen && "opacity-80")}>
-      <CardContent className="space-y-3 p-3">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+    <Card className={cn("overflow-hidden rounded-[1.6rem] border bg-background shadow-sm", seen && "opacity-85")}>
+      <CardContent className="p-0">
+        <div className="flex items-center gap-3 px-3 py-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 via-amber-400 to-sky-500 p-[2px] text-sm font-semibold text-white">
+            <span className="flex h-full w-full items-center justify-center rounded-full bg-background text-primary">
             {item.source.slice(0, 2).toUpperCase()}
+            </span>
           </div>
           <InspirationDetailDialog item={item} collections={collections}>
             <CardTrigger className="group min-w-0 flex-1 rounded-md">
-              <span className="flex items-center gap-1.5 font-semibold hover:underline">
+              <span className="flex items-center gap-1.5 truncate font-semibold hover:underline">
                 {item.title}
                 <Eye className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
               </span>
-              <span className="text-xs text-muted-foreground">
-                {item.source} - updated {formatDate(item.updated_at)}
+              <span className="block truncate text-xs text-muted-foreground">
+                {item.source}
                 {addedBy ? ` - added by ${addedBy}` : ""}
-                {seen ? " - seen" : ""}
               </span>
             </CardTrigger>
           </InspirationDetailDialog>
           <ActionsMenu item={item} collections={collections} />
         </div>
-        {item.notes ? <p className="line-clamp-3 whitespace-pre-wrap text-sm">{item.notes}</p> : null}
-        {seen ? (
-          <button
-            type="button"
-            onClick={() => setManuallyExpanded(false)}
-            aria-label="Collapse reel"
-            className="ml-auto flex h-8 w-8 items-center justify-center rounded-full border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <ChevronUp className="h-4 w-4" aria-hidden="true" />
-          </button>
-        ) : null}
-        {item.link ? (
-          <SocialEmbed link={item.link} title={item.title} />
-        ) : item.image_url ? (
+        <div className="bg-muted/30">
+          {item.link ? (
+            <SocialEmbed link={item.link} title={item.title} />
+          ) : item.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.image_url} alt={item.title} className="max-h-[680px] w-full rounded-lg object-cover" />
-        ) : null}
-        <div className="flex flex-wrap gap-1.5">
-          {item.category ? <Badge variant="outline">{item.category}</Badge> : null}
-          {item.room ? <Badge variant="outline">{item.room}</Badge> : null}
-          {item.tags?.map((tag) => <Badge key={tag} variant="secondary">#{tag}</Badge>)}
+            <img src={item.image_url} alt={item.title} className="max-h-[680px] w-full object-cover" />
+          ) : (
+            <div className="flex aspect-[4/5] items-center justify-center px-8 text-center text-sm text-muted-foreground">
+              {item.notes || item.title}
+            </div>
+          )}
+        </div>
+        <div className="space-y-3 px-3 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 text-muted-foreground">
+              <Heart className="h-5 w-5" />
+              <MessageCircle className="h-5 w-5" />
+              <ExternalLink className="h-5 w-5" />
+            </div>
+            {seen ? (
+              <button
+                type="button"
+                onClick={() => setManuallyExpanded(false)}
+                aria-label="Collapse reel"
+                className="flex h-8 w-8 items-center justify-center rounded-full border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <ChevronUp className="h-4 w-4" aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
+          {item.notes ? <p className="line-clamp-3 whitespace-pre-wrap text-sm">{item.notes}</p> : null}
+          <div className="flex flex-wrap gap-1.5">
+            {item.category ? <Badge variant="outline">{item.category}</Badge> : null}
+            {item.room ? <Badge variant="outline">{item.room}</Badge> : null}
+            {item.tags?.map((tag) => <Badge key={tag} variant="secondary">#{tag}</Badge>)}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Updated {formatDate(item.updated_at)}
+            {seen ? " - seen" : ""}
+          </p>
         </div>
       </CardContent>
     </Card>

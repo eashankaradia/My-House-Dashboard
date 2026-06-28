@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, CircleDollarSign, Plus, Ruler, Star, Store } from "lucide-react";
+import { CheckCircle2, ChevronDown, CircleDollarSign, Plus, Ruler, Star, Store } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,7 @@ import { ShareButton } from "@/components/shared/share-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { ItemComments } from "@/components/shared/item-comments";
 import { priorityVariant } from "@/lib/ui";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { PurchaseOption, PurchaseWithOptions } from "@/lib/database.types";
 import { PurchaseForm } from "./purchase-form";
@@ -30,10 +30,12 @@ import { deletePurchase } from "./actions";
 export function PurchaseDetailDialog({
   purchase,
   memberMap,
+  categories = [],
   children,
 }: {
   purchase: PurchaseWithOptions;
   memberMap: MemberMap;
+  categories?: string[];
   children: React.ReactNode;
 }) {
   const { open, onOpenChange } = useOpenFromUrl(purchase.id);
@@ -105,6 +107,7 @@ export function PurchaseDetailDialog({
                 <OptionRow
                   key={opt.id}
                   purchaseId={purchase.id}
+                  purchaseCategory={purchase.category}
                   option={opt}
                   isFirst={i === 0}
                   isLast={i === options.length - 1}
@@ -112,6 +115,7 @@ export function PurchaseDetailDialog({
               ))}
               <OptionForm
                 purchaseId={purchase.id}
+                purchaseCategory={purchase.category}
                 trigger={
                   <Button variant="outline" size="sm" className="w-full gap-1 border-dashed">
                     <Plus className="h-4 w-4" /> Add option
@@ -132,7 +136,7 @@ export function PurchaseDetailDialog({
             <AddedBy name={memberMap[purchase.user_id]} />
             <div className="flex items-center gap-2">
               <ShareButton title={purchase.name} text={`${purchase.status} · ${purchase.category}`} />
-              <PurchaseForm purchase={purchase} members={Object.entries(memberMap).map(([id, name]) => ({ id, name }))} />
+              <PurchaseForm purchase={purchase} members={Object.entries(memberMap).map(([id, name]) => ({ id, name }))} categories={categories} />
               <ConfirmDelete itemLabel="item" action={deletePurchase.bind(null, purchase.id)} variant="menu" />
             </div>
           </div>
@@ -167,6 +171,7 @@ function DecisionCentre({
     .filter((o) => o.rating != null)
     .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || a.rank - b.rank)[0];
   const fitted = options.filter((o) => o.width_cm != null && o.depth_cm != null);
+  const isFurniture = purchase.category === "Furniture";
   const decision = chosen ?? topRated ?? cheapest ?? null;
   const basePrice = decision ? Number(decision.price) : Number(purchase.price);
   const priceSpread =
@@ -176,61 +181,82 @@ function DecisionCentre({
   const readySignals = [
     options.length > 0,
     Boolean(chosen || topRated),
-    Boolean(fitted.length || purchase.category !== "Furniture"),
+    Boolean(!isFurniture || fitted.length),
     Boolean(purchase.non_negotiables || options.some((o) => o.notes)),
   ].filter(Boolean).length;
 
+  const [open, setOpen] = React.useState(false);
+
   return (
     <div className="rounded-lg border bg-muted/25 p-3">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-sm font-semibold">Decision centre</p>
-        <Badge variant={readySignals >= 3 ? "success" : "secondary"}>
-          {readySignals >= 3 ? "Decision ready" : `${readySignals}/4 checks`}
-        </Badge>
-      </div>
-
-      <div className="grid gap-2 sm:grid-cols-2">
-        <DecisionMetric
-          icon={CheckCircle2}
-          label="Current pick"
-          value={decision?.name ?? purchase.name}
-          detail={decision ? formatCurrency(decision.price) : formatCurrency(purchase.price)}
-        />
-        <DecisionMetric
-          icon={CircleDollarSign}
-          label="Cheapest"
-          value={cheapest?.name ?? "No option prices"}
-          detail={cheapest ? formatCurrency(cheapest.price) : "Add options to compare"}
-        />
-        <DecisionMetric
-          icon={Star}
-          label="Top rated"
-          value={topRated?.name ?? "No ratings yet"}
-          detail={topRated?.rating ? `${topRated.rating}/5` : "Rate options to rank them"}
-        />
-        <DecisionMetric
-          icon={Ruler}
-          label="Room fit"
-          value={fitted.length ? `${fitted.length} measured` : "No measured options"}
-          detail={fitted[0] ? `${fitted[0].width_cm} x ${fitted[0].depth_cm} cm` : "Add W/D for room planning"}
-        />
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-        <span className="rounded-full bg-background px-2 py-1">
-          Decision cost: <span className="font-medium text-foreground">{formatCurrency(basePrice)}</span>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-2 text-left"
+        aria-expanded={open}
+      >
+        <span>
+          <span className="block text-sm font-semibold">Decision centre</span>
+          <span className="block text-xs text-muted-foreground">
+            {decision?.name ?? "No pick yet"} - {formatCurrency(basePrice)}
+          </span>
         </span>
-        {priceSpread > 0 ? (
-          <span className="rounded-full bg-background px-2 py-1">
-            Price spread: <span className="font-medium text-foreground">{formatCurrency(priceSpread)}</span>
-          </span>
-        ) : null}
-        {decision?.store ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-background px-2 py-1">
-            <Store className="h-3 w-3" /> {decision.store}
-          </span>
-        ) : null}
-      </div>
+        <span className="flex items-center gap-2">
+          <Badge variant={readySignals >= 3 ? "success" : "secondary"}>
+            {readySignals >= 3 ? "Ready" : `${readySignals}/4`}
+          </Badge>
+          <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
+        </span>
+      </button>
+
+      {open ? (
+        <>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <DecisionMetric
+              icon={CheckCircle2}
+              label="Current pick"
+              value={decision?.name ?? purchase.name}
+              detail={decision ? formatCurrency(decision.price) : formatCurrency(purchase.price)}
+            />
+            <DecisionMetric
+              icon={CircleDollarSign}
+              label="Cheapest"
+              value={cheapest?.name ?? "No option prices"}
+              detail={cheapest ? formatCurrency(cheapest.price) : "Add options to compare"}
+            />
+            <DecisionMetric
+              icon={Star}
+              label="Top rated"
+              value={topRated?.name ?? "No ratings yet"}
+              detail={topRated?.rating ? `${topRated.rating}/5` : "Rate options to rank them"}
+            />
+            {isFurniture ? (
+              <DecisionMetric
+                icon={Ruler}
+                label="Room fit"
+                value={fitted.length ? `${fitted.length} measured` : "No measured options"}
+                detail={fitted[0] ? `${fitted[0].width_cm} x ${fitted[0].depth_cm} cm` : "Add W/D for room planning"}
+              />
+            ) : null}
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+            <span className="rounded-full bg-background px-2 py-1">
+              Decision cost: <span className="font-medium text-foreground">{formatCurrency(basePrice)}</span>
+            </span>
+            {priceSpread > 0 ? (
+              <span className="rounded-full bg-background px-2 py-1">
+                Price spread: <span className="font-medium text-foreground">{formatCurrency(priceSpread)}</span>
+              </span>
+            ) : null}
+            {decision?.store ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-background px-2 py-1">
+                <Store className="h-3 w-3" /> {decision.store}
+              </span>
+            ) : null}
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

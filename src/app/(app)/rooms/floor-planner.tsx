@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { DoorOpen, ExternalLink, FlipHorizontal2, Heart, Plus, Ruler, RotateCw, SlidersHorizontal, Trash2 } from "lucide-react";
+import { DoorOpen, ExternalLink, FlipHorizontal2, Heart, Lock, Plus, Ruler, RotateCw, SlidersHorizontal, Trash2, Unlock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -160,6 +160,7 @@ export function FloorPlanner({
       else if (d.wall === "bottom") { A = { x: off, y: L }; B = { x: off + wd, y: L }; n = { x: 0, y: -1 }; }
       else if (d.wall === "left") { A = { x: 0, y: off }; B = { x: 0, y: off + wd }; n = { x: 1, y: 0 }; }
       else { A = { x: W, y: off }; B = { x: W, y: off + wd }; n = { x: -1, y: 0 }; }
+      if (d.opens_out) n = { x: -n.x, y: -n.y };
       const hinge = d.flipped ? B : A;
       const latch = d.flipped ? A : B;
       const leafEnd = { x: hinge.x + n.x * wd, y: hinge.y + n.y * wd };
@@ -274,6 +275,11 @@ export function FloorPlanner({
   }, [W, L, items, persist, persistOutline, persistDoors]);
 
   function startDrag(e: React.PointerEvent, it: RoomLayoutItem) {
+    if (it.locked) {
+      setSelectedDoor(null);
+      setSelectedId(it.id);
+      return;
+    }
     e.preventDefault();
     setSelectedDoor(null);
     setSelectedId(it.id);
@@ -513,7 +519,7 @@ export function FloorPlanner({
                   <g
                     key={it.id}
                     onPointerDown={editShape ? undefined : (e) => startDrag(e, it)}
-                    className={editShape ? "" : "cursor-move"}
+                    className={editShape || it.locked ? "" : "cursor-move"}
                     style={editShape ? { pointerEvents: "none", opacity: 0.5 } : undefined}
                   >
                     {it.shape === "round" ? (
@@ -550,6 +556,16 @@ export function FloorPlanner({
                     >
                       {it.name}
                     </text>
+                    {it.locked ? (
+                      <text
+                        x={it.x_cm + Math.min(it.width_cm - 8, 12)}
+                        y={it.y_cm + 16}
+                        className="pointer-events-none fill-white"
+                        style={{ fontSize: Math.max(12, Math.min(W, L) / 26) }}
+                      >
+                        locked
+                      </text>
+                    ) : null}
                   </g>
                 );
               })}
@@ -649,9 +665,9 @@ export function FloorPlanner({
                   variant="outline"
                   size="sm"
                   className="gap-1.5"
-                  onClick={() => updateDoor(selectedDoor, { flipped: !doors[selectedDoor].flipped })}
+                  onClick={() => updateDoor(selectedDoor, { opens_out: !doors[selectedDoor].opens_out })}
                 >
-                  <FlipHorizontal2 className="h-4 w-4" /> Flip
+                  <FlipHorizontal2 className="h-4 w-4" /> {doors[selectedDoor].opens_out ? "Swing in" : "Swing out"}
                 </Button>
                 <button onClick={() => removeDoor(selectedDoor)} aria-label="Delete door" className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-destructive">
                   <Trash2 className="h-4 w-4" />
@@ -673,8 +689,15 @@ export function FloorPlanner({
                   onBlur={(e) => updateDoor(selectedDoor, { width: Number(e.target.value) || doors[selectedDoor].width })}
                 />
               </Field>
+              <Field label="Along wall (cm)">
+                <Input
+                  type="number"
+                  value={Math.round(doors[selectedDoor].offset)}
+                  onChange={(e) => updateDoor(selectedDoor, { offset: Number(e.target.value) || 0 })}
+                />
+              </Field>
             </div>
-            <p className="text-xs text-muted-foreground">Drag the door along the wall to position it.</p>
+            <p className="text-xs text-muted-foreground">Drag the door or type how far it sits along the wall.</p>
           </CardContent>
         </Card>
       ) : null}
@@ -692,6 +715,10 @@ export function FloorPlanner({
               <div className="flex flex-wrap items-center gap-1">
                 <Button variant="outline" size="sm" className="gap-1.5" onClick={() => rotate(selected)}>
                   <RotateCw className="h-4 w-4" /> Rotate
+                </Button>
+                <Button variant={selected.locked ? "default" : "outline"} size="sm" className="gap-1.5" onClick={() => update(selected.id, { locked: !selected.locked })}>
+                  {selected.locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                  {selected.locked ? "Locked" : "Lock"}
                 </Button>
                 <button onClick={() => remove(selected.id)} aria-label="Delete" className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-destructive">
                   <Trash2 className="h-4 w-4" />

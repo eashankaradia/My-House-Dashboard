@@ -58,14 +58,17 @@ export function PurchasesGrid({
   purchases,
   memberMap,
   currentUserId,
+  categories,
 }: {
   purchases: PurchaseWithOptions[];
   memberMap: MemberMap;
   starInfo?: Record<string, StarInfo>;
   currentUserId?: string;
+  categories: string[];
 }) {
   const [status, setStatus] = React.useState<string>("All");
   const [room, setRoom] = React.useState<string>("All");
+  const [category, setCategory] = React.useState<string>("All");
   const [size, setSize] = React.useState<string>("All");
   const [minRating, setMinRating] = React.useState<number>(0);
   const [sort, setSort] = React.useState<keyof typeof SORTS>("rating");
@@ -80,6 +83,7 @@ export function PurchasesGrid({
     hideNoOptions ? { label: "Has options", clear: () => setHideNoOptions(false) } : null,
     status !== "All" ? { label: status, clear: () => setStatus("All") } : null,
     room !== "All" ? { label: room, clear: () => setRoom("All") } : null,
+    category !== "All" ? { label: category, clear: () => setCategory("All") } : null,
     size !== "All" ? { label: `${size} purchases`, clear: () => setSize("All") } : null,
     minRating > 0 ? { label: `${minRating}+ stars`, clear: () => setMinRating(0) } : null,
   ].filter((filter): filter is { label: string; clear: () => void } => Boolean(filter));
@@ -89,6 +93,7 @@ export function PurchasesGrid({
     .filter((p) => (!hideNoOptions ? true : p.options.length > 0))
     .filter((p) => (status === "All" ? true : p.status === status))
     .filter((p) => (room === "All" ? true : p.room === room))
+    .filter((p) => (category === "All" ? true : p.category === category))
     .filter((p) => (size === "All" ? true : (p.size ?? "") === size))
     .filter((p) => (minRating === 0 ? true : effectiveRating(p) >= minRating))
     .sort((a, b) => {
@@ -113,7 +118,7 @@ export function PurchasesGrid({
       <div className="flex flex-wrap items-center gap-2">
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1.5 lg:hidden">
+            <Button variant="ghost" size="sm" className="h-9 gap-1.5 rounded-full border bg-background px-3 shadow-sm lg:hidden">
               <Filter className="h-4 w-4" />
               Filters
               {activeFilters.length ? (
@@ -155,6 +160,12 @@ export function PurchasesGrid({
                 <option value="All">All rooms</option>
                 {rooms.map((r) => (
                   <option key={r} value={r}>{r}</option>
+                ))}
+              </FilterSelect>
+              <FilterSelect label="Category" value={category} onChange={setCategory}>
+                <option value="All">All categories</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>{c}</option>
                 ))}
               </FilterSelect>
               <FilterSelect label="Size" value={size} onChange={setSize}>
@@ -231,6 +242,12 @@ export function PurchasesGrid({
             <option key={r} value={r}>{r}</option>
           ))}
         </NativeSelect>
+        <NativeSelect value={category} onChange={(e) => setCategory(e.target.value)} className="hidden h-9 w-auto text-sm lg:block">
+          <option value="All">All categories</option>
+          {categories.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </NativeSelect>
         <NativeSelect value={size} onChange={(e) => setSize(e.target.value)} className="hidden h-9 w-auto text-sm lg:block">
           <option value="All">Any size</option>
           {PURCHASE_SIZES.map((s) => (
@@ -291,7 +308,7 @@ export function PurchasesGrid({
         <Card>
           <CardContent className="divide-y p-0">
             {filtered.map((purchase) => (
-              <CompactRow key={purchase.id} purchase={purchase} memberMap={memberMap} />
+              <CompactRow key={purchase.id} purchase={purchase} memberMap={memberMap} categories={categories} />
             ))}
           </CardContent>
         </Card>
@@ -301,7 +318,7 @@ export function PurchasesGrid({
         <div className="grid min-w-0 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
           {filtered.map((purchase, i) => (
             // Only the top-rated item starts expanded; the rest are pre-collapsed.
-            <PurchaseCard key={purchase.id} purchase={purchase} memberMap={memberMap} defaultOpen={i === 0} />
+            <PurchaseCard key={purchase.id} purchase={purchase} memberMap={memberMap} defaultOpen={i === 0} categories={categories} />
           ))}
         </div>
       )}
@@ -405,15 +422,17 @@ function StatusSelect({ purchase }: { purchase: PurchaseWithOptions }) {
 function CompactRow({
   purchase,
   memberMap,
+  categories = [],
 }: {
   purchase: PurchaseWithOptions;
   memberMap: MemberMap;
+  categories?: string[];
 }) {
   const opts = sortedOptions(purchase);
   const members = Object.entries(memberMap).map(([id, name]) => ({ id, name }));
   return (
     <div className={cn("flex min-w-0 items-center gap-3 border-l-4 px-4 py-2.5 text-sm", PRIORITY_ACCENT[purchase.priority])}>
-      <PurchaseDetailDialog purchase={purchase} memberMap={memberMap}>
+      <PurchaseDetailDialog purchase={purchase} memberMap={memberMap} categories={categories}>
         <CardTrigger className="min-w-0 flex-1 rounded-md">
           <div className="flex items-center gap-2">
             <span className="truncate font-medium">{purchase.name}</span>
@@ -435,6 +454,7 @@ function CompactRow({
         <PurchaseForm
           purchase={purchase}
           members={members}
+          categories={categories}
           trigger={
             <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
               <Pencil className="h-4 w-4" />
@@ -452,10 +472,12 @@ function PurchaseCard({
   purchase,
   memberMap,
   defaultOpen = false,
+  categories = [],
 }: {
   purchase: PurchaseWithOptions;
   memberMap: MemberMap;
   defaultOpen?: boolean;
+  categories?: string[];
 }) {
   const [open, setOpen] = React.useState(defaultOpen);
   const options = sortedOptions(purchase);
@@ -469,7 +491,7 @@ function PurchaseCard({
     <Card className={cn("flex min-w-0 max-w-full flex-col overflow-hidden border-l-4", PRIORITY_ACCENT[purchase.priority])}>
       <CardContent className="flex min-w-0 flex-1 flex-col gap-3 p-4">
         <div className="flex items-start justify-between gap-2">
-          <PurchaseDetailDialog purchase={purchase} memberMap={memberMap}>
+          <PurchaseDetailDialog purchase={purchase} memberMap={memberMap} categories={categories}>
             <CardTrigger className="block min-w-0 flex-1 rounded-md text-left">
               <span className="block min-w-0 whitespace-normal break-words font-medium leading-snug [overflow-wrap:anywhere] hover:underline">
                 {purchase.name}
@@ -518,6 +540,7 @@ function PurchaseCard({
                 <OptionRow
                   key={opt.id}
                   purchaseId={purchase.id}
+                  purchaseCategory={purchase.category}
                   option={opt}
                   isFirst={i === 0}
                   isLast={i === options.length - 1}
@@ -525,6 +548,7 @@ function PurchaseCard({
               ))}
               <OptionForm
                 purchaseId={purchase.id}
+                purchaseCategory={purchase.category}
                 trigger={
                   <Button variant="outline" size="sm" className="w-full gap-1 border-dashed">
                     <Plus className="h-4 w-4" /> Add option
@@ -544,6 +568,7 @@ function PurchaseCard({
             <PurchaseForm
               purchase={purchase}
               members={members}
+              categories={categories}
               trigger={
                 <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
                   <Pencil className="h-4 w-4" />

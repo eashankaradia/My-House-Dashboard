@@ -15,11 +15,13 @@ import { chooseOption, deleteOption, moveOption, setOptionRating } from "./actio
 
 export function OptionRow({
   purchaseId,
+  purchaseCategory,
   option,
   isFirst,
   isLast,
 }: {
   purchaseId: string;
+  purchaseCategory?: string;
   option: PurchaseOption;
   isFirst: boolean;
   isLast: boolean;
@@ -66,13 +68,13 @@ export function OptionRow({
         </div>
 
         {option.image_url ? (
-          <OptionDetailDialog purchaseId={purchaseId} option={option}>
+          <OptionDetailDialog purchaseId={purchaseId} purchaseCategory={purchaseCategory} option={option}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={option.image_url} alt="" className="h-10 w-10 shrink-0 cursor-pointer rounded-md object-cover hover:opacity-80" />
           </OptionDetailDialog>
         ) : null}
 
-        <OptionDetailDialog purchaseId={purchaseId} option={option}>
+        <OptionDetailDialog purchaseId={purchaseId} purchaseCategory={purchaseCategory} option={option}>
           <button className="block min-w-0 flex-1 rounded text-left hover:underline">
             <span className="flex min-w-0 flex-wrap items-center gap-1.5">
               <span className="min-w-0 flex-1 whitespace-normal break-words text-sm font-medium leading-snug [overflow-wrap:anywhere]">
@@ -129,6 +131,7 @@ export function OptionRow({
           </button>
           <OptionForm
             purchaseId={purchaseId}
+            purchaseCategory={purchaseCategory}
             option={option}
             trigger={
               <button aria-label="Edit option" className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">

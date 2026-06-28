@@ -88,8 +88,14 @@ export function RoomShapeDoors({ room, save }: { room: Room; save: (patch: Recor
                 <Field label="Width (m)" className="w-24">
                   <Input type="number" step="0.01" defaultValue={(d.width / 100).toString()} onBlur={(e) => updateDoor(i, { width: Math.round(Number(e.target.value) * 100) || 80 })} />
                 </Field>
-                <button type="button" onClick={() => updateDoor(i, { flipped: !d.flipped })} aria-label="Flip door" className="mb-1 rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground">
+                <button
+                  type="button"
+                  onClick={() => updateDoor(i, { opens_out: !d.opens_out })}
+                  aria-label={d.opens_out ? "Swing door inwards" : "Swing door outwards"}
+                  className="mb-1 inline-flex items-center gap-1 rounded-md p-2 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                >
                   <FlipHorizontal2 className="h-4 w-4" />
+                  {d.opens_out ? "In" : "Out"}
                 </button>
                 <button type="button" onClick={() => saveDoors(doors.filter((_, j) => j !== i))} aria-label="Remove door" className="mb-1 rounded-md p-2 text-muted-foreground hover:text-destructive">
                   <X className="h-4 w-4" />
