@@ -30,7 +30,7 @@ export async function SectionActivityLog({
     query.order("created_at", { ascending: false }).limit(Math.max(limit, 2)),
     getHouseholdMap(),
   ]);
-  const activity = ((data ?? []) as ActivityLog[]).slice(0, 2);
+  const activity = ((data ?? []) as ActivityLog[]).slice(0, 10);
   const total = (data ?? []).length;
 
   return (

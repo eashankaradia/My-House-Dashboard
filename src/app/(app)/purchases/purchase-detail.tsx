@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus } from "lucide-react";
+import { CheckCircle2, CircleDollarSign, Plus, Ruler, Star, Store } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -93,6 +93,7 @@ export function PurchaseDetailDialog({
               </div>
             </div>
           ) : null}
+          <DecisionCentre purchase={purchase} options={options} />
           <ItemTimestamps createdAt={purchase.created_at} updatedAt={purchase.updated_at} />
 
           <div>
@@ -146,6 +147,112 @@ function Detail({ label, value }: { label: string; value: string }) {
     <div>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <p className="font-medium">{value}</p>
+    </div>
+  );
+}
+
+function DecisionCentre({
+  purchase,
+  options,
+}: {
+  purchase: PurchaseWithOptions;
+  options: PurchaseOption[];
+}) {
+  const chosen = options.find((o) => o.is_chosen);
+  const priced = options.filter((o) => Number.isFinite(Number(o.price)));
+  const cheapest = priced.length
+    ? priced.reduce((best, opt) => (Number(opt.price) < Number(best.price) ? opt : best), priced[0])
+    : null;
+  const topRated = options
+    .filter((o) => o.rating != null)
+    .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || a.rank - b.rank)[0];
+  const fitted = options.filter((o) => o.width_cm != null && o.depth_cm != null);
+  const decision = chosen ?? topRated ?? cheapest ?? null;
+  const basePrice = decision ? Number(decision.price) : Number(purchase.price);
+  const priceSpread =
+    priced.length > 1
+      ? Math.max(...priced.map((o) => Number(o.price))) - Math.min(...priced.map((o) => Number(o.price)))
+      : 0;
+  const readySignals = [
+    options.length > 0,
+    Boolean(chosen || topRated),
+    Boolean(fitted.length || purchase.category !== "Furniture"),
+    Boolean(purchase.non_negotiables || options.some((o) => o.notes)),
+  ].filter(Boolean).length;
+
+  return (
+    <div className="rounded-lg border bg-muted/25 p-3">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold">Decision centre</p>
+        <Badge variant={readySignals >= 3 ? "success" : "secondary"}>
+          {readySignals >= 3 ? "Decision ready" : `${readySignals}/4 checks`}
+        </Badge>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        <DecisionMetric
+          icon={CheckCircle2}
+          label="Current pick"
+          value={decision?.name ?? purchase.name}
+          detail={decision ? formatCurrency(decision.price) : formatCurrency(purchase.price)}
+        />
+        <DecisionMetric
+          icon={CircleDollarSign}
+          label="Cheapest"
+          value={cheapest?.name ?? "No option prices"}
+          detail={cheapest ? formatCurrency(cheapest.price) : "Add options to compare"}
+        />
+        <DecisionMetric
+          icon={Star}
+          label="Top rated"
+          value={topRated?.name ?? "No ratings yet"}
+          detail={topRated?.rating ? `${topRated.rating}/5` : "Rate options to rank them"}
+        />
+        <DecisionMetric
+          icon={Ruler}
+          label="Room fit"
+          value={fitted.length ? `${fitted.length} measured` : "No measured options"}
+          detail={fitted[0] ? `${fitted[0].width_cm} x ${fitted[0].depth_cm} cm` : "Add W/D for room planning"}
+        />
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+        <span className="rounded-full bg-background px-2 py-1">
+          Decision cost: <span className="font-medium text-foreground">{formatCurrency(basePrice)}</span>
+        </span>
+        {priceSpread > 0 ? (
+          <span className="rounded-full bg-background px-2 py-1">
+            Price spread: <span className="font-medium text-foreground">{formatCurrency(priceSpread)}</span>
+          </span>
+        ) : null}
+        {decision?.store ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-background px-2 py-1">
+            <Store className="h-3 w-3" /> {decision.store}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function DecisionMetric({
+  icon: Icon,
+  label,
+  value,
+  detail,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="min-w-0 rounded-md bg-background p-2">
+      <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <Icon className="h-3.5 w-3.5" /> {label}
+      </p>
+      <p className="truncate text-sm font-medium">{value}</p>
+      <p className="truncate text-xs text-muted-foreground">{detail}</p>
     </div>
   );
 }

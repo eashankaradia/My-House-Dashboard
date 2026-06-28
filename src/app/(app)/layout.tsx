@@ -39,7 +39,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <HouseholdColorsProvider colors={memberColors}>
     <PrefsProvider initial={initialPrefs}>
-    <div className="min-h-screen lg:grid lg:grid-cols-[16rem_1fr]">
+    <div className="min-h-screen overflow-x-hidden lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
       {/* Desktop sidebar */}
       <aside className="hidden border-r bg-card/40 lg:flex lg:flex-col">
         <Link href="/dashboard" className="flex items-center gap-2.5 px-6 py-5">
@@ -54,7 +54,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen min-w-0 flex-col">
         {/* Top bar */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur sm:px-6">
           <div className="flex items-center gap-2">
@@ -88,7 +88,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-6">
+        <main className="min-w-0 flex-1 px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:pb-6">
           <div className="mx-auto w-full max-w-7xl">{children}</div>
         </main>
       </div>

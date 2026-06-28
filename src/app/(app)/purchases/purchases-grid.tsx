@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, LayoutGrid, Pencil, Plus, Rows3, ShoppingBag, Table2 } from "lucide-react";
+import { ChevronDown, Filter, LayoutGrid, Pencil, Plus, Rows3, ShoppingBag, Table2, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AddedBy } from "@/components/shared/added-by";
@@ -74,6 +75,14 @@ export function PurchasesGrid({
 
   const rooms = Array.from(new Set(purchases.map((p) => p.room).filter(Boolean))) as string[];
   const rank = { High: 0, Medium: 1, Low: 2 } as const;
+  const activeFilters = [
+    onlyMine ? { label: "Mine", clear: () => setOnlyMine(false) } : null,
+    hideNoOptions ? { label: "Has options", clear: () => setHideNoOptions(false) } : null,
+    status !== "All" ? { label: status, clear: () => setStatus("All") } : null,
+    room !== "All" ? { label: room, clear: () => setRoom("All") } : null,
+    size !== "All" ? { label: `${size} purchases`, clear: () => setSize("All") } : null,
+    minRating > 0 ? { label: `${minRating}+ stars`, clear: () => setMinRating(0) } : null,
+  ].filter((filter): filter is { label: string; clear: () => void } => Boolean(filter));
 
   const filtered = purchases
     .filter((p) => (!onlyMine ? true : p.user_id === currentUserId))
@@ -102,7 +111,89 @@ export function PurchasesGrid({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center rounded-lg border p-0.5 text-sm">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1.5 lg:hidden">
+              <Filter className="h-4 w-4" />
+              Filters
+              {activeFilters.length ? (
+                <span className="rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">
+                  {activeFilters.length}
+                </span>
+              ) : null}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-full max-w-sm overflow-y-auto">
+            <SheetTitle>Purchase filters</SheetTitle>
+            <div className="mt-5 space-y-4">
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">Owner</p>
+                <div className="flex items-center rounded-lg border p-0.5 text-sm">
+                  <button
+                    type="button"
+                    onClick={() => setOnlyMine(false)}
+                    className={cn("flex-1 rounded-md px-2.5 py-1.5", !onlyMine && "bg-accent")}
+                  >
+                    All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOnlyMine(true)}
+                    className={cn("flex-1 rounded-md px-2.5 py-1.5", onlyMine && "bg-accent")}
+                  >
+                    Mine
+                  </button>
+                </div>
+              </div>
+              <FilterSelect label="Status" value={status} onChange={setStatus}>
+                <option value="All">All statuses</option>
+                {PURCHASE_STATUSES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </FilterSelect>
+              <FilterSelect label="Room" value={room} onChange={setRoom}>
+                <option value="All">All rooms</option>
+                {rooms.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </FilterSelect>
+              <FilterSelect label="Size" value={size} onChange={setSize}>
+                <option value="All">Any size</option>
+                {PURCHASE_SIZES.map((s) => (
+                  <option key={s} value={s}>{s} purchases</option>
+                ))}
+              </FilterSelect>
+              <FilterSelect label="Rating" value={String(minRating)} onChange={(v) => setMinRating(Number(v))}>
+                <option value="0">Any rating</option>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <option key={n} value={n}>{n} stars and up</option>
+                ))}
+              </FilterSelect>
+              <button
+                type="button"
+                onClick={() => setHideNoOptions((v) => !v)}
+                className={cn(
+                  "w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors",
+                  hideNoOptions && "bg-accent text-foreground",
+                )}
+              >
+                Hide items with no options
+              </button>
+            </div>
+          </SheetContent>
+        </Sheet>
+        {activeFilters.map((filter) => (
+          <button
+            key={filter.label}
+            type="button"
+            onClick={filter.clear}
+            className="inline-flex max-w-[10rem] items-center gap-1 rounded-full border bg-background px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground lg:hidden"
+          >
+            <span className="truncate">{filter.label}</span>
+            <X className="h-3 w-3" />
+          </button>
+        ))}
+        <div className="hidden items-center rounded-lg border p-0.5 text-sm lg:flex">
           <button
             type="button"
             onClick={() => setOnlyMine(false)}
@@ -122,25 +213,25 @@ export function PurchasesGrid({
           type="button"
           onClick={() => setHideNoOptions((v) => !v)}
           className={cn(
-            "rounded-lg border px-3 py-2 text-sm transition-colors",
+            "hidden rounded-lg border px-3 py-2 text-sm transition-colors lg:inline-flex",
             hideNoOptions && "bg-accent text-foreground",
           )}
         >
           {hideNoOptions ? "Showing items with options" : "Hide items with no options"}
         </button>
-        <NativeSelect value={status} onChange={(e) => setStatus(e.target.value)} className="h-9 w-auto text-sm">
+        <NativeSelect value={status} onChange={(e) => setStatus(e.target.value)} className="hidden h-9 w-auto text-sm lg:block">
           <option value="All">All statuses</option>
           {PURCHASE_STATUSES.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </NativeSelect>
-        <NativeSelect value={room} onChange={(e) => setRoom(e.target.value)} className="h-9 w-auto text-sm">
+        <NativeSelect value={room} onChange={(e) => setRoom(e.target.value)} className="hidden h-9 w-auto text-sm lg:block">
           <option value="All">All rooms</option>
           {rooms.map((r) => (
             <option key={r} value={r}>{r}</option>
           ))}
         </NativeSelect>
-        <NativeSelect value={size} onChange={(e) => setSize(e.target.value)} className="h-9 w-auto text-sm">
+        <NativeSelect value={size} onChange={(e) => setSize(e.target.value)} className="hidden h-9 w-auto text-sm lg:block">
           <option value="All">Any size</option>
           {PURCHASE_SIZES.map((s) => (
             <option key={s} value={s}>{s} purchases</option>
@@ -149,7 +240,7 @@ export function PurchasesGrid({
         <NativeSelect
           value={String(minRating)}
           onChange={(e) => setMinRating(Number(e.target.value))}
-          className="h-9 w-auto text-sm"
+          className="hidden h-9 w-auto text-sm lg:block"
         >
           <option value="0">Any rating</option>
           {[1, 2, 3, 4, 5].map((n) => (
@@ -265,6 +356,27 @@ function PurchaseTable({
         </table>
       </CardContent>
     </Card>
+  );
+}
+
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <NativeSelect value={value} onChange={(e) => onChange(e.target.value)} className="w-full">
+        {children}
+      </NativeSelect>
+    </label>
   );
 }
 
