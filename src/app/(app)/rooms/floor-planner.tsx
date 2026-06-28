@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ExternalLink, Heart, Plus, RotateCw, Trash2 } from "lucide-react";
+import { DoorOpen, ExternalLink, Heart, Plus, Ruler, RotateCw, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { outlinePoints, pointsToSvg } from "@/lib/room-shape";
-import type { Room, RoomDesignVersion, RoomLayoutItem, RoomPoint } from "@/lib/database.types";
+import type { Room, RoomDesignVersion, RoomDoor, RoomLayoutItem, RoomPoint } from "@/lib/database.types";
 import { addLayoutItem, createPurchaseFromLayout, deleteLayoutItem, updateLayoutItem, updateRoomDetails } from "./actions";
 
 const SNAP = 5; // cm
@@ -88,8 +88,21 @@ export function FloorPlanner({
   }, [outline]);
   const vertexDrag = React.useRef<number | null>(null);
 
+  // Doors: placed and dragged on the plan, persisted to room.doors.
+  const [doors, setDoors] = React.useState<RoomDoor[]>(room.doors ?? []);
+  const doorsRef = React.useRef(doors);
+  React.useEffect(() => {
+    doorsRef.current = doors;
+  }, [doors]);
+  const [selectedDoor, setSelectedDoor] = React.useState<number | null>(null);
+  const doorDrag = React.useRef<number | null>(null);
+
+  // Toggle on-plan measurements (wall lengths + selected item's gaps to walls).
+  const [showDims, setShowDims] = React.useState(false);
+
   const selected = items.find((i) => i.id === selectedId) ?? null;
   const handleR = Math.max(6, Math.min(W || 100, L || 100) / 18);
+  const labelSize = Math.max(11, Math.min(W || 100, L || 100) / 26);
 
   const persistOutline = React.useCallback(
     (next: RoomPoint[]) => {
@@ -112,6 +125,48 @@ export function FloorPlanner({
     outlineRef.current = next;
     persistOutline(next);
   }
+
+  const persistDoors = React.useCallback(
+    (next: RoomDoor[]) => {
+      setStatus("saving");
+      updateRoomDetails(room.id, { doors: next }).then((res) => {
+        if (res?.error) {
+          toast({ variant: "destructive", title: "Couldn't save door", description: res.error });
+          setStatus("idle");
+        } else {
+          setStatus("saved");
+          setTimeout(() => setStatus("idle"), 1200);
+        }
+      });
+    },
+    [room.id, toast],
+  );
+
+  function commitDoors(next: RoomDoor[]) {
+    setDoors(next);
+    doorsRef.current = next;
+    persistDoors(next);
+  }
+  // Geometry of a door along its wall, plus the swing arc into the room.
+  const doorGeom = React.useCallback(
+    (d: RoomDoor) => {
+      const wd = Math.max(20, d.width);
+      const span = d.wall === "left" || d.wall === "right" ? L : W;
+      const off = clamp(d.offset, 0, Math.max(0, span - wd));
+      // A = hinge jamb, B = latch jamb (along the wall), n = inward normal.
+      let A: RoomPoint, B: RoomPoint, n: RoomPoint;
+      if (d.wall === "top") { A = { x: off, y: 0 }; B = { x: off + wd, y: 0 }; n = { x: 0, y: 1 }; }
+      else if (d.wall === "bottom") { A = { x: off, y: L }; B = { x: off + wd, y: L }; n = { x: 0, y: -1 }; }
+      else if (d.wall === "left") { A = { x: 0, y: off }; B = { x: 0, y: off + wd }; n = { x: 1, y: 0 }; }
+      else { A = { x: W, y: off }; B = { x: W, y: off + wd }; n = { x: -1, y: 0 }; }
+      const leafEnd = { x: A.x + n.x * wd, y: A.y + n.y * wd };
+      const t = { x: (B.x - A.x) / wd, y: (B.y - A.y) / wd };
+      const sweep = t.x * n.y - t.y * n.x > 0 ? 1 : 0;
+      const mid = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+      return { wd, A, B, n, leafEnd, sweep, mid };
+    },
+    [W, L],
+  );
   function addVertex(i: number) {
     const a = outline[i];
     const b = outline[(i + 1) % outline.length];
@@ -164,6 +219,20 @@ export function FloorPlanner({
         );
         return;
       }
+      if (doorDrag.current !== null) {
+        const p = toCm(e.clientX, e.clientY);
+        const idx = doorDrag.current;
+        setDoors((prev) =>
+          prev.map((dr, j) => {
+            if (j !== idx) return dr;
+            const wd = Math.max(20, dr.width);
+            const along = dr.wall === "left" || dr.wall === "right" ? p.y : p.x;
+            const span = dr.wall === "left" || dr.wall === "right" ? L : W;
+            return { ...dr, offset: clamp(snap(along - wd / 2), 0, Math.max(0, span - wd)) };
+          }),
+        );
+        return;
+      }
       const d = drag.current;
       if (!d) return;
       const p = toCm(e.clientX, e.clientY);
@@ -182,6 +251,11 @@ export function FloorPlanner({
         persistOutline(outlineRef.current);
         return;
       }
+      if (doorDrag.current !== null) {
+        doorDrag.current = null;
+        persistDoors(doorsRef.current);
+        return;
+      }
       const d = drag.current;
       if (!d) return;
       drag.current = null;
@@ -194,10 +268,11 @@ export function FloorPlanner({
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
     };
-  }, [W, L, items, persist, persistOutline]);
+  }, [W, L, items, persist, persistOutline, persistDoors]);
 
   function startDrag(e: React.PointerEvent, it: RoomLayoutItem) {
     e.preventDefault();
+    setSelectedDoor(null);
     setSelectedId(it.id);
     const r = svgRef.current!.getBoundingClientRect();
     drag.current = {
@@ -237,6 +312,31 @@ export function FloorPlanner({
       toast({ title: "Added to your wishlist", description: "Linked to this furniture item." });
       setTimeout(() => setStatus("idle"), 1200);
     });
+  }
+
+  function addDoor() {
+    // Drop a default door on the bottom wall, then let the user drag it.
+    const next = [...doors, { wall: "bottom" as const, offset: clamp(Math.round(W / 2 - 40), 0, Math.max(0, W - 80)), width: 80 }];
+    commitDoors(next);
+    setSelectedId(null);
+    setSelectedDoor(next.length - 1);
+  }
+
+  function updateDoor(i: number, patch: Partial<RoomDoor>) {
+    commitDoors(doors.map((d, j) => (j === i ? { ...d, ...patch } : d)));
+  }
+
+  function removeDoor(i: number) {
+    commitDoors(doors.filter((_, j) => j !== i));
+    setSelectedDoor(null);
+  }
+
+  function startDoorDrag(e: React.PointerEvent, i: number) {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedId(null);
+    setSelectedDoor(i);
+    doorDrag.current = i;
   }
 
   async function add(data: { name: string; category: string; width_cm: number; depth_cm: number; color: string }) {
@@ -294,9 +394,23 @@ export function FloorPlanner({
           <span className="text-xs text-muted-foreground">
             {status === "saving" ? "Saving…" : status === "saved" ? "Saved" : ""}
           </span>
+          <Button
+            variant={showDims ? "default" : "outline"}
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setShowDims((v) => !v)}
+            aria-pressed={showDims}
+          >
+            <Ruler className="h-4 w-4" /> Distances
+          </Button>
           <Button variant={editShape ? "default" : "outline"} size="sm" onClick={() => setEditShape((v) => !v)}>
             {editShape ? "Done" : "Edit shape"}
           </Button>
+          {!editShape ? (
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={addDoor}>
+              <DoorOpen className="h-4 w-4" /> Door
+            </Button>
+          ) : null}
           {!editShape && wishlist.length ? <AddFromWishlist options={wishlist} onPlace={addFromOption} /> : null}
           {!editShape ? <AddFurniture onAdd={add} /> : null}
         </div>
@@ -319,7 +433,10 @@ export function FloorPlanner({
               className="w-full touch-none select-none"
               style={{ maxHeight: "65vh" }}
               onPointerDown={(e) => {
-                if (e.target === e.currentTarget) setSelectedId(null);
+                if (e.target === e.currentTarget) {
+                  setSelectedId(null);
+                  setSelectedDoor(null);
+                }
               }}
             >
               {/* grid */}
@@ -332,19 +449,32 @@ export function FloorPlanner({
               {/* room outline (polygon supports L-shapes + manual editing) */}
               <polygon points={pointsToSvg(outline)} fill={editShape ? "rgba(14,165,233,0.06)" : "none"} stroke="currentColor" className="text-foreground" strokeWidth={3} />
 
-              {/* doors */}
-              {(room.doors ?? []).map((d, i) => {
-                const off = Math.max(0, d.offset);
-                const wd = Math.max(20, d.width);
-                let x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-                if (d.wall === "top") { x1 = off; y1 = 0; x2 = off + wd; y2 = 0; }
-                else if (d.wall === "bottom") { x1 = off; y1 = L; x2 = off + wd; y2 = L; }
-                else if (d.wall === "left") { x1 = 0; y1 = off; x2 = 0; y2 = off + wd; }
-                else { x1 = W; y1 = off; x2 = W; y2 = off + wd; }
+              {/* doors — draggable along their wall, with a swing arc */}
+              {doors.map((d, i) => {
+                const g = doorGeom(d);
+                const isSel = i === selectedDoor;
+                const stroke = isSel ? "#f59e0b" : "#0ea5e9";
                 return (
-                  <g key={`door${i}`}>
-                    <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#fff" strokeWidth={6} />
-                    <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#0ea5e9" strokeWidth={3} strokeDasharray="8 6" />
+                  <g
+                    key={`door${i}`}
+                    className={editShape ? "" : "cursor-move"}
+                    style={editShape ? { pointerEvents: "none", opacity: 0.4 } : undefined}
+                    onPointerDown={editShape ? undefined : (e) => startDoorDrag(e, i)}
+                  >
+                    {/* white gap masks the wall so it reads as an opening */}
+                    <line x1={g.A.x} y1={g.A.y} x2={g.B.x} y2={g.B.y} stroke="#fff" strokeWidth={7} />
+                    {/* swing arc + leaf */}
+                    <path
+                      d={`M ${g.B.x} ${g.B.y} A ${g.wd} ${g.wd} 0 0 ${g.sweep} ${g.leafEnd.x} ${g.leafEnd.y}`}
+                      fill="none"
+                      stroke={stroke}
+                      strokeWidth={isSel ? 3 : 2}
+                      strokeDasharray="6 5"
+                    />
+                    <line x1={g.A.x} y1={g.A.y} x2={g.leafEnd.x} y2={g.leafEnd.y} stroke={stroke} strokeWidth={isSel ? 4 : 3} />
+                    {/* jamb dots so the doorway is obvious */}
+                    <circle cx={g.A.x} cy={g.A.y} r={handleR * 0.4} fill={stroke} />
+                    <circle cx={g.B.x} cy={g.B.y} r={handleR * 0.4} fill={stroke} />
                   </g>
                 );
               })}
@@ -398,6 +528,53 @@ export function FloorPlanner({
                 );
               })}
 
+              {/* Distances: wall lengths + the selected item's gaps to the walls */}
+              {showDims ? (
+                <g>
+                  {outline.map((pt, i) => {
+                    const nx = outline[(i + 1) % outline.length];
+                    const len = Math.hypot(nx.x - pt.x, nx.y - pt.y);
+                    if (len < 1) return null;
+                    const mid = { x: (pt.x + nx.x) / 2, y: (pt.y + nx.y) / 2 };
+                    // Nudge the label inward (toward the room's centre).
+                    const cx = outline.reduce((s, p) => s + p.x, 0) / outline.length;
+                    const cy = outline.reduce((s, p) => s + p.y, 0) / outline.length;
+                    const dx = cx - mid.x, dy = cy - mid.y;
+                    const dl = Math.hypot(dx, dy) || 1;
+                    const inset = labelSize * 1.4;
+                    return (
+                      <DimLabel key={`wall${i}`} x={mid.x + (dx / dl) * inset} y={mid.y + (dy / dl) * inset} text={fmtDist(len)} size={labelSize} />
+                    );
+                  })}
+
+                  {selected
+                    ? (() => {
+                        const cx = selected.x_cm + selected.width_cm / 2;
+                        const cy = selected.y_cm + selected.depth_cm / 2;
+                        const left = selected.x_cm;
+                        const right = W - (selected.x_cm + selected.width_cm);
+                        const top = selected.y_cm;
+                        const bottom = L - (selected.y_cm + selected.depth_cm);
+                        const line = (x1: number, y1: number, x2: number, y2: number, key: string) => (
+                          <line key={key} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#0ea5e9" strokeWidth={1.5} strokeDasharray="5 4" />
+                        );
+                        return (
+                          <g>
+                            {left > 1 ? line(0, cy, selected.x_cm, cy, "gl") : null}
+                            {left > 1 ? <DimLabel x={left / 2} y={cy} text={fmtDist(left)} size={labelSize} /> : null}
+                            {right > 1 ? line(selected.x_cm + selected.width_cm, cy, W, cy, "gr") : null}
+                            {right > 1 ? <DimLabel x={W - right / 2} y={cy} text={fmtDist(right)} size={labelSize} /> : null}
+                            {top > 1 ? line(cx, 0, cx, selected.y_cm, "gt") : null}
+                            {top > 1 ? <DimLabel x={cx} y={top / 2} text={fmtDist(top)} size={labelSize} /> : null}
+                            {bottom > 1 ? line(cx, selected.y_cm + selected.depth_cm, cx, L, "gb") : null}
+                            {bottom > 1 ? <DimLabel x={cx} y={L - bottom / 2} text={fmtDist(bottom)} size={labelSize} /> : null}
+                          </g>
+                        );
+                      })()
+                    : null}
+                </g>
+              ) : null}
+
               {/* Manual shape editing: drag corners, add (+) / remove (×) points */}
               {editShape
                 ? outline.map((pt, i) => {
@@ -423,6 +600,38 @@ export function FloorPlanner({
 
       {overlapping.size > 0 ? (
         <p className="text-center text-xs text-destructive">Some items overlap (shown in red).</p>
+      ) : null}
+
+      {selectedDoor !== null && doors[selectedDoor] ? (
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <p className="flex items-center gap-1.5 text-sm font-medium">
+                <DoorOpen className="h-4 w-4" /> Door
+              </p>
+              <button onClick={() => removeDoor(selectedDoor)} aria-label="Delete door" className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-destructive">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Wall">
+                <NativeSelect value={doors[selectedDoor].wall} onChange={(e) => updateDoor(selectedDoor, { wall: e.target.value as RoomDoor["wall"], offset: 0 })}>
+                  {(["top", "bottom", "left", "right"] as RoomDoor["wall"][]).map((w) => (
+                    <option key={w} value={w}>{cap(w)}</option>
+                  ))}
+                </NativeSelect>
+              </Field>
+              <Field label="Width (cm)">
+                <Input
+                  type="number"
+                  defaultValue={doors[selectedDoor].width}
+                  onBlur={(e) => updateDoor(selectedDoor, { width: Number(e.target.value) || doors[selectedDoor].width })}
+                />
+              </Field>
+            </div>
+            <p className="text-xs text-muted-foreground">Drag the door along the wall to position it.</p>
+          </CardContent>
+        </Card>
       ) : null}
 
       {selected ? (
@@ -513,6 +722,25 @@ export function FloorPlanner({
 
 function clamp(n: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, n));
+}
+
+/** Human distance: metres for ≥1m, else centimetres. */
+function fmtDist(cm: number) {
+  return cm >= 100 ? `${(cm / 100).toFixed(2)}m` : `${Math.round(cm)}cm`;
+}
+
+/** A measurement label with a translucent backing so it stays readable. */
+function DimLabel({ x, y, text, size }: { x: number; y: number; text: string; size: number }) {
+  const w = text.length * size * 0.62 + size * 0.6;
+  const h = size * 1.5;
+  return (
+    <g className="pointer-events-none">
+      <rect x={x - w / 2} y={y - h / 2} width={w} height={h} rx={size * 0.3} fill="white" fillOpacity={0.82} />
+      <text x={x} y={y} textAnchor="middle" dominantBaseline="central" className="fill-foreground" style={{ fontSize: size }}>
+        {text}
+      </text>
+    </g>
+  );
 }
 
 function findOverlaps(items: RoomLayoutItem[]): Set<string> {
