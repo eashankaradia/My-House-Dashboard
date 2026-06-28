@@ -6,7 +6,7 @@ import {
   ChevronUp,
   ExternalLink,
   Eye,
-  EyeOff,
+  Filter,
   Hammer,
   LayoutGrid,
   List,
@@ -21,6 +21,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,7 +59,6 @@ export function InspirationHub({
   const [room, setRoom] = React.useState("All");
   const [collection, setCollection] = React.useState("All");
   const [addedBy, setAddedBy] = React.useState("All");
-  const [collapseSeenEmbeds, setCollapseSeenEmbeds] = React.useState(true);
   const seen = React.useMemo(() => new Set(seenIds), [seenIds]);
 
   const rooms = Array.from(new Set(items.map((i) => i.room).filter(Boolean))) as string[];
@@ -83,20 +84,52 @@ export function InspirationHub({
     })
     // Ideas you've already opened sink to the bottom.
     .sort((a, b) => Number(seen.has(a.id)) - Number(seen.has(b.id)));
+  const activeFilterCount = Number(room !== "All") + Number(collection !== "All") + Number(addedBy !== "All");
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
         <Input
-          placeholder="Search ideas, tags, notes…"
+          placeholder="Search ideas, tags, notes..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="h-9 w-full sm:w-64"
+          className="h-9 min-w-0 flex-1 sm:max-w-xs"
         />
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1.5 lg:hidden">
+              <Filter className="h-4 w-4" /> Filters
+              {activeFilterCount ? <span className="rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">{activeFilterCount}</span> : null}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-full max-w-sm overflow-y-auto">
+            <SheetTitle>Inspiration filters</SheetTitle>
+            <div className="mt-5 space-y-4">
+              <FilterSelect label="Room" value={room} onChange={setRoom}>
+                <option value="All">All rooms</option>
+                {rooms.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </FilterSelect>
+              <FilterSelect label="Collection" value={collection} onChange={setCollection}>
+                <option value="All">All collections</option>
+                {collections.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </FilterSelect>
+              <FilterSelect label="Added by" value={addedBy} onChange={setAddedBy}>
+                <option value="All">Added by anyone</option>
+                {creators.map((creator) => (
+                  <option key={creator.id} value={creator.id}>{creator.name}</option>
+                ))}
+              </FilterSelect>
+            </div>
+          </SheetContent>
+        </Sheet>
         <select
           value={room}
           onChange={(e) => setRoom(e.target.value)}
-          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+          className="hidden h-9 rounded-lg border border-input bg-background px-3 text-sm lg:block"
         >
           <option value="All">All rooms</option>
           {rooms.map((r) => (
@@ -106,7 +139,7 @@ export function InspirationHub({
         <select
           value={collection}
           onChange={(e) => setCollection(e.target.value)}
-          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+          className="hidden h-9 rounded-lg border border-input bg-background px-3 text-sm lg:block"
         >
           <option value="All">All collections</option>
           {collections.map((c) => (
@@ -116,25 +149,13 @@ export function InspirationHub({
         <select
           value={addedBy}
           onChange={(e) => setAddedBy(e.target.value)}
-          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+          className="hidden h-9 rounded-lg border border-input bg-background px-3 text-sm lg:block"
         >
           <option value="All">Added by anyone</option>
           {creators.map((creator) => (
             <option key={creator.id} value={creator.id}>{creator.name}</option>
           ))}
         </select>
-        <button
-          type="button"
-          onClick={() => setCollapseSeenEmbeds((v) => !v)}
-          className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm transition-colors",
-            collapseSeenEmbeds && "bg-accent text-foreground",
-          )}
-        >
-          {collapseSeenEmbeds ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          {collapseSeenEmbeds ? "Seen reels collapsed" : "Show seen reels"}
-        </button>
-
         <div className="ml-auto flex items-center rounded-lg border p-0.5">
           <ViewButton active={view === "feed"} onClick={() => setView("feed")} icon={Newspaper} label="Feed" />
           <ViewButton active={view === "masonry"} onClick={() => setView("masonry")} icon={LayoutGrid} label="Masonry" />
@@ -153,7 +174,6 @@ export function InspirationHub({
               item={item}
               collections={collections}
               seen={seen.has(item.id)}
-              collapseSeenEmbeds={collapseSeenEmbeds}
               addedBy={memberMap[item.user_id]}
             />
           ))}
@@ -185,17 +205,15 @@ function InspirationFeedItem({
   item,
   collections,
   seen,
-  collapseSeenEmbeds,
   addedBy,
 }: {
   item: Inspiration;
   collections: Collection[];
   seen?: boolean;
-  collapseSeenEmbeds: boolean;
   addedBy?: string;
 }) {
   const [manuallyExpanded, setManuallyExpanded] = React.useState(false);
-  const cardCollapsed = Boolean(seen && collapseSeenEmbeds && !manuallyExpanded);
+  const cardCollapsed = Boolean(seen && !manuallyExpanded);
 
   if (cardCollapsed) {
     return (
@@ -232,16 +250,16 @@ function InspirationFeedItem({
                 <Eye className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
               </span>
               <span className="text-xs text-muted-foreground">
-                {item.source} · updated {formatDate(item.updated_at)}
-                {addedBy ? ` · added by ${addedBy}` : ""}
-                {seen ? " · seen" : ""}
+                {item.source} - updated {formatDate(item.updated_at)}
+                {addedBy ? ` - added by ${addedBy}` : ""}
+                {seen ? " - seen" : ""}
               </span>
             </CardTrigger>
           </InspirationDetailDialog>
           <ActionsMenu item={item} collections={collections} />
         </div>
         {item.notes ? <p className="line-clamp-3 whitespace-pre-wrap text-sm">{item.notes}</p> : null}
-        {seen && collapseSeenEmbeds ? (
+        {seen ? (
           <button
             type="button"
             onClick={() => setManuallyExpanded(false)}
@@ -289,6 +307,27 @@ function ViewButton({
     >
       <Icon className="h-4 w-4" />
     </button>
+  );
+}
+
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <NativeSelect value={value} onChange={(e) => onChange(e.target.value)} className="w-full">
+        {children}
+      </NativeSelect>
+    </label>
   );
 }
 
@@ -424,7 +463,7 @@ function InspirationRow({ item, collections, seen }: { item: Inspiration; collec
           <CardTrigger className="min-w-0 flex-1 rounded-md">
             <span className="block truncate font-medium hover:underline">{item.title}</span>
             <p className="truncate text-xs text-muted-foreground">
-              {[item.source, item.category, item.room].filter(Boolean).join(" · ")}
+              {[item.source, item.category, item.room].filter(Boolean).join(" - ")}
             </p>
           </CardTrigger>
         </InspirationDetailDialog>

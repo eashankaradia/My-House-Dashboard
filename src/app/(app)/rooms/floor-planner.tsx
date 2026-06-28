@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { DoorOpen, ExternalLink, FlipHorizontal2, Heart, Plus, Ruler, RotateCw, Trash2 } from "lucide-react";
+import { DoorOpen, ExternalLink, FlipHorizontal2, Heart, Plus, Ruler, RotateCw, SlidersHorizontal, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,6 +99,7 @@ export function FloorPlanner({
 
   // Toggle on-plan measurements (wall lengths + furniture gaps to nearby walls).
   const [showDims, setShowDims] = React.useState(false);
+  const [toolsOpen, setToolsOpen] = React.useState(false);
 
   const selected = items.find((i) => i.id === selectedId) ?? null;
   const handleR = Math.max(6, Math.min(W || 100, L || 100) / 18);
@@ -206,7 +207,7 @@ export function FloorPlanner({
     [toast],
   );
 
-  // --- Drag handling (pointer → cm via the SVG's box) ----------------------
+  // --- Drag handling (pointer -> cm via the SVG's box) ----------------------
   React.useEffect(() => {
     function toCm(clientX: number, clientY: number) {
       const r = svgRef.current!.getBoundingClientRect();
@@ -369,7 +370,7 @@ export function FloorPlanner({
     }
     setItems((prev) => [...prev, res.item!]);
     setSelectedId(res.item.id);
-    toast({ title: "Placed on the plan", description: `${opt.name} — drag it into position.` });
+    toast({ title: "Placed on the plan", description: `${opt.name} - drag it into position.` });
   }
 
   if (!W || !L) {
@@ -388,14 +389,24 @@ export function FloorPlanner({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
-          {(W / 100).toFixed(2)}m × {(L / 100).toFixed(2)}m · {usedPct}% floor used
+          {(W / 100).toFixed(2)}m x {(L / 100).toFixed(2)}m - {usedPct}% floor used
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground">
-            {status === "saving" ? "Saving…" : status === "saved" ? "Saved" : ""}
+            {status === "saving" ? "Saving..." : status === "saved" ? "Saved" : ""}
           </span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 sm:hidden"
+            onClick={() => setToolsOpen((v) => !v)}
+            aria-expanded={toolsOpen}
+          >
+            <SlidersHorizontal className="h-4 w-4" /> Tools
+          </Button>
+          <div className={cn("flex flex-wrap items-center gap-2", !toolsOpen && "hidden sm:flex")}>
           <Button
             variant={showDims ? "default" : "outline"}
             size="sm"
@@ -415,23 +426,30 @@ export function FloorPlanner({
           ) : null}
           {!editShape && wishlist.length ? <AddFromWishlist options={wishlist} onPlace={addFromOption} /> : null}
           {!editShape ? <AddFurniture onAdd={add} /> : null}
+          </div>
         </div>
       </div>
 
       {editShape ? (
-        <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-          <span>Drag the blue corners. Tap + on an edge to add a point, red dot to remove.</span>
-          <button type="button" onClick={resetShape} className="shrink-0 font-medium text-foreground hover:underline">Reset to rectangle</button>
-        </div>
+        <details className="rounded-lg border bg-muted/30 px-3 py-2 text-xs text-muted-foreground" open>
+          <summary className="cursor-pointer font-medium text-foreground">Shape tools</summary>
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span>Drag the blue corners. Tap + on an edge to add a point, red dot to remove.</span>
+            <button type="button" onClick={resetShape} className="shrink-0 font-medium text-foreground hover:underline">Reset to rectangle</button>
+          </div>
+        </details>
       ) : (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-          <span>Drag furniture or doors to move them.</span>
-          <span>Tap an item to edit size, colour, status or linked purchase.</span>
-          <span>Turn on Distances to see each item&apos;s nearest wall gaps.</span>
-        </div>
+        <details className="rounded-lg border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          <summary className="cursor-pointer font-medium text-foreground">Planner tips</summary>
+          <div className="mt-2 flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:gap-2">
+            <span>Drag furniture or doors to move them.</span>
+            <span>Tap an item to edit size, colour, status or linked purchase.</span>
+            <span>Turn on Distances to see each item&apos;s nearest wall gaps.</span>
+          </div>
+        </details>
       )}
 
-      <Card>
+      <Card className="overflow-hidden">
         <CardContent className="p-2">
           <div className="mx-auto w-full" style={{ maxWidth: 640 }}>
             <svg
@@ -457,7 +475,7 @@ export function FloorPlanner({
               {/* room outline (polygon supports L-shapes + manual editing) */}
               <polygon points={pointsToSvg(outline)} fill={editShape ? "rgba(14,165,233,0.06)" : "none"} stroke="currentColor" className="text-foreground" strokeWidth={3} />
 
-              {/* doors — draggable along their wall, with a swing arc */}
+              {/* doors - draggable along their wall, with a swing arc */}
               {doors.map((d, i) => {
                 const g = doorGeom(d);
                 const isSel = i === selectedDoor;
@@ -591,7 +609,7 @@ export function FloorPlanner({
                 </g>
               ) : null}
 
-              {/* Manual shape editing: drag corners, add (+) / remove (×) points */}
+              {/* Manual shape editing: drag corners, add (+) / remove (x) points */}
               {editShape
                 ? outline.map((pt, i) => {
                     const nx = outline[(i + 1) % outline.length];
@@ -621,11 +639,11 @@ export function FloorPlanner({
       {selectedDoor !== null && doors[selectedDoor] ? (
         <Card>
           <CardContent className="space-y-3 p-4">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="flex items-center gap-1.5 text-sm font-medium">
                 <DoorOpen className="h-4 w-4" /> Door
               </p>
-              <div className="flex items-center gap-1">
+              <div className="flex flex-wrap items-center gap-1">
                 <Button
                   type="button"
                   variant="outline"
@@ -640,7 +658,7 @@ export function FloorPlanner({
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Wall">
                 <NativeSelect value={doors[selectedDoor].wall} onChange={(e) => updateDoor(selectedDoor, { wall: e.target.value as RoomDoor["wall"], offset: 0 })}>
                   {(["top", "bottom", "left", "right"] as RoomDoor["wall"][]).map((w) => (
@@ -664,14 +682,14 @@ export function FloorPlanner({
       {selected ? (
         <Card>
           <CardContent className="space-y-3 p-4">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <Input
                 value={selected.name}
                 onChange={(e) => setItems((prev) => prev.map((i) => (i.id === selected.id ? { ...i, name: e.target.value } : i)))}
                 onBlur={(e) => persist(selected.id, { name: e.target.value })}
-                className="h-9 max-w-[60%] font-medium"
+                className="h-9 min-w-0 font-medium sm:max-w-[60%]"
               />
-              <div className="flex items-center gap-1">
+              <div className="flex flex-wrap items-center gap-1">
                 <Button variant="outline" size="sm" className="gap-1.5" onClick={() => rotate(selected)}>
                   <RotateCw className="h-4 w-4" /> Rotate
                 </Button>
@@ -680,7 +698,7 @@ export function FloorPlanner({
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Width (cm)">
                 <Input
                   type="number"
@@ -696,7 +714,7 @@ export function FloorPlanner({
                 />
               </Field>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Shape">
                 <NativeSelect
                   value={selected.shape ?? "rectangle"}
@@ -751,7 +769,7 @@ function clamp(n: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, n));
 }
 
-/** Human distance: metres for ≥1m, else centimetres. */
+/** Human distance: metres for >=1m, else centimetres. */
 function fmtDist(cm: number) {
   return cm >= 100 ? `${(cm / 100).toFixed(2)}m` : `${Math.round(cm)}cm`;
 }
@@ -843,11 +861,11 @@ function AddFromWishlist({
                 <span className="block truncate text-xs text-muted-foreground">
                   {[
                     opt.purchase_name,
-                    `${Math.round(opt.width_cm)}×${Math.round(opt.depth_cm)} cm`,
+                    `${Math.round(opt.width_cm)}x${Math.round(opt.depth_cm)} cm`,
                     opt.shape ? cap(opt.shape) : null,
                   ]
                     .filter(Boolean)
-                    .join(" · ")}
+                    .join(" - ")}
                 </span>
               </span>
             </button>
@@ -936,7 +954,7 @@ function AddFurniture({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>Cancel</Button>
-            <Button type="submit" disabled={pending}>{pending ? "Adding…" : "Add to plan"}</Button>
+            <Button type="submit" disabled={pending}>{pending ? "Adding..." : "Add to plan"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
