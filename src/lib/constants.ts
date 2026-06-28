@@ -13,6 +13,7 @@ import {
   FolderArchive,
   BarChart3,
   CalendarDays,
+  Bot,
   History,
   FileText,
   type LucideIcon,
@@ -35,6 +36,7 @@ export const NAV_GROUPS = ["Overview", "Money", "Planning", "Home", "Capture", "
 /** Primary navigation — drives both the desktop sidebar and mobile menu. */
 export const NAV_ITEMS: NavItem[] = [
   { title: "Dashboard", short: "Home", href: "/dashboard", icon: LayoutDashboard, description: "Your home command centre", group: "Overview" },
+  { title: "House Assistant", short: "Assist", href: "/assistant", icon: Bot, description: "Free rule-based guidance", group: "Overview" },
   { title: "Bills & Expenses", short: "Bills", href: "/bills", icon: Receipt, description: "Recurring household costs", group: "Money" },
   { title: "Mortgage", href: "/mortgage", icon: Home, description: "Balance, equity & payoff", group: "Money" },
   { title: "Savings Pots", short: "Savings", href: "/savings", icon: PiggyBank, description: "Goals & contributions", group: "Money" },
