@@ -22,7 +22,6 @@ import { ImageUpload } from "@/components/shared/image-upload";
 import { useToast } from "@/hooks/use-toast";
 import {
   PRIORITIES,
-  PURCHASE_CATEGORIES,
   PURCHASE_SIZES,
   PURCHASE_STATUSES,
 } from "@/lib/constants";
@@ -39,9 +38,10 @@ type Props = {
   defaults?: Partial<PurchaseInput>;
   /** Household members, so a buyer can be chosen when marking Purchased. */
   members?: { id: string; name: string }[];
+  categories?: string[];
 };
 
-export function PurchaseForm({ purchase, trigger, defaults, members = [] }: Props) {
+export function PurchaseForm({ purchase, trigger, defaults, members = [], categories = [] }: Props) {
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
@@ -76,6 +76,10 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [] }: Prop
   });
 
   const currentStatus = watch("status");
+  const categoryOptions = React.useMemo(
+    () => Array.from(new Set(["Furniture", ...categories, purchase?.category, defaults?.category].filter(Boolean) as string[])).sort(),
+    [categories, defaults?.category, purchase?.category],
+  );
 
   // New items can have their comparison options entered up front.
   const [options, setOptions] = React.useState<DraftOption[]>([]);
@@ -204,7 +208,7 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [] }: Prop
           <div className="grid grid-cols-2 gap-3">
             <Field label="Category" tooltip="The broad type of item.">
               <NativeSelect {...register("category")}>
-                {PURCHASE_CATEGORIES.map((c) => (
+                {categoryOptions.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </NativeSelect>

@@ -1,11 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { Check, Pencil } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Check, Pencil, Wrench } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
+import { ListRow } from "@/components/shared/list-row";
 import { useToast } from "@/hooks/use-toast";
 import { FREQUENCY_LABELS } from "@/lib/constants";
 import { daysUntil, formatCurrency, formatDate } from "@/lib/utils";
@@ -30,31 +30,36 @@ export function MaintenanceRow({ task }: { task: MaintenanceTask }) {
   }
 
   return (
-    <Card className="shadow-none">
-      <CardContent className="flex flex-wrap items-center gap-3 p-4">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <p className="truncate font-medium">{task.task}</p>
-            <Badge variant="secondary">{FREQUENCY_LABELS[task.frequency]}</Badge>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {task.next_due_date ? `Due ${formatDate(task.next_due_date)}` : "No due date"}
-            {task.last_completed_date ? ` · last done ${formatDate(task.last_completed_date)}` : ""}
-            {task.cost ? ` · ${formatCurrency(task.cost)}` : ""}
-          </p>
-        </div>
-
-        {days !== null ? (
-          days < 0 ? (
-            <Badge variant="destructive">{Math.abs(days)}d overdue</Badge>
-          ) : days <= 30 ? (
-            <Badge variant="warning">{days}d</Badge>
-          ) : (
-            <Badge variant="secondary">{days}d</Badge>
-          )
-        ) : null}
-
-        <div className="flex items-center gap-1">
+    <ListRow
+      icon={
+        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Wrench className="h-5 w-5" />
+        </span>
+      }
+      title={task.task}
+      meta={
+        <>
+          {task.next_due_date ? `Due ${formatDate(task.next_due_date)}` : "No due date"}
+          {task.last_completed_date ? ` · last done ${formatDate(task.last_completed_date)}` : ""}
+          {task.cost ? ` · ${formatCurrency(task.cost)}` : ""}
+        </>
+      }
+      badges={
+        <>
+          <Badge variant="secondary">{FREQUENCY_LABELS[task.frequency]}</Badge>
+          {days !== null ? (
+            days < 0 ? (
+              <Badge variant="destructive">{Math.abs(days)}d overdue</Badge>
+            ) : days <= 30 ? (
+              <Badge variant="warning">{days}d</Badge>
+            ) : (
+              <Badge variant="secondary">{days}d</Badge>
+            )
+          ) : null}
+        </>
+      }
+      actions={
+        <>
           <Button variant="outline" size="sm" onClick={complete} disabled={pending}>
             <Check className="h-4 w-4" /> Done
           </Button>
@@ -68,8 +73,8 @@ export function MaintenanceRow({ task }: { task: MaintenanceTask }) {
             }
           />
           <ConfirmDelete itemLabel="task" action={deleteMaintenance.bind(null, task.id)} />
-        </div>
-      </CardContent>
-    </Card>
+        </>
+      }
+    />
   );
 }

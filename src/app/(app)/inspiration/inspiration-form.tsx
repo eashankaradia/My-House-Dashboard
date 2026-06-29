@@ -58,7 +58,7 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
   } = useForm<InspirationInput>({
     resolver: zodResolver(inspirationSchema),
     defaultValues: {
-      title: inspiration?.title ?? "",
+      title: inspiration?.title ?? "Saved idea",
       link: inspiration?.link ?? "",
       source: inspiration?.source ?? "Instagram",
       category: inspiration?.category ?? "",
@@ -82,16 +82,27 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
       toast({ variant: "destructive", title: "Couldn't auto-fill", description: res.error });
       return;
     }
-    if (res.title && !getValues("title")) setValue("title", res.title.slice(0, 160));
+    if (res.title && !getValues("notes")) setValue("notes", res.title.slice(0, 500));
     if (res.image) setValue("image_url", res.image);
     toast({ title: "Filled from link" });
   }
 
+  function titleFrom(values: InspirationInput) {
+    const link = values.link?.trim();
+    if (!link) return values.notes?.trim().slice(0, 160) || "Saved idea";
+    try {
+      return new URL(link).hostname.replace(/^www\./, "").slice(0, 160);
+    } catch {
+      return link.slice(0, 160);
+    }
+  }
+
   function onSubmit(values: InspirationInput) {
+    const payload = { ...values, title: titleFrom(values) };
     startTransition(async () => {
       const result = editing
-        ? await updateInspiration(inspiration!.id, values)
-        : await createInspiration(values);
+        ? await updateInspiration(inspiration!.id, payload)
+        : await createInspiration(payload);
       if (result?.error) {
         toast({ variant: "destructive", title: "Something went wrong", description: result.error });
         return;
@@ -118,10 +129,8 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
           <DialogDescription>Paste a link from Instagram, TikTok, Pinterest and more.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Field label="Title" htmlFor="title" required error={errors.title?.message}>
-            <Input id="title" placeholder="e.g. Dark green kitchen units" {...register("title")} />
-          </Field>
-          <Field label="Link (URL)" htmlFor="link" tooltip="Paste a link, then tap Auto-fill to pull the title and image.">
+          <input type="hidden" {...register("title")} />
+          <Field label="Link (URL)" htmlFor="link" tooltip="Paste a link, then tap Auto-fill to pull the description and image.">
             <div className="flex gap-2">
               <Input id="link" type="url" placeholder="https://…" {...register("link")} />
               <Button type="button" variant="outline" onClick={autofill} disabled={fetching} className="shrink-0">
@@ -187,8 +196,8 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
           <Field label="Tags" htmlFor="tags" hint="Comma-separated, e.g. modern, oak, shelving">
             <Input id="tags" placeholder="modern, oak, shelving" {...register("tags")} />
           </Field>
-          <Field label="Notes" htmlFor="notes">
-            <Textarea id="notes" rows={2} {...register("notes")} />
+          <Field label="Description" htmlFor="notes" hint="Auto-fill can pull this from the link.">
+            <Textarea id="notes" rows={2} placeholder="What stood out about this idea?" {...register("notes")} />
           </Field>
           <DialogFooter className="sm:justify-between">
             {editing && inspiration ? (

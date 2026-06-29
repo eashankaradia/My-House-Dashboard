@@ -6,10 +6,12 @@ import type {
   Inspiration,
   Project,
   Purchase,
+  PurchaseOption,
   Room,
   RoomColourPalette,
   RoomColourSwatch,
   RoomDesignVersion,
+  RoomLayoutItem,
 } from "@/lib/database.types";
 import { RoomWorkspace } from "../room-workspace";
 
@@ -27,10 +29,21 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
   const room = roomData as Room | null;
   if (!room) notFound();
 
-  const [{ data: versionData }, { data: purchaseData }, { data: inspoData }, { data: projectData }, { data: paletteData }, { data: swatchData }] =
+  const [
+    { data: versionData },
+    { data: purchaseData },
+    { data: optionData },
+    { data: layoutData },
+    { data: inspoData },
+    { data: projectData },
+    { data: paletteData },
+    { data: swatchData },
+  ] =
     await Promise.all([
       supabase.from("room_design_versions").select("*").eq("room_id", id).order("created_at", { ascending: true }),
       supabase.from("purchases").select("*").eq("room", room.name).is("archived_at", null),
+      supabase.from("purchase_options").select("*").order("rank", { ascending: true }),
+      supabase.from("room_design_layout_items").select("*"),
       supabase.from("inspiration").select("*").eq("room", room.name),
       supabase.from("projects").select("id, name").is("archived_at", null).order("name"),
       supabase.from("room_colour_palettes").select("*").eq("room_id", id).order("created_at"),
@@ -39,6 +52,10 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
 
   const versions = (versionData ?? []) as RoomDesignVersion[];
   const purchases = (purchaseData ?? []) as Purchase[];
+  const versionIds = new Set(versions.map((v) => v.id));
+  const purchaseIds = new Set(purchases.map((p) => p.id));
+  const options = ((optionData ?? []) as PurchaseOption[]).filter((o) => purchaseIds.has(o.purchase_id));
+  const layoutItems = ((layoutData ?? []) as RoomLayoutItem[]).filter((item) => versionIds.has(item.version_id));
   const inspiration = (inspoData ?? []) as Inspiration[];
   const projects = (projectData ?? []) as Pick<Project, "id" | "name">[];
   const palettes = (paletteData ?? []) as RoomColourPalette[];
@@ -54,6 +71,8 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
         room={room}
         versions={versions}
         purchases={purchases}
+        options={options}
+        layoutItems={layoutItems}
         inspiration={inspiration}
         projects={projects}
         palettes={palettes}

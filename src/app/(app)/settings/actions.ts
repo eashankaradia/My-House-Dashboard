@@ -29,3 +29,28 @@ export async function updateMemberColor(color: string): Promise<ActionResult> {
   revalidatePath("/", "layout");
   return {};
 }
+
+export async function addPurchaseCategory(name: string): Promise<ActionResult> {
+  const clean = name.trim().slice(0, 80);
+  if (!clean) return { error: "Enter a category name" };
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase
+    .from("purchase_categories")
+    .insert({ user_id: user.id, name: clean });
+  if (error) {
+    if (error.code === "23505") return { error: "That category already exists" };
+    return { error: error.message };
+  }
+  revalidatePath("/settings");
+  revalidatePath("/purchases");
+  return {};
+}
+
+export async function removePurchaseCategory(id: string): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("purchase_categories").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/settings");
+  revalidatePath("/purchases");
+  return {};
+}

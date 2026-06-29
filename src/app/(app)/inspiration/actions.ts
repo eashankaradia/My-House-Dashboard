@@ -62,6 +62,36 @@ export async function createCollection(raw: CollectionInput): Promise<ActionResu
   return {};
 }
 
+export async function importPinterestBoard(raw: { name: string; url: string }): Promise<ActionResult> {
+  const name = raw.name.trim().slice(0, 120);
+  const url = raw.url.trim();
+  if (!name) return { error: "Name the mood board" };
+  if (!/^https?:\/\/(www\.)?(pinterest\.[a-z.]+|pin\.it)\//i.test(url)) {
+    return { error: "Paste a Pinterest board link" };
+  }
+  const { supabase, user } = await getActionContext();
+  const { data: collection, error: collectionError } = await supabase
+    .from("collections")
+    .insert({ user_id: user.id, name, description: "Pinterest mood board" })
+    .select("id")
+    .single();
+  if (collectionError || !collection) return { error: collectionError?.message ?? "Couldn't create collection" };
+  const { error } = await supabase.from("inspiration").insert({
+    user_id: user.id,
+    title: name,
+    link: url,
+    source: "Pinterest",
+    category: "Mood board",
+    status: "Saved",
+    priority: "Low",
+    collection_id: (collection as { id: string }).id,
+    tags: ["pinterest", "moodboard"],
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/inspiration");
+  return {};
+}
+
 export async function deleteCollection(id: string): Promise<ActionResult> {
   const { supabase } = await getActionContext();
   const { error } = await supabase.from("collections").delete().eq("id", id);

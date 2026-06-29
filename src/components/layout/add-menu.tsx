@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Camera, CheckSquare, FileText, FolderArchive, Hammer, Lightbulb, Receipt, ShoppingBag, Wrench } from "lucide-react";
+import { Camera, CheckSquare, FileText, FolderArchive, Hammer, Lightbulb, ListPlus, Receipt, ShoppingBag, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { QuickPhotoDialog } from "@/app/(app)/photos/quick-photo-dialog";
 import { DraftDialog } from "@/app/(app)/drafts/draft-dialog";
@@ -9,6 +9,7 @@ import { BillForm } from "@/app/(app)/bills/bill-form";
 import { ProjectForm } from "@/app/(app)/projects/project-form";
 import { TaskQuickForm } from "@/app/(app)/projects/task-quick-form";
 import { PurchaseForm } from "@/app/(app)/purchases/purchase-form";
+import { QuickOptionForm } from "@/app/(app)/purchases/quick-option-form";
 import { InspirationForm } from "@/app/(app)/inspiration/inspiration-form";
 import { MaintenanceForm } from "@/app/(app)/maintenance/maintenance-form";
 import { DocumentForm } from "@/app/(app)/documents/document-form";
@@ -36,15 +37,31 @@ Pill.displayName = "Pill";
 export function AddPills({ className }: { className?: string }) {
   return (
     <div className={className}>
-      <QuickPhotoDialog trigger={<Pill icon={Camera} label="Photo" />} />
-      <DraftDialog trigger={<Pill icon={FileText} label="Draft" />} />
-      <TaskQuickForm trigger={<Pill icon={CheckSquare} label="Task" />} />
-      <BillForm trigger={<Pill icon={Receipt} label="Expense" />} />
-      <ProjectForm trigger={<Pill icon={Hammer} label="Project" />} />
-      <PurchaseForm trigger={<Pill icon={ShoppingBag} label="Purchase" />} />
-      <InspirationForm collections={[]} trigger={<Pill icon={Lightbulb} label="Idea" />} />
-      <MaintenanceForm trigger={<Pill icon={Wrench} label="Maintenance" />} />
-      <DocumentForm trigger={<Pill icon={FolderArchive} label="Document" />} />
+      <AddGroup label="Capture">
+        <QuickPhotoDialog trigger={<Pill icon={Camera} label="Photo" />} />
+        <DraftDialog trigger={<Pill icon={FileText} label="Draft" />} />
+        <InspirationForm collections={[]} trigger={<Pill icon={Lightbulb} label="Idea" />} />
+      </AddGroup>
+      <AddGroup label="Money">
+        <BillForm trigger={<Pill icon={Receipt} label="Expense" />} />
+        <PurchaseForm trigger={<Pill icon={ShoppingBag} label="Purchase" />} />
+        <QuickOptionForm trigger={<Pill icon={ListPlus} label="Option" />} />
+        <DocumentForm trigger={<Pill icon={FolderArchive} label="Document" />} />
+      </AddGroup>
+      <AddGroup label="Work">
+        <TaskQuickForm trigger={<Pill icon={CheckSquare} label="Task" />} />
+        <ProjectForm trigger={<Pill icon={Hammer} label="Project" />} />
+        <MaintenanceForm trigger={<Pill icon={Wrench} label="Maintenance" />} />
+      </AddGroup>
+    </div>
+  );
+}
+
+function AddGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col items-stretch gap-1.5 lg:items-end">
+      <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end">{children}</div>
     </div>
   );
 }

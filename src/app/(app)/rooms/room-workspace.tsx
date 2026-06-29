@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Copy, Layers, Lightbulb, ListChecks, Palette, Plus, ShoppingBag, SlidersHorizontal, Star } from "lucide-react";
+import { AlertCircle, CheckCircle2, Copy, Layers, Lightbulb, ListChecks, Palette, Plus, Ruler, ShoppingBag, SlidersHorizontal, Star } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
-import type { Inspiration, Project, Purchase, Room, RoomColourPalette, RoomColourSwatch, RoomDesignVersion } from "@/lib/database.types";
+import type { Inspiration, Project, Purchase, PurchaseOption, Room, RoomColourPalette, RoomColourSwatch, RoomDesignVersion, RoomLayoutItem } from "@/lib/database.types";
 import { createTask } from "@/app/(app)/projects/actions";
 import { ColourStudio } from "./colour-studio";
 import { RoomShapeDoors } from "./room-shape-doors";
@@ -48,6 +48,8 @@ export function RoomWorkspace({
   room,
   versions,
   purchases,
+  options,
+  layoutItems,
   inspiration,
   projects,
   palettes,
@@ -56,6 +58,8 @@ export function RoomWorkspace({
   room: Room;
   versions: RoomDesignVersion[];
   purchases: Purchase[];
+  options: PurchaseOption[];
+  layoutItems: RoomLayoutItem[];
   inspiration: Inspiration[];
   projects: Pick<Project, "id" | "name">[];
   palettes: RoomColourPalette[];
@@ -88,7 +92,7 @@ export function RoomWorkspace({
         </TabsContent>
 
         <TabsContent value="items" className="space-y-6">
-          <PurchasesTab room={room} purchases={purchases} />
+          <PurchasesTab room={room} purchases={purchases} options={options} layoutItems={layoutItems} />
           <section className="space-y-3 border-t pt-6">
             <h3 className="flex items-center gap-2 text-sm font-semibold"><Lightbulb className="h-4 w-4" /> Ideas</h3>
             <InspirationTab room={room} inspiration={inspiration} />
@@ -437,11 +441,47 @@ function VersionEditDialog({ version }: { version: RoomDesignVersion }) {
 
 // --- Items (purchases tagged to this room) ---------------------------------
 
-function PurchasesTab({ room, purchases }: { room: Room; purchases: Purchase[] }) {
+function PurchasesTab({
+  room,
+  purchases,
+  options,
+  layoutItems,
+}: {
+  room: Room;
+  purchases: Purchase[];
+  options: PurchaseOption[];
+  layoutItems: RoomLayoutItem[];
+}) {
   const planned = purchases.filter((p) => p.status !== "Purchased");
   const bought = purchases.filter((p) => p.status === "Purchased");
-  const plannedCost = planned.reduce((s, p) => s + Number(p.price), 0);
+  const optionsByPurchase = new Map<string, PurchaseOption[]>();
+  for (const option of options) {
+    const list = optionsByPurchase.get(option.purchase_id) ?? [];
+    list.push(option);
+    optionsByPurchase.set(option.purchase_id, list);
+  }
+  const layoutByPurchase = new Map<string, RoomLayoutItem[]>();
+  for (const item of layoutItems) {
+    if (!item.purchase_id) continue;
+    const list = layoutByPurchase.get(item.purchase_id) ?? [];
+    list.push(item);
+    layoutByPurchase.set(item.purchase_id, list);
+  }
+  const pickPrice = (p: Purchase) => {
+    const opts = optionsByPurchase.get(p.id) ?? [];
+    const chosen = opts.find((o) => o.is_chosen);
+    if (chosen) return Number(chosen.price);
+    if (opts.length) return Math.min(...opts.map((o) => Number(o.price)));
+    return Number(p.price);
+  };
+  const plannedCost = planned.reduce((s, p) => s + pickPrice(p), 0);
   const spent = bought.reduce((s, p) => s + Number(p.purchased_price ?? p.price), 0);
+  const placedPurchases = purchases.filter((p) => layoutByPurchase.has(p.id));
+  const missingLayout = planned.filter((p) => !layoutByPurchase.has(p.id));
+  const missingMeasurements = planned.filter((p) => {
+    const opts = optionsByPurchase.get(p.id) ?? [];
+    return opts.length === 0 || !opts.some((o) => o.width_cm != null && o.depth_cm != null);
+  });
 
   // Per-category budget rollup (planned vs spent).
   const byCategory = new Map<string, { planned: number; spent: number }>();
@@ -449,7 +489,7 @@ function PurchasesTab({ room, purchases }: { room: Room; purchases: Purchase[] }
     const cat = p.category || "Other";
     const row = byCategory.get(cat) ?? { planned: 0, spent: 0 };
     if (p.status === "Purchased") row.spent += Number(p.purchased_price ?? p.price);
-    else row.planned += Number(p.price);
+    else row.planned += pickPrice(p);
     byCategory.set(cat, row);
   }
   const categoryRows = Array.from(byCategory.entries()).sort((a, b) => (b[1].planned + b[1].spent) - (a[1].planned + a[1].spent));
@@ -460,6 +500,35 @@ function PurchasesTab({ room, purchases }: { room: Room; purchases: Purchase[] }
         <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Planned</p><p className="text-xl font-semibold">{formatCurrency(plannedCost)}</p><p className="text-xs text-muted-foreground">{planned.length} item{planned.length === 1 ? "" : "s"}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Spent</p><p className="text-xl font-semibold">{formatCurrency(spent)}</p><p className="text-xs text-muted-foreground">{bought.length} bought</p></CardContent></Card>
       </div>
+
+      <Card>
+        <CardContent className="space-y-3 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Shopping plan</p>
+              <p className="text-xs text-muted-foreground">Wishlist items linked to this room and its floor plans.</p>
+            </div>
+            <Badge variant={missingLayout.length || missingMeasurements.length ? "warning" : "success"}>
+              {placedPurchases.length}/{planned.length} placed
+            </Badge>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <PlanSignal icon={ShoppingBag} label="To buy" value={formatCurrency(plannedCost)} detail={`${planned.length} planned`} />
+            <PlanSignal icon={Ruler} label="Measured" value={String(planned.length - missingMeasurements.length)} detail={`${missingMeasurements.length} missing size`} />
+            <PlanSignal icon={Layers} label="On plans" value={String(placedPurchases.length)} detail={`${missingLayout.length} not placed`} />
+          </div>
+          {missingLayout.length || missingMeasurements.length ? (
+            <div className="space-y-1 rounded-md bg-amber-500/10 p-2 text-xs text-amber-800 dark:text-amber-300">
+              {missingLayout.length ? (
+                <p className="flex gap-1.5"><AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> Place {missingLayout.length} planned item{missingLayout.length === 1 ? "" : "s"} on a design version.</p>
+              ) : null}
+              {missingMeasurements.length ? (
+                <p className="flex gap-1.5"><AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> Add option dimensions for {missingMeasurements.length} item{missingMeasurements.length === 1 ? "" : "s"} so the planner can size them.</p>
+              ) : null}
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
 
       {categoryRows.length > 0 ? (
         <Card>
@@ -494,16 +563,48 @@ function PurchasesTab({ room, purchases }: { room: Room; purchases: Purchase[] }
       ) : (
         <Card>
           <CardContent className="divide-y p-0">
-            {purchases.map((p) => (
-              <Link key={p.id} href={`/purchases?item=${p.id}`} className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent">
-                <span className="min-w-0 flex-1 truncate font-medium">{p.name}</span>
-                <Badge variant={p.status === "Purchased" ? "success" : "secondary"}>{p.status}</Badge>
-                <span className="shrink-0 font-medium">{formatCurrency(p.purchased_price ?? p.price)}</span>
+            {purchases.map((p) => {
+              const opts = optionsByPurchase.get(p.id) ?? [];
+              const measured = opts.some((o) => o.width_cm != null && o.depth_cm != null);
+              const placed = layoutByPurchase.get(p.id)?.length ?? 0;
+              return (
+              <Link key={p.id} href={`/purchases?item=${p.id}`} className="flex min-w-0 items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent">
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{p.name}</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {opts.length} option{opts.length === 1 ? "" : "s"} · {measured ? "measured" : "needs size"} · {placed ? `${placed} on plan` : "not placed"}
+                  </span>
+                </span>
+                <Badge variant={p.status === "Purchased" ? "success" : placed ? "secondary" : "outline"}>{p.status}</Badge>
+                <span className="shrink-0 font-medium">{formatCurrency(p.status === "Purchased" ? p.purchased_price ?? p.price : pickPrice(p))}</span>
               </Link>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+function PlanSignal({
+  icon: Icon,
+  label,
+  value,
+  detail,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-md border bg-background p-3">
+      <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <Icon className="h-3.5 w-3.5" /> {label}
+      </p>
+      <p className="text-lg font-semibold">{value}</p>
+      <p className="text-xs text-muted-foreground">{detail}</p>
     </div>
   );
 }

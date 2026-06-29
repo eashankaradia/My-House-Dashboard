@@ -152,6 +152,62 @@ Requests:
   block is now behind its own nested toggle (`showSize`).
 - Verified: typecheck, lint, build all clean.
 
+### Batch 11 (done, no DB) — purchases/inspiration polish follow-up
+- **Purchases long text no longer widens cards:** `purchases-grid.tsx` purchase
+  cards now force `min-w-0`/`max-w-full`/`overflow-hidden`; purchase names and
+  notes wrap with `overflow-wrap:anywhere` so very long appliance/item names or
+  descriptions stay inside the card instead of causing sideways scrolling.
+- **Purchase option rows wrap safely too:** `option-row.tsx` changed option
+  names/meta from single-line truncation to wrapping with `overflow-wrap:anywhere`,
+  while preserving the image/rank/price/actions layout.
+- **Items with no options are de-prioritised:** purchases with one or more options
+  always sort above purchases with zero options, regardless of the selected sort.
+  Added a "Hide items with no options" toggle in the purchases filter bar.
+- **Inspiration can filter by creator:** `inspiration/page.tsx` now passes
+  `memberMap`; `inspiration-hub.tsx` adds an "Added by anyone/member" filter.
+- **Seen inspiration reels can collapse:** feed view has a "Seen reels collapsed"
+  toggle. Items already marked seen (via existing `comment_reads`) show a compact
+  placeholder instead of loading the embed, with a one-click "show it again" reveal.
+- Verified: `npm.cmd run typecheck` and `npm.cmd run lint` clean. No migration.
+
+### Batch 12 (done, no DB) — inspiration reels UI follow-up
+- **Collapsed seen reels are now single-line:** `inspiration-hub.tsx` replaced the
+  large dashed explainer placeholder with a slim 36px pill row containing the item
+  title and a right-side expand chevron.
+- **Expanded seen reels can be tucked away again:** when a seen reel is manually
+  expanded, it shows a small icon-only collapse chevron above the media.
+- **Collections are collapsible:** new `collections-strip.tsx` replaces the always-
+  visible collection chips on `inspiration/page.tsx` with a compact "Collections"
+  row showing collection count + saved idea count; expanding reveals the chips and
+  delete controls.
+- **Feed feels more like reels:** feed column narrowed to a phone-like reel width,
+  cards are rounder with less padding/chrome, notes clamp to three lines, and
+  `social-embed.tsx` uses a taller 9:14 reel aspect with black media framing.
+- No migration.
+
+### Batch 13 (done, no DB) — reel-card collapse, recent updates, room designer
+- **Whole seen reel cards collapse:** `inspiration-hub.tsx` now collapses the
+  entire seen feed card into a slim one-line pill with source initials, title and
+  a right-side expand chevron. Expanding restores the full card; the full card
+  keeps the icon-only collapse chevron.
+- **Recent updates are collapsed everywhere:** `SectionActivityLog` now renders
+  through new client component `activity-log-card.tsx`; every section log is
+  collapsed by default and shows a badge count in the header.
+- **Recent updates show two max when expanded:** `SectionActivityLog` slices the
+  loaded activity to the two newest entries when open, keeping per-tab bottoms
+  tidy.
+- **Room Designer door flipping:** `RoomDoor` gained optional `flipped` (stored
+  inside existing `rooms.doors` JSON, no migration). `floor-planner.tsx` swaps
+  the hinge/latch geometry when flipped and adds a selected-door "Flip" button;
+  `room-shape-doors.tsx` exposes the same flip icon in the overview door list.
+- **Room Designer is more self-explanatory:** planner now shows a short guidance
+  strip explaining drag/select/distances when not editing the room outline.
+- **Distances apply to all furniture:** distance mode now shows each layout
+  item's nearest horizontal and vertical wall gaps, instead of only measuring
+  the selected item.
+- Verified: `npm.cmd run typecheck`, `npm.cmd run lint`, and `npm.cmd run build`
+  clean. No migration.
+
 **FOURTH LIST COMPLETE** — all 9 requests shipped. Migrations the user still needs
 to run live: 0029 (option dims), 0030 (bill start_date), 0031 (purchase size),
 0032 (layout item shape/option_id). Each was provided inline in chat.

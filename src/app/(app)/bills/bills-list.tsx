@@ -89,9 +89,10 @@ export function BillsList({
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>
                       {FREQUENCY_LABELS[bill.frequency]}
-                      {bill.account_id ? ` · ${accountNames.get(bill.account_id) ?? "Account"}` : bill.payment_account ? ` · ${bill.payment_account}` : ""}
-                      {bill.due_date ? ` · due ${formatDate(bill.due_date)}` : ""}
-                      {bill.end_date ? ` · ends ${formatDate(bill.end_date)}` : ""}
+                      {bill.account_id ? ` - ${accountNames.get(bill.account_id) ?? "Account"}` : bill.payment_account ? ` - ${bill.payment_account}` : ""}
+                      {bill.start_date ? ` - started ${formatDate(bill.start_date)}` : ""}
+                      {bill.due_date ? ` - due ${formatDate(bill.due_date)}` : ""}
+                      {bill.end_date ? ` - ends ${formatDate(bill.end_date)}` : ""}
                     </span>
                     <AddedBy name={memberMap[bill.user_id]} />
                   </div>

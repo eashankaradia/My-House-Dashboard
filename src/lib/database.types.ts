@@ -167,7 +167,7 @@ export type Purchase = Timestamps & {
   url: string | null;
   store: string | null;
   price: number;
-  category: PurchaseCategory;
+  category: string;
   sub_category: string | null;
   /** "Small" | "Big" | null — big-ticket vs everyday purchase. */
   size: string | null;
@@ -210,6 +210,13 @@ export type PurchaseOption = Timestamps & {
   width_cm: number | null;
   depth_cm: number | null;
   height_cm: number | null;
+};
+
+export type PurchaseCategoryRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
 };
 
 /** A purchase with its compared options attached (used in list views). */
@@ -275,15 +282,7 @@ export type ProjectStatus =
   | "In Progress"
   | "Completed";
 
-export type PurchaseCategory =
-  | "Furniture"
-  | "Appliances"
-  | "Technology"
-  | "Garden"
-  | "Decor"
-  | "Tools"
-  | "Storage"
-  | "Other";
+export type PurchaseCategory = string;
 
 export type PurchaseStatus =
   | "Interesting"
@@ -339,7 +338,15 @@ export type Reaction = {
 
 export type RoomOpening = { position: number; width: number; height?: number; label?: string };
 export type RoomPoint = { x: number; y: number };
-export type RoomDoor = { wall: "top" | "bottom" | "left" | "right"; offset: number; width: number };
+export type RoomDoor = {
+  wall: "top" | "bottom" | "left" | "right";
+  offset: number;
+  width: number;
+  /** When true, the hinge is on the opposite jamb, flipping the door swing. */
+  flipped?: boolean;
+  /** When true, the door swings away from the room instead of into it. */
+  opens_out?: boolean;
+};
 
 export type Room = {
   id: string;
@@ -407,6 +414,7 @@ export type RoomLayoutItem = Timestamps & {
   /** Footprint shape: "rectangle" | "square" | "round" | null. */
   shape: string | null;
   image_url: string | null;
+  locked: boolean;
 };
 
 export type RoomColourPalette = {
@@ -565,6 +573,7 @@ export type Database = {
       inspiration: Row<Inspiration>;
       projects: Row<Project>;
       purchases: Row<Purchase>;
+      purchase_categories: Row<PurchaseCategoryRow>;
       purchase_options: Row<PurchaseOption>;
       purchase_stars: Row<PurchaseStar>;
       links: Row<Link>;

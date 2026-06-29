@@ -21,16 +21,19 @@ import { OptionForm } from "./option-form";
 /** Read-only view of a single option — click an option to see its details. */
 export function OptionDetailDialog({
   purchaseId,
+  purchaseCategory = "Furniture",
   option,
   children,
 }: {
   purchaseId: string;
+  purchaseCategory?: string;
   option: PurchaseOption;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = React.useState(false);
   const dims = [option.width_cm, option.depth_cm, option.height_cm];
   const hasDims = dims.some((d) => d != null && d > 0);
+  const isFurniture = purchaseCategory === "Furniture";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -72,8 +75,8 @@ export function OptionDetailDialog({
 
           <div className="grid grid-cols-2 gap-3 text-sm">
             {option.store ? <Detail label="Store" value={option.store} /> : null}
-            {option.shape ? <Detail label="Shape" value={OPTION_SHAPE_LABELS[option.shape] ?? option.shape} /> : null}
-            {hasDims ? (
+            {isFurniture && option.shape ? <Detail label="Shape" value={OPTION_SHAPE_LABELS[option.shape] ?? option.shape} /> : null}
+            {isFurniture && hasDims ? (
               <Detail
                 label="Size (W×D×H cm)"
                 value={dims.map((d) => (d != null && d > 0 ? d : "—")).join(" × ")}
@@ -115,6 +118,7 @@ export function OptionDetailDialog({
             ) : null}
             <OptionForm
               purchaseId={purchaseId}
+              purchaseCategory={purchaseCategory}
               option={option}
               trigger={
                 <Button variant="outline" size="sm" className="gap-1">

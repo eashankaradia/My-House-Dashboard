@@ -37,14 +37,14 @@ export function SocialEmbed({ link, title }: { link: string; title: string }) {
     );
   }
   return (
-    <div className="overflow-hidden rounded-lg border bg-black">
+    <div className="overflow-hidden rounded-2xl bg-black">
       <iframe
         src={src}
         title={title}
         loading="lazy"
         allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
         allowFullScreen
-        className="aspect-[9/12] max-h-[680px] w-full"
+        className="aspect-[9/14] max-h-[760px] w-full"
       />
     </div>
   );

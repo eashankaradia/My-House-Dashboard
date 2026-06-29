@@ -1,4 +1,4 @@
-import { Bell, DoorOpen, Download, Eye, Gauge, LayoutGrid, LogOut, Users } from "lucide-react";
+import { Bell, DoorOpen, Download, Eye, Gauge, LayoutGrid, LogOut, ShoppingBag, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { initialsFromName } from "@/lib/utils";
 import { MEMBER_COLOR_TEXT } from "@/lib/constants";
 import { getHouseholdMap } from "@/lib/household";
-import type { Bill, HouseholdMember, MaintenanceTask, NotificationPreference, Project, Purchase } from "@/lib/database.types";
+import type { Bill, HouseholdMember, MaintenanceTask, NotificationPreference, Project, Purchase, PurchaseCategoryRow } from "@/lib/database.types";
 import { DisplayNameForm } from "./display-name-form";
 import { ColorPicker } from "./color-picker";
 import { TabVisibilitySettings } from "./tab-visibility";
@@ -18,6 +18,7 @@ import { GlanceStatsSettings } from "@/app/(app)/dashboard/glance-stats";
 import { BottomTabsSettings } from "./bottom-tabs";
 import { RoomsSettings } from "./rooms-settings";
 import { ViewDefaultsSettings } from "./view-defaults";
+import { PurchaseCategoriesSettings } from "./purchase-categories-settings";
 import { getRooms } from "@/app/(app)/rooms/actions";
 
 export const metadata = { title: "Settings" };
@@ -35,6 +36,7 @@ export default async function SettingsPage() {
     { data: purchaseData },
     { data: projectData },
     { data: maintenanceData },
+    { data: purchaseCategoryData },
     memberMap,
     rooms,
   ] = await Promise.all([
@@ -44,6 +46,7 @@ export default async function SettingsPage() {
     supabase.from("purchases").select("*").order("created_at", { ascending: false }),
     supabase.from("projects").select("*").order("created_at", { ascending: false }),
     supabase.from("maintenance_tasks").select("*").order("next_due_date"),
+    supabase.from("purchase_categories").select("*").order("name"),
     getHouseholdMap(),
     getRooms(),
   ]);
@@ -56,6 +59,7 @@ export default async function SettingsPage() {
   const purchases = (purchaseData ?? []) as Purchase[];
   const projects = (projectData ?? []) as Project[];
   const maintenance = (maintenanceData ?? []) as MaintenanceTask[];
+  const purchaseCategories = (purchaseCategoryData ?? []) as PurchaseCategoryRow[];
 
   return (
     <div className="space-y-6">
@@ -170,6 +174,18 @@ export default async function SettingsPage() {
       </Card>
 
       <SettingsSection>Data &amp; alerts</SettingsSection>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ShoppingBag className="h-4 w-4" /> Purchase categories
+          </CardTitle>
+          <CardDescription>Add categories for purchase forms and filters.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PurchaseCategoriesSettings categories={purchaseCategories} />
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">

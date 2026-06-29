@@ -2,11 +2,16 @@
 
 import * as React from "react";
 import {
+  ChevronDown,
+  ChevronUp,
   ExternalLink,
   Eye,
+  Filter,
   Hammer,
+  Heart,
   LayoutGrid,
   List,
+  MessageCircle,
   MoreVertical,
   Newspaper,
   Pencil,
@@ -18,6 +23,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +36,7 @@ import { CardTrigger } from "@/components/shared/card-trigger";
 import { useToast } from "@/hooks/use-toast";
 import { cn, formatDate } from "@/lib/utils";
 import { priorityVariant } from "@/lib/ui";
+import type { MemberMap } from "@/lib/household";
 import type { Collection, Inspiration } from "@/lib/database.types";
 import { InspirationForm } from "./inspiration-form";
 import { InspirationDetailDialog } from "./inspiration-detail";
@@ -41,23 +49,31 @@ export function InspirationHub({
   items,
   collections,
   seenIds = [],
+  memberMap,
 }: {
   items: Inspiration[];
   collections: Collection[];
   seenIds?: string[];
+  memberMap: MemberMap;
 }) {
   const [view, setView] = React.useState<View>("feed");
   const [query, setQuery] = React.useState("");
   const [room, setRoom] = React.useState("All");
   const [collection, setCollection] = React.useState("All");
+  const [addedBy, setAddedBy] = React.useState("All");
   const seen = React.useMemo(() => new Set(seenIds), [seenIds]);
 
   const rooms = Array.from(new Set(items.map((i) => i.room).filter(Boolean))) as string[];
+  const creators = Array.from(new Set(items.map((i) => i.user_id))).map((id) => ({
+    id,
+    name: memberMap[id] ?? "Unknown",
+  }));
 
   const filtered = items
     .filter((i) => {
       if (room !== "All" && i.room !== room) return false;
       if (collection !== "All" && i.collection_id !== collection) return false;
+      if (addedBy !== "All" && i.user_id !== addedBy) return false;
       if (query) {
         const q = query.toLowerCase();
         const hay = [i.title, i.notes, i.category, i.source, ...(i.tags ?? [])]
@@ -70,20 +86,52 @@ export function InspirationHub({
     })
     // Ideas you've already opened sink to the bottom.
     .sort((a, b) => Number(seen.has(a.id)) - Number(seen.has(b.id)));
+  const activeFilterCount = Number(room !== "All") + Number(collection !== "All") + Number(addedBy !== "All");
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
         <Input
-          placeholder="Search ideas, tags, notes…"
+          placeholder="Search ideas, tags, notes..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="h-9 w-full sm:w-64"
+          className="h-9 min-w-0 flex-1 sm:max-w-xs"
         />
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1.5 lg:hidden">
+              <Filter className="h-4 w-4" /> Filters
+              {activeFilterCount ? <span className="rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">{activeFilterCount}</span> : null}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-full max-w-sm overflow-y-auto">
+            <SheetTitle>Inspiration filters</SheetTitle>
+            <div className="mt-5 space-y-4">
+              <FilterSelect label="Room" value={room} onChange={setRoom}>
+                <option value="All">All rooms</option>
+                {rooms.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </FilterSelect>
+              <FilterSelect label="Collection" value={collection} onChange={setCollection}>
+                <option value="All">All collections</option>
+                {collections.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </FilterSelect>
+              <FilterSelect label="Added by" value={addedBy} onChange={setAddedBy}>
+                <option value="All">Added by anyone</option>
+                {creators.map((creator) => (
+                  <option key={creator.id} value={creator.id}>{creator.name}</option>
+                ))}
+              </FilterSelect>
+            </div>
+          </SheetContent>
+        </Sheet>
         <select
           value={room}
           onChange={(e) => setRoom(e.target.value)}
-          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+          className="hidden h-9 rounded-lg border border-input bg-background px-3 text-sm lg:block"
         >
           <option value="All">All rooms</option>
           {rooms.map((r) => (
@@ -93,15 +141,24 @@ export function InspirationHub({
         <select
           value={collection}
           onChange={(e) => setCollection(e.target.value)}
-          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+          className="hidden h-9 rounded-lg border border-input bg-background px-3 text-sm lg:block"
         >
           <option value="All">All collections</option>
           {collections.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
-
-        <div className="ml-auto flex items-center rounded-lg border p-0.5">
+        <select
+          value={addedBy}
+          onChange={(e) => setAddedBy(e.target.value)}
+          className="hidden h-9 rounded-lg border border-input bg-background px-3 text-sm lg:block"
+        >
+          <option value="All">Added by anyone</option>
+          {creators.map((creator) => (
+            <option key={creator.id} value={creator.id}>{creator.name}</option>
+          ))}
+        </select>
+        <div className="ml-auto flex items-center rounded-full border bg-background/80 p-0.5 shadow-sm">
           <ViewButton active={view === "feed"} onClick={() => setView("feed")} icon={Newspaper} label="Feed" />
           <ViewButton active={view === "masonry"} onClick={() => setView("masonry")} icon={LayoutGrid} label="Masonry" />
           <ViewButton active={view === "cards"} onClick={() => setView("cards")} icon={Rows3} label="Cards" />
@@ -112,9 +169,15 @@ export function InspirationHub({
       {filtered.length === 0 ? (
         <p className="py-12 text-center text-sm text-muted-foreground">No ideas match your filters.</p>
       ) : view === "feed" ? (
-        <div className="mx-auto max-w-2xl space-y-5">
+        <div className="mx-auto max-w-[430px] space-y-5">
           {filtered.map((item) => (
-            <InspirationFeedItem key={item.id} item={item} collections={collections} seen={seen.has(item.id)} />
+            <InspirationFeedItem
+              key={item.id}
+              item={item}
+              collections={collections}
+              seen={seen.has(item.id)}
+              addedBy={memberMap[item.user_id]}
+            />
           ))}
         </div>
       ) : view === "masonry" ? (
@@ -140,39 +203,104 @@ export function InspirationHub({
   );
 }
 
-function InspirationFeedItem({ item, collections, seen }: { item: Inspiration; collections: Collection[]; seen?: boolean }) {
+function InspirationFeedItem({
+  item,
+  collections,
+  seen,
+  addedBy,
+}: {
+  item: Inspiration;
+  collections: Collection[];
+  seen?: boolean;
+  addedBy?: string;
+}) {
+  const [manuallyExpanded, setManuallyExpanded] = React.useState(false);
+  const cardCollapsed = Boolean(seen && !manuallyExpanded);
+
+  if (cardCollapsed) {
+    return (
+      <Card className="overflow-hidden rounded-full shadow-sm">
+        <button
+          type="button"
+          onClick={() => setManuallyExpanded(true)}
+          className="flex h-11 w-full items-center justify-between gap-3 px-3 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          aria-label={`Expand ${item.title}`}
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
+              {item.source.slice(0, 2).toUpperCase()}
+            </span>
+            <span className="min-w-0 truncate font-medium">{item.title}</span>
+          </span>
+          <ChevronDown className="h-4 w-4 shrink-0" aria-hidden="true" />
+        </button>
+      </Card>
+    );
+  }
+
   return (
-    <Card className={cn("overflow-hidden", seen && "opacity-70")}>
-      <CardContent className="space-y-3 p-4">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+    <Card className={cn("overflow-hidden rounded-[1.6rem] border bg-background shadow-sm", seen && "opacity-85")}>
+      <CardContent className="p-0">
+        <div className="flex items-center gap-3 px-3 py-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 via-amber-400 to-sky-500 p-[2px] text-sm font-semibold text-white">
+            <span className="flex h-full w-full items-center justify-center rounded-full bg-background text-primary">
             {item.source.slice(0, 2).toUpperCase()}
+            </span>
           </div>
           <InspirationDetailDialog item={item} collections={collections}>
             <CardTrigger className="group min-w-0 flex-1 rounded-md">
-              <span className="flex items-center gap-1.5 font-semibold hover:underline">
+              <span className="flex items-center gap-1.5 truncate font-semibold hover:underline">
                 {item.title}
                 <Eye className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
               </span>
-              <span className="text-xs text-muted-foreground">
-                {item.source} · updated {formatDate(item.updated_at)}
-                {seen ? " · seen" : ""}
+              <span className="block truncate text-xs text-muted-foreground">
+                {item.source}
+                {addedBy ? ` - added by ${addedBy}` : ""}
               </span>
             </CardTrigger>
           </InspirationDetailDialog>
           <ActionsMenu item={item} collections={collections} />
         </div>
-        {item.notes ? <p className="whitespace-pre-wrap text-sm">{item.notes}</p> : null}
-        {item.link ? (
-          <SocialEmbed link={item.link} title={item.title} />
-        ) : item.image_url ? (
+        <div className="bg-muted/30">
+          {item.link ? (
+            <SocialEmbed link={item.link} title={item.title} />
+          ) : item.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.image_url} alt={item.title} className="max-h-[680px] w-full rounded-lg object-cover" />
-        ) : null}
-        <div className="flex flex-wrap gap-1.5">
-          {item.category ? <Badge variant="outline">{item.category}</Badge> : null}
-          {item.room ? <Badge variant="outline">{item.room}</Badge> : null}
-          {item.tags?.map((tag) => <Badge key={tag} variant="secondary">#{tag}</Badge>)}
+            <img src={item.image_url} alt={item.title} className="max-h-[680px] w-full object-cover" />
+          ) : (
+            <div className="flex aspect-[4/5] items-center justify-center px-8 text-center text-sm text-muted-foreground">
+              {item.notes || item.title}
+            </div>
+          )}
+        </div>
+        <div className="space-y-3 px-3 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 text-muted-foreground">
+              <Heart className="h-5 w-5" />
+              <MessageCircle className="h-5 w-5" />
+              <ExternalLink className="h-5 w-5" />
+            </div>
+            {seen ? (
+              <button
+                type="button"
+                onClick={() => setManuallyExpanded(false)}
+                aria-label="Collapse reel"
+                className="flex h-8 w-8 items-center justify-center rounded-full border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <ChevronUp className="h-4 w-4" aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
+          {item.notes ? <p className="line-clamp-3 whitespace-pre-wrap text-sm">{item.notes}</p> : null}
+          <div className="flex flex-wrap gap-1.5">
+            {item.category ? <Badge variant="outline">{item.category}</Badge> : null}
+            {item.room ? <Badge variant="outline">{item.room}</Badge> : null}
+            {item.tags?.map((tag) => <Badge key={tag} variant="secondary">#{tag}</Badge>)}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Updated {formatDate(item.updated_at)}
+            {seen ? " - seen" : ""}
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -201,6 +329,27 @@ function ViewButton({
     >
       <Icon className="h-4 w-4" />
     </button>
+  );
+}
+
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <NativeSelect value={value} onChange={(e) => onChange(e.target.value)} className="w-full">
+        {children}
+      </NativeSelect>
+    </label>
   );
 }
 
@@ -336,7 +485,7 @@ function InspirationRow({ item, collections, seen }: { item: Inspiration; collec
           <CardTrigger className="min-w-0 flex-1 rounded-md">
             <span className="block truncate font-medium hover:underline">{item.title}</span>
             <p className="truncate text-xs text-muted-foreground">
-              {[item.source, item.category, item.room].filter(Boolean).join(" · ")}
+              {[item.source, item.category, item.room].filter(Boolean).join(" - ")}
             </p>
           </CardTrigger>
         </InspirationDetailDialog>
