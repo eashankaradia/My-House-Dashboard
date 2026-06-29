@@ -53,6 +53,7 @@ export async function createDocument(formData: FormData): Promise<ActionResult> 
   }
 
   revalidatePath("/documents");
+  revalidatePath("/notes");
   revalidatePath("/dashboard");
   return {};
 }
@@ -66,6 +67,7 @@ export async function deleteDocument(id: string): Promise<ActionResult> {
   const { error } = await supabase.from("documents").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/documents");
+  revalidatePath("/notes");
   revalidatePath("/dashboard");
   return {};
 }
