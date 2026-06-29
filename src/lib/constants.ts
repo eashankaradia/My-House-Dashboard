@@ -15,6 +15,7 @@ import {
   CalendarDays,
   History,
   FileText,
+  NotebookPen,
   type LucideIcon,
 } from "lucide-react";
 
@@ -45,7 +46,8 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Ideas & link collections", group: "Planning" },
   { title: "Groceries", short: "Shop", href: "/shopping", icon: ShoppingCart, description: "Shared shopping list", group: "Home" },
   { title: "Maintenance", short: "Upkeep", href: "/maintenance", icon: Wrench, description: "Reminders & servicing", group: "Home" },
-  { title: "Documents & notes", short: "Docs", href: "/documents", icon: FolderArchive, description: "Warranties, insurance, notes & more", group: "Home" },
+  { title: "Documents", short: "Docs", href: "/documents", icon: FolderArchive, description: "Warranties, insurance, manuals & more", group: "Home" },
+  { title: "Notes & Links", short: "Notes", href: "/notes", icon: NotebookPen, description: "Quick notes and useful web links", group: "Home" },
   { title: "Photos", short: "Photos", href: "/photos", icon: Camera, description: "Quick snaps to label later", group: "Capture" },
   { title: "Drafts", short: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later", group: "Capture" },
   { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance", group: "Calendar" },

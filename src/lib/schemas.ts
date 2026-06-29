@@ -175,6 +175,13 @@ export const maintenanceSchema = z.object({
 });
 export type MaintenanceInput = z.infer<typeof maintenanceSchema>;
 
+export const usefulLinkSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(160),
+  url: z.string().trim().url("Enter a valid URL (include https://)").max(2000),
+  description: optionalString,
+});
+export type UsefulLinkInput = z.infer<typeof usefulLinkSchema>;
+
 export const documentSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(160),
   category: z.enum(DOCUMENT_CATEGORIES),

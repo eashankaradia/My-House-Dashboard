@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Camera, CheckSquare, FileText, FolderArchive, Hammer, Lightbulb, ListPlus, Receipt, ShoppingBag, Wrench } from "lucide-react";
+import { Camera, CheckSquare, FileText, FolderArchive, Hammer, Lightbulb, Link2, ListPlus, Receipt, ShoppingBag, StickyNote, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { QuickPhotoDialog } from "@/app/(app)/photos/quick-photo-dialog";
 import { DraftDialog } from "@/app/(app)/drafts/draft-dialog";
@@ -13,6 +13,8 @@ import { QuickOptionForm } from "@/app/(app)/purchases/quick-option-form";
 import { InspirationForm } from "@/app/(app)/inspiration/inspiration-form";
 import { MaintenanceForm } from "@/app/(app)/maintenance/maintenance-form";
 import { DocumentForm } from "@/app/(app)/documents/document-form";
+import { NoteForm } from "@/app/(app)/documents/note-form";
+import { UsefulLinkForm } from "@/app/(app)/notes/useful-link-form";
 
 export const Pill = React.forwardRef<
   HTMLButtonElement,
@@ -41,6 +43,8 @@ export function AddPills({ className }: { className?: string }) {
         <QuickPhotoDialog trigger={<Pill icon={Camera} label="Photo" />} />
         <DraftDialog trigger={<Pill icon={FileText} label="Draft" />} />
         <InspirationForm collections={[]} trigger={<Pill icon={Lightbulb} label="Idea" />} />
+        <NoteForm trigger={<Pill icon={StickyNote} label="Note" />} />
+        <UsefulLinkForm trigger={<Pill icon={Link2} label="Link" />} />
       </AddGroup>
       <AddGroup label="Money">
         <BillForm trigger={<Pill icon={Receipt} label="Expense" />} />

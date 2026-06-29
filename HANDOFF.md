@@ -2,7 +2,23 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-29 (Claude — new house/"M" brand logo).
+> after **every** change. Last updated: 2026-06-29 (Claude — Notes & Links section; documents split out).
+
+### Notes & Links (done) — **needs migration 0034**
+- `0034_useful_links.sql` adds `useful_links` (title, url, description) + household
+  RLS + updated_at trigger. **RUN THIS LIVE** (SQL given inline).
+- **Separated notes from documents.** New `/notes` route ("Notes & Links") shows
+  Notes (the existing `documents` rows with `category="Note"`) + a new **Useful
+  links** list. The `/documents` page now shows documents only (queries
+  `neq category 'Note'`), renamed to just "Documents".
+- New: `notes/page.tsx`, `notes/actions.ts` (create/update/deleteUsefulLink),
+  `notes/useful-link-form.tsx`. Notes still reuse `documents/note-form.tsx` +
+  `deleteDocument` (which now also `revalidatePath("/notes")`).
+- Types/schema: `UsefulLink` type + `useful_links` registered in `Database`;
+  `usefulLinkSchema` in schemas.
+- Nav: `/documents` renamed "Documents"; new "Notes & Links" (`NotebookPen`,
+  group Home). Quick-add menu gains **Note** and **Link** pills (Capture group).
+- Verified: typecheck, lint, build clean.
 
 ### Brand logo (done, no DB)
 - Replaced the generic lucide `Home` icon mark with the new house/"M" logo

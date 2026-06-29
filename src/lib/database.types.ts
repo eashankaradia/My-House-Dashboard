@@ -460,6 +460,14 @@ export type Draft = Timestamps & {
   image_url: string | null;
 };
 
+export type UsefulLink = Timestamps & {
+  id: string;
+  user_id: string;
+  title: string;
+  url: string;
+  description: string | null;
+};
+
 export type ShoppingItem = Timestamps & {
   id: string;
   user_id: string;
@@ -586,6 +594,7 @@ export type Database = {
       shopping_items: Row<ShoppingItem>;
       quick_photos: Row<QuickPhoto>;
       drafts: Row<Draft>;
+      useful_links: Row<UsefulLink>;
       comments: Row<Comment>;
       comment_reads: Row<CommentRead>;
       reactions: Row<Reaction>;
