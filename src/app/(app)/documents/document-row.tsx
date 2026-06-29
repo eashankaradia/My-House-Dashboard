@@ -47,16 +47,13 @@ export function DocumentRow({ doc }: { doc: Document }) {
         </>
       }
       badges={
-        <>
-          <Badge variant="secondary">{doc.category}</Badge>
-          {expiryDays !== null ? (
-            expiryDays < 0 ? (
-              <Badge variant="destructive">Expired</Badge>
-            ) : expiryDays <= 60 ? (
-              <Badge variant="warning">{expiryDays}d left</Badge>
-            ) : null
-          ) : null}
-        </>
+        expiryDays !== null ? (
+          expiryDays < 0 ? (
+            <Badge variant="destructive">Expired</Badge>
+          ) : expiryDays <= 60 ? (
+            <Badge variant="warning">{expiryDays}d left</Badge>
+          ) : null
+        ) : null
       }
       actions={
         <>
