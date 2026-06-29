@@ -13,6 +13,7 @@ import { CardTrigger } from "@/components/shared/card-trigger";
 import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
 import { useViewPref } from "@/hooks/use-view-prefs";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { PURCHASE_SIZES, PURCHASE_STATUSES } from "@/lib/constants";
 import { PRIORITY_ACCENT } from "@/lib/ui";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -73,6 +74,9 @@ export function PurchasesGrid({
   const [minRating, setMinRating] = React.useState<number>(0);
   const [sort, setSort] = React.useState<keyof typeof SORTS>("rating");
   const [view, setView] = useViewPref("purchases");
+  // The table scrolls sideways on phones — fall back to cards there.
+  const isMobile = useIsMobile();
+  const effectiveView = isMobile && view === "table" ? "detailed" : view;
   const [onlyMine, setOnlyMine] = React.useState(false);
   const [hideNoOptions, setHideNoOptions] = React.useState(false);
 
@@ -294,7 +298,7 @@ export function PurchasesGrid({
             <button
               onClick={() => setView("table")}
               aria-label="Table view"
-              className={cn("rounded-md p-1.5 text-muted-foreground", view === "table" && "bg-accent text-foreground")}
+              className={cn("hidden rounded-md p-1.5 text-muted-foreground sm:block", view === "table" && "bg-accent text-foreground")}
             >
               <Table2 className="h-4 w-4" />
             </button>
@@ -304,7 +308,7 @@ export function PurchasesGrid({
 
       {filtered.length === 0 ? (
         <EmptyState icon={ShoppingBag} title="Nothing here" description="No items match this filter yet." />
-      ) : view === "compact" ? (
+      ) : effectiveView === "compact" ? (
         <Card>
           <CardContent className="divide-y p-0">
             {filtered.map((purchase) => (
@@ -312,7 +316,7 @@ export function PurchasesGrid({
             ))}
           </CardContent>
         </Card>
-      ) : view === "table" ? (
+      ) : effectiveView === "table" ? (
         <PurchaseTable purchases={filtered} memberMap={memberMap} />
       ) : (
         <div className="grid min-w-0 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">

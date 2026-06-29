@@ -21,10 +21,14 @@ export function PageHeader({ title, description, info, children, className }: Pr
     >
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{title}</h1>
           {info ? <InfoHint text={info} /> : null}
         </div>
-        {description ? <p className="max-w-3xl text-sm text-muted-foreground">{description}</p> : null}
+        {/* Save vertical space on phones: if there's an info hint to carry the
+            explanation, hide the description on mobile; otherwise keep it. */}
+        {description ? (
+          <p className={cn("max-w-3xl text-sm text-muted-foreground", info && "hidden sm:block")}>{description}</p>
+        ) : null}
       </div>
       {children ? <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">{children}</div> : null}
     </div>
