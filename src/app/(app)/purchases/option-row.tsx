@@ -53,7 +53,7 @@ export function OptionRow({
             onClick={() => run(() => moveOption(purchaseId, option.id, "up"))}
             disabled={pending || isFirst}
             aria-label="Rank higher"
-            className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+            className="inline-flex h-6 w-7 items-center justify-center text-muted-foreground transition-transform hover:text-foreground active:scale-90 disabled:opacity-30"
           >
             <ChevronUp className="h-4 w-4" />
           </button>
@@ -61,7 +61,7 @@ export function OptionRow({
             onClick={() => run(() => moveOption(purchaseId, option.id, "down"))}
             disabled={pending || isLast}
             aria-label="Rank lower"
-            className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+            className="inline-flex h-6 w-7 items-center justify-center text-muted-foreground transition-transform hover:text-foreground active:scale-90 disabled:opacity-30"
           >
             <ChevronDown className="h-4 w-4" />
           </button>
@@ -113,7 +113,7 @@ export function OptionRow({
               target="_blank"
               rel="noreferrer"
               aria-label="Open product link"
-              className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-transform hover:bg-accent hover:text-foreground active:scale-90"
             >
               <ExternalLink className="h-4 w-4" />
             </a>
@@ -123,7 +123,7 @@ export function OptionRow({
             disabled={pending}
             aria-label={option.is_chosen ? "Chosen option" : "Pick this option"}
             className={cn(
-              "rounded-md p-1.5 transition-colors hover:bg-accent",
+              "inline-flex h-10 w-10 items-center justify-center rounded-md transition-transform hover:bg-accent active:scale-90",
               option.is_chosen ? "text-amber-500" : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -134,7 +134,7 @@ export function OptionRow({
             purchaseCategory={purchaseCategory}
             option={option}
             trigger={
-              <button aria-label="Edit option" className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+              <button aria-label="Edit option" className="inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-transform hover:bg-accent hover:text-foreground active:scale-90">
                 <Pencil className="h-4 w-4" />
               </button>
             }
