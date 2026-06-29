@@ -89,18 +89,20 @@ export default async function DocumentsPage() {
                 />
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {grouped.map(({ category, docs }) => (
-                  <Card key={category}>
-                    <CardHeader>
-                      <CardTitle className="text-base">{category}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
+                  <section key={category}>
+                    {/* Sticky section header (pins under the top bar while scrolling). */}
+                    <div className="sticky top-16 z-10 -mx-1 mb-2 flex items-center gap-2 bg-background/90 px-1 py-1.5 backdrop-blur">
+                      <h2 className="text-sm font-semibold">{category}</h2>
+                      <span className="text-xs text-muted-foreground">{docs.length}</span>
+                    </div>
+                    <div className="space-y-2">
                       {docs.map((doc) => (
                         <DocumentRow key={doc.id} doc={doc} />
                       ))}
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </section>
                 ))}
               </div>
             </>

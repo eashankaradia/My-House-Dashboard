@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-28 (Claude — Mobile UX Tier 2: consistency & layout).
+> after **every** change. Last updated: 2026-06-28 (Claude — Mobile UX Tier 3: polish; Tiers 1-3 shipped).
 
 ## -2. FOURTH LIST in progress (Claude, 2026-06-27)
 
@@ -110,6 +110,13 @@ Requests:
   is now `min-w-0 flex-1 truncate`, inner flex is `min-w-0`, Picked badge is
   `shrink-0`, button is `w-full min-w-0`. Also hid the "Edit" label on mobile
   (`hidden sm:inline`, icon kept) to free width. Typecheck/lint/build clean.
+
+### Mobile UX Tier 3 (done, no DB) — polish
+- **Sticky section headers** on Documents: each category group is a `<section>`
+  with a `sticky top-16` backdrop-blurred header + count (iOS grouped-list feel),
+  replacing the per-category Cards.
+- Overscroll containment came in Tier 1 (dialogs); internal scroll lists inherit it.
+- Verified: typecheck, lint, build clean. **Mobile UX Tiers 1–3 all shipped.**
 
 ### Mobile UX Tier 2 (done, no DB) — consistency & layout
 - **Tables → cards on mobile**: new `useIsMobile()` hook (SSR-safe matchMedia).
