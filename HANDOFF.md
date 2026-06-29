@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-28 (Claude — Mobile UX Tier 1: native-feel fundamentals).
+> after **every** change. Last updated: 2026-06-28 (Claude — Mobile UX Tier 2: consistency & layout).
 
 ## -2. FOURTH LIST in progress (Claude, 2026-06-27)
 
@@ -110,6 +110,15 @@ Requests:
   is now `min-w-0 flex-1 truncate`, inner flex is `min-w-0`, Picked badge is
   `shrink-0`, button is `w-full min-w-0`. Also hid the "Edit" label on mobile
   (`hidden sm:inline`, icon kept) to free width. Typecheck/lint/build clean.
+
+### Mobile UX Tier 2 (done, no DB) — consistency & layout
+- **Tables → cards on mobile**: new `useIsMobile()` hook (SSR-safe matchMedia).
+  Tasks and Purchases force the stacked/card view under `sm` regardless of the saved
+  view pref, and hide the Table-view toggle on mobile. (Projects kanban left as-is —
+  horizontal column scroll is an accepted mobile pattern.)
+- **Compact mobile page headers**: `PageHeader` title `text-xl sm:text-2xl`; the
+  description is hidden on mobile only when an info hint carries the explanation.
+- Verified: typecheck, lint, build clean. NEXT: Tier 3 (sticky group headers, scroll polish).
 
 ### Batch 12 (done, no DB) — Mobile UX Tier 1 (native-feel fundamentals)
 - **16px inputs on mobile** (Input/Textarea/NativeSelect now `text-base sm:text-sm`,

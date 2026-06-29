@@ -24,6 +24,7 @@ import { CardTrigger } from "@/components/shared/card-trigger";
 import { useToast } from "@/hooks/use-toast";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { useViewPref } from "@/hooks/use-view-prefs";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { LinkedItems } from "@/app/(app)/links/linked-items";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { ItemComments } from "@/components/shared/item-comments";
@@ -49,6 +50,9 @@ export function TasksView({
 }) {
   const [onlyMine, setOnlyMine] = React.useState(false);
   const [view, setView] = useViewPref("tasks");
+  // Tables scroll sideways on phones — always use the stacked list there.
+  const isMobile = useIsMobile();
+  const effectiveView = isMobile ? "detailed" : view;
 
   const members: Member[] = React.useMemo(
     () => Object.entries(memberMap).map(([id, name]) => ({ id, name })),
@@ -85,7 +89,7 @@ export function TasksView({
             </button>
           </div>
         ) : null}
-        <div className="flex items-center rounded-lg border p-0.5">
+        <div className="hidden items-center rounded-lg border p-0.5 sm:flex">
           <button
             onClick={() => setView("detailed")}
             aria-label="List view"
@@ -103,7 +107,7 @@ export function TasksView({
         </div>
       </div>
 
-      {view === "table" ? (
+      {effectiveView === "table" ? (
         <TaskTable
           outstanding={outstanding}
           done={done}
