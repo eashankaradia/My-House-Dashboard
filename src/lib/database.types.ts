@@ -529,6 +529,18 @@ export type DocumentCategory =
   | "Quotes"
   | "Certificates"
   | "Receipts"
+  | "Tax"
+  | "Utilities"
+  | "Contracts"
+  | "Legal"
+  | "Vehicle"
+  | "Medical"
+  | "Identity"
+  | "Banking"
+  | "Appliances"
+  | "Garden"
+  | "Pets"
+  | "Travel"
   | "Note"
   | "Other";
 

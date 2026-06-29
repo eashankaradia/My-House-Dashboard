@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-28 (Claude — Room Designer: doors on the plan + distances toggle).
+> after **every** change. Last updated: 2026-06-28 (Claude — Documents: drop row category badge + more categories).
 
 ## -2. FOURTH LIST in progress (Claude, 2026-06-27)
 
@@ -110,6 +110,17 @@ Requests:
   is now `min-w-0 flex-1 truncate`, inner flex is `min-w-0`, Picked badge is
   `shrink-0`, button is `w-full min-w-0`. Also hid the "Edit" label on mobile
   (`hidden sm:inline`, icon kept) to free width. Typecheck/lint/build clean.
+
+### Batch 11 (done, no DB) — Documents: drop row category badge + more categories
+- The per-document **category badge is removed from `document-row.tsx`** (the page
+  already groups documents into per-category section cards, so it was redundant).
+- **More document categories**: `DOCUMENT_CATEGORIES` (constants) gained Tax,
+  Utilities, Contracts, Legal, Vehicle, Medical, Identity, Banking, Appliances,
+  Garden, Pets, Travel (Note/Other kept last). The matching `DocumentCategory`
+  union in `database.types.ts` was extended to match (it's a hand-maintained
+  union, separate from the constant — keep them in sync). No DB change (category
+  is a text column; the form already lists `DOCUMENT_CATEGORIES` minus "Note").
+- Verified: typecheck, lint, build all clean.
 
 ### Batch 10 (done, no DB) — Room Designer: doors on the plan + distances
 - **Doors are now placed/dragged on the floor plan** (`floor-planner.tsx`), not just

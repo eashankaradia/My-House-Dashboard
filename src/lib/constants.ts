@@ -120,7 +120,9 @@ export const MAINTENANCE_FREQUENCIES = [
 ] as const;
 
 export const DOCUMENT_CATEGORIES = [
-  "Mortgage", "Insurance", "Warranties", "Manuals", "Quotes", "Certificates", "Receipts", "Note", "Other",
+  "Mortgage", "Insurance", "Warranties", "Manuals", "Quotes", "Certificates", "Receipts",
+  "Tax", "Utilities", "Contracts", "Legal", "Vehicle", "Medical", "Identity", "Banking",
+  "Appliances", "Garden", "Pets", "Travel", "Note", "Other",
 ] as const;
 
 export const ROOMS = [

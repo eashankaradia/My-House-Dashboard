@@ -35,12 +35,9 @@ export function DocumentRow({ doc }: { doc: Document }) {
           <FileText className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <DocumentDetailDialog doc={doc}>
-              <button className="truncate text-left font-medium hover:underline">{doc.name}</button>
-            </DocumentDetailDialog>
-            <Badge variant="secondary">{doc.category}</Badge>
-          </div>
+          <DocumentDetailDialog doc={doc}>
+            <button className="block max-w-full truncate text-left font-medium hover:underline">{doc.name}</button>
+          </DocumentDetailDialog>
           <p className="text-xs text-muted-foreground">
             {doc.expiry_date ? `Expires ${formatDate(doc.expiry_date)}` : "No expiry"}
             {doc.file_path ? "" : " · no file"}
