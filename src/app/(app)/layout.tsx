@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bell, Home } from "lucide-react";
+import { Bell } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -43,9 +43,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {/* Desktop sidebar */}
       <aside className="hidden border-r bg-card/40 lg:flex lg:flex-col">
         <Link href="/dashboard" className="flex items-center gap-2.5 px-6 py-5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow">
-            <Home className="h-5 w-5" />
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/logo.png" alt="My House" className="h-9 w-9 shrink-0 rounded-xl object-contain shadow-sm" />
           <span className="text-[15px] font-semibold">My House</span>
         </Link>
         <SidebarNav />
@@ -60,9 +59,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-2">
             <MobileNav />
             <Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Home className="h-4 w-4" />
-              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/logo.png" alt="My House" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
               <span className="font-semibold">My House</span>
             </Link>
           </div>

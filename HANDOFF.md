@@ -2,7 +2,16 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-28 (Claude — Mobile UX Tier 3: polish; Tiers 1-3 shipped).
+> after **every** change. Last updated: 2026-06-29 (Claude — new house/"M" brand logo).
+
+### Brand logo (done, no DB)
+- Replaced the generic lucide `Home` icon mark with the new house/"M" logo
+  (`public/icons/logo.png`, 1254²). Used in the app sidebar + mobile top bar
+  (`(app)/layout.tsx`) and the login card, sized in a square with `object-contain`
+  so it's centred with the asset's built-in padding.
+- Favicon via `src/app/icon.png` (Next.js convention); PWA `manifest.ts` icons now
+  point at `/icons/icon.png` (512², purpose any + maskable). Old `icon.svg` left in
+  place but unreferenced.
 
 ## -2. FOURTH LIST in progress (Claude, 2026-06-27)
 
