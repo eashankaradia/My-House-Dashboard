@@ -244,15 +244,15 @@ function CommentRow({
           </div>
         ) : null}
       </div>
-      <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="flex shrink-0 items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
         <button
           type="button"
           disabled={disabled}
           onClick={() => setPickerOpen((v) => !v)}
           aria-label="React to comment"
-          className="text-muted-foreground hover:text-foreground"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-transform hover:bg-accent hover:text-foreground active:scale-90"
         >
-          <SmilePlus className="h-3.5 w-3.5" />
+          <SmilePlus className="h-4 w-4" />
         </button>
         {mine ? (
           <button
@@ -260,9 +260,9 @@ function CommentRow({
             disabled={disabled}
             onClick={onDelete}
             aria-label="Delete comment"
-            className="text-muted-foreground hover:text-destructive"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-transform hover:bg-accent hover:text-destructive active:scale-90"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-4 w-4" />
           </button>
         ) : null}
       </div>

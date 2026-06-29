@@ -107,7 +107,7 @@ function PaletteCard({ palette, swatches }: { palette: RoomColourPalette; swatch
                 <button
                   onClick={() => startTransition(async () => { await deleteSwatch(s.id); router.refresh(); })}
                   aria-label="Remove colour"
-                  className="absolute -right-1 -top-1 rounded-full bg-background p-0.5 text-muted-foreground opacity-0 shadow transition-opacity hover:text-destructive group-hover:opacity-100"
+                  className="absolute -right-1 -top-1 rounded-full bg-background p-1 text-muted-foreground opacity-100 shadow transition-opacity hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>

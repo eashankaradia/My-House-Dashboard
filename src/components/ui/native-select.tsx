@@ -12,7 +12,8 @@ const NativeSelect = React.forwardRef<HTMLSelectElement, React.ComponentProps<"s
       <select
         ref={ref}
         className={cn(
-          "flex h-10 w-full appearance-none rounded-lg border border-input bg-background px-3 py-2 pr-9 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+          // 16px text on mobile stops iOS Safari auto-zooming on focus; 14px from sm up.
+          "flex h-11 w-full appearance-none rounded-lg border border-input bg-background px-3 py-2 pr-9 text-base shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 sm:h-10 sm:text-sm",
           className,
         )}
         {...props}

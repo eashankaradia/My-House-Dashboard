@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-28 (Claude — Documents: drop row category badge + more categories).
+> after **every** change. Last updated: 2026-06-28 (Claude — Mobile UX Tier 1: native-feel fundamentals).
 
 ## -2. FOURTH LIST in progress (Claude, 2026-06-27)
 
@@ -110,6 +110,23 @@ Requests:
   is now `min-w-0 flex-1 truncate`, inner flex is `min-w-0`, Picked badge is
   `shrink-0`, button is `w-full min-w-0`. Also hid the "Edit" label on mobile
   (`hidden sm:inline`, icon kept) to free width. Typecheck/lint/build clean.
+
+### Batch 12 (done, no DB) — Mobile UX Tier 1 (native-feel fundamentals)
+- **16px inputs on mobile** (Input/Textarea/NativeSelect now `text-base sm:text-sm`,
+  inputs/selects `h-11 sm:h-10`) — stops iOS Safari auto-zooming on focus.
+- **Safe-area insets**: bottom nav `pb-[env(safe-area-inset-bottom)]`; main content
+  `pb-[calc(6rem+env(safe-area-inset-bottom))]`; mobile dialog sheet + sticky footer
+  padded for the home indicator.
+- **Dialog uses `dvh`** (90dvh/92dvh) + `overscroll-contain` so sheets don't jump
+  with the URL bar or drag the page.
+- **Press feedback**: `active:scale` on Button (global), bottom-nav tabs + FAB.
+- **Touch targets + touch-reachability**: option-row action/chevron buttons and
+  comment react/delete buttons enlarged to ~36–40px with active states. Fixed
+  hover-only reveals that were unreachable on touch (comment actions, colour-studio
+  swatch remove) → visible on mobile, hover-reveal on `sm+`.
+- Verified: typecheck, lint, build all clean. NEXT: Tier 2 (tables→cards on mobile,
+  filter sheets across list pages, compact mobile headers), then Tier 3 (sticky
+  group headers, overscroll polish).
 
 ### Batch 11 (done, no DB) — Documents: drop row category badge + more categories
 - The per-document **category badge is removed from `document-row.tsx`** (the page

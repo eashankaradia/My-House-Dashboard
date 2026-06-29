@@ -34,12 +34,12 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed z-50 grid gap-4 overflow-y-auto bg-background p-6 shadow-lg duration-200",
+        "fixed z-50 grid gap-4 overflow-y-auto overscroll-contain bg-background p-6 shadow-lg duration-200",
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         // Desktop: centred modal.
-        "left-1/2 top-1/2 max-h-[92vh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 border data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 sm:rounded-xl",
-        // Mobile: bottom sheet that slides up from the bottom.
-        "max-sm:inset-x-0 max-sm:bottom-0 max-sm:left-0 max-sm:top-auto max-sm:max-h-[90vh] max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:border-t max-sm:pb-8",
+        "left-1/2 top-1/2 max-h-[92dvh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 border data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 sm:rounded-xl",
+        // Mobile: bottom sheet that slides up from the bottom (dvh tracks the URL bar).
+        "max-sm:inset-x-0 max-sm:bottom-0 max-sm:left-0 max-sm:top-auto max-sm:max-h-[90dvh] max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:border-t max-sm:pb-[calc(2rem+env(safe-area-inset-bottom))]",
         "max-sm:data-[state=open]:zoom-in-100 max-sm:data-[state=closed]:zoom-out-100 max-sm:data-[state=open]:slide-in-from-bottom max-sm:data-[state=closed]:slide-out-to-bottom",
         className,
       )}
@@ -68,7 +68,7 @@ function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
         "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
         // On the mobile sheet, pin the actions to the bottom so Save stays
         // reachable above the on-screen keyboard.
-        "max-sm:sticky max-sm:bottom-0 max-sm:z-10 max-sm:-mx-6 max-sm:-mb-8 max-sm:border-t max-sm:bg-background/95 max-sm:px-6 max-sm:pb-6 max-sm:pt-3 max-sm:backdrop-blur",
+        "max-sm:sticky max-sm:bottom-0 max-sm:z-10 max-sm:-mx-6 max-sm:-mb-[calc(2rem+env(safe-area-inset-bottom))] max-sm:border-t max-sm:bg-background/95 max-sm:px-6 max-sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-sm:pt-3 max-sm:backdrop-blur",
         className,
       )}
       {...props}

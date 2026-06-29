@@ -36,7 +36,7 @@ export function BottomNav() {
         key={item.href}
         href={item.href}
         className={cn(
-          "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors",
+          "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-transform active:scale-95",
           active ? "text-primary" : "text-muted-foreground",
         )}
       >
@@ -62,7 +62,7 @@ export function BottomNav() {
         </>
       ) : null}
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/90 backdrop-blur lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-lg items-stretch justify-around">
           {left.map(renderTab)}
           <button
@@ -71,7 +71,7 @@ export function BottomNav() {
             aria-label={addOpen ? "Close add menu" : "Add new"}
             className="flex flex-col items-center justify-center px-3"
           >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-90">
               {addOpen ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
             </span>
           </button>
