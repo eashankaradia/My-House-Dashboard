@@ -316,6 +316,13 @@ export const WORKOUT_TYPES = [
   "Strength", "Cardio", "HIIT", "Yoga", "Pilates", "Sport", "Walk", "Run", "Swim", "Cycling", "Other",
 ] as const;
 
+export const MUSCLE_GROUPS = [
+  "Chest", "Back", "Shoulders", "Biceps", "Triceps", "Forearms",
+  "Abs", "Quads", "Hamstrings", "Glutes", "Calves",
+] as const;
+
+export const PB_UNITS = ["kg", "lb", "reps", "seconds", "minutes", "km", "m"] as const;
+
 // ---------------------------------------------------------------------------
 // Health
 // ---------------------------------------------------------------------------

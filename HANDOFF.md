@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (MyLife module redesign in progress — Habits v2 shipped; landing-page branding fix shipped).
+> after **every** change. Last updated: 2026-06-30 (MyLife module redesign in progress — Habits v2 + Fitness/workout-plans shipped; landing-page branding fix shipped).
 
 ---
 
@@ -66,18 +66,54 @@ branch on `process.env.NEXT_PUBLIC_APP === "life"`. No DB change.
   their dedicated logging UI, not a single tap-toggle).
 - Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
 
+### Fitness → workout plans — DONE — migration `0038_workout_plans.sql` (already applied live via MCP)
+- Replaced per-session workout logging entirely with a reusable **exercise
+  library + workout plan builder**. New tables: `exercises` (name,
+  `muscle_groups text[]`, `technique`, `inspiration`, `pb_value`/`pb_unit`/
+  `pb_date`), `workout_plans` (name, description, is_active), and
+  `workout_plan_exercises` (join: plan_id, exercise_id, sets, reps,
+  target_weight_kg, order_index, notes). The old `workouts`/
+  `workout_exercises` tables are left in place but fully unused (nothing
+  referenced them outside the fitness module — verified via grep before
+  deleting `workout-form.tsx`).
+- `src/lib/constants.ts`: `MUSCLE_GROUPS` (11 groups: Chest, Back,
+  Shoulders, Biceps, Triceps, Forearms, Abs, Quads, Hamstrings, Glutes,
+  Calves) and `PB_UNITS` (kg/lb/reps/seconds/minutes/km/m).
+- `fitness/actions.ts` rewritten: `createExercise`/`updateExercise`/
+  `deleteExercise` (now operate on the new `exercises` table — same
+  function names as before but different table/shape, no other module
+  imports them), `createWorkoutPlan`/`updateWorkoutPlan`/`deleteWorkoutPlan`,
+  `addExerciseToPlan`/`updatePlanExercise`/`removeExerciseFromPlan`.
+- `fitness/body-diagram.tsx`: a simplified front+back SVG human silhouette
+  (geometric shapes, not anatomically precise) with one highlightable zone
+  per `MUSCLE_GROUPS` entry — fills `fill-primary` when that muscle is
+  worked. Used both per-plan (aggregated from its exercises) and at the
+  bottom of the page (aggregated across the whole library).
+- `fitness/exercise-form.tsx`: name, a toggle-pill multi-select for muscle
+  groups, technique notes, inspiration, and an optional PB (value + unit +
+  date, date only shown once a value is entered). Has an `onCreated`
+  callback so it can be used both standalone and nested inside the plan
+  picker (create-and-attach in one step).
+- `fitness/plan-form.tsx`: name + description only (kept deliberately
+  minimal — exercises are attached after creation via the detail dialog).
+- `fitness/plan-detail-dialog.tsx`: shows the plan's exercises (sets/reps/
+  weight, PB badge, muscle badges), the body diagram for just this plan's
+  muscles, a "choose from library" select to attach an existing exercise, and
+  a nested `ExerciseForm` to create-and-attach a brand new one. Same
+  nested-dialog pattern as `habit-detail-dialog.tsx`/`option-detail.tsx`.
+- `fitness/fitness-view.tsx` (client) + `fitness/page.tsx` (server): Plans
+  grid (tap a card to open `PlanDetailDialog`), an Exercise library grid
+  (tap a card to open `ExerciseForm` pre-filled for editing — same
+  previously-dead-code-now-wired pattern as the habits edit fix), and a
+  library-wide body diagram at the bottom.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
 ### Still TODO on this redesign (next batches, same branch)
-1. **Workouts → workout plans**: replace logging individual workouts with a
-   plan builder. Per exercise: PBs, inspiration, technique notes, muscle
-   group tag, and a human-body diagram highlighting which muscles a plan
-   works. Current schema (`workouts`/`workout_exercises`, both per-session
-   logs) will need new tables for reusable exercises + plans — has not been
-   designed yet.
-2. **Nutrition → recipes**: replace meal logging with recipe capture (video
+1. **Nutrition → recipes**: replace meal logging with recipe capture (video
    URL, ingredients list, nutritional value per recipe). Current
    `nutrition_logs` table is meal-log-shaped; will likely need a new
    `recipes` table (+ maybe `recipe_ingredients`) rather than reusing it.
-3. **Finance: savings & investment pots**: `savings_pots` already exists
+2. **Finance: savings & investment pots**: `savings_pots` already exists
    (household-shared table, RLS `auth.uid() = user_id or
    is_household_member()`) with a full accounts/contributions ledger
    (migration 0007) and an existing `QuickContribute` quick-add-value
@@ -87,7 +123,7 @@ branch on `process.env.NEXT_PUBLIC_APP === "life"`. No DB change.
    `savings_pots` and surface investment pots (reusing `PotCard`/
    `QuickContribute`) on the `/finance` page rather than building new
    infrastructure.
-4. **Health: reels & guides**: capture health inspiration reels/videos and
+3. **Health: reels & guides**: capture health inspiration reels/videos and
    "how to be healthy" guides. Not yet designed — likely a new table
    (similar shape to `quick_photos`/`drafts`/inspiration) scoped to health,
    or could extend the existing inspiration feed with a `category="health"`

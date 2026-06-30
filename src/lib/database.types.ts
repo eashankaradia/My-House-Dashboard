@@ -615,6 +615,43 @@ export type WorkoutExercise = {
   created_at: string;
 };
 
+export type Exercise = {
+  id: string;
+  user_id: string;
+  name: string;
+  muscle_groups: string[];
+  technique: string | null;
+  inspiration: string | null;
+  pb_value: number | null;
+  pb_unit: string | null;
+  pb_date: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WorkoutPlan = {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WorkoutPlanExercise = {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  exercise_id: string;
+  sets: number | null;
+  reps: number | null;
+  target_weight_kg: number | null;
+  order_index: number;
+  notes: string | null;
+  created_at: string;
+};
+
 export type HealthRecord = {
   id: string;
   user_id: string;
@@ -777,6 +814,9 @@ export type Database = {
       journal_entries: Row<JournalEntry>;
       workouts: Row<Workout>;
       workout_exercises: Row<WorkoutExercise>;
+      exercises: Row<Exercise>;
+      workout_plans: Row<WorkoutPlan>;
+      workout_plan_exercises: Row<WorkoutPlanExercise>;
       health_records: Row<HealthRecord>;
       medications: Row<Medication>;
       appointments: Row<Appointment>;
