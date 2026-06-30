@@ -21,28 +21,3 @@ export async function upsertFinanceSettings(input: {
   revalidatePath("/dashboard");
 }
 
-export async function upsertBudget(input: {
-  category: string;
-  monthlyLimit: number;
-  notes?: string;
-}) {
-  const { supabase, user } = await getActionContext();
-  const { error } = await supabase.from("budgets").upsert(
-    {
-      user_id: user.id,
-      category: input.category,
-      monthly_limit: input.monthlyLimit,
-      notes: input.notes ?? null,
-    },
-    { onConflict: "user_id,category" },
-  );
-  if (error) return { error: error.message };
-  revalidatePath("/finance");
-}
-
-export async function deleteBudget(id: string) {
-  const { supabase } = await getActionContext();
-  const { error } = await supabase.from("budgets").delete().eq("id", id);
-  if (error) return { error: error.message };
-  revalidatePath("/finance");
-}

@@ -771,6 +771,9 @@ export type FinanceSettings = {
   user_id: string;
   monthly_income: number | null;
   income_label: string;
+  annual_salary: number | null;
+  employer: string | null;
+  salary_notes: string | null;
   updated_at: string;
 };
 
@@ -780,6 +783,54 @@ export type Budget = Timestamps & {
   category: string;
   monthly_limit: number;
   notes: string | null;
+};
+
+export type IncomeMonth = Timestamps & {
+  id: string;
+  user_id: string;
+  month: string;
+  net_income: number;
+  bonus: number;
+  notes: string | null;
+};
+
+export type CreditCard = Timestamps & {
+  id: string;
+  user_id: string;
+  name: string;
+  last4: string | null;
+  statement_day: number | null;
+  notes: string | null;
+};
+
+export type CreditCardStatement = Timestamps & {
+  id: string;
+  user_id: string;
+  card_id: string;
+  statement_month: string;
+  amount: number;
+  is_paid: boolean;
+  notes: string | null;
+};
+
+export type PotContributionSchedule = Timestamps & {
+  id: string;
+  user_id: string;
+  pot_id: string;
+  amount: number;
+  start_date: string | null;
+  end_date: string | null;
+  notes: string | null;
+};
+
+export type PotContributionOverride = {
+  id: string;
+  user_id: string;
+  pot_id: string;
+  month: string;
+  amount: number;
+  notes: string | null;
+  created_at: string;
 };
 
 export type InspirationSource =
@@ -888,6 +939,11 @@ export type Database = {
       recipe_ingredients: Row<RecipeIngredient>;
       finance_settings: Row<FinanceSettings>;
       budgets: Row<Budget>;
+      income_months: Row<IncomeMonth>;
+      credit_cards: Row<CreditCard>;
+      credit_card_statements: Row<CreditCardStatement>;
+      pot_contribution_schedules: Row<PotContributionSchedule>;
+      pot_contribution_overrides: Row<PotContributionOverride>;
     };
     Views: { [_ in never]: never };
     Functions: {

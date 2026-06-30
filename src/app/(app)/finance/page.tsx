@@ -4,13 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, toMonthly } from "@/lib/utils";
-import type { Bill, Budget, FinanceSettings, Goal, SavingsAccount, SavingsContribution, SavingsPot } from "@/lib/database.types";
+import type { Bill, FinanceSettings, Goal, SavingsAccount, SavingsContribution, SavingsPot } from "@/lib/database.types";
 import { IncomeForm } from "./income-form";
-import { BudgetForm } from "./budget-form";
-import { BILL_CATEGORIES } from "@/lib/constants";
 import { PotCard } from "@/app/(app)/savings/pot-card";
 import { PotForm } from "@/app/(app)/savings/pot-form";
 
@@ -18,10 +15,9 @@ export const metadata = { title: "Finance" };
 
 export default async function FinancePage() {
   const supabase = await createClient();
-  const [billsRes, settingsRes, budgetsRes, potsRes, accountsRes, contribRes, goalsRes] = await Promise.all([
+  const [billsRes, settingsRes, potsRes, accountsRes, contribRes, goalsRes] = await Promise.all([
     supabase.from("bills").select("*"),
     supabase.from("finance_settings").select("*").limit(1).maybeSingle(),
-    supabase.from("budgets").select("*").order("category"),
     supabase.from("savings_pots").select("*").order("created_at"),
     supabase.from("savings_accounts").select("*"),
     supabase.from("savings_contributions").select("*"),
@@ -30,7 +26,6 @@ export default async function FinancePage() {
 
   const bills = (billsRes.data ?? []) as Bill[];
   const settings = settingsRes.data as FinanceSettings | null;
-  const budgets = (budgetsRes.data ?? []) as Budget[];
   const pots = (potsRes.data ?? []) as SavingsPot[];
   const accounts = (accountsRes.data ?? []) as SavingsAccount[];
   const contributions = (contribRes.data ?? []) as SavingsContribution[];
@@ -46,30 +41,6 @@ export default async function FinancePage() {
     monthlyIncome && monthlyIncome > 0
       ? Math.round((monthlySavings / monthlyIncome) * 100)
       : null;
-
-  // Group bills by category for the budget comparison
-  const spendByCategory = new Map<string, number>();
-  for (const b of bills) {
-    const key = b.category;
-    spendByCategory.set(key, (spendByCategory.get(key) ?? 0) + toMonthly(Number(b.amount), b.frequency));
-  }
-
-  // Build all categories that have either bills or a budget
-  const allCategories = Array.from(
-    new Set([
-      ...Array.from(spendByCategory.keys()),
-      ...budgets.map((b) => b.category),
-    ]),
-  ).sort();
-
-  const budgetByCategory = new Map(budgets.map((b) => [b.category, b]));
-
-  // Sort BILL_CATEGORIES first, then others alphabetically
-  const billCatSet = new Set<string>(BILL_CATEGORIES);
-  const orderedCategories = [
-    ...allCategories.filter((c) => billCatSet.has(c)),
-    ...allCategories.filter((c) => !billCatSet.has(c)),
-  ];
 
   const totalSaved = savingsPots.reduce((s, p) => s + Number(p.current_amount), 0);
   const totalTarget = savingsPots.reduce((s, p) => s + Number(p.target_amount ?? 0), 0);
@@ -116,63 +87,6 @@ export default async function FinancePage() {
           accent="muted"
         />
       </div>
-
-      {/* Budget vs actual */}
-      <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle>Budget vs actual</CardTitle>
-          <BudgetForm />
-        </CardHeader>
-        <CardContent>
-          {orderedCategories.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              Add bills and budgets to see your spending here.
-            </p>
-          ) : (
-            <div className="divide-y">
-              {orderedCategories.map((cat) => {
-                const actual = Math.round(spendByCategory.get(cat) ?? 0);
-                const budget = budgetByCategory.get(cat);
-                const limit = budget ? Number(budget.monthly_limit) : null;
-                const pct = limit && limit > 0 ? Math.min(100, Math.round((actual / limit) * 100)) : null;
-                const overBudget = pct !== null && pct >= 100;
-                const nearLimit = pct !== null && pct >= 80 && pct < 100;
-
-                return (
-                  <div key={cat} className="flex items-center gap-3 py-3">
-                    <div className="min-w-0 flex-1 space-y-1.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium">{cat}</span>
-                        <div className="flex shrink-0 items-center gap-2">
-                          <span className="text-sm tabular-nums">
-                            {formatCurrency(actual)}
-                            {limit !== null && (
-                              <span className="text-muted-foreground"> / {formatCurrency(limit)}</span>
-                            )}
-                          </span>
-                          {overBudget && <Badge variant="destructive">Over</Badge>}
-                          {nearLimit && <Badge variant="warning">Near</Badge>}
-                          {!limit && <span className="text-xs text-muted-foreground">No budget</span>}
-                        </div>
-                      </div>
-                      {pct !== null && (
-                        <Progress
-                          value={pct}
-                          className={`h-1.5 ${overBudget ? "[&>div]:bg-destructive" : nearLimit ? "[&>div]:bg-amber-500" : ""}`}
-                        />
-                      )}
-                    </div>
-                    <BudgetForm
-                      budget={budget}
-                      defaultCategory={cat}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Savings pots */}
       <Card>
