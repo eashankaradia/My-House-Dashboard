@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (MyLife module redesign COMPLETE — all 5 modules + landing-page branding fix shipped, not yet merged to main).
+> after **every** change. Last updated: 2026-06-30 (MyLife module redesign COMPLETE — all 5 modules + landing-page branding fix shipped, merging to main).
 
 ---
 
@@ -200,6 +200,48 @@ Smaller pre-existing gaps not part of this redesign (still open):
 - Journal entries: past entries show non-clickable rows; `JournalForm` isn't
   wired into the entry list for editing.
 - Goals: cards have no per-card edit button.
+
+---
+
+## MyHouse / MyLife app split — COMPLETE (merged to main, PR #95)
+
+**What shipped:**
+- Single codebase, single Supabase database, **two Vercel deployments** distinguished
+  by one build-time env var: `NEXT_PUBLIC_APP=house` (existing `my-house-dashboard`
+  project, default when unset) vs `NEXT_PUBLIC_APP=life` (new MyLife project, not yet
+  created in Vercel — see below).
+- `src/lib/constants.ts`: replaced the single flat `NAV_ITEMS`/`NAV_GROUPS` with two
+  full sets — `HOUSE_NAV_GROUPS`/`HOUSE_NAV_ITEMS` (household-focused: Bills, Mortgage,
+  Savings, Projects, Rooms, Inspiration, etc.) and `LIFE_NAV_GROUPS`/`LIFE_NAV_ITEMS`
+  (personal OS: Habits, Journal, Fitness, Nutrition, Health, Finance, Goals, Tasks).
+  A `_isLife = process.env.NEXT_PUBLIC_APP === "life"` switch picks which set is
+  exported as `NAV_ITEMS`/`NAV_GROUPS` (same names, so every existing import site is
+  unaffected).
+- `src/hooks/use-bottom-tabs.ts`: `DEFAULT_BOTTOM_TABS` now branches the same way
+  (`["/dashboard","/habits","/fitness","/journal"]` for life vs
+  `["/dashboard","/projects","/bills","/rooms"]` for house).
+- `src/app/(app)/layout.tsx` + `src/components/layout/mobile-nav.tsx`: branding
+  ("My House" vs "MyLife") and the footer tagline now read from the same env var
+  instead of being hardcoded.
+- Both apps share the same Supabase URL/anon key, so tasks/bills/calendar created in
+  one are visible in the other — only nav and branding differ.
+- No DB migration for this batch (pure nav/branding).
+
+**Verification:** `npm run typecheck`, `npm run lint`, `npm run build` all clean
+(35 routes compiled).
+
+**Merge history note:** PR #95 was originally opened on top of the 3 separate
+MyLife milestone commits, but `main` had since absorbed those as one squashed commit
+(`445ea2d`, from PR #94), causing a real merge conflict. Fixed by resetting the
+feature branch to `origin/main` and cherry-picking just the app-split commit on top
+(no conflicts — it touches the same files as the squash but the squash already
+contains that content). Force-pushed, status checks passed, merged via squash.
+
+**Still TODO (needs the user, outside this codebase):**
+- Create the second Vercel project: Add New Project → import
+  `eashankaradia/My-House-Dashboard` → set `NEXT_PUBLIC_APP=life` → copy across the
+  existing Supabase env vars (URL + anon key) → Deploy. The existing
+  `my-house-dashboard` project needs no changes (unset env var defaults to house).
 
 ---
 
