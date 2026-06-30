@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { formatCurrency, formatDate, daysUntil, toAnnual, toMonthly } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
-import type { Bill, BillPayment, PaymentAccount } from "@/lib/database.types";
+import type { Bill, BillContributor, BillPayment, HouseholdMember, PaymentAccount } from "@/lib/database.types";
 import { BillForm } from "./bill-form";
 import { BillsList } from "./bills-list";
 import { SectionActivityLog } from "@/components/shared/section-activity-log";
@@ -19,19 +19,24 @@ export const metadata = { title: "Bills & Expenses" };
 
 export default async function BillsPage() {
   const supabase = await createClient();
-  const [{ data }, { data: accountData }, { data: paymentData }, memberMap] = await Promise.all([
-    supabase
-      .from("bills")
-      .select("*")
-      .order("category", { ascending: true })
-      .order("name", { ascending: true }),
-    supabase.from("payment_accounts").select("*").order("name"),
-    supabase.from("bill_payments").select("*").order("payment_date", { ascending: false }),
-    getHouseholdMap(),
-  ]);
+  const [{ data }, { data: accountData }, { data: paymentData }, { data: contributorData }, { data: memberData }, memberMap] =
+    await Promise.all([
+      supabase
+        .from("bills")
+        .select("*")
+        .order("category", { ascending: true })
+        .order("name", { ascending: true }),
+      supabase.from("payment_accounts").select("*").order("name"),
+      supabase.from("bill_payments").select("*").order("payment_date", { ascending: false }),
+      supabase.from("bill_contributors").select("*"),
+      supabase.from("household_members").select("*").order("display_name"),
+      getHouseholdMap(),
+    ]);
   const bills = (data ?? []) as Bill[];
   const accounts = (accountData ?? []) as PaymentAccount[];
   const payments = (paymentData ?? []) as BillPayment[];
+  const contributors = (contributorData ?? []) as BillContributor[];
+  const members = (memberData ?? []) as HouseholdMember[];
 
   const monthlyTotal = bills.reduce((sum, b) => sum + toMonthly(b.amount, b.frequency), 0);
   const annualTotal = bills.reduce((sum, b) => sum + toAnnual(b.amount, b.frequency), 0);
@@ -126,7 +131,7 @@ export default async function BillsPage() {
             </Card>
           </div>
 
-          <BillsList bills={bills} accounts={accounts} payments={payments} memberMap={memberMap} />
+          <BillsList bills={bills} accounts={accounts} payments={payments} contributors={contributors} members={members} memberMap={memberMap} />
           <BottomAdmin label="Manage payment accounts">
             <PaymentAccounts accounts={accounts} memberMap={memberMap} />
           </BottomAdmin>

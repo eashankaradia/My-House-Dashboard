@@ -256,3 +256,44 @@ export async function updateBillPaymentDetail(
   revalidatePath("/bills");
   return {};
 }
+
+// --- Bill contributors (split who pays what) --------------------------------
+
+export async function createBillContributor(
+  billId: string,
+  input: { member_id: string; amount?: number | null; start_date?: string; end_date?: string; notes?: string },
+): Promise<ActionResult> {
+  if (!input.member_id) return { error: "Choose a household member" };
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase.from("bill_contributors").insert({
+    bill_id: billId,
+    user_id: user.id,
+    member_id: input.member_id,
+    amount: input.amount ?? null,
+    start_date: input.start_date || null,
+    end_date: input.end_date || null,
+    notes: input.notes?.trim() || null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/bills");
+  return {};
+}
+
+export async function updateBillContributor(
+  id: string,
+  input: Partial<{ member_id: string; amount: number | null; start_date: string | null; end_date: string | null; notes: string | null }>,
+): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("bill_contributors").update(input).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/bills");
+  return {};
+}
+
+export async function deleteBillContributor(id: string): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("bill_contributors").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/bills");
+  return {};
+}

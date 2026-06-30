@@ -2,7 +2,54 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (Account/household management: change password, self-serve sign-up, household invite codes — shipped, not yet merged).
+> after **every** change. Last updated: 2026-06-30 (Bills: split contributions between household members — shipped, not yet merged).
+
+---
+
+## Bill contributors (split who pays a bill) — COMPLETE, awaiting PR/merge (branch `claude/bill-contributions`)
+
+User's exact scenario: a bill split between two household members, one with a
+fixed monthly amount that may change over time (so needs a start/end date),
+the other paying "the rest". Generalised to: any bill can have any number of
+contributors, each either a fixed amount or flagged as the remainder payer.
+
+**Migration `0043_bill_contributors.sql`** (already applied live via MCP):
+new table `bill_contributors` — `bill_id`, `user_id` (creator, for RLS —
+mirrors the `hh_select`/`hh_insert`/etc. pattern used by every other
+household table since migration 0008), `member_id` (the household member
+this row is *about* — a separate column from `user_id` since Eashan can add a
+contributor row that represents Neelam), `amount` (numeric, **null means
+"pays the rest"**), `start_date`/`end_date` (both nullable — a row with no
+dates is always active; changing an amount means ending the old row and
+adding a new one, not overwriting, so history is preserved), `notes`.
+No DB-level constraint enforcing "only one remainder contributor" — handled
+at the UI/calc layer instead (if more than one remainder row is active
+simultaneously, the leftover is split evenly between them; this is a
+reasonable fallback for user error, not a case anyone should hit normally).
+
+- `bills/actions.ts`: `createBillContributor(billId, input)`,
+  `updateBillContributor(id, input)`, `deleteBillContributor(id)`.
+- `bills/bill-contributor-form.tsx`: member picker (from the household's
+  `HouseholdMember[]`), a "Fixed amount" / "Pays the rest" toggle (amount
+  input only shown for the fixed case), start/end date.
+- `bills/bill-contributors.tsx`: the "Who pays" section inside the bill
+  detail dialog. `isActive(contributor, today)` checks the date range;
+  active fixed contributors sum to `fixedTotal`, active remainder
+  contributors each get `max(0, bill.amount - fixedTotal) / remainder.length`.
+  Each row is itself a `BillContributorForm` trigger (tap to edit), shows the
+  member's avatar/colour (reusing `MEMBER_COLOR_TEXT`/`initialsFromName`,
+  same as Settings' household list), the date range, and either the fixed
+  amount or a "Pays the rest" badge with the live computed `≈ £X` underneath.
+  A summary line at the bottom spells out the current split in one sentence.
+- Threaded `contributors: BillContributor[]` and `members: HouseholdMember[]`
+  from `bills/page.tsx` → `bills-list.tsx` → `bill-detail.tsx` →
+  `bill-contributors.tsx` (contributors filtered per-bill at each list site,
+  same pattern already used for `payments`).
+- `database.types.ts`: `BillContributor` type + registered in the `Database`
+  map.
+
+Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean
+(35 routes compile).
 
 ---
 

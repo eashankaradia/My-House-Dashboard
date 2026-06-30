@@ -52,6 +52,17 @@ export type BillPayment = Timestamps & {
   is_paid: boolean;
 };
 
+export type BillContributor = Timestamps & {
+  id: string;
+  bill_id: string;
+  user_id: string;
+  member_id: string;
+  amount: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  notes: string | null;
+};
+
 export type NotificationPreference = Timestamps & {
   id: string;
   user_id: string;
@@ -823,6 +834,7 @@ export type Database = {
       bills: Row<Bill>;
       payment_accounts: Row<PaymentAccount>;
       bill_payments: Row<BillPayment>;
+      bill_contributors: Row<BillContributor>;
       notification_preferences: Row<NotificationPreference>;
       notifications: Row<Notification>;
       mortgages: Row<Mortgage>;
