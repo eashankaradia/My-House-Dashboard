@@ -655,6 +655,22 @@ export type NutritionLog = {
   created_at: string;
 };
 
+export type FinanceSettings = {
+  id: string;
+  user_id: string;
+  monthly_income: number | null;
+  income_label: string;
+  updated_at: string;
+};
+
+export type Budget = Timestamps & {
+  id: string;
+  user_id: string;
+  category: string;
+  monthly_limit: number;
+  notes: string | null;
+};
+
 export type InspirationSource =
   | "Instagram"
   | "TikTok"
@@ -750,6 +766,8 @@ export type Database = {
       medications: Row<Medication>;
       appointments: Row<Appointment>;
       nutrition_logs: Row<NutritionLog>;
+      finance_settings: Row<FinanceSettings>;
+      budgets: Row<Budget>;
     };
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };

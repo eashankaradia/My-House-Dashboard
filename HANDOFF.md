@@ -2,7 +2,67 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (MyLife Milestone 2: Core Platform — form dialogs, dashboard briefing, loading states).
+> after **every** change. Last updated: 2026-06-30 (MyLife Milestone 3: Finance — budget tracking, cash flow, finance overview page).
+
+---
+
+## MyLife Milestone 3: Finance — COMPLETE
+
+**What shipped:**
+- **New `/finance` page** — Personal financial overview hub with:
+  - 4 stat cards: Monthly income, Monthly bills, Net monthly (income − bills), Savings rate
+  - Budget vs actual: per-category comparison with progress bars and Over/Near badges
+  - Savings pots overview: total saved, target, monthly contributions + per-pot progress bars
+  - Financial goals: active goals with `category === "Financial"` + progress
+  - Quick links to Bills, Savings, Analytics
+  - `finance/loading.tsx` skeleton screen
+- **Income tracking** — `finance_settings` table (one row per user). `IncomeForm` dialog to set/edit monthly take-home income + label.
+- **Budget management** — `budgets` table (one row per user per category, unique constraint). `BudgetForm` dialog to add/edit/delete monthly budget limits per category. `BUDGET_CATEGORIES` constant extends `BILL_CATEGORIES` with personal spending categories (Food & Groceries, Transport, Eating Out, Entertainment, Clothing, Personal Care, Healthcare).
+- **Server actions** — `finance/actions.ts`: `upsertFinanceSettings`, `upsertBudget`, `deleteBudget`.
+- **Nav item** — `/finance` added at top of Finances group with `Wallet` icon.
+- **Dashboard cash flow widget** — `cashFlow` widget (id registered in `DASHBOARD_WIDGETS`). Only renders when income is set. Shows income / bills / net monthly / savings rate in a compact 4-column grid inside a `CollapsibleSection` linking to `/finance`.
+- **Types** — `FinanceSettings` and `Budget` types added to `database.types.ts` + Database Tables map.
+
+**Verification:** `npm run build` ✓ clean (all 36 routes compiled).
+
+**DB migration — run this in Supabase SQL editor:**
+
+```sql
+-- 0036_finance_budgets.sql
+create table if not exists finance_settings (
+  id             uuid         primary key default gen_random_uuid(),
+  user_id        uuid         not null unique references auth.users(id) on delete cascade,
+  monthly_income numeric(12, 2),
+  income_label   text         not null default 'Monthly income',
+  updated_at     timestamptz  not null default now()
+);
+alter table finance_settings enable row level security;
+create policy "Users manage own finance settings" on finance_settings
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create table if not exists budgets (
+  id            uuid         primary key default gen_random_uuid(),
+  user_id       uuid         not null references auth.users(id) on delete cascade,
+  category      text         not null,
+  monthly_limit numeric(12, 2) not null default 0,
+  notes         text,
+  created_at    timestamptz  not null default now(),
+  updated_at    timestamptz  not null default now(),
+  unique (user_id, category)
+);
+alter table budgets enable row level security;
+create policy "Users manage own budgets" on budgets
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create trigger set_finance_settings_updated_at
+  before update on finance_settings
+  for each row execute function set_updated_at();
+create trigger set_budgets_updated_at
+  before update on budgets
+  for each row execute function set_updated_at();
+```
+
+**Next milestone (Milestone 4):** Per the roadmap this would be Fitness (enhanced workout tracking, exercise library, progress charts) or Health (health records dashboard, medication reminders, appointment timeline). Alternatively: wire journal entries to be clickable/editable from the list (currently read-only), or add edit buttons to goal cards.
 
 ---
 

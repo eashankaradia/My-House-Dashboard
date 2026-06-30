@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 export const DASHBOARD_WIDGETS: { id: string; label: string }[] = [
   { id: "habitCheckIn", label: "Today's habits" },
   { id: "goalsProgress", label: "Goals progress" },
+  { id: "cashFlow", label: "Cash flow" },
   { id: "finance", label: "Glance stats" },
   { id: "week", label: "Week ahead" },
   { id: "reminders", label: "Renewal reminders" },

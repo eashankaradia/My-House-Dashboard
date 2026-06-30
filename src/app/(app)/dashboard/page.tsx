@@ -12,6 +12,7 @@ import type {
   BillPayment,
   CalendarEvent,
   Document,
+  FinanceSettings,
   Goal,
   Habit,
   HabitLog,
@@ -73,6 +74,7 @@ export default async function DashboardPage() {
     habitsRes,
     habitLogsRes,
     goalsRes,
+    financeSettingsRes,
   ] = await Promise.all([
     supabase.from("bills").select("*"),
     supabase.from("savings_pots").select("*"),
@@ -89,6 +91,7 @@ export default async function DashboardPage() {
     supabase.from("habits").select("*").eq("is_active", true).order("created_at", { ascending: true }),
     supabase.from("habit_logs").select("*").gte("logged_date", thirtyDaysAgo),
     supabase.from("goals").select("*").eq("status", "Active").order("created_at", { ascending: false }).limit(6),
+    supabase.from("finance_settings").select("*").limit(1).maybeSingle(),
   ]);
 
   const bills = (billsRes.data ?? []) as Bill[];
@@ -105,6 +108,17 @@ export default async function DashboardPage() {
   const habits = (habitsRes.data ?? []) as Habit[];
   const habitLogs = (habitLogsRes.data ?? []) as HabitLog[];
   const activeGoals = (goalsRes.data ?? []) as Goal[];
+  const financeSettings = financeSettingsRes.data as FinanceSettings | null;
+
+  // --- Finance: cash flow ---------------------------------------------------
+  const monthlyIncome = financeSettings?.monthly_income ? Number(financeSettings.monthly_income) : null;
+  const monthlyBillsTotal = bills.reduce((s, b) => s + toMonthly(Number(b.amount), b.frequency), 0);
+  const netMonthly = monthlyIncome !== null ? monthlyIncome - monthlyBillsTotal : null;
+  const monthlySavingsContribs = pots.reduce((s, p) => s + Number(p.monthly_contribution ?? 0), 0);
+  const savingsRate =
+    monthlyIncome && monthlyIncome > 0
+      ? Math.round((monthlySavingsContribs / monthlyIncome) * 100)
+      : null;
 
   // --- Habits: daily life score ----------------------------------------------
   const dailyHabits = habits.filter((h) => h.frequency === "daily");
@@ -368,6 +382,34 @@ export default async function DashboardPage() {
                   </Link>
                 );
               })}
+            </div>
+          </CollapsibleSection>
+        </DashboardWidget>
+      )}
+
+      {/* Cash flow summary (only shown when income is set) */}
+      {netMonthly !== null && (
+        <DashboardWidget id="cashFlow">
+          <CollapsibleSection title="Cash flow" href="/finance" count={0}>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div>
+                <p className="text-xs text-muted-foreground">{financeSettings?.income_label ?? "Income"}</p>
+                <p className="text-base font-semibold">{formatCurrency(monthlyIncome!)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Bills</p>
+                <p className="text-base font-semibold">{formatCurrency(monthlyBillsTotal)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Net monthly</p>
+                <p className={`text-base font-semibold ${netMonthly < 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
+                  {netMonthly < 0 ? "−" : "+"}{formatCurrency(Math.abs(netMonthly))}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Savings rate</p>
+                <p className="text-base font-semibold">{savingsRate !== null ? `${savingsRate}%` : "—"}</p>
+              </div>
             </div>
           </CollapsibleSection>
         </DashboardWidget>

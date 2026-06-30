@@ -22,6 +22,7 @@ import {
   Repeat,
   Target,
   BookOpen,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -52,6 +53,14 @@ export const NAV_ITEMS: NavItem[] = [
   },
 
   // Finances
+  {
+    title: "Finance",
+    short: "Finance",
+    href: "/finance",
+    icon: Wallet,
+    description: "Income, budgets & cash flow",
+    group: "Finances",
+  },
   {
     title: "Bills & Expenses",
     short: "Bills",
@@ -246,6 +255,13 @@ export const NOTIFICATION_ENTITY_TYPES = [
 export const BILL_CATEGORIES = [
   "Mortgage", "Utilities", "Council Tax", "Broadband", "Mobile",
   "Insurance", "Subscriptions", "Maintenance", "Other",
+] as const;
+
+export const BUDGET_CATEGORIES = [
+  "Mortgage", "Utilities", "Council Tax", "Broadband", "Mobile",
+  "Insurance", "Subscriptions", "Maintenance",
+  "Food & Groceries", "Transport", "Eating Out", "Entertainment",
+  "Clothing", "Personal Care", "Healthcare", "Other",
 ] as const;
 
 export const FREQUENCIES = ["weekly", "monthly", "quarterly", "annually", "one-off"] as const;
