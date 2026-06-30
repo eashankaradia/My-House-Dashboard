@@ -224,6 +224,13 @@ export const POT_COLORS = [
   "emerald", "sky", "violet", "amber", "rose", "teal", "indigo", "orange",
 ] as const;
 
+export const POT_TYPES = ["savings", "investment"] as const;
+
+export const POT_TYPE_LABELS: Record<string, string> = {
+  savings: "Savings",
+  investment: "Investment",
+};
+
 // ---------------------------------------------------------------------------
 // Members / household
 // ---------------------------------------------------------------------------
@@ -279,6 +286,25 @@ export const HABIT_COLORS = [
   "emerald", "sky", "violet", "amber", "rose", "teal", "indigo", "orange", "pink",
 ] as const;
 
+export const HABIT_TYPES = ["yes_no", "numeric", "timer"] as const;
+
+export const HABIT_TYPE_LABELS: Record<string, string> = {
+  yes_no: "Yes / No",
+  numeric: "Numeric value",
+  timer: "Timer",
+};
+
+export const HABIT_TARGET_PERIODS = ["day", "week", "month", "year", "all_time", "single"] as const;
+
+export const HABIT_TARGET_PERIOD_LABELS: Record<string, string> = {
+  day: "Per day",
+  week: "Per week",
+  month: "Per month",
+  year: "Per year",
+  all_time: "All-time total",
+  single: "Single goal",
+};
+
 // ---------------------------------------------------------------------------
 // Goals
 // ---------------------------------------------------------------------------
@@ -296,6 +322,13 @@ export const GOAL_STATUSES = ["Active", "Completed", "Paused", "Abandoned"] as c
 export const WORKOUT_TYPES = [
   "Strength", "Cardio", "HIIT", "Yoga", "Pilates", "Sport", "Walk", "Run", "Swim", "Cycling", "Other",
 ] as const;
+
+export const MUSCLE_GROUPS = [
+  "Chest", "Back", "Shoulders", "Biceps", "Triceps", "Forearms",
+  "Abs", "Quads", "Hamstrings", "Glutes", "Calves",
+] as const;
+
+export const PB_UNITS = ["kg", "lb", "reps", "seconds", "minutes", "km", "m"] as const;
 
 // ---------------------------------------------------------------------------
 // Health
@@ -317,6 +350,13 @@ export const HEALTH_RECORD_LABELS: Record<string, string> = {
 };
 
 export const APPOINTMENT_STATUSES = ["Upcoming", "Completed", "Cancelled"] as const;
+
+export const HEALTH_INSPIRATION_KINDS = ["reel", "guide"] as const;
+
+export const HEALTH_INSPIRATION_KIND_LABELS: Record<string, string> = {
+  reel: "Reel / video",
+  guide: "Guide",
+};
 
 // ---------------------------------------------------------------------------
 // Nutrition

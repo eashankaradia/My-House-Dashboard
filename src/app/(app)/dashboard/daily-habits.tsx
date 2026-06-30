@@ -69,7 +69,7 @@ export function DailyHabits({ habits, logs, completedToday }: Props) {
     });
   }
 
-  const daily = habits.filter((h) => h.frequency === "daily");
+  const daily = habits.filter((h) => h.frequency === "daily" && h.habit_type === "yes_no");
   if (daily.length === 0) return null;
 
   return (

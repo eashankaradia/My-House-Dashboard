@@ -70,6 +70,7 @@ export const savingsPotSchema = z.object({
   target_date: optionalDate,
   color: z.string().default("emerald"),
   notes: optionalString,
+  pot_type: z.enum(["savings", "investment"]).default("savings"),
 });
 export type SavingsPotInput = z.infer<typeof savingsPotSchema>;
 

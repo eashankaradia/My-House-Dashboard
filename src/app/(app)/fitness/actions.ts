@@ -3,86 +3,129 @@
 import { getActionContext } from "@/lib/action-utils";
 import { revalidatePath } from "next/cache";
 
-export async function createWorkout(input: {
+// ─── Exercises (library) ─────────────────────────────────────────────────────
+
+export async function createExercise(input: {
   name: string;
-  workout_date: string;
-  duration_minutes?: number;
-  workout_type?: string;
-  notes?: string;
+  muscle_groups: string[];
+  technique?: string;
+  inspiration?: string;
+  pb_value?: number;
+  pb_unit?: string;
+  pb_date?: string;
 }) {
   const { supabase, user } = await getActionContext();
   const { data, error } = await supabase
-    .from("workouts")
+    .from("exercises")
     .insert({
       user_id: user.id,
       name: input.name,
-      workout_date: input.workout_date,
-      duration_minutes: input.duration_minutes ?? null,
-      workout_type: input.workout_type ?? "Strength",
-      notes: input.notes ?? null,
+      muscle_groups: input.muscle_groups,
+      technique: input.technique ?? null,
+      inspiration: input.inspiration ?? null,
+      pb_value: input.pb_value ?? null,
+      pb_unit: input.pb_unit ?? null,
+      pb_date: input.pb_date ?? null,
     })
     .select("id")
     .single();
   if (error) return { error: error.message };
   revalidatePath("/fitness");
-  return { id: data.id };
+  return { id: data.id as string };
 }
 
-export async function updateWorkout(
+export async function updateExercise(
   id: string,
   input: Partial<{
     name: string;
-    workout_date: string;
-    duration_minutes: number;
-    workout_type: string;
-    notes: string;
+    muscle_groups: string[];
+    technique: string | null;
+    inspiration: string | null;
+    pb_value: number | null;
+    pb_unit: string | null;
+    pb_date: string | null;
   }>,
 ) {
   const { supabase } = await getActionContext();
-  const { error } = await supabase
-    .from("workouts")
-    .update({ ...input, updated_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) return { error: error.message };
-  revalidatePath("/fitness");
-}
-
-export async function deleteWorkout(id: string) {
-  const { supabase } = await getActionContext();
-  const { error } = await supabase.from("workouts").delete().eq("id", id);
-  if (error) return { error: error.message };
-  revalidatePath("/fitness");
-}
-
-export async function addExercise(input: {
-  workout_id: string;
-  name: string;
-  sets?: number;
-  reps?: number;
-  weight_kg?: number;
-  duration_seconds?: number;
-  distance_meters?: number;
-  notes?: string;
-}) {
-  const { supabase, user } = await getActionContext();
-  const { error } = await supabase.from("workout_exercises").insert({
-    user_id: user.id,
-    workout_id: input.workout_id,
-    name: input.name,
-    sets: input.sets ?? null,
-    reps: input.reps ?? null,
-    weight_kg: input.weight_kg ?? null,
-    duration_seconds: input.duration_seconds ?? null,
-    distance_meters: input.distance_meters ?? null,
-    notes: input.notes ?? null,
-  });
+  const { error } = await supabase.from("exercises").update({ ...input, updated_at: new Date().toISOString() }).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/fitness");
 }
 
 export async function deleteExercise(id: string) {
   const { supabase } = await getActionContext();
-  const { error } = await supabase.from("workout_exercises").delete().eq("id", id);
+  const { error } = await supabase.from("exercises").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/fitness");
+}
+
+// ─── Workout plans ────────────────────────────────────────────────────────────
+
+export async function createWorkoutPlan(input: { name: string; description?: string }) {
+  const { supabase, user } = await getActionContext();
+  const { data, error } = await supabase
+    .from("workout_plans")
+    .insert({ user_id: user.id, name: input.name, description: input.description ?? null })
+    .select("id")
+    .single();
+  if (error) return { error: error.message };
+  revalidatePath("/fitness");
+  return { id: data.id as string };
+}
+
+export async function updateWorkoutPlan(id: string, input: Partial<{ name: string; description: string | null; is_active: boolean }>) {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("workout_plans").update({ ...input, updated_at: new Date().toISOString() }).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/fitness");
+}
+
+export async function deleteWorkoutPlan(id: string) {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("workout_plans").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/fitness");
+}
+
+// ─── Plan ↔ exercise links ────────────────────────────────────────────────────
+
+export async function addExerciseToPlan(input: {
+  plan_id: string;
+  exercise_id: string;
+  sets?: number;
+  reps?: number;
+  target_weight_kg?: number;
+  order_index?: number;
+  notes?: string;
+}) {
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase.from("workout_plan_exercises").insert({
+    user_id: user.id,
+    plan_id: input.plan_id,
+    exercise_id: input.exercise_id,
+    sets: input.sets ?? null,
+    reps: input.reps ?? null,
+    target_weight_kg: input.target_weight_kg ?? null,
+    order_index: input.order_index ?? 0,
+    notes: input.notes ?? null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/fitness");
+}
+
+export async function updatePlanExercise(
+  id: string,
+  input: Partial<{ sets: number | null; reps: number | null; target_weight_kg: number | null; order_index: number; notes: string | null }>,
+) {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("workout_plan_exercises").update(input).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/fitness");
+}
+
+export async function removeExerciseFromPlan(id: string) {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("workout_plan_exercises").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/fitness");
 }

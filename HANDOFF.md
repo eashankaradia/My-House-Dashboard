@@ -2,7 +2,204 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (MyHouse/MyLife app split via NEXT_PUBLIC_APP env var — merged to main).
+> after **every** change. Last updated: 2026-06-30 (MyLife module redesign COMPLETE — all 5 modules + landing-page branding fix shipped, merging to main).
+
+---
+
+## MyLife module redesign — COMPLETE, awaiting PR/merge (branch `claude/mylife-modules-v2`)
+
+User asked for a deep redesign of 5 MyLife modules (habits, fitness, nutrition,
+finance, health) plus a landing-page branding bug. Working through it as
+separate verified, pushed batches. Tracking via the session's internal task
+list (5 tasks: Habits, Workouts→plans, Nutrition→recipes, Finance pots,
+Health reels/guides).
+
+### Landing page branding fix — DONE
+`src/app/login/page.tsx`, `src/app/layout.tsx` (root metadata), and
+`src/app/manifest.ts` were hardcoded to "My House"/"MyLife" text instead of
+switching on `NEXT_PUBLIC_APP` like the rest of the app shell. All three now
+branch on `process.env.NEXT_PUBLIC_APP === "life"`. No DB change.
+
+### Habits v2 — DONE — migration `0037_habits_v2.sql` (already applied live via MCP)
+- `habits` gained `habit_type` ('yes_no' | 'numeric' | 'timer', default
+  'yes_no'), `why` (text, the inspiration/motivation field), `unit` (text,
+  for numeric habits e.g. "glasses").
+- `habit_logs` gained `value` (numeric, for numeric-type logs) and
+  `duration_seconds` (int, for timer-type logs). `count` is kept for
+  backward compat but no longer carries meaning beyond "a log exists".
+- New table `habit_targets` (habit_id, period, target_value) — a habit can
+  have **one target per period**, periods are day/week/month/year/all_time/
+  single (unique constraint on habit_id+period, so re-saving a period
+  upserts it). `single` and `all_time` are computed identically (cumulative
+  sum of all logs) — `single` is just framed as a one-shot goal in the UI.
+- `src/lib/habit-progress.ts` (new, shared by page/dashboard/dialog):
+  `logAmount(habit, log)` (1 for yes_no, `value` for numeric, minutes for
+  timer), `getStreak(habit, logs)`, `sumForPeriod(habit, logs, period, today)`.
+- `src/app/(app)/habits/actions.ts`: added `logHabitValue` (numeric upsert),
+  `logHabitDuration` (timer upsert, `{add: true}` accumulates onto today's
+  existing duration), `upsertHabitTarget`/`deleteHabitTarget`. Existing
+  `logHabit`/`unlogHabit` (yes/no toggle) unchanged — still used by the
+  dashboard quick-checkin widget.
+- New `habit-calendar.tsx` (month-grid tracker, prev/next nav, filled cells
+  = logged days, today gets a ring), `habit-timer.tsx` (start/pause/stop,
+  mm:ss display, stop logs via `logHabitDuration` with `add:true`),
+  `habit-detail-dialog.tsx` (why quote, type-appropriate quick-log control,
+  target progress bars via `sumForPeriod`, the calendar, an Edit button that
+  opens `HabitForm` nested inside — same nested-dialog pattern as
+  `option-detail.tsx`).
+- `habit-form.tsx`: added Type/Unit/Why fields; a `TargetsEditor` sub-section
+  (only shown when editing an existing habit, since targets need a habit id)
+  lets you set/replace/delete a target per period.
+- `habits-view.tsx`: rows are now type-aware — yes_no keeps the tap-to-toggle
+  circle; numeric/timer rows show today's logged amount and a chevron that
+  opens `HabitDetailDialog` (where the actual numeric/timer logging happens).
+  Tapping a habit's name always opens the detail dialog now (previously there
+  was no per-habit edit entry point at all — `HabitForm` with a `habit` prop
+  was unreferenced dead code).
+- `habits/page.tsx`: now fetches **all** habit_logs (not just the last 30
+  days) and `habit_targets`, since `all_time`/`single` targets and the
+  calendar's month navigation need full history. "Best streak" and "This
+  week" stat cards were previously hardcoded `—` — now computed for real via
+  `habit-progress.ts`.
+- `dashboard/daily-habits.tsx`: the dashboard quick-checkin widget now only
+  shows `habit_type === "yes_no"` daily habits (numeric/timer habits need
+  their dedicated logging UI, not a single tap-toggle).
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+### Fitness → workout plans — DONE — migration `0038_workout_plans.sql` (already applied live via MCP)
+- Replaced per-session workout logging entirely with a reusable **exercise
+  library + workout plan builder**. New tables: `exercises` (name,
+  `muscle_groups text[]`, `technique`, `inspiration`, `pb_value`/`pb_unit`/
+  `pb_date`), `workout_plans` (name, description, is_active), and
+  `workout_plan_exercises` (join: plan_id, exercise_id, sets, reps,
+  target_weight_kg, order_index, notes). The old `workouts`/
+  `workout_exercises` tables are left in place but fully unused (nothing
+  referenced them outside the fitness module — verified via grep before
+  deleting `workout-form.tsx`).
+- `src/lib/constants.ts`: `MUSCLE_GROUPS` (11 groups: Chest, Back,
+  Shoulders, Biceps, Triceps, Forearms, Abs, Quads, Hamstrings, Glutes,
+  Calves) and `PB_UNITS` (kg/lb/reps/seconds/minutes/km/m).
+- `fitness/actions.ts` rewritten: `createExercise`/`updateExercise`/
+  `deleteExercise` (now operate on the new `exercises` table — same
+  function names as before but different table/shape, no other module
+  imports them), `createWorkoutPlan`/`updateWorkoutPlan`/`deleteWorkoutPlan`,
+  `addExerciseToPlan`/`updatePlanExercise`/`removeExerciseFromPlan`.
+- `fitness/body-diagram.tsx`: a simplified front+back SVG human silhouette
+  (geometric shapes, not anatomically precise) with one highlightable zone
+  per `MUSCLE_GROUPS` entry — fills `fill-primary` when that muscle is
+  worked. Used both per-plan (aggregated from its exercises) and at the
+  bottom of the page (aggregated across the whole library).
+- `fitness/exercise-form.tsx`: name, a toggle-pill multi-select for muscle
+  groups, technique notes, inspiration, and an optional PB (value + unit +
+  date, date only shown once a value is entered). Has an `onCreated`
+  callback so it can be used both standalone and nested inside the plan
+  picker (create-and-attach in one step).
+- `fitness/plan-form.tsx`: name + description only (kept deliberately
+  minimal — exercises are attached after creation via the detail dialog).
+- `fitness/plan-detail-dialog.tsx`: shows the plan's exercises (sets/reps/
+  weight, PB badge, muscle badges), the body diagram for just this plan's
+  muscles, a "choose from library" select to attach an existing exercise, and
+  a nested `ExerciseForm` to create-and-attach a brand new one. Same
+  nested-dialog pattern as `habit-detail-dialog.tsx`/`option-detail.tsx`.
+- `fitness/fitness-view.tsx` (client) + `fitness/page.tsx` (server): Plans
+  grid (tap a card to open `PlanDetailDialog`), an Exercise library grid
+  (tap a card to open `ExerciseForm` pre-filled for editing — same
+  previously-dead-code-now-wired pattern as the habits edit fix), and a
+  library-wide body diagram at the bottom.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+### Nutrition → recipes — DONE — migration `0039_recipes.sql` (already applied live via MCP)
+- Replaced meal logging with recipe capture. New tables: `recipes` (name,
+  `video_url`, `image_url`, `servings`, `calories`/`protein_g`/`carbs_g`/
+  `fat_g` — nutritional value per recipe, `notes` for method/steps) and
+  `recipe_ingredients` (recipe_id, `name`, `quantity` as free text e.g. "2
+  cups" or "a pinch" — deliberately not split into numeric+unit, ingredient
+  quantities are too irregular for that, `order_index`). Old
+  `nutrition_logs` table left in place but unused (confirmed via grep: not
+  referenced by the dashboard or anywhere else).
+- `nutrition/actions.ts` rewritten: `createRecipe`/`updateRecipe` accept the
+  recipe fields plus an `ingredients[]` array and write both tables in one
+  call (update replaces all ingredient rows — delete-then-reinsert, simplest
+  correct approach for a small reorderable list), `deleteRecipe`.
+- `nutrition/recipe-form.tsx`: name, `ImageUpload` photo (same component
+  used by projects/photos), video link (plain URL field — no embed
+  fetching/oEmbed, just a "watch the video" link out), a dynamic
+  add/remove ingredients list (name + free-text quantity per row),
+  servings, the 4 macro fields, and a method/notes textarea.
+- `nutrition/recipe-detail-dialog.tsx`: photo, video link, a 4-stat macro
+  strip, ingredients list, method, and a nested Edit button (same pattern
+  as habits/fitness).
+- `nutrition/nutrition-view.tsx` + `nutrition/page.tsx`: a recipe card grid
+  (photo or a ChefHat placeholder, calories, ingredient count, a film icon
+  if it has a video) — tapping a card opens the detail dialog.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+### Finance: savings & investment pots — DONE — migration `0040_pot_type.sql` (already applied live via MCP)
+- Reused the existing `savings_pots` infrastructure (household-shared
+  table, accounts + contributions ledger from migration 0007, the
+  `QuickContribute` quick-add-value dialog) rather than building anything
+  new — added a single `pot_type` column ('savings' | 'investment',
+  default 'savings').
+- `src/lib/constants.ts`: `POT_TYPES`, `POT_TYPE_LABELS`.
+- `src/lib/schemas.ts`: `savingsPotSchema` gained `pot_type` (enum, default
+  'savings'); `savings/actions.ts#toRow` persists it.
+- `savings/pot-form.tsx`: a Pot type select, plus a new `defaultPotType`
+  prop so a "New pot" trigger can pre-select Investment.
+- `/savings` page now groups pots into a "Savings pots" section and an
+  "Investment pots" section (only rendered when non-empty), each still
+  using the existing `PotCard` grid.
+- `/finance` page: replaced the single read-only "Savings pots" summary
+  with two full `Card`s — **Savings pots** and **Investment pots** — each
+  rendering up to 4 `PotCard`s (imported from
+  `@/app/(app)/savings/pot-card`, same cross-route-group import pattern
+  already used by `dashboard/daily-habits.tsx`), so the existing
+  `QuickContribute` "Add" button is right there on `/finance` for fast
+  value/contribution entry on any pot, plus a "New pot" trigger pre-set to
+  the right type. `totalSaved`/`totalTarget` stats are now scoped to
+  savings-type pots only; the top "Savings rate" stat card still sums
+  monthly contributions across both types (a deliberate "money being put
+  away" metric).
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+### Health: reels & guides — DONE — migration `0041_health_inspiration.sql` (already applied live via MCP)
+- Additive (unlike the other 4 modules — health keeps all its existing
+  records/medications/appointments functionality, this just adds a new
+  section). New table `health_inspiration`: `kind` ('reel' | 'guide'),
+  `title`, `url` (video link for reels, optional link for guides),
+  `image_url`, `source` (e.g. "Instagram", "a friend"), `content` (notes
+  for a reel, the body for a guide).
+- `src/lib/constants.ts`: `HEALTH_INSPIRATION_KINDS`,
+  `HEALTH_INSPIRATION_KIND_LABELS`.
+- `health/actions.ts`: `createHealthInspiration`/`updateHealthInspiration`/
+  `deleteHealthInspiration` appended to the existing file.
+- `health/health-inspiration-form.tsx`: kind select (changes labels/hints
+  contextually — "Video link" for reels vs an optional link for guides,
+  "Guide content" vs "Notes" for the textarea), title, `ImageUpload` cover
+  photo, source, content. Added to `HealthAddMenu` alongside the existing
+  record/medication/appointment triggers.
+- `health/health-inspiration-list.tsx`: a card grid (cover photo or a
+  Film/BookOpen placeholder icon by kind) — tapping a card opens the form
+  pre-filled for editing.
+- `health/page.tsx`: new "Inspiration & guides" section (its own Add
+  button + empty state), `hasData` now also considers inspiration items so
+  the page's empty state only shows when there's truly nothing.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+### Branch status / next steps for whoever picks this up
+All 5 requested module redesigns are shipped, verified, committed and
+pushed to `claude/mylife-modules-v2` (6 batches: branding fix, habits,
+fitness, nutrition, finance, health). **No PR has been opened yet for this
+branch** — that's the next step, then it needs review/merge to `main` like
+PR #95 was. After merging, the existing MyLife Vercel deployment will pick
+up all of this automatically (single env-var-gated codebase, no new env
+vars needed for any of these 5 migrations). Migrations 0037–0041 are all
+already applied live on the Supabase project via MCP — nothing further to
+run.
+
+Smaller pre-existing gaps not part of this redesign (still open):
+- Journal entries: past entries show non-clickable rows; `JournalForm` isn't
+  wired into the entry list for editing.
+- Goals: cards have no per-card edit button.
 
 ---
 

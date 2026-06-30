@@ -20,6 +20,7 @@ function toRow(values: SavingsPotInput) {
     target_date: values.target_date ?? null,
     color: values.color,
     notes: values.notes ?? null,
+    pot_type: values.pot_type,
   };
 }
 

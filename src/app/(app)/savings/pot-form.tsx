@@ -19,13 +19,21 @@ import {
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
 import { useToast } from "@/hooks/use-toast";
-import { POT_COLORS } from "@/lib/constants";
+import { POT_COLORS, POT_TYPES, POT_TYPE_LABELS } from "@/lib/constants";
 import { savingsPotSchema, type SavingsPotInput } from "@/lib/schemas";
 import type { SavingsPot } from "@/lib/database.types";
 import { FormDeleteButton } from "@/components/shared/form-delete-button";
 import { createPot, deletePot, updatePot } from "./actions";
 
-export function PotForm({ pot, trigger }: { pot?: SavingsPot; trigger?: React.ReactNode }) {
+export function PotForm({
+  pot,
+  trigger,
+  defaultPotType = "savings",
+}: {
+  pot?: SavingsPot;
+  trigger?: React.ReactNode;
+  defaultPotType?: string;
+}) {
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
@@ -46,6 +54,7 @@ export function PotForm({ pot, trigger }: { pot?: SavingsPot; trigger?: React.Re
       target_date: pot?.target_date ?? "",
       color: pot?.color ?? "emerald",
       notes: pot?.notes ?? "",
+      pot_type: (pot?.pot_type as "savings" | "investment") ?? (defaultPotType as "savings" | "investment"),
     },
   });
 
@@ -80,6 +89,15 @@ export function PotForm({ pot, trigger }: { pot?: SavingsPot; trigger?: React.Re
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Field label="Name" htmlFor="name" required error={errors.name?.message}>
             <Input id="name" placeholder="e.g. Emergency Fund" {...register("name")} />
+          </Field>
+          <Field label="Pot type">
+            <NativeSelect {...register("pot_type")}>
+              {POT_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {POT_TYPE_LABELS[t]}
+                </option>
+              ))}
+            </NativeSelect>
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Current (£)" htmlFor="current_amount" error={errors.current_amount?.message}>

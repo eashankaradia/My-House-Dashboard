@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, PiggyBank, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { ArrowRight, PiggyBank, TrendingDown, TrendingUp, Wallet, LineChart } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
@@ -7,20 +7,24 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, toMonthly } from "@/lib/utils";
-import type { Bill, Budget, FinanceSettings, Goal, SavingsPot } from "@/lib/database.types";
+import type { Bill, Budget, FinanceSettings, Goal, SavingsAccount, SavingsContribution, SavingsPot } from "@/lib/database.types";
 import { IncomeForm } from "./income-form";
 import { BudgetForm } from "./budget-form";
 import { BILL_CATEGORIES } from "@/lib/constants";
+import { PotCard } from "@/app/(app)/savings/pot-card";
+import { PotForm } from "@/app/(app)/savings/pot-form";
 
 export const metadata = { title: "Finance" };
 
 export default async function FinancePage() {
   const supabase = await createClient();
-  const [billsRes, settingsRes, budgetsRes, potsRes, goalsRes] = await Promise.all([
+  const [billsRes, settingsRes, budgetsRes, potsRes, accountsRes, contribRes, goalsRes] = await Promise.all([
     supabase.from("bills").select("*"),
     supabase.from("finance_settings").select("*").limit(1).maybeSingle(),
     supabase.from("budgets").select("*").order("category"),
     supabase.from("savings_pots").select("*").order("created_at"),
+    supabase.from("savings_accounts").select("*"),
+    supabase.from("savings_contributions").select("*"),
     supabase.from("goals").select("*").eq("status", "Active").eq("category", "Financial"),
   ]);
 
@@ -28,7 +32,11 @@ export default async function FinancePage() {
   const settings = settingsRes.data as FinanceSettings | null;
   const budgets = (budgetsRes.data ?? []) as Budget[];
   const pots = (potsRes.data ?? []) as SavingsPot[];
+  const accounts = (accountsRes.data ?? []) as SavingsAccount[];
+  const contributions = (contribRes.data ?? []) as SavingsContribution[];
   const financialGoals = (goalsRes.data ?? []) as Goal[];
+  const savingsPots = pots.filter((p) => (p.pot_type ?? "savings") === "savings");
+  const investmentPots = pots.filter((p) => p.pot_type === "investment");
 
   const monthlyIncome = settings?.monthly_income ? Number(settings.monthly_income) : null;
   const monthlyBills = bills.reduce((s, b) => s + toMonthly(Number(b.amount), b.frequency), 0);
@@ -63,8 +71,9 @@ export default async function FinancePage() {
     ...allCategories.filter((c) => !billCatSet.has(c)),
   ];
 
-  const totalSaved = pots.reduce((s, p) => s + Number(p.current_amount), 0);
-  const totalTarget = pots.reduce((s, p) => s + Number(p.target_amount ?? 0), 0);
+  const totalSaved = savingsPots.reduce((s, p) => s + Number(p.current_amount), 0);
+  const totalTarget = savingsPots.reduce((s, p) => s + Number(p.target_amount ?? 0), 0);
+  const totalInvested = investmentPots.reduce((s, p) => s + Number(p.current_amount), 0);
 
   return (
     <div className="space-y-6">
@@ -165,56 +174,97 @@ export default async function FinancePage() {
         </CardContent>
       </Card>
 
-      {/* Savings overview */}
-      {pots.length > 0 && (
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>Savings pots</CardTitle>
+      {/* Savings pots */}
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle>Savings pots</CardTitle>
+          <div className="flex items-center gap-2">
+            <PotForm
+              defaultPotType="savings"
+              trigger={
+                <button className="text-sm font-medium text-primary hover:underline">New pot</button>
+              }
+            />
             <Link href="/savings" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
               View all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Total saved</p>
-                <p className="text-xl font-semibold">{formatCurrency(totalSaved)}</p>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {savingsPots.length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">No savings pots yet.</p>
+          ) : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Total saved</p>
+                  <p className="text-xl font-semibold">{formatCurrency(totalSaved)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Target</p>
+                  <p className="text-xl font-semibold">{totalTarget > 0 ? formatCurrency(totalTarget) : "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Monthly contributions</p>
+                  <p className="text-xl font-semibold">{formatCurrency(monthlySavings)}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Target</p>
-                <p className="text-xl font-semibold">{totalTarget > 0 ? formatCurrency(totalTarget) : "—"}</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {savingsPots.slice(0, 4).map((pot) => (
+                  <PotCard
+                    key={pot.id}
+                    pot={pot}
+                    accounts={accounts.filter((a) => a.pot_id === pot.id)}
+                    contributions={contributions.filter((c) => c.pot_id === pot.id)}
+                  />
+                ))}
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Monthly contributions</p>
-                <p className="text-xl font-semibold">{formatCurrency(monthlySavings)}</p>
-              </div>
-            </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-            {pots.length > 0 && (
-              <div className="divide-y">
-                {pots.slice(0, 5).map((pot) => {
-                  const current = Number(pot.current_amount);
-                  const target = Number(pot.target_amount ?? 0);
-                  const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : null;
-                  return (
-                    <div key={pot.id} className="flex items-center gap-3 py-2.5">
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="truncate font-medium">{pot.name}</span>
-                          <span className="shrink-0 tabular-nums text-muted-foreground">
-                            {formatCurrency(current)}{target > 0 ? ` / ${formatCurrency(target)}` : ""}
-                          </span>
-                        </div>
-                        {pct !== null && <Progress value={pct} className="h-1.5" />}
-                      </div>
-                    </div>
-                  );
-                })}
+      {/* Investment pots */}
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="flex items-center gap-2">
+            <LineChart className="h-4 w-4 text-muted-foreground" /> Investment pots
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <PotForm
+              defaultPotType="investment"
+              trigger={
+                <button className="text-sm font-medium text-primary hover:underline">New pot</button>
+              }
+            />
+            <Link href="/savings" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+              View all <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {investmentPots.length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">No investment pots yet.</p>
+          ) : (
+            <>
+              <div>
+                <p className="text-xs text-muted-foreground">Total invested</p>
+                <p className="text-xl font-semibold">{formatCurrency(totalInvested)}</p>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+              <div className="grid gap-4 sm:grid-cols-2">
+                {investmentPots.slice(0, 4).map((pot) => (
+                <PotCard
+                  key={pot.id}
+                  pot={pot}
+                  accounts={accounts.filter((a) => a.pot_id === pot.id)}
+                    contributions={contributions.filter((c) => c.pot_id === pot.id)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Financial goals */}
       {financialGoals.length > 0 && (

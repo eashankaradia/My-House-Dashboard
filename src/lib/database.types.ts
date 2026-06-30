@@ -98,6 +98,7 @@ export type SavingsPot = Timestamps & {
   color: string;
   icon: string | null;
   notes: string | null;
+  pot_type: string;
 };
 
 export type SavingsAccount = Timestamps & {
@@ -533,6 +534,9 @@ export type Habit = {
   color: string | null;
   is_active: boolean;
   start_date: string | null;
+  habit_type: string;
+  why: string | null;
+  unit: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -543,7 +547,18 @@ export type HabitLog = {
   habit_id: string;
   logged_date: string;
   count: number;
+  value: number | null;
+  duration_seconds: number | null;
   notes: string | null;
+  created_at: string;
+};
+
+export type HabitTarget = {
+  id: string;
+  user_id: string;
+  habit_id: string;
+  period: string;
+  target_value: number;
   created_at: string;
 };
 
@@ -601,6 +616,43 @@ export type WorkoutExercise = {
   created_at: string;
 };
 
+export type Exercise = {
+  id: string;
+  user_id: string;
+  name: string;
+  muscle_groups: string[];
+  technique: string | null;
+  inspiration: string | null;
+  pb_value: number | null;
+  pb_unit: string | null;
+  pb_date: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WorkoutPlan = {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WorkoutPlanExercise = {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  exercise_id: string;
+  sets: number | null;
+  reps: number | null;
+  target_weight_kg: number | null;
+  order_index: number;
+  notes: string | null;
+  created_at: string;
+};
+
 export type HealthRecord = {
   id: string;
   user_id: string;
@@ -641,6 +693,19 @@ export type Appointment = {
   updated_at: string;
 };
 
+export type HealthInspiration = {
+  id: string;
+  user_id: string;
+  kind: string;
+  title: string;
+  url: string | null;
+  image_url: string | null;
+  source: string | null;
+  content: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type NutritionLog = {
   id: string;
   user_id: string;
@@ -652,6 +717,32 @@ export type NutritionLog = {
   carbs_g: number | null;
   fat_g: number | null;
   notes: string | null;
+  created_at: string;
+};
+
+export type Recipe = {
+  id: string;
+  user_id: string;
+  name: string;
+  video_url: string | null;
+  image_url: string | null;
+  servings: number | null;
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RecipeIngredient = {
+  id: string;
+  user_id: string;
+  recipe_id: string;
+  name: string;
+  quantity: string | null;
+  order_index: number;
   created_at: string;
 };
 
@@ -758,14 +849,21 @@ export type Database = {
       room_design_inspiration_links: Row<RoomDesignInspirationLink>;
       habits: Row<Habit>;
       habit_logs: Row<HabitLog>;
+      habit_targets: Row<HabitTarget>;
       goals: Row<Goal>;
       journal_entries: Row<JournalEntry>;
       workouts: Row<Workout>;
       workout_exercises: Row<WorkoutExercise>;
+      exercises: Row<Exercise>;
+      workout_plans: Row<WorkoutPlan>;
+      workout_plan_exercises: Row<WorkoutPlanExercise>;
       health_records: Row<HealthRecord>;
       medications: Row<Medication>;
       appointments: Row<Appointment>;
+      health_inspiration: Row<HealthInspiration>;
       nutrition_logs: Row<NutritionLog>;
+      recipes: Row<Recipe>;
+      recipe_ingredients: Row<RecipeIngredient>;
       finance_settings: Row<FinanceSettings>;
       budgets: Row<Budget>;
     };

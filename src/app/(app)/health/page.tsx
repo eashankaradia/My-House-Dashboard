@@ -3,10 +3,12 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { createClient } from "@/lib/supabase/server";
-import type { HealthRecord, Medication, Appointment } from "@/lib/database.types";
+import type { HealthRecord, Medication, Appointment, HealthInspiration } from "@/lib/database.types";
 import { HEALTH_RECORD_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 import { HealthAddMenu, LogHealthRecordForm } from "./health-forms";
+import { HealthInspirationList } from "./health-inspiration-list";
+import { HealthInspirationForm } from "./health-inspiration-form";
 
 export const metadata = { title: "Health" };
 
@@ -15,7 +17,7 @@ export default async function HealthPage() {
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [recordsRes, medsRes, appointmentsRes] = await Promise.all([
+  const [recordsRes, medsRes, appointmentsRes, inspirationRes] = await Promise.all([
     supabase
       .from("health_records")
       .select("*")
@@ -33,11 +35,13 @@ export default async function HealthPage() {
       .neq("status", "Cancelled")
       .order("appointment_date", { ascending: true })
       .limit(10),
+    supabase.from("health_inspiration").select("*").order("created_at", { ascending: false }),
   ]);
 
   const records = (recordsRes.data ?? []) as HealthRecord[];
   const medications = (medsRes.data ?? []) as Medication[];
   const appointments = (appointmentsRes.data ?? []) as Appointment[];
+  const inspiration = (inspirationRes.data ?? []) as HealthInspiration[];
 
   const latestWeight = records.find((r) => r.record_type === "weight");
   const latestBP = records.find((r) => r.record_type === "blood_pressure");
@@ -45,7 +49,7 @@ export default async function HealthPage() {
     (a) => a.appointment_date >= new Date().toISOString().slice(0, 10) && a.status === "Upcoming",
   );
 
-  const hasData = records.length > 0 || medications.length > 0 || appointments.length > 0;
+  const hasData = records.length > 0 || medications.length > 0 || appointments.length > 0 || inspiration.length > 0;
 
   return (
     <div className="space-y-6">
@@ -147,6 +151,27 @@ export default async function HealthPage() {
               </div>
             </section>
           )}
+
+          {/* Inspiration & guides */}
+          <section className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Inspiration & guides
+              </h2>
+              <HealthInspirationForm
+                trigger={
+                  <button className="text-sm font-medium text-primary hover:underline">Add</button>
+                }
+              />
+            </div>
+            {inspiration.length > 0 ? (
+              <HealthInspirationList items={inspiration} />
+            ) : (
+              <p className="rounded-xl border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
+                Save reels and guides on how to be healthy.
+              </p>
+            )}
+          </section>
 
           {/* Recent records */}
           {records.length > 0 && (

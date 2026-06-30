@@ -2,8 +2,10 @@ import { GoogleSignIn } from "@/components/auth/google-sign-in";
 import { PasswordSignIn } from "@/components/auth/password-sign-in";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
+const isLife = process.env.NEXT_PUBLIC_APP === "life";
+
 export const metadata = {
-  title: "Sign in · My House Dashboard",
+  title: isLife ? "Sign in · MyLife" : "Sign in · My House Dashboard",
 };
 
 export default function LoginPage() {
@@ -16,11 +18,16 @@ export default function LoginPage() {
       <Card className="relative w-full max-w-md border-border/60 shadow-xl">
         <CardHeader className="items-center text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/logo.png" alt="My House" className="mb-3 h-16 w-16 rounded-2xl object-contain shadow-lg" />
-          <CardTitle className="text-2xl">My House Dashboard</CardTitle>
+          <img
+            src="/icons/logo.png"
+            alt={isLife ? "MyLife" : "My House"}
+            className="mb-3 h-16 w-16 rounded-2xl object-contain shadow-lg"
+          />
+          <CardTitle className="text-2xl">{isLife ? "MyLife" : "My House Dashboard"}</CardTitle>
           <CardDescription className="max-w-xs">
-            Your home command centre — bills, savings, projects, purchases and inspiration in one
-            calm place.
+            {isLife
+              ? "Your personal operating system — health, fitness, finance, habits and goals in one calm place."
+              : "Your home command centre — bills, savings, projects, purchases and inspiration in one calm place."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
