@@ -37,201 +37,68 @@ export type NavItem = {
   group: string;
 };
 
+// ─── My House nav ────────────────────────────────────────────────────────────
+
+const HOUSE_NAV_GROUPS = ["Home", "Finances", "Planner", "More"] as const;
+
+const HOUSE_NAV_ITEMS: NavItem[] = [
+  // Home
+  { title: "Dashboard", short: "Home", href: "/dashboard", icon: LayoutDashboard, description: "Your daily briefing", group: "Home" },
+  // Finances
+  { title: "Bills & Expenses", short: "Bills", href: "/bills", icon: Receipt, description: "Recurring costs & payments", group: "Finances" },
+  { title: "Mortgage", href: "/mortgage", icon: Home, description: "Balance, equity & payoff", group: "Finances" },
+  { title: "Savings Pots", short: "Savings", href: "/savings", icon: PiggyBank, description: "Goals & contributions", group: "Finances" },
+  { title: "Analytics", href: "/analytics", icon: BarChart3, description: "Trends & breakdowns", group: "Finances" },
+  // Planner
+  { title: "Projects & Tasks", short: "Projects", href: "/projects", icon: Hammer, description: "Plan projects and track to-dos", group: "Planner" },
+  { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance", group: "Planner" },
+  { title: "Future Purchases", short: "Purchases", href: "/purchases", icon: ShoppingBag, description: "Your home wishlist", group: "Planner" },
+  { title: "Room Designer", short: "Rooms", href: "/rooms", icon: Sofa, description: "Design each room before you buy", group: "Planner" },
+  { title: "Groceries", short: "Shop", href: "/shopping", icon: ShoppingCart, description: "Shared shopping list", group: "Planner" },
+  { title: "Maintenance", short: "Upkeep", href: "/maintenance", icon: Wrench, description: "Reminders & servicing", group: "Planner" },
+  // More
+  { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Ideas & collections", group: "More" },
+  { title: "Documents", short: "Docs", href: "/documents", icon: FolderArchive, description: "Warranties, insurance & more", group: "More" },
+  { title: "Notes & Links", short: "Notes", href: "/notes", icon: NotebookPen, description: "Quick notes and useful links", group: "More" },
+  { title: "Photos", href: "/photos", icon: Camera, description: "Quick snaps to label later", group: "More" },
+  { title: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later", group: "More" },
+  { title: "Change log", short: "Log", href: "/activity", icon: History, description: "Who changed what, and when", group: "More" },
+];
+
+// ─── MyLife nav ───────────────────────────────────────────────────────────────
+
+const LIFE_NAV_GROUPS = ["Home", "Health", "Finances", "Planner", "More"] as const;
+
+const LIFE_NAV_ITEMS: NavItem[] = [
+  // Home
+  { title: "Dashboard", short: "Home", href: "/dashboard", icon: LayoutDashboard, description: "Your daily briefing", group: "Home" },
+  // Health
+  { title: "Habits", href: "/habits", icon: Repeat, description: "Build consistent daily habits", group: "Health" },
+  { title: "Journal", href: "/journal", icon: BookOpen, description: "Daily reflections & mood", group: "Health" },
+  { title: "Fitness", href: "/fitness", icon: Dumbbell, description: "Workouts & training log", group: "Health" },
+  { title: "Nutrition", href: "/nutrition", icon: Utensils, description: "Meals, macros & protein", group: "Health" },
+  { title: "Health", href: "/health", icon: Heart, description: "Records, appointments & medication", group: "Health" },
+  // Finances
+  { title: "Finance", short: "Finance", href: "/finance", icon: Wallet, description: "Income, budgets & cash flow", group: "Finances" },
+  { title: "Bills & Expenses", short: "Bills", href: "/bills", icon: Receipt, description: "Recurring costs & payments", group: "Finances" },
+  // Planner
+  { title: "Goals", href: "/goals", icon: Target, description: "Life goals & automatic progress", group: "Planner" },
+  { title: "Projects & Tasks", short: "Tasks", href: "/projects", icon: Hammer, description: "Plan projects and track to-dos", group: "Planner" },
+  { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance", group: "Planner" },
+  // More
+  { title: "Notes & Links", short: "Notes", href: "/notes", icon: NotebookPen, description: "Quick notes and useful links", group: "More" },
+  { title: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later", group: "More" },
+];
+
+// ─── Active nav (switched by NEXT_PUBLIC_APP env var) ────────────────────────
+
+const _isLife = process.env.NEXT_PUBLIC_APP === "life";
+
 /** Order the sidebar groups appear in. */
-export const NAV_GROUPS = ["Home", "Finances", "Health", "Planner", "More"] as const;
+export const NAV_GROUPS: readonly string[] = _isLife ? LIFE_NAV_GROUPS : HOUSE_NAV_GROUPS;
 
 /** Primary navigation — drives both the desktop sidebar and mobile menu. */
-export const NAV_ITEMS: NavItem[] = [
-  // Home
-  {
-    title: "Dashboard",
-    short: "Home",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    description: "Your daily briefing",
-    group: "Home",
-  },
-
-  // Finances
-  {
-    title: "Finance",
-    short: "Finance",
-    href: "/finance",
-    icon: Wallet,
-    description: "Income, budgets & cash flow",
-    group: "Finances",
-  },
-  {
-    title: "Bills & Expenses",
-    short: "Bills",
-    href: "/bills",
-    icon: Receipt,
-    description: "Recurring costs & payments",
-    group: "Finances",
-  },
-  {
-    title: "Mortgage",
-    href: "/mortgage",
-    icon: Home,
-    description: "Balance, equity & payoff",
-    group: "Finances",
-  },
-  {
-    title: "Savings Pots",
-    short: "Savings",
-    href: "/savings",
-    icon: PiggyBank,
-    description: "Goals & contributions",
-    group: "Finances",
-  },
-  {
-    title: "Analytics",
-    href: "/analytics",
-    icon: BarChart3,
-    description: "Trends & breakdowns",
-    group: "Finances",
-  },
-
-  // Health
-  {
-    title: "Fitness",
-    href: "/fitness",
-    icon: Dumbbell,
-    description: "Workouts & training log",
-    group: "Health",
-  },
-  {
-    title: "Nutrition",
-    href: "/nutrition",
-    icon: Utensils,
-    description: "Meals, macros & protein",
-    group: "Health",
-  },
-  {
-    title: "Health",
-    href: "/health",
-    icon: Heart,
-    description: "Records, appointments & medication",
-    group: "Health",
-  },
-  {
-    title: "Habits",
-    href: "/habits",
-    icon: Repeat,
-    description: "Build consistent daily habits",
-    group: "Health",
-  },
-
-  // Planner
-  {
-    title: "Goals",
-    href: "/goals",
-    icon: Target,
-    description: "Life goals & automatic progress",
-    group: "Planner",
-  },
-  {
-    title: "Projects & Tasks",
-    short: "Projects",
-    href: "/projects",
-    icon: Hammer,
-    description: "Plan projects and track to-dos",
-    group: "Planner",
-  },
-  {
-    title: "Calendar",
-    href: "/calendar",
-    icon: CalendarDays,
-    description: "Key dates at a glance",
-    group: "Planner",
-  },
-  {
-    title: "Future Purchases",
-    short: "Purchases",
-    href: "/purchases",
-    icon: ShoppingBag,
-    description: "Your home wishlist",
-    group: "Planner",
-  },
-  {
-    title: "Room Designer",
-    short: "Rooms",
-    href: "/rooms",
-    icon: Sofa,
-    description: "Design each room before you buy",
-    group: "Planner",
-  },
-
-  // More
-  {
-    title: "Journal",
-    href: "/journal",
-    icon: BookOpen,
-    description: "Daily reflections & mood",
-    group: "More",
-  },
-  {
-    title: "Inspiration",
-    href: "/inspiration",
-    icon: Lightbulb,
-    description: "Ideas & collections",
-    group: "More",
-  },
-  {
-    title: "Documents",
-    short: "Docs",
-    href: "/documents",
-    icon: FolderArchive,
-    description: "Warranties, insurance & more",
-    group: "More",
-  },
-  {
-    title: "Notes & Links",
-    short: "Notes",
-    href: "/notes",
-    icon: NotebookPen,
-    description: "Quick notes and useful links",
-    group: "More",
-  },
-  {
-    title: "Groceries",
-    short: "Shop",
-    href: "/shopping",
-    icon: ShoppingCart,
-    description: "Shared shopping list",
-    group: "More",
-  },
-  {
-    title: "Maintenance",
-    short: "Upkeep",
-    href: "/maintenance",
-    icon: Wrench,
-    description: "Reminders & servicing",
-    group: "More",
-  },
-  {
-    title: "Photos",
-    href: "/photos",
-    icon: Camera,
-    description: "Quick snaps to label later",
-    group: "More",
-  },
-  {
-    title: "Drafts",
-    href: "/drafts",
-    icon: FileText,
-    description: "Half-formed ideas saved for later",
-    group: "More",
-  },
-  {
-    title: "Change log",
-    short: "Log",
-    href: "/activity",
-    icon: History,
-    description: "Who changed what, and when",
-    group: "More",
-  },
-];
+export const NAV_ITEMS: NavItem[] = _isLife ? LIFE_NAV_ITEMS : HOUSE_NAV_ITEMS;
 
 /** Tabs that can never be hidden from the sidebar. */
 export const ALWAYS_VISIBLE = ["/dashboard"] as const;
