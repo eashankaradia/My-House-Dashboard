@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (MyLife module redesign in progress — Habits v2 + Fitness/workout-plans shipped; landing-page branding fix shipped).
+> after **every** change. Last updated: 2026-06-30 (MyLife module redesign in progress — Habits v2 + Fitness/workout-plans + Nutrition/recipes shipped; landing-page branding fix shipped).
 
 ---
 
@@ -108,12 +108,34 @@ branch on `process.env.NEXT_PUBLIC_APP === "life"`. No DB change.
   library-wide body diagram at the bottom.
 - Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
 
+### Nutrition → recipes — DONE — migration `0039_recipes.sql` (already applied live via MCP)
+- Replaced meal logging with recipe capture. New tables: `recipes` (name,
+  `video_url`, `image_url`, `servings`, `calories`/`protein_g`/`carbs_g`/
+  `fat_g` — nutritional value per recipe, `notes` for method/steps) and
+  `recipe_ingredients` (recipe_id, `name`, `quantity` as free text e.g. "2
+  cups" or "a pinch" — deliberately not split into numeric+unit, ingredient
+  quantities are too irregular for that, `order_index`). Old
+  `nutrition_logs` table left in place but unused (confirmed via grep: not
+  referenced by the dashboard or anywhere else).
+- `nutrition/actions.ts` rewritten: `createRecipe`/`updateRecipe` accept the
+  recipe fields plus an `ingredients[]` array and write both tables in one
+  call (update replaces all ingredient rows — delete-then-reinsert, simplest
+  correct approach for a small reorderable list), `deleteRecipe`.
+- `nutrition/recipe-form.tsx`: name, `ImageUpload` photo (same component
+  used by projects/photos), video link (plain URL field — no embed
+  fetching/oEmbed, just a "watch the video" link out), a dynamic
+  add/remove ingredients list (name + free-text quantity per row),
+  servings, the 4 macro fields, and a method/notes textarea.
+- `nutrition/recipe-detail-dialog.tsx`: photo, video link, a 4-stat macro
+  strip, ingredients list, method, and a nested Edit button (same pattern
+  as habits/fitness).
+- `nutrition/nutrition-view.tsx` + `nutrition/page.tsx`: a recipe card grid
+  (photo or a ChefHat placeholder, calories, ingredient count, a film icon
+  if it has a video) — tapping a card opens the detail dialog.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
 ### Still TODO on this redesign (next batches, same branch)
-1. **Nutrition → recipes**: replace meal logging with recipe capture (video
-   URL, ingredients list, nutritional value per recipe). Current
-   `nutrition_logs` table is meal-log-shaped; will likely need a new
-   `recipes` table (+ maybe `recipe_ingredients`) rather than reusing it.
-2. **Finance: savings & investment pots**: `savings_pots` already exists
+1. **Finance: savings & investment pots**: `savings_pots` already exists
    (household-shared table, RLS `auth.uid() = user_id or
    is_household_member()`) with a full accounts/contributions ledger
    (migration 0007) and an existing `QuickContribute` quick-add-value
@@ -123,7 +145,7 @@ branch on `process.env.NEXT_PUBLIC_APP === "life"`. No DB change.
    `savings_pots` and surface investment pots (reusing `PotCard`/
    `QuickContribute`) on the `/finance` page rather than building new
    infrastructure.
-3. **Health: reels & guides**: capture health inspiration reels/videos and
+2. **Health: reels & guides**: capture health inspiration reels/videos and
    "how to be healthy" guides. Not yet designed — likely a new table
    (similar shape to `quick_photos`/`drafts`/inspiration) scoped to health,
    or could extend the existing inspiration feed with a `category="health"`

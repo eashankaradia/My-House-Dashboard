@@ -706,6 +706,32 @@ export type NutritionLog = {
   created_at: string;
 };
 
+export type Recipe = {
+  id: string;
+  user_id: string;
+  name: string;
+  video_url: string | null;
+  image_url: string | null;
+  servings: number | null;
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RecipeIngredient = {
+  id: string;
+  user_id: string;
+  recipe_id: string;
+  name: string;
+  quantity: string | null;
+  order_index: number;
+  created_at: string;
+};
+
 export type FinanceSettings = {
   id: string;
   user_id: string;
@@ -821,6 +847,8 @@ export type Database = {
       medications: Row<Medication>;
       appointments: Row<Appointment>;
       nutrition_logs: Row<NutritionLog>;
+      recipes: Row<Recipe>;
+      recipe_ingredients: Row<RecipeIngredient>;
       finance_settings: Row<FinanceSettings>;
       budgets: Row<Budget>;
     };
