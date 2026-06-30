@@ -1,8 +1,42 @@
-# My House Dashboard — Engineering Handoff
+# MyLife — Engineering Handoff
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-29 (Claude — Notes & Links section; documents split out).
+> after **every** change. Last updated: 2026-06-30 (MyLife Milestone 1: Foundation — rebrand, design system, new modules, DB schema).
+
+---
+
+## MyLife Milestone 1: Foundation — COMPLETE
+
+**What shipped:**
+- **Rebrand**: App renamed from "My House Dashboard" → "MyLife" throughout (metadata, sidebar, topbar, footer, manifest).
+- **Dark mode default**: `defaultTheme="dark"` in providers (users can still toggle).
+- **Design system**: Updated CSS custom properties — deep neutral dark mode (premium feel, not navy-tinted), `info` semantic color added, `--radius` updated. `tailwind.config.ts` now has `info` color + richer animation keyframes (`fade-in-scale`, `slide-up`, `number-in`, `shimmer`). Typography scale CSS classes added (`.text-display`, `.text-heading`, `.text-title`, `.text-body`, `.text-caption`, `.skeleton`).
+- **Navigation restructure**: `NAV_GROUPS` changed from `["Overview","Money","Planning","Home","Capture","Calendar"]` → `["Home","Finances","Health","Planner","More"]`. All 23 nav items reorganised. New icons: Dumbbell, Heart, Utensils, Repeat, Target, BookOpen. Default bottom tabs updated to `["/dashboard", "/bills", "/fitness", "/habits"]`. Sidebar now shows group headings for all 5 groups.
+- **6 new module pages** (all build, all have proper empty states + stat cards):
+  - `/fitness` — workout log, exercise sets, monthly stats
+  - `/health` — health records, medications, appointments
+  - `/habits` — daily/weekly/monthly habit tracker with streak + optimistic toggle
+  - `/goals` — goal cards with progress bars, category colours
+  - `/journal` — daily reflections with mood emoji, entry list
+  - `/nutrition` — meal logging, macro tracking, daily targets
+- **Server actions** for all 6 modules: `habits/actions.ts`, `goals/actions.ts`, `journal/actions.ts`, `fitness/actions.ts`, `health/actions.ts`, `nutrition/actions.ts`.
+- **Migration `0035_mylife_foundation.sql`** — **RUN THIS LIVE** in Supabase SQL editor. Adds:
+  - `habits` + `habit_logs` (personal RLS: `auth.uid() = user_id`)
+  - `goals`
+  - `journal_entries` (unique per user per date)
+  - `workouts` + `workout_exercises`
+  - `health_records`, `medications`, `appointments`
+  - `nutrition_logs`
+  - All tables have indexes + `updated_at` triggers (reuses existing `set_updated_at()` function).
+- **`database.types.ts`** updated with 10 new type exports + all new tables registered in the `Database` map.
+- **`constants.ts`** extended with `HABIT_FREQUENCIES`, `HABIT_COLORS`, `GOAL_CATEGORIES`, `GOAL_STATUSES`, `WORKOUT_TYPES`, `HEALTH_RECORD_TYPES`, `HEALTH_RECORD_LABELS`, `APPOINTMENT_STATUSES`, `MEAL_TYPES`, `MOOD_OPTIONS`.
+
+**Verification:** `npm run build` ✓ clean (all 29 routes compiled).
+
+**Next milestone (Milestone 2: Core Platform):** Dashboard redesign to the MyLife daily briefing — personalised greeting, life score, "Needs attention", quick habit check-in, goals progress ring, and a morning briefing card. Also: form dialogs for all 6 new modules (currently pages show empty states or read-only views with no forms wired up yet).
+
+---
 
 ### Notes & Links (done) — **needs migration 0034**
 - `0034_useful_links.sql` adds `useful_links` (title, url, description) + household

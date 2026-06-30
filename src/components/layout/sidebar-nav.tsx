@@ -57,11 +57,9 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           if (groupItems.length === 0) return null;
           return (
             <div key={group} className="mt-2 first:mt-0">
-              {group !== "Overview" ? (
-                <p className="px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/70">
-                  {group}
-                </p>
-              ) : null}
+              <p className="px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+                {group}
+              </p>
               {groupItems.map(renderLink)}
             </div>
           );

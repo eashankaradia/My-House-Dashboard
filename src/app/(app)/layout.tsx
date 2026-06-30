@@ -44,12 +44,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <aside className="hidden border-r bg-card/40 lg:flex lg:flex-col">
         <Link href="/dashboard" className="flex items-center gap-2.5 px-6 py-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/logo.png" alt="My House" className="h-9 w-9 shrink-0 rounded-xl object-contain shadow-sm" />
-          <span className="text-[15px] font-semibold">My House</span>
+          <img src="/icons/logo.png" alt="MyLife" className="h-9 w-9 shrink-0 rounded-xl object-contain shadow-sm" />
+          <span className="text-[15px] font-semibold">MyLife</span>
         </Link>
         <SidebarNav />
         <div className="px-5 py-4 text-xs text-muted-foreground">
-          {new Date().getFullYear()} · Home command centre
+          {new Date().getFullYear()} · MyLife personal OS
         </div>
       </aside>
 
@@ -60,8 +60,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <MobileNav />
             <Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icons/logo.png" alt="My House" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
-              <span className="font-semibold">My House</span>
+              <img src="/icons/logo.png" alt="MyLife" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
+              <span className="font-semibold">MyLife</span>
             </Link>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
