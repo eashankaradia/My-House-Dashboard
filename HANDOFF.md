@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (Finance overhaul in progress: budget-vs-actual + credit cards + nav visibility + personal-purchases-in-MyLife shipped; income/pots/shares/personal-vs-household-filters/cross-module-inspiration queued — branch `claude/finance-overhaul`, not yet merged).
+> after **every** change. Last updated: 2026-06-30 (Finance overhaul in progress: budget-vs-actual + credit cards + nav visibility + personal-purchases + income log shipped; pots/shares/personal-vs-household-filters/cross-module-inspiration queued — branch `claude/finance-overhaul`, not yet merged).
 
 ---
 

@@ -12,10 +12,10 @@ import type {
   BillPayment,
   CalendarEvent,
   Document,
-  FinanceSettings,
   Goal,
   Habit,
   HabitLog,
+  IncomeMonth,
   Inspiration,
   MaintenanceTask,
   Mortgage,
@@ -24,6 +24,7 @@ import type {
   Purchase,
   SavingsPot,
 } from "@/lib/database.types";
+import { monthStr, effectiveIncomeForMonth } from "@/lib/income";
 import { DashboardWidget, EditDashboardButton } from "./dashboard-customize";
 import { CollapsibleSection } from "./collapsible-section";
 import { WeekAhead } from "./week-ahead";
@@ -74,7 +75,7 @@ export default async function DashboardPage() {
     habitsRes,
     habitLogsRes,
     goalsRes,
-    financeSettingsRes,
+    incomeMonthsRes,
   ] = await Promise.all([
     supabase.from("bills").select("*"),
     supabase.from("savings_pots").select("*"),
@@ -91,7 +92,7 @@ export default async function DashboardPage() {
     supabase.from("habits").select("*").eq("is_active", true).order("created_at", { ascending: true }),
     supabase.from("habit_logs").select("*").gte("logged_date", thirtyDaysAgo),
     supabase.from("goals").select("*").eq("status", "Active").order("created_at", { ascending: false }).limit(6),
-    supabase.from("finance_settings").select("*").limit(1).maybeSingle(),
+    supabase.from("income_months").select("*").order("month", { ascending: false }),
   ]);
 
   const bills = (billsRes.data ?? []) as Bill[];
@@ -108,10 +109,11 @@ export default async function DashboardPage() {
   const habits = (habitsRes.data ?? []) as Habit[];
   const habitLogs = (habitLogsRes.data ?? []) as HabitLog[];
   const activeGoals = (goalsRes.data ?? []) as Goal[];
-  const financeSettings = financeSettingsRes.data as FinanceSettings | null;
+  const incomeMonths = (incomeMonthsRes.data ?? []) as IncomeMonth[];
 
   // --- Finance: cash flow ---------------------------------------------------
-  const monthlyIncome = financeSettings?.monthly_income ? Number(financeSettings.monthly_income) : null;
+  const income = effectiveIncomeForMonth(incomeMonths, monthStr());
+  const monthlyIncome = income.source !== "none" ? income.net + income.bonus : null;
   const monthlyBillsTotal = bills.reduce((s, b) => s + toMonthly(Number(b.amount), b.frequency), 0);
   const netMonthly = monthlyIncome !== null ? monthlyIncome - monthlyBillsTotal : null;
   const monthlySavingsContribs = pots.reduce((s, p) => s + Number(p.monthly_contribution ?? 0), 0);
@@ -393,7 +395,7 @@ export default async function DashboardPage() {
           <CollapsibleSection title="Cash flow" href="/finance" count={0}>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div>
-                <p className="text-xs text-muted-foreground">{financeSettings?.income_label ?? "Income"}</p>
+                <p className="text-xs text-muted-foreground">Income</p>
                 <p className="text-base font-semibold">{formatCurrency(monthlyIncome!)}</p>
               </div>
               <div>

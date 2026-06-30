@@ -12,11 +12,13 @@ import type {
   CreditCardStatement,
   FinanceSettings,
   Goal,
+  IncomeMonth,
   SavingsAccount,
   SavingsContribution,
   SavingsPot,
 } from "@/lib/database.types";
-import { IncomeForm } from "./income-form";
+import { monthStr, effectiveIncomeForMonth } from "@/lib/income";
+import { IncomeSection } from "./income-section";
 import { PotCard } from "@/app/(app)/savings/pot-card";
 import { PotForm } from "@/app/(app)/savings/pot-form";
 import { CreditCardsSection } from "./credit-cards-section";
@@ -24,14 +26,9 @@ import { CreditCardForm } from "./credit-card-form";
 
 export const metadata = { title: "Finance" };
 
-function currentMonthStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
-}
-
 export default async function FinancePage() {
   const supabase = await createClient();
-  const [billsRes, settingsRes, potsRes, accountsRes, contribRes, goalsRes, cardsRes, statementsRes] = await Promise.all([
+  const [billsRes, settingsRes, potsRes, accountsRes, contribRes, goalsRes, cardsRes, statementsRes, incomeRes] = await Promise.all([
     supabase.from("bills").select("*"),
     supabase.from("finance_settings").select("*").limit(1).maybeSingle(),
     supabase.from("savings_pots").select("*").order("created_at"),
@@ -40,6 +37,7 @@ export default async function FinancePage() {
     supabase.from("goals").select("*").eq("status", "Active").eq("category", "Financial"),
     supabase.from("credit_cards").select("*").order("name"),
     supabase.from("credit_card_statements").select("*").order("statement_month", { ascending: false }),
+    supabase.from("income_months").select("*").order("month", { ascending: false }),
   ]);
 
   const bills = (billsRes.data ?? []) as Bill[];
@@ -50,15 +48,17 @@ export default async function FinancePage() {
   const financialGoals = (goalsRes.data ?? []) as Goal[];
   const creditCards = (cardsRes.data ?? []) as CreditCard[];
   const cardStatements = (statementsRes.data ?? []) as CreditCardStatement[];
+  const incomeMonths = (incomeRes.data ?? []) as IncomeMonth[];
   const savingsPots = pots.filter((p) => (p.pot_type ?? "savings") === "savings");
   const investmentPots = pots.filter((p) => p.pot_type === "investment");
 
-  const thisMonth = currentMonthStr();
+  const thisMonth = monthStr();
   const monthlyCardStatements = cardStatements
     .filter((s) => s.statement_month === thisMonth)
     .reduce((sum, s) => sum + Number(s.amount), 0);
 
-  const monthlyIncome = settings?.monthly_income ? Number(settings.monthly_income) : null;
+  const income = effectiveIncomeForMonth(incomeMonths, thisMonth);
+  const monthlyIncome = income.source !== "none" ? income.net + income.bonus : null;
   const monthlyBills = bills.reduce((s, b) => s + toMonthly(Number(b.amount), b.frequency), 0) + monthlyCardStatements;
   const monthlySavings = pots.reduce((s, p) => s + Number(p.monthly_contribution ?? 0), 0);
   const netMonthly = monthlyIncome !== null ? monthlyIncome - monthlyBills : null;
@@ -76,17 +76,21 @@ export default async function FinancePage() {
       <PageHeader
         title="Finance"
         description="Your personal financial overview."
-        info="Set your monthly income to calculate your net position and savings rate. Add budgets per category to track spending against your bills."
-      >
-        <IncomeForm settings={settings} />
-      </PageHeader>
+        info="Log your monthly net income below to calculate your net position and savings rate."
+      />
 
       {/* Key numbers */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label={settings?.income_label ?? "Monthly income"}
+          label="Monthly income"
           value={monthlyIncome !== null ? formatCurrency(monthlyIncome) : "Not set"}
-          hint={monthlyIncome !== null ? "Take-home pay" : "Tap 'Set income' above"}
+          hint={
+            income.source === "entered"
+              ? "Logged this month"
+              : income.source === "carried"
+                ? "Carried from last entry"
+                : "Add it in Income below"
+          }
           icon={Wallet}
           accent={monthlyIncome === null ? "muted" : undefined}
         />
@@ -112,6 +116,16 @@ export default async function FinancePage() {
           accent="muted"
         />
       </div>
+
+      {/* Income */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Income</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <IncomeSection settings={settings} months={incomeMonths} />
+        </CardContent>
+      </Card>
 
       {/* Credit cards */}
       <Card>

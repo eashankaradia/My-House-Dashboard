@@ -3,19 +3,44 @@
 import { getActionContext } from "@/lib/action-utils";
 import { revalidatePath } from "next/cache";
 
-export async function upsertFinanceSettings(input: {
-  monthlyIncome?: number | null;
-  incomeLabel?: string;
-}) {
+// --- Income: fixed salary details + monthly net income/bonus log -----------
+
+export async function upsertSalaryDetails(input: { annualSalary?: number | null; employer?: string; salaryNotes?: string }) {
   const { supabase, user } = await getActionContext();
   const { error } = await supabase.from("finance_settings").upsert(
     {
       user_id: user.id,
-      monthly_income: input.monthlyIncome ?? null,
-      income_label: input.incomeLabel || "Monthly income",
+      annual_salary: input.annualSalary ?? null,
+      employer: input.employer?.trim() || null,
+      salary_notes: input.salaryNotes?.trim() || null,
     },
     { onConflict: "user_id" },
   );
+  if (error) return { error: error.message };
+  revalidatePath("/finance");
+}
+
+export async function upsertIncomeMonth(input: { month: string; net_income: number; bonus?: number; notes?: string }) {
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase.from("income_months").upsert(
+    {
+      user_id: user.id,
+      month: input.month,
+      net_income: input.net_income,
+      bonus: input.bonus ?? 0,
+      notes: input.notes?.trim() || null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,month" },
+  );
+  if (error) return { error: error.message };
+  revalidatePath("/finance");
+  revalidatePath("/dashboard");
+}
+
+export async function deleteIncomeMonth(id: string) {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("income_months").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/finance");
   revalidatePath("/dashboard");
