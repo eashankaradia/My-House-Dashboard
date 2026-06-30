@@ -7,16 +7,16 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swa
 
 export const metadata: Metadata = {
   title: {
-    default: "My House Dashboard",
-    template: "%s · My House Dashboard",
+    default: "MyLife",
+    template: "%s · MyLife",
   },
   description:
-    "A premium command centre for managing your home — bills, mortgage, savings, projects, purchases, inspiration, maintenance and documents.",
+    "Your premium personal operating system — health, fitness, finance, habits, goals and home, all in one place.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "My House Dashboard",
+    title: "MyLife",
   },
   icons: {
     icon: "/icons/icon.svg",

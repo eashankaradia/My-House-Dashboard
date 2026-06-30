@@ -1,8 +1,130 @@
-# My House Dashboard — Engineering Handoff
+# MyLife — Engineering Handoff
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-29 (Claude — Notes & Links section; documents split out).
+> after **every** change. Last updated: 2026-06-30 (MyLife Milestone 3: Finance — budget tracking, cash flow, finance overview page).
+
+---
+
+## MyLife Milestone 3: Finance — COMPLETE
+
+**What shipped:**
+- **New `/finance` page** — Personal financial overview hub with:
+  - 4 stat cards: Monthly income, Monthly bills, Net monthly (income − bills), Savings rate
+  - Budget vs actual: per-category comparison with progress bars and Over/Near badges
+  - Savings pots overview: total saved, target, monthly contributions + per-pot progress bars
+  - Financial goals: active goals with `category === "Financial"` + progress
+  - Quick links to Bills, Savings, Analytics
+  - `finance/loading.tsx` skeleton screen
+- **Income tracking** — `finance_settings` table (one row per user). `IncomeForm` dialog to set/edit monthly take-home income + label.
+- **Budget management** — `budgets` table (one row per user per category, unique constraint). `BudgetForm` dialog to add/edit/delete monthly budget limits per category. `BUDGET_CATEGORIES` constant extends `BILL_CATEGORIES` with personal spending categories (Food & Groceries, Transport, Eating Out, Entertainment, Clothing, Personal Care, Healthcare).
+- **Server actions** — `finance/actions.ts`: `upsertFinanceSettings`, `upsertBudget`, `deleteBudget`.
+- **Nav item** — `/finance` added at top of Finances group with `Wallet` icon.
+- **Dashboard cash flow widget** — `cashFlow` widget (id registered in `DASHBOARD_WIDGETS`). Only renders when income is set. Shows income / bills / net monthly / savings rate in a compact 4-column grid inside a `CollapsibleSection` linking to `/finance`.
+- **Types** — `FinanceSettings` and `Budget` types added to `database.types.ts` + Database Tables map.
+
+**Verification:** `npm run build` ✓ clean (all 36 routes compiled).
+
+**DB migration — run this in Supabase SQL editor:**
+
+```sql
+-- 0036_finance_budgets.sql
+create table if not exists finance_settings (
+  id             uuid         primary key default gen_random_uuid(),
+  user_id        uuid         not null unique references auth.users(id) on delete cascade,
+  monthly_income numeric(12, 2),
+  income_label   text         not null default 'Monthly income',
+  updated_at     timestamptz  not null default now()
+);
+alter table finance_settings enable row level security;
+create policy "Users manage own finance settings" on finance_settings
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create table if not exists budgets (
+  id            uuid         primary key default gen_random_uuid(),
+  user_id       uuid         not null references auth.users(id) on delete cascade,
+  category      text         not null,
+  monthly_limit numeric(12, 2) not null default 0,
+  notes         text,
+  created_at    timestamptz  not null default now(),
+  updated_at    timestamptz  not null default now(),
+  unique (user_id, category)
+);
+alter table budgets enable row level security;
+create policy "Users manage own budgets" on budgets
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create trigger set_finance_settings_updated_at
+  before update on finance_settings
+  for each row execute function set_updated_at();
+create trigger set_budgets_updated_at
+  before update on budgets
+  for each row execute function set_updated_at();
+```
+
+**Next milestone (Milestone 4):** Per the roadmap this would be Fitness (enhanced workout tracking, exercise library, progress charts) or Health (health records dashboard, medication reminders, appointment timeline). Alternatively: wire journal entries to be clickable/editable from the list (currently read-only), or add edit buttons to goal cards.
+
+---
+
+## MyLife Milestone 2: Core Platform — COMPLETE
+
+**What shipped:**
+- **Form dialogs** wired up for all 6 new modules — every "Add" button now opens a working form:
+  - `habits/habit-form.tsx` — create/edit habits (name, description, frequency, colour, delete)
+  - `goals/goal-form.tsx` — create/edit goals (title, description, category, target/current value, unit, target date, status when editing, delete)
+  - `journal/journal-form.tsx` — write/edit journal entries (date, mood picker with emoji, content, gratitude; upserts so one entry per day)
+  - `fitness/workout-form.tsx` — log/edit workouts (name, type, date, duration, notes, delete)
+  - `health/health-forms.tsx` — three separate forms: `LogHealthRecordForm` (type, value/value2 for BP, unit), `AddMedicationForm` (name, dosage, frequency, start date), `AddAppointmentForm` (title, provider, date, time, location); `HealthAddMenu` combines all three in the page header
+  - `nutrition/meal-form.tsx` — log a meal (name, type, date, calories, protein, carbs, fat)
+- **All module pages updated** to replace static `<Button>` placeholders with the real form dialog components (habits, goals, journal, fitness, health, nutrition pages all updated).
+- **Loading skeletons** added for all 6 new modules: `habits/loading.tsx`, `goals/loading.tsx`, `journal/loading.tsx`, `fitness/loading.tsx`, `health/loading.tsx`, `nutrition/loading.tsx`.
+- **Dashboard redesign** — MyLife daily briefing added:
+  - Subtitle under greeting now shows life score: "X of Y habits done today · N%"
+  - New `dashboard/daily-habits.tsx` — client component for interactive habit check-in on the dashboard (tap to complete/un-complete daily habits, with streak badges, optimistic updates)
+  - New "Today's habits" dashboard widget (`habitCheckIn`) — compact collapsible with `DailyHabits` component
+  - New "Goals progress" dashboard widget (`goalsProgress`) — compact collapsible with active goals, progress bars, category badges
+  - Both new widgets added to `DASHBOARD_WIDGETS` in `dashboard-customize.tsx` (visible by default, user can toggle off)
+  - Dashboard fetches habits + habit_logs (last 30 days) + active goals in the existing `Promise.all`
+
+**Verification:** `npm run build` ✓ clean (all 34 routes compiled).
+
+**No new DB migrations** — all form components call the server actions from Milestone 1. Migration 0035 (from Milestone 1) must still be run live for the forms to actually save data.
+
+**Next milestone (Milestone 3):** Per the roadmap this would be Finance (bill intelligence, spending analysis, savings automation). Alternatively, the journal entries list currently shows non-clickable buttons — wiring `JournalForm` into the existing journal entry rows (edit flow) would be a quick win. Goals page could also show edit buttons on each card.
+
+---
+
+## MyLife Milestone 1: Foundation — COMPLETE
+
+**What shipped:**
+- **Rebrand**: App renamed from "My House Dashboard" → "MyLife" throughout (metadata, sidebar, topbar, footer, manifest).
+- **Dark mode default**: `defaultTheme="dark"` in providers (users can still toggle).
+- **Design system**: Updated CSS custom properties — deep neutral dark mode (premium feel, not navy-tinted), `info` semantic color added, `--radius` updated. `tailwind.config.ts` now has `info` color + richer animation keyframes (`fade-in-scale`, `slide-up`, `number-in`, `shimmer`). Typography scale CSS classes added (`.text-display`, `.text-heading`, `.text-title`, `.text-body`, `.text-caption`, `.skeleton`).
+- **Navigation restructure**: `NAV_GROUPS` changed from `["Overview","Money","Planning","Home","Capture","Calendar"]` → `["Home","Finances","Health","Planner","More"]`. All 23 nav items reorganised. New icons: Dumbbell, Heart, Utensils, Repeat, Target, BookOpen. Default bottom tabs updated to `["/dashboard", "/bills", "/fitness", "/habits"]`. Sidebar now shows group headings for all 5 groups.
+- **6 new module pages** (all build, all have proper empty states + stat cards):
+  - `/fitness` — workout log, exercise sets, monthly stats
+  - `/health` — health records, medications, appointments
+  - `/habits` — daily/weekly/monthly habit tracker with streak + optimistic toggle
+  - `/goals` — goal cards with progress bars, category colours
+  - `/journal` — daily reflections with mood emoji, entry list
+  - `/nutrition` — meal logging, macro tracking, daily targets
+- **Server actions** for all 6 modules: `habits/actions.ts`, `goals/actions.ts`, `journal/actions.ts`, `fitness/actions.ts`, `health/actions.ts`, `nutrition/actions.ts`.
+- **Migration `0035_mylife_foundation.sql`** — **RUN THIS LIVE** in Supabase SQL editor. Adds:
+  - `habits` + `habit_logs` (personal RLS: `auth.uid() = user_id`)
+  - `goals`
+  - `journal_entries` (unique per user per date)
+  - `workouts` + `workout_exercises`
+  - `health_records`, `medications`, `appointments`
+  - `nutrition_logs`
+  - All tables have indexes + `updated_at` triggers (reuses existing `set_updated_at()` function).
+- **`database.types.ts`** updated with 10 new type exports + all new tables registered in the `Database` map.
+- **`constants.ts`** extended with `HABIT_FREQUENCIES`, `HABIT_COLORS`, `GOAL_CATEGORIES`, `GOAL_STATUSES`, `WORKOUT_TYPES`, `HEALTH_RECORD_TYPES`, `HEALTH_RECORD_LABELS`, `APPOINTMENT_STATUSES`, `MEAL_TYPES`, `MOOD_OPTIONS`.
+
+**Verification:** `npm run build` ✓ clean (all 29 routes compiled).
+
+**Next milestone (Milestone 2: Core Platform):** Dashboard redesign to the MyLife daily briefing — personalised greeting, life score, "Needs attention", quick habit check-in, goals progress ring, and a morning briefing card. Also: form dialogs for all 6 new modules (currently pages show empty states or read-only views with no forms wired up yet).
+
+---
 
 ### Notes & Links (done) — **needs migration 0034**
 - `0034_useful_links.sql` adds `useful_links` (title, url, description) + household

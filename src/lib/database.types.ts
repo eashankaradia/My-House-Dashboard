@@ -519,6 +519,158 @@ export type ActivityLog = {
 
 export type ProjectWithTasks = Project & { tasks: ProjectTask[] };
 
+// ---------------------------------------------------------------------------
+// MyLife personal modules
+// ---------------------------------------------------------------------------
+
+export type Habit = {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  frequency: string;
+  target_count: number;
+  color: string | null;
+  is_active: boolean;
+  start_date: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type HabitLog = {
+  id: string;
+  user_id: string;
+  habit_id: string;
+  logged_date: string;
+  count: number;
+  notes: string | null;
+  created_at: string;
+};
+
+export type Goal = {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  target_value: number | null;
+  current_value: number | null;
+  unit: string | null;
+  target_date: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type JournalEntry = {
+  id: string;
+  user_id: string;
+  entry_date: string;
+  mood: string | null;
+  mood_score: number | null;
+  content: string | null;
+  gratitude: string | null;
+  photo_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Workout = {
+  id: string;
+  user_id: string;
+  name: string;
+  workout_date: string;
+  duration_minutes: number | null;
+  workout_type: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WorkoutExercise = {
+  id: string;
+  user_id: string;
+  workout_id: string;
+  name: string;
+  sets: number | null;
+  reps: number | null;
+  weight_kg: number | null;
+  duration_seconds: number | null;
+  distance_meters: number | null;
+  notes: string | null;
+  created_at: string;
+};
+
+export type HealthRecord = {
+  id: string;
+  user_id: string;
+  record_type: string;
+  value: number | null;
+  value2: number | null;
+  unit: string | null;
+  notes: string | null;
+  recorded_at: string;
+  created_at: string;
+};
+
+export type Medication = {
+  id: string;
+  user_id: string;
+  name: string;
+  dosage: string | null;
+  frequency: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Appointment = {
+  id: string;
+  user_id: string;
+  title: string;
+  provider: string | null;
+  appointment_date: string;
+  appointment_time: string | null;
+  location: string | null;
+  notes: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NutritionLog = {
+  id: string;
+  user_id: string;
+  log_date: string;
+  meal_type: string;
+  name: string;
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+  notes: string | null;
+  created_at: string;
+};
+
+export type FinanceSettings = {
+  id: string;
+  user_id: string;
+  monthly_income: number | null;
+  income_label: string;
+  updated_at: string;
+};
+
+export type Budget = Timestamps & {
+  id: string;
+  user_id: string;
+  category: string;
+  monthly_limit: number;
+  notes: string | null;
+};
+
 export type InspirationSource =
   | "Instagram"
   | "TikTok"
@@ -604,6 +756,18 @@ export type Database = {
       room_colour_palettes: Row<RoomColourPalette>;
       room_colour_swatches: Row<RoomColourSwatch>;
       room_design_inspiration_links: Row<RoomDesignInspirationLink>;
+      habits: Row<Habit>;
+      habit_logs: Row<HabitLog>;
+      goals: Row<Goal>;
+      journal_entries: Row<JournalEntry>;
+      workouts: Row<Workout>;
+      workout_exercises: Row<WorkoutExercise>;
+      health_records: Row<HealthRecord>;
+      medications: Row<Medication>;
+      appointments: Row<Appointment>;
+      nutrition_logs: Row<NutritionLog>;
+      finance_settings: Row<FinanceSettings>;
+      budgets: Row<Budget>;
     };
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };
