@@ -2,7 +2,77 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (Bills: split contributions between household members — shipped, not yet merged).
+> after **every** change. Last updated: 2026-06-30 (Finance overhaul in progress: budget-vs-actual removed, credit card statements shipped; income/pots/shares/nav-visibility/cross-module-inspiration queued — branch `claude/finance-overhaul`, not yet merged).
+
+---
+
+## Finance overhaul — IN PROGRESS (branch `claude/finance-overhaul`)
+
+User sent a rapid sequence of finance-related requests in one session. Schema
+for the whole batch was landed in one migration (`0044_finance_overhaul.sql`,
+applied live via MCP) so later UI batches don't need new migrations for the
+already-queued pieces (income, pot contribution schedules). Working through
+the UI in verified batches; tracked via the session's task list.
+
+### Done
+- **Budget vs Actual removed**: the whole card, `BudgetForm`, and
+  `upsertBudget`/`deleteBudget` actions are gone (`budgets` table left in
+  place, unused — same pattern as other deprecated columns in this codebase).
+- **Credit cards**: new `credit_cards` (name, last4, statement_day) +
+  `credit_card_statements` (card_id, statement_month, amount, is_paid) —
+  both **personal** RLS (`auth.uid() = user_id` only, matching
+  `finance_settings`/`budgets`, not household-shared like bills/pots — credit
+  cards are typically personal even within a shared household).
+  `finance/credit-card-form.tsx` (add/edit a card),
+  `finance/credit-card-statement-form.tsx` (log/edit one month's amount, a
+  paid checkbox), `finance/credit-cards-section.tsx` (expandable per-card row:
+  this month's amount + paid/unpaid/not-logged badge, history of up to 12
+  past statements below). The current month's total statement amount across
+  all cards is folded into the existing `monthlyBills` figure (and therefore
+  `netMonthly`) on `/finance`.
+
+### Queued (not started yet, in this order)
+1. **Nav visibility**: `Notes & Links` currently appears in both
+   `HOUSE_NAV_ITEMS` and `LIFE_NAV_ITEMS` (`src/lib/constants.ts`) — remove
+   it from House (Finance is already Life-only, no change needed there).
+   Data stays shared either way (same Supabase backend); this is purely a
+   nav-visibility change in `src/lib/constants.ts`.
+2. **Future Purchases in MyLife**: add a nav item to `LIFE_NAV_ITEMS`
+   pointing at the existing `/purchases` route, scoped/defaulted to the
+   user's own purchases rather than the full household list. Check whether
+   `/purchases` already has a "mine only" filter (HANDOFF history mentions a
+   "my-items filter" from an earlier batch) before building a new one.
+3. **Income overhaul**: replace the `IncomeForm` "Edit income" button with a
+   dedicated section — fixed salary details (already added to
+   `finance_settings`: `annual_salary`, `employer`, `salary_notes`) plus a
+   monthly net-income log (`income_months` table — already created: month,
+   net_income, bonus, notes, unique per user+month) that carries forward last
+   month's value as an editable default when the current month has no entry
+   yet. Need to update `dashboard/page.tsx`'s cash-flow widget too, since it
+   currently reads `finance_settings.monthly_income` directly — should read
+   the effective current-month income from `income_months` instead (with a
+   shared helper, e.g. `src/lib/income.ts`).
+4. **Pots/accounts redesign + net worth**: `savings_accounts` gains `name`
+   (already has it) + a new `provider` field (bank/platform); simplify
+   `PotCard` (remove the monthly-contribution display from the compact
+   card — `pot_contribution_schedules`/`pot_contribution_overrides` tables
+   already exist for this, to be surfaced in the pot *detail* view instead);
+   a compact accounts view (name + value only); an aggregated **net worth**
+   stat (savings + investment pots, and later shares); pot detail should show
+   value vs total contributed (sum of `savings_contributions`).
+5. **Shares tracking with live prices**: new feature, not yet designed.
+   Needs a `shares` table (ticker, quantity, purchase price) and a **modular,
+   swappable** free price-data provider per `CLAUDE.md` ("Never hard-code
+   providers", "Version 1 should only implement free integrations") — likely
+   an env-var-gated API key, with graceful degradation (show purchase value
+   only, no live gain/loss) when no key is configured. Needs a design
+   decision on which free provider to default to before implementing.
+6. **Inspiration capture for finance and nutrition**: mirror the
+   `health_inspiration` reels/guides pattern (see the "Health: reels &
+   guides" section below) as `finance_inspiration` and `nutrition_inspiration`
+   — kept as separate per-module tables rather than a shared abstraction,
+   consistent with how habits/fitness/nutrition/health/finance already each
+   own their schema independently in this codebase.
 
 ---
 

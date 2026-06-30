@@ -1,27 +1,45 @@
 import Link from "next/link";
-import { ArrowRight, PiggyBank, TrendingDown, TrendingUp, Wallet, LineChart } from "lucide-react";
+import { ArrowRight, PiggyBank, TrendingDown, TrendingUp, Wallet, LineChart, CreditCard as CreditCardIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, toMonthly } from "@/lib/utils";
-import type { Bill, FinanceSettings, Goal, SavingsAccount, SavingsContribution, SavingsPot } from "@/lib/database.types";
+import type {
+  Bill,
+  CreditCard,
+  CreditCardStatement,
+  FinanceSettings,
+  Goal,
+  SavingsAccount,
+  SavingsContribution,
+  SavingsPot,
+} from "@/lib/database.types";
 import { IncomeForm } from "./income-form";
 import { PotCard } from "@/app/(app)/savings/pot-card";
 import { PotForm } from "@/app/(app)/savings/pot-form";
+import { CreditCardsSection } from "./credit-cards-section";
+import { CreditCardForm } from "./credit-card-form";
 
 export const metadata = { title: "Finance" };
 
+function currentMonthStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+}
+
 export default async function FinancePage() {
   const supabase = await createClient();
-  const [billsRes, settingsRes, potsRes, accountsRes, contribRes, goalsRes] = await Promise.all([
+  const [billsRes, settingsRes, potsRes, accountsRes, contribRes, goalsRes, cardsRes, statementsRes] = await Promise.all([
     supabase.from("bills").select("*"),
     supabase.from("finance_settings").select("*").limit(1).maybeSingle(),
     supabase.from("savings_pots").select("*").order("created_at"),
     supabase.from("savings_accounts").select("*"),
     supabase.from("savings_contributions").select("*"),
     supabase.from("goals").select("*").eq("status", "Active").eq("category", "Financial"),
+    supabase.from("credit_cards").select("*").order("name"),
+    supabase.from("credit_card_statements").select("*").order("statement_month", { ascending: false }),
   ]);
 
   const bills = (billsRes.data ?? []) as Bill[];
@@ -30,11 +48,18 @@ export default async function FinancePage() {
   const accounts = (accountsRes.data ?? []) as SavingsAccount[];
   const contributions = (contribRes.data ?? []) as SavingsContribution[];
   const financialGoals = (goalsRes.data ?? []) as Goal[];
+  const creditCards = (cardsRes.data ?? []) as CreditCard[];
+  const cardStatements = (statementsRes.data ?? []) as CreditCardStatement[];
   const savingsPots = pots.filter((p) => (p.pot_type ?? "savings") === "savings");
   const investmentPots = pots.filter((p) => p.pot_type === "investment");
 
+  const thisMonth = currentMonthStr();
+  const monthlyCardStatements = cardStatements
+    .filter((s) => s.statement_month === thisMonth)
+    .reduce((sum, s) => sum + Number(s.amount), 0);
+
   const monthlyIncome = settings?.monthly_income ? Number(settings.monthly_income) : null;
-  const monthlyBills = bills.reduce((s, b) => s + toMonthly(Number(b.amount), b.frequency), 0);
+  const monthlyBills = bills.reduce((s, b) => s + toMonthly(Number(b.amount), b.frequency), 0) + monthlyCardStatements;
   const monthlySavings = pots.reduce((s, p) => s + Number(p.monthly_contribution ?? 0), 0);
   const netMonthly = monthlyIncome !== null ? monthlyIncome - monthlyBills : null;
   const savingsRate =
@@ -68,7 +93,7 @@ export default async function FinancePage() {
         <StatCard
           label="Monthly bills"
           value={formatCurrency(monthlyBills)}
-          hint={`${bills.length} recurring cost${bills.length === 1 ? "" : "s"}`}
+          hint={`${bills.length} recurring cost${bills.length === 1 ? "" : "s"}${creditCards.length ? " + cards" : ""}`}
           icon={TrendingDown}
           accent="muted"
         />
@@ -87,6 +112,25 @@ export default async function FinancePage() {
           accent="muted"
         />
       </div>
+
+      {/* Credit cards */}
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="flex items-center gap-2">
+            <CreditCardIcon className="h-4 w-4 text-muted-foreground" /> Credit cards
+          </CardTitle>
+          <CreditCardForm />
+        </CardHeader>
+        <CardContent>
+          {creditCards.length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              Add your credit cards to log each month&apos;s statement as an expense.
+            </p>
+          ) : (
+            <CreditCardsSection cards={creditCards} statements={cardStatements} />
+          )}
+        </CardContent>
+      </Card>
 
       {/* Savings pots */}
       <Card>
