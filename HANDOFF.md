@@ -2,11 +2,84 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (MyLife module redesign COMPLETE — all 5 modules + landing-page branding fix shipped, merging to main).
+> after **every** change. Last updated: 2026-06-30 (Account/household management: change password, self-serve sign-up, household invite codes — shipped, not yet merged).
 
 ---
 
-## MyLife module redesign — COMPLETE, awaiting PR/merge (branch `claude/mylife-modules-v2`)
+## Account & household management — COMPLETE, awaiting PR/merge (branch `claude/account-household-mgmt`)
+
+User asked for three things after the module redesign (PR #97) was merged:
+1. A settings page to change password.
+2. A "create new user" interface on the landing page.
+3. A way in settings to join or add someone to your household.
+
+### Change password — DONE, no migration
+- `settings/change-password.tsx`: re-authenticates with the current password via
+  `supabase.auth.signInWithPassword` (this app's accounts are
+  username→`@myhouse.local` email, so this re-auth is the only practical "are
+  you sure" check available) before calling
+  `supabase.auth.updateUser({ password })`. Wired into the existing Account
+  card on `/settings`, above the Sign out button.
+- Only meaningfully works for password-based accounts (the username/password
+  flow), not Google-OAuth-only users — acceptable since password auth is this
+  app's primary mechanism.
+
+### Household invite/join — DONE — migration `0042_household_invites.sql` (already applied live via MCP)
+- New table `household_invites` (household_id, code, created_by, expires_at
+  — 7 days). RLS only lets you see/insert/delete invites you created.
+- New `SECURITY DEFINER` function `public.redeem_household_invite(p_code)` —
+  looks up the code (ignoring expired ones), then updates the caller's
+  `household_members.household_id` to match. SECURITY DEFINER is required
+  here (same pattern as the existing `same_household`/`is_household_member`
+  helpers) because the joining user has no RLS visibility into a household
+  they're not yet part of.
+- `settings/actions.ts`: `createHouseholdInvite()` (requires the caller
+  already has a `household_members` row — i.e. has set a display name —
+  generates a 6-char code from an ambiguity-free alphabet, no 0/O/1/I),
+  `joinHousehold(code)` (calls the RPC, surfaces a friendly error if the
+  code's invalid/expired or the caller hasn't set a display name yet).
+- `database.types.ts`: added `HouseholdInvite` type, registered
+  `household_invites` in the Database map, and — new — populated the
+  previously-empty `Functions` map with `redeem_household_invite` so
+  `supabase.rpc(...)` typechecks (no other RPC call existed in the codebase
+  before this).
+- `settings/household-invite.tsx`: two-column UI in the existing Household
+  card — "Invite someone" (generate + copy a code) and "Join a household"
+  (paste a code + Join).
+
+### Sign-up UI on the landing page — DONE, no migration
+- `components/auth/sign-up.tsx`: name + username + password + confirm,
+  reuses the existing `usernameToEmail()` mapping so created accounts are
+  consistent with the existing `PasswordSignIn` flow. On success with a
+  session, calls the existing `updateDisplayName` server action (imported
+  from `settings/actions.ts` — same cross-route-group import pattern used
+  elsewhere) so the new user's `household_members` row exists immediately,
+  then redirects to `/dashboard`.
+- **Open question for the user**: this project's existing 3 accounts
+  (eashan/neelam/demo) all have `confirmed_at` set, but I can't tell from
+  available tooling whether that's because "Confirm email" is OFF
+  project-wide, or because each was manually ticked "Auto Confirm User" in
+  the Supabase dashboard (the comment in `password-sign-in.tsx` suggests the
+  latter — accounts were historically dashboard-created). If confirmation is
+  required, `supabase.auth.signUp()` returns no session for a fresh
+  `@myhouse.local` address (which can never receive a real confirmation
+  email) and the account would be stuck. `sign-up.tsx` handles both cases:
+  if a session comes back, it logs the user in immediately; if not, it shows
+  an explanation telling them to ask an admin to confirm the account in
+  Supabase, or to turn off "Confirm email" under Authentication → Providers
+  → Email so self-serve signup works without an admin step. **I don't have a
+  tool to read or change that GoTrue setting** — whoever picks this up
+  should test signup once deployed and toggle it in the dashboard if needed.
+- `components/auth/auth-tabs.tsx`: a "Sign in" / "Create account" toggle on
+  `/login`, replacing the previously-static `PasswordSignIn` + `GoogleSignIn`
+  block (now nested inside the "Sign in" tab).
+
+Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean on
+every batch (35 routes compile).
+
+---
+
+## MyLife module redesign — COMPLETE, merged to main (PR #97)
 
 User asked for a deep redesign of 5 MyLife modules (habits, fitness, nutrition,
 finance, health) plus a landing-page branding bug. Working through it as
@@ -185,16 +258,11 @@ branch on `process.env.NEXT_PUBLIC_APP === "life"`. No DB change.
   the page's empty state only shows when there's truly nothing.
 - Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
 
-### Branch status / next steps for whoever picks this up
-All 5 requested module redesigns are shipped, verified, committed and
-pushed to `claude/mylife-modules-v2` (6 batches: branding fix, habits,
-fitness, nutrition, finance, health). **No PR has been opened yet for this
-branch** — that's the next step, then it needs review/merge to `main` like
-PR #95 was. After merging, the existing MyLife Vercel deployment will pick
-up all of this automatically (single env-var-gated codebase, no new env
-vars needed for any of these 5 migrations). Migrations 0037–0041 are all
-already applied live on the Supabase project via MCP — nothing further to
-run.
+### Branch status
+All 5 module redesigns shipped via PR #97, merged to `main`, and confirmed
+live in production on both Vercel projects (`my-house-dashboard` and
+`my-life-dashboard`) off the merge commit. Migrations 0037–0041 were applied
+live on the Supabase project via MCP — nothing further to run.
 
 Smaller pre-existing gaps not part of this redesign (still open):
 - Journal entries: past entries show non-clickable rows; `JournalForm` isn't
