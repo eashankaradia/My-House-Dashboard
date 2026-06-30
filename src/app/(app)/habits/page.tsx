@@ -1,10 +1,10 @@
-import { Repeat, Plus, Flame, CheckCircle2, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Repeat, Flame, CheckCircle2, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import type { Habit, HabitLog } from "@/lib/database.types";
 import { HabitsView } from "./habits-view";
+import { HabitForm } from "./habit-form";
 
 export const metadata = { title: "Habits" };
 
@@ -41,10 +41,7 @@ export default async function HabitsPage() {
         description="Build consistency one day at a time."
         info="Track daily, weekly, and monthly habits. Your streak grows as you stay consistent."
       >
-        <Button size="sm" className="gap-1.5">
-          <Plus className="h-4 w-4" />
-          Add habit
-        </Button>
+        <HabitForm />
       </PageHeader>
 
       {habits.length === 0 ? (
@@ -53,10 +50,7 @@ export default async function HabitsPage() {
           title="No habits yet"
           description="Add your first habit and start building streaks. Whether it's daily exercise, reading, or drinking more water — small habits compound into big results."
         >
-          <Button className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            Add your first habit
-          </Button>
+          <HabitForm />
         </EmptyState>
       ) : (
         <>

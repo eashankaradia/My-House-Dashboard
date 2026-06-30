@@ -1,11 +1,10 @@
-import { BookOpen, Plus, PenLine, Calendar } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { BookOpen, Calendar } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import type { JournalEntry } from "@/lib/database.types";
 import { MOOD_OPTIONS } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { JournalForm } from "./journal-form";
 
 export const metadata = { title: "Journal" };
 
@@ -30,10 +29,7 @@ export default async function JournalPage() {
         description="Reflect on your day, track your mood, and record your thoughts."
         info="Each day has one journal entry. Your entries are private to you."
       >
-        <Button size="sm" className="gap-1.5">
-          <PenLine className="h-4 w-4" />
-          {todayEntry ? "Edit today" : "Write today"}
-        </Button>
+        <JournalForm entry={todayEntry} />
       </PageHeader>
 
       {/* Today's entry highlight */}
@@ -43,10 +39,9 @@ export default async function JournalPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
           </p>
-          <Button className="mt-4 gap-1.5">
-            <PenLine className="h-4 w-4" />
-            Write today&apos;s entry
-          </Button>
+          <div className="mt-4 flex justify-center">
+            <JournalForm />
+          </div>
         </div>
       )}
 
@@ -56,10 +51,7 @@ export default async function JournalPage() {
           title="No journal entries yet"
           description="Start writing. Capture how you feel, what you're grateful for, and what you want to improve. Even one sentence a day adds up."
         >
-          <Button className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            Write your first entry
-          </Button>
+          <JournalForm />
         </EmptyState>
       ) : (
         <div className="space-y-2">

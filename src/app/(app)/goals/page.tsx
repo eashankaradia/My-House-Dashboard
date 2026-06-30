@@ -1,13 +1,12 @@
-import { Target, Plus, Trophy, TrendingUp, CircleDashed } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Progress } from "@/components/ui/progress";
 import { createClient } from "@/lib/supabase/server";
 import type { Goal } from "@/lib/database.types";
-import { GOAL_CATEGORIES } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
+import { GoalForm } from "./goal-form";
 
 export const metadata = { title: "Goals" };
 
@@ -48,10 +47,7 @@ export default async function GoalsPage() {
         description="Set meaningful goals and track your progress automatically."
         info="Goals calculate progress from linked data when possible, or you can update them manually."
       >
-        <Button size="sm" className="gap-1.5">
-          <Plus className="h-4 w-4" />
-          Add goal
-        </Button>
+        <GoalForm />
       </PageHeader>
 
       {goals.length === 0 ? (
@@ -60,10 +56,7 @@ export default async function GoalsPage() {
           title="No goals yet"
           description="Set your first goal — financial, fitness, career, or personal. Goals give you direction and help you measure what matters."
         >
-          <Button className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            Set your first goal
-          </Button>
+          <GoalForm />
         </EmptyState>
       ) : (
         <div className="space-y-8">

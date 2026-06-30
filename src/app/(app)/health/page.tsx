@@ -1,5 +1,4 @@
-import { Heart, Plus, Scale, Activity, Pill, CalendarCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Heart, Scale, Activity, Pill, CalendarCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -7,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { HealthRecord, Medication, Appointment } from "@/lib/database.types";
 import { HEALTH_RECORD_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
+import { HealthAddMenu, LogHealthRecordForm } from "./health-forms";
 
 export const metadata = { title: "Health" };
 
@@ -54,10 +54,7 @@ export default async function HealthPage() {
         description="Track your health metrics, appointments and medication."
         info="Your health data is private to you. Log weight, blood pressure, appointments and more."
       >
-        <Button size="sm" className="gap-1.5">
-          <Plus className="h-4 w-4" />
-          Log record
-        </Button>
+        <HealthAddMenu />
       </PageHeader>
 
       {!hasData ? (
@@ -66,10 +63,7 @@ export default async function HealthPage() {
           title="No health records yet"
           description="Start tracking your health. Log your weight, blood pressure, appointments and medication. Spot trends and stay on top of what matters."
         >
-          <Button className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            Add first record
-          </Button>
+          <LogHealthRecordForm />
         </EmptyState>
       ) : (
         <div className="space-y-6">

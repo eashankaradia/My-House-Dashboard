@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { ColoredName } from "@/components/providers/household-colors";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { priorityVariant } from "@/lib/ui";
 import { daysUntil, formatCurrency, formatDate, toAnnual, toMonthly } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
@@ -11,6 +12,9 @@ import type {
   BillPayment,
   CalendarEvent,
   Document,
+  Goal,
+  Habit,
+  HabitLog,
   Inspiration,
   MaintenanceTask,
   Mortgage,
@@ -25,6 +29,7 @@ import { WeekAhead } from "./week-ahead";
 import { NeedsAttention, type AttentionItem } from "./needs-attention";
 import { GlanceStats, type GlanceValue } from "./glance-stats";
 import { SectionActivityLog } from "@/components/shared/section-activity-log";
+import { DailyHabits } from "./daily-habits";
 
 export const metadata = { title: "Dashboard" };
 
@@ -49,6 +54,9 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
   const [
     billsRes,
     potsRes,
@@ -62,6 +70,9 @@ export default async function DashboardPage() {
     memberMap,
     calEventsRes,
     paymentsRes,
+    habitsRes,
+    habitLogsRes,
+    goalsRes,
   ] = await Promise.all([
     supabase.from("bills").select("*"),
     supabase.from("savings_pots").select("*"),
@@ -75,6 +86,9 @@ export default async function DashboardPage() {
     getHouseholdMap(),
     supabase.from("calendar_events").select("*"),
     supabase.from("bill_payments").select("*").eq("is_paid", false),
+    supabase.from("habits").select("*").eq("is_active", true).order("created_at", { ascending: true }),
+    supabase.from("habit_logs").select("*").gte("logged_date", thirtyDaysAgo),
+    supabase.from("goals").select("*").eq("status", "Active").order("created_at", { ascending: false }).limit(6),
   ]);
 
   const bills = (billsRes.data ?? []) as Bill[];
@@ -88,6 +102,15 @@ export default async function DashboardPage() {
   const mortgage = (mortgageRes.data?.[0] as Mortgage | undefined) ?? undefined;
   const calEvents = (calEventsRes.data ?? []) as CalendarEvent[];
   const duePayments = (paymentsRes.data ?? []) as BillPayment[];
+  const habits = (habitsRes.data ?? []) as Habit[];
+  const habitLogs = (habitLogsRes.data ?? []) as HabitLog[];
+  const activeGoals = (goalsRes.data ?? []) as Goal[];
+
+  // --- Habits: daily life score ----------------------------------------------
+  const dailyHabits = habits.filter((h) => h.frequency === "daily");
+  const completedTodayIds = habitLogs.filter((l) => l.logged_date === todayStr).map((l) => l.habit_id);
+  const lifeScore =
+    dailyHabits.length > 0 ? Math.round((completedTodayIds.length / dailyHabits.length) * 100) : null;
 
   // --- Week ahead: how much is on each of the next 7 days -------------------
   const today0 = new Date();
@@ -294,13 +317,61 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {greeting}, <ColoredName name={myName} />
           </h1>
-          <p className="text-muted-foreground">Here&apos;s what needs your attention.</p>
+          <p className="text-sm text-muted-foreground">
+            {lifeScore !== null
+              ? `${completedTodayIds.length} of ${dailyHabits.length} habits done today · ${lifeScore}%`
+              : "Here's your day at a glance."}
+          </p>
         </div>
         <EditDashboardButton />
       </div>
 
       {/* Needs attention — the urgent things, always first */}
       <NeedsAttention items={attention} />
+
+      {/* Daily habit check-in */}
+      {dailyHabits.length > 0 && (
+        <DashboardWidget id="habitCheckIn">
+          <CollapsibleSection
+            title="Today's habits"
+            href="/habits"
+            count={completedTodayIds.length}
+          >
+            <DailyHabits habits={habits} logs={habitLogs} completedToday={completedTodayIds} />
+          </CollapsibleSection>
+        </DashboardWidget>
+      )}
+
+      {/* Active goals progress */}
+      {activeGoals.length > 0 && (
+        <DashboardWidget id="goalsProgress">
+          <CollapsibleSection title="Goals" href="/goals" count={activeGoals.length}>
+            <div className="space-y-3">
+              {activeGoals.slice(0, 4).map((goal) => {
+                const pct =
+                  goal.target_value && goal.current_value
+                    ? Math.min(100, Math.round((Number(goal.current_value) / Number(goal.target_value)) * 100))
+                    : 0;
+                return (
+                  <Link key={goal.id} href="/goals" className="block space-y-1 rounded-md p-1 transition-colors hover:bg-accent">
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <span className="min-w-0 truncate font-medium">{goal.title}</span>
+                      {goal.target_value ? (
+                        <span className="shrink-0 text-xs text-muted-foreground">{pct}%</span>
+                      ) : (
+                        <Badge variant="secondary" className="shrink-0 text-xs">{goal.category}</Badge>
+                      )}
+                    </div>
+                    {goal.target_value ? (
+                      <Progress value={pct} className="h-1.5" />
+                    ) : null}
+                  </Link>
+                );
+              })}
+            </div>
+          </CollapsibleSection>
+        </DashboardWidget>
+      )}
 
       {/* Glance stats (user-customisable in Settings) */}
       <DashboardWidget id="finance">

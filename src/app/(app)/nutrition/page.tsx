@@ -1,12 +1,12 @@
-import { Utensils, Plus, Apple, Beef, Wheat, Droplets } from "lucide-react";
+import { Utensils, Plus, Beef, Wheat, Droplets } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Progress } from "@/components/ui/progress";
 import { createClient } from "@/lib/supabase/server";
 import type { NutritionLog } from "@/lib/database.types";
 import { MEAL_TYPES } from "@/lib/constants";
+import { MealForm } from "./meal-form";
 
 export const metadata = { title: "Nutrition" };
 
@@ -56,10 +56,7 @@ export default async function NutritionPage() {
         title="Nutrition"
         description="Track your meals, hit your protein target, and understand your intake."
       >
-        <Button size="sm" className="gap-1.5">
-          <Plus className="h-4 w-4" />
-          Log meal
-        </Button>
+        <MealForm />
       </PageHeader>
 
       {logs.length === 0 ? (
@@ -68,10 +65,7 @@ export default async function NutritionPage() {
           title="No meals logged yet"
           description="Start tracking your nutrition. Log meals manually, track your macros, and stay on top of your protein target every day."
         >
-          <Button className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            Log your first meal
-          </Button>
+          <MealForm />
         </EmptyState>
       ) : (
         <div className="space-y-6">
@@ -82,10 +76,14 @@ export default async function NutritionPage() {
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Today</p>
                 <p className="text-2xl font-bold">{todayTotals.calories} <span className="text-base font-normal text-muted-foreground">/ {DAILY_TARGETS.calories} kcal</span></p>
               </div>
-              <Button size="sm" variant="outline" className="gap-1.5">
-                <Plus className="h-4 w-4" />
-                Add
-              </Button>
+              <MealForm
+                trigger={
+                  <Button size="sm" variant="outline" className="gap-1.5">
+                    <Plus className="h-4 w-4" />
+                    Add
+                  </Button>
+                }
+              />
             </div>
             <Progress value={Math.min(100, (todayTotals.calories / DAILY_TARGETS.calories) * 100)} className="h-2 mb-4" />
             <div className="grid grid-cols-3 gap-3">

@@ -2,7 +2,35 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (MyLife Milestone 1: Foundation — rebrand, design system, new modules, DB schema).
+> after **every** change. Last updated: 2026-06-30 (MyLife Milestone 2: Core Platform — form dialogs, dashboard briefing, loading states).
+
+---
+
+## MyLife Milestone 2: Core Platform — COMPLETE
+
+**What shipped:**
+- **Form dialogs** wired up for all 6 new modules — every "Add" button now opens a working form:
+  - `habits/habit-form.tsx` — create/edit habits (name, description, frequency, colour, delete)
+  - `goals/goal-form.tsx` — create/edit goals (title, description, category, target/current value, unit, target date, status when editing, delete)
+  - `journal/journal-form.tsx` — write/edit journal entries (date, mood picker with emoji, content, gratitude; upserts so one entry per day)
+  - `fitness/workout-form.tsx` — log/edit workouts (name, type, date, duration, notes, delete)
+  - `health/health-forms.tsx` — three separate forms: `LogHealthRecordForm` (type, value/value2 for BP, unit), `AddMedicationForm` (name, dosage, frequency, start date), `AddAppointmentForm` (title, provider, date, time, location); `HealthAddMenu` combines all three in the page header
+  - `nutrition/meal-form.tsx` — log a meal (name, type, date, calories, protein, carbs, fat)
+- **All module pages updated** to replace static `<Button>` placeholders with the real form dialog components (habits, goals, journal, fitness, health, nutrition pages all updated).
+- **Loading skeletons** added for all 6 new modules: `habits/loading.tsx`, `goals/loading.tsx`, `journal/loading.tsx`, `fitness/loading.tsx`, `health/loading.tsx`, `nutrition/loading.tsx`.
+- **Dashboard redesign** — MyLife daily briefing added:
+  - Subtitle under greeting now shows life score: "X of Y habits done today · N%"
+  - New `dashboard/daily-habits.tsx` — client component for interactive habit check-in on the dashboard (tap to complete/un-complete daily habits, with streak badges, optimistic updates)
+  - New "Today's habits" dashboard widget (`habitCheckIn`) — compact collapsible with `DailyHabits` component
+  - New "Goals progress" dashboard widget (`goalsProgress`) — compact collapsible with active goals, progress bars, category badges
+  - Both new widgets added to `DASHBOARD_WIDGETS` in `dashboard-customize.tsx` (visible by default, user can toggle off)
+  - Dashboard fetches habits + habit_logs (last 30 days) + active goals in the existing `Promise.all`
+
+**Verification:** `npm run build` ✓ clean (all 34 routes compiled).
+
+**No new DB migrations** — all form components call the server actions from Milestone 1. Migration 0035 (from Milestone 1) must still be run live for the forms to actually save data.
+
+**Next milestone (Milestone 3):** Per the roadmap this would be Finance (bill intelligence, spending analysis, savings automation). Alternatively, the journal entries list currently shows non-clickable buttons — wiring `JournalForm` into the existing journal entry rows (edit flow) would be a quick win. Goals page could also show edit buttons on each card.
 
 ---
 

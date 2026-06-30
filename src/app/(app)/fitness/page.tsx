@@ -1,11 +1,10 @@
-import { Dumbbell, Plus, Flame, Activity, Trophy, Timer } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Dumbbell, Flame, Activity, Timer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import type { Workout, WorkoutExercise } from "@/lib/database.types";
-import { WORKOUT_TYPES } from "@/lib/constants";
+import { WorkoutForm } from "./workout-form";
 
 export const metadata = { title: "Fitness" };
 
@@ -48,10 +47,7 @@ export default async function FitnessPage() {
         title="Fitness"
         description="Track your workouts, monitor progress, and hit personal records."
       >
-        <Button size="sm" className="gap-1.5">
-          <Plus className="h-4 w-4" />
-          Log workout
-        </Button>
+        <WorkoutForm />
       </PageHeader>
 
       {workouts.length === 0 ? (
@@ -60,10 +56,7 @@ export default async function FitnessPage() {
           title="No workouts logged yet"
           description="Start tracking your training. Log workouts, exercises, sets and reps. Watch your progressive overload over time."
         >
-          <Button className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            Log your first workout
-          </Button>
+          <WorkoutForm />
         </EmptyState>
       ) : (
         <>
