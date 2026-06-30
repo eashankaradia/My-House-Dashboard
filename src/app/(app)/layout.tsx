@@ -36,6 +36,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const memberColors = await getHouseholdColors();
   const initialPrefs = parsePrefs((await cookies()).get(PREFS_COOKIE)?.value);
 
+  const isLife = process.env.NEXT_PUBLIC_APP === "life";
+  const appName = isLife ? "MyLife" : "My House";
+
   return (
     <HouseholdColorsProvider colors={memberColors}>
     <PrefsProvider initial={initialPrefs}>
@@ -44,12 +47,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <aside className="hidden border-r bg-card/40 lg:flex lg:flex-col">
         <Link href="/dashboard" className="flex items-center gap-2.5 px-6 py-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/logo.png" alt="MyLife" className="h-9 w-9 shrink-0 rounded-xl object-contain shadow-sm" />
-          <span className="text-[15px] font-semibold">MyLife</span>
+          <img src="/icons/logo.png" alt={appName} className="h-9 w-9 shrink-0 rounded-xl object-contain shadow-sm" />
+          <span className="text-[15px] font-semibold">{appName}</span>
         </Link>
         <SidebarNav />
         <div className="px-5 py-4 text-xs text-muted-foreground">
-          {new Date().getFullYear()} · MyLife personal OS
+          {new Date().getFullYear()} · {isLife ? "MyLife personal OS" : "My House Dashboard"}
         </div>
       </aside>
 
@@ -60,8 +63,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <MobileNav />
             <Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icons/logo.png" alt="MyLife" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
-              <span className="font-semibold">MyLife</span>
+              <img src="/icons/logo.png" alt={appName} className="h-8 w-8 shrink-0 rounded-lg object-contain" />
+              <span className="font-semibold">{appName}</span>
             </Link>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
