@@ -279,6 +279,25 @@ export const HABIT_COLORS = [
   "emerald", "sky", "violet", "amber", "rose", "teal", "indigo", "orange", "pink",
 ] as const;
 
+export const HABIT_TYPES = ["yes_no", "numeric", "timer"] as const;
+
+export const HABIT_TYPE_LABELS: Record<string, string> = {
+  yes_no: "Yes / No",
+  numeric: "Numeric value",
+  timer: "Timer",
+};
+
+export const HABIT_TARGET_PERIODS = ["day", "week", "month", "year", "all_time", "single"] as const;
+
+export const HABIT_TARGET_PERIOD_LABELS: Record<string, string> = {
+  day: "Per day",
+  week: "Per week",
+  month: "Per month",
+  year: "Per year",
+  all_time: "All-time total",
+  single: "Single goal",
+};
+
 // ---------------------------------------------------------------------------
 // Goals
 // ---------------------------------------------------------------------------

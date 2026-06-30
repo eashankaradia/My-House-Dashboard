@@ -533,6 +533,9 @@ export type Habit = {
   color: string | null;
   is_active: boolean;
   start_date: string | null;
+  habit_type: string;
+  why: string | null;
+  unit: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -543,7 +546,18 @@ export type HabitLog = {
   habit_id: string;
   logged_date: string;
   count: number;
+  value: number | null;
+  duration_seconds: number | null;
   notes: string | null;
+  created_at: string;
+};
+
+export type HabitTarget = {
+  id: string;
+  user_id: string;
+  habit_id: string;
+  period: string;
+  target_value: number;
   created_at: string;
 };
 
@@ -758,6 +772,7 @@ export type Database = {
       room_design_inspiration_links: Row<RoomDesignInspirationLink>;
       habits: Row<Habit>;
       habit_logs: Row<HabitLog>;
+      habit_targets: Row<HabitTarget>;
       goals: Row<Goal>;
       journal_entries: Row<JournalEntry>;
       workouts: Row<Workout>;

@@ -2,7 +2,96 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (MyLife Milestone 3: Finance — budget tracking, cash flow, finance overview page).
+> after **every** change. Last updated: 2026-06-30 (MyLife module redesign in progress — Habits v2 shipped; landing-page branding fix shipped).
+
+---
+
+## MyLife module redesign — IN PROGRESS (branch `claude/mylife-modules-v2`)
+
+User asked for a deep redesign of 5 MyLife modules (habits, fitness, nutrition,
+finance, health) plus a landing-page branding bug. Working through it as
+separate verified, pushed batches. Tracking via the session's internal task
+list (5 tasks: Habits, Workouts→plans, Nutrition→recipes, Finance pots,
+Health reels/guides).
+
+### Landing page branding fix — DONE
+`src/app/login/page.tsx`, `src/app/layout.tsx` (root metadata), and
+`src/app/manifest.ts` were hardcoded to "My House"/"MyLife" text instead of
+switching on `NEXT_PUBLIC_APP` like the rest of the app shell. All three now
+branch on `process.env.NEXT_PUBLIC_APP === "life"`. No DB change.
+
+### Habits v2 — DONE — migration `0037_habits_v2.sql` (already applied live via MCP)
+- `habits` gained `habit_type` ('yes_no' | 'numeric' | 'timer', default
+  'yes_no'), `why` (text, the inspiration/motivation field), `unit` (text,
+  for numeric habits e.g. "glasses").
+- `habit_logs` gained `value` (numeric, for numeric-type logs) and
+  `duration_seconds` (int, for timer-type logs). `count` is kept for
+  backward compat but no longer carries meaning beyond "a log exists".
+- New table `habit_targets` (habit_id, period, target_value) — a habit can
+  have **one target per period**, periods are day/week/month/year/all_time/
+  single (unique constraint on habit_id+period, so re-saving a period
+  upserts it). `single` and `all_time` are computed identically (cumulative
+  sum of all logs) — `single` is just framed as a one-shot goal in the UI.
+- `src/lib/habit-progress.ts` (new, shared by page/dashboard/dialog):
+  `logAmount(habit, log)` (1 for yes_no, `value` for numeric, minutes for
+  timer), `getStreak(habit, logs)`, `sumForPeriod(habit, logs, period, today)`.
+- `src/app/(app)/habits/actions.ts`: added `logHabitValue` (numeric upsert),
+  `logHabitDuration` (timer upsert, `{add: true}` accumulates onto today's
+  existing duration), `upsertHabitTarget`/`deleteHabitTarget`. Existing
+  `logHabit`/`unlogHabit` (yes/no toggle) unchanged — still used by the
+  dashboard quick-checkin widget.
+- New `habit-calendar.tsx` (month-grid tracker, prev/next nav, filled cells
+  = logged days, today gets a ring), `habit-timer.tsx` (start/pause/stop,
+  mm:ss display, stop logs via `logHabitDuration` with `add:true`),
+  `habit-detail-dialog.tsx` (why quote, type-appropriate quick-log control,
+  target progress bars via `sumForPeriod`, the calendar, an Edit button that
+  opens `HabitForm` nested inside — same nested-dialog pattern as
+  `option-detail.tsx`).
+- `habit-form.tsx`: added Type/Unit/Why fields; a `TargetsEditor` sub-section
+  (only shown when editing an existing habit, since targets need a habit id)
+  lets you set/replace/delete a target per period.
+- `habits-view.tsx`: rows are now type-aware — yes_no keeps the tap-to-toggle
+  circle; numeric/timer rows show today's logged amount and a chevron that
+  opens `HabitDetailDialog` (where the actual numeric/timer logging happens).
+  Tapping a habit's name always opens the detail dialog now (previously there
+  was no per-habit edit entry point at all — `HabitForm` with a `habit` prop
+  was unreferenced dead code).
+- `habits/page.tsx`: now fetches **all** habit_logs (not just the last 30
+  days) and `habit_targets`, since `all_time`/`single` targets and the
+  calendar's month navigation need full history. "Best streak" and "This
+  week" stat cards were previously hardcoded `—` — now computed for real via
+  `habit-progress.ts`.
+- `dashboard/daily-habits.tsx`: the dashboard quick-checkin widget now only
+  shows `habit_type === "yes_no"` daily habits (numeric/timer habits need
+  their dedicated logging UI, not a single tap-toggle).
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+### Still TODO on this redesign (next batches, same branch)
+1. **Workouts → workout plans**: replace logging individual workouts with a
+   plan builder. Per exercise: PBs, inspiration, technique notes, muscle
+   group tag, and a human-body diagram highlighting which muscles a plan
+   works. Current schema (`workouts`/`workout_exercises`, both per-session
+   logs) will need new tables for reusable exercises + plans — has not been
+   designed yet.
+2. **Nutrition → recipes**: replace meal logging with recipe capture (video
+   URL, ingredients list, nutritional value per recipe). Current
+   `nutrition_logs` table is meal-log-shaped; will likely need a new
+   `recipes` table (+ maybe `recipe_ingredients`) rather than reusing it.
+3. **Finance: savings & investment pots**: `savings_pots` already exists
+   (household-shared table, RLS `auth.uid() = user_id or
+   is_household_member()`) with a full accounts/contributions ledger
+   (migration 0007) and an existing `QuickContribute` quick-add-value
+   component (`src/app/(app)/savings/quick-contribute.tsx`) — exactly the
+   "quickly add a value or contribution" UX already requested. Plan: add a
+   `pot_type` column ('savings' | 'investment', default 'savings') to
+   `savings_pots` and surface investment pots (reusing `PotCard`/
+   `QuickContribute`) on the `/finance` page rather than building new
+   infrastructure.
+4. **Health: reels & guides**: capture health inspiration reels/videos and
+   "how to be healthy" guides. Not yet designed — likely a new table
+   (similar shape to `quick_photos`/`drafts`/inspiration) scoped to health,
+   or could extend the existing inspiration feed with a `category="health"`
+   filter. Needs a design decision before implementing.
 
 ---
 
