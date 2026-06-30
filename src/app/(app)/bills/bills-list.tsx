@@ -10,7 +10,7 @@ import { CardTrigger } from "@/components/shared/card-trigger";
 import { FREQUENCY_LABELS } from "@/lib/constants";
 import { cn, formatCurrency, formatDate, toMonthly } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
-import type { Bill, BillPayment, PaymentAccount } from "@/lib/database.types";
+import type { Bill, BillContributor, BillPayment, HouseholdMember, PaymentAccount } from "@/lib/database.types";
 import { BillForm } from "./bill-form";
 import { BillDetailDialog } from "./bill-detail";
 import { deleteBill } from "./actions";
@@ -19,11 +19,15 @@ export function BillsList({
   bills,
   accounts,
   payments,
+  contributors,
+  members,
   memberMap,
 }: {
   bills: Bill[];
   accounts: PaymentAccount[];
   payments: BillPayment[];
+  contributors: BillContributor[];
+  members: HouseholdMember[];
   memberMap: MemberMap;
 }) {
   const [compact, setCompact] = React.useState(true);
@@ -48,7 +52,7 @@ export function BillsList({
         {bills.map((bill) =>
           compact ? (
             <div key={bill.id} className="flex items-center gap-3 py-2 text-sm first:pt-0 last:pb-0">
-              <BillDetailDialog bill={bill} accounts={accounts} payments={payments.filter((payment) => payment.bill_id === bill.id)} memberMap={memberMap}>
+              <BillDetailDialog bill={bill} accounts={accounts} payments={payments.filter((payment) => payment.bill_id === bill.id)} contributors={contributors.filter((c) => c.bill_id === bill.id)} members={members} memberMap={memberMap}>
                 <CardTrigger className="flex min-w-0 flex-1 items-center gap-3 rounded-md">
                   <span className="min-w-0 flex-1 truncate font-medium">{bill.name}</span>
                   <Badge variant="secondary">{bill.category}</Badge>
@@ -79,7 +83,7 @@ export function BillsList({
             </div>
           ) : (
             <div key={bill.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-              <BillDetailDialog bill={bill} accounts={accounts} payments={payments.filter((payment) => payment.bill_id === bill.id)} memberMap={memberMap}>
+              <BillDetailDialog bill={bill} accounts={accounts} payments={payments.filter((payment) => payment.bill_id === bill.id)} contributors={contributors.filter((c) => c.bill_id === bill.id)} members={members} memberMap={memberMap}>
                 <CardTrigger className="min-w-0 flex-1 rounded-md">
                   <div className="flex items-center gap-2">
                     <span className="truncate font-medium">{bill.name}</span>
