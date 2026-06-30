@@ -351,6 +351,13 @@ export const HEALTH_RECORD_LABELS: Record<string, string> = {
 
 export const APPOINTMENT_STATUSES = ["Upcoming", "Completed", "Cancelled"] as const;
 
+export const HEALTH_INSPIRATION_KINDS = ["reel", "guide"] as const;
+
+export const HEALTH_INSPIRATION_KIND_LABELS: Record<string, string> = {
+  reel: "Reel / video",
+  guide: "Guide",
+};
+
 // ---------------------------------------------------------------------------
 // Nutrition
 // ---------------------------------------------------------------------------

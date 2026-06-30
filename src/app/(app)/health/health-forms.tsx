@@ -18,6 +18,7 @@ import { Field } from "@/components/shared/form-field";
 import { useToast } from "@/hooks/use-toast";
 import { HEALTH_RECORD_TYPES, HEALTH_RECORD_LABELS } from "@/lib/constants";
 import { logHealthRecord, createMedication, createAppointment } from "./actions";
+import { HealthInspirationForm } from "./health-inspiration-form";
 
 // ---------------------------------------------------------------------------
 // Log a health record (weight, BP, steps, etc.)
@@ -335,6 +336,7 @@ export function HealthAddMenu() {
       />
       <AddMedicationForm />
       <AddAppointmentForm />
+      <HealthInspirationForm />
     </div>
   );
 }

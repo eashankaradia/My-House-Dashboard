@@ -693,6 +693,19 @@ export type Appointment = {
   updated_at: string;
 };
 
+export type HealthInspiration = {
+  id: string;
+  user_id: string;
+  kind: string;
+  title: string;
+  url: string | null;
+  image_url: string | null;
+  source: string | null;
+  content: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type NutritionLog = {
   id: string;
   user_id: string;
@@ -847,6 +860,7 @@ export type Database = {
       health_records: Row<HealthRecord>;
       medications: Row<Medication>;
       appointments: Row<Appointment>;
+      health_inspiration: Row<HealthInspiration>;
       nutrition_logs: Row<NutritionLog>;
       recipes: Row<Recipe>;
       recipe_ingredients: Row<RecipeIngredient>;

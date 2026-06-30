@@ -2,11 +2,11 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (MyLife module redesign in progress — Habits v2 + Fitness/workout-plans + Nutrition/recipes + Finance investment pots shipped; landing-page branding fix shipped).
+> after **every** change. Last updated: 2026-06-30 (MyLife module redesign COMPLETE — all 5 modules + landing-page branding fix shipped, not yet merged to main).
 
 ---
 
-## MyLife module redesign — IN PROGRESS (branch `claude/mylife-modules-v2`)
+## MyLife module redesign — COMPLETE, awaiting PR/merge (branch `claude/mylife-modules-v2`)
 
 User asked for a deep redesign of 5 MyLife modules (habits, fitness, nutrition,
 finance, health) plus a landing-page branding bug. Working through it as
@@ -161,12 +161,45 @@ branch on `process.env.NEXT_PUBLIC_APP === "life"`. No DB change.
   away" metric).
 - Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
 
-### Still TODO on this redesign (next batches, same branch)
-1. **Health: reels & guides**: capture health inspiration reels/videos and
-   "how to be healthy" guides. Not yet designed — likely a new table
-   (similar shape to `quick_photos`/`drafts`/inspiration) scoped to health,
-   or could extend the existing inspiration feed with a `category="health"`
-   filter. Needs a design decision before implementing.
+### Health: reels & guides — DONE — migration `0041_health_inspiration.sql` (already applied live via MCP)
+- Additive (unlike the other 4 modules — health keeps all its existing
+  records/medications/appointments functionality, this just adds a new
+  section). New table `health_inspiration`: `kind` ('reel' | 'guide'),
+  `title`, `url` (video link for reels, optional link for guides),
+  `image_url`, `source` (e.g. "Instagram", "a friend"), `content` (notes
+  for a reel, the body for a guide).
+- `src/lib/constants.ts`: `HEALTH_INSPIRATION_KINDS`,
+  `HEALTH_INSPIRATION_KIND_LABELS`.
+- `health/actions.ts`: `createHealthInspiration`/`updateHealthInspiration`/
+  `deleteHealthInspiration` appended to the existing file.
+- `health/health-inspiration-form.tsx`: kind select (changes labels/hints
+  contextually — "Video link" for reels vs an optional link for guides,
+  "Guide content" vs "Notes" for the textarea), title, `ImageUpload` cover
+  photo, source, content. Added to `HealthAddMenu` alongside the existing
+  record/medication/appointment triggers.
+- `health/health-inspiration-list.tsx`: a card grid (cover photo or a
+  Film/BookOpen placeholder icon by kind) — tapping a card opens the form
+  pre-filled for editing.
+- `health/page.tsx`: new "Inspiration & guides" section (its own Add
+  button + empty state), `hasData` now also considers inspiration items so
+  the page's empty state only shows when there's truly nothing.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+### Branch status / next steps for whoever picks this up
+All 5 requested module redesigns are shipped, verified, committed and
+pushed to `claude/mylife-modules-v2` (6 batches: branding fix, habits,
+fitness, nutrition, finance, health). **No PR has been opened yet for this
+branch** — that's the next step, then it needs review/merge to `main` like
+PR #95 was. After merging, the existing MyLife Vercel deployment will pick
+up all of this automatically (single env-var-gated codebase, no new env
+vars needed for any of these 5 migrations). Migrations 0037–0041 are all
+already applied live on the Supabase project via MCP — nothing further to
+run.
+
+Smaller pre-existing gaps not part of this redesign (still open):
+- Journal entries: past entries show non-clickable rows; `JournalForm` isn't
+  wired into the entry list for editing.
+- Goals: cards have no per-card edit button.
 
 ---
 
