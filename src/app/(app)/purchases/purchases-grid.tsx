@@ -77,7 +77,7 @@ export function PurchasesGrid({
   // The table scrolls sideways on phones — fall back to cards there.
   const isMobile = useIsMobile();
   const effectiveView = isMobile && view === "table" ? "detailed" : view;
-  const [onlyMine, setOnlyMine] = React.useState(false);
+  const [onlyMine, setOnlyMine] = React.useState(process.env.NEXT_PUBLIC_APP === "life");
   const [hideNoOptions, setHideNoOptions] = React.useState(false);
 
   const rooms = Array.from(new Set(purchases.map((p) => p.room).filter(Boolean))) as string[];

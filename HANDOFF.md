@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (Finance overhaul in progress: budget-vs-actual removed, credit card statements shipped; income/pots/shares/nav-visibility/cross-module-inspiration queued — branch `claude/finance-overhaul`, not yet merged).
+> after **every** change. Last updated: 2026-06-30 (Finance overhaul in progress: budget-vs-actual + credit cards + nav visibility + personal-purchases-in-MyLife shipped; income/pots/shares/personal-vs-household-filters/cross-module-inspiration queued — branch `claude/finance-overhaul`, not yet merged).
 
 ---
 
@@ -31,18 +31,31 @@ the UI in verified batches; tracked via the session's task list.
   all cards is folded into the existing `monthlyBills` figure (and therefore
   `netMonthly`) on `/finance`.
 
+### Done (this batch)
+- **Nav visibility**: removed `Notes & Links` from `HOUSE_NAV_ITEMS`
+  (`src/lib/constants.ts`) — it now only appears in `LIFE_NAV_ITEMS`. Finance
+  was already Life-only. Underlying data is unaffected either way (same
+  Supabase backend, nav is purely cosmetic — the routes themselves aren't
+  gated by `NEXT_PUBLIC_APP`).
+- **Future Purchases in MyLife**: added to `LIFE_NAV_ITEMS` (Planner group),
+  pointing at the existing `/purchases` route. It already had a "Mine"
+  filter toggle (`onlyMine` state in `purchases-grid.tsx`) from an earlier
+  batch — now defaults to `true` when `NEXT_PUBLIC_APP === "life"` (still
+  toggleable, not hard-locked, so a MyLife user can still see household
+  purchases if they want).
+
 ### Queued (not started yet, in this order)
-1. **Nav visibility**: `Notes & Links` currently appears in both
-   `HOUSE_NAV_ITEMS` and `LIFE_NAV_ITEMS` (`src/lib/constants.ts`) — remove
-   it from House (Finance is already Life-only, no change needed there).
-   Data stays shared either way (same Supabase backend); this is purely a
-   nav-visibility change in `src/lib/constants.ts`.
-2. **Future Purchases in MyLife**: add a nav item to `LIFE_NAV_ITEMS`
-   pointing at the existing `/purchases` route, scoped/defaulted to the
-   user's own purchases rather than the full household list. Check whether
-   `/purchases` already has a "mine only" filter (HANDOFF history mentions a
-   "my-items filter" from an earlier batch) before building a new one.
-3. **Income overhaul**: replace the `IncomeForm` "Edit income" button with a
+1. **Personal vs household filter — Projects/Tasks, Purchases, Finance**:
+   user asked for this as a generalisation right after the Future Purchases
+   work above. `project_tasks`/`projects` are currently fully
+   household-shared (no per-user filter at all, unlike purchases). Needs:
+   (a) a "Personal / Household" filter added to `/projects` (probably
+   mirroring the `onlyMine` pattern from `purchases-grid.tsx`), (b) confirm
+   Purchases' existing `onlyMine` toggle covers this adequately, (c) add an
+   equivalent filter to Finance's household-shared sections (bills shown via
+   the monthly-bills figure, savings/investment pots) — exact UI not yet
+   designed.
+2. **Income overhaul**: replace the `IncomeForm` "Edit income" button with a
    dedicated section — fixed salary details (already added to
    `finance_settings`: `annual_salary`, `employer`, `salary_notes`) plus a
    monthly net-income log (`income_months` table — already created: month,
@@ -52,7 +65,7 @@ the UI in verified batches; tracked via the session's task list.
    currently reads `finance_settings.monthly_income` directly — should read
    the effective current-month income from `income_months` instead (with a
    shared helper, e.g. `src/lib/income.ts`).
-4. **Pots/accounts redesign + net worth**: `savings_accounts` gains `name`
+3. **Pots/accounts redesign + net worth**: `savings_accounts` gains `name`
    (already has it) + a new `provider` field (bank/platform); simplify
    `PotCard` (remove the monthly-contribution display from the compact
    card — `pot_contribution_schedules`/`pot_contribution_overrides` tables
@@ -60,14 +73,14 @@ the UI in verified batches; tracked via the session's task list.
    a compact accounts view (name + value only); an aggregated **net worth**
    stat (savings + investment pots, and later shares); pot detail should show
    value vs total contributed (sum of `savings_contributions`).
-5. **Shares tracking with live prices**: new feature, not yet designed.
+4. **Shares tracking with live prices**: new feature, not yet designed.
    Needs a `shares` table (ticker, quantity, purchase price) and a **modular,
    swappable** free price-data provider per `CLAUDE.md` ("Never hard-code
    providers", "Version 1 should only implement free integrations") — likely
    an env-var-gated API key, with graceful degradation (show purchase value
    only, no live gain/loss) when no key is configured. Needs a design
    decision on which free provider to default to before implementing.
-6. **Inspiration capture for finance and nutrition**: mirror the
+5. **Inspiration capture for finance and nutrition**: mirror the
    `health_inspiration` reels/guides pattern (see the "Health: reels &
    guides" section below) as `finance_inspiration` and `nutrition_inspiration`
    — kept as separate per-module tables rather than a shared abstraction,

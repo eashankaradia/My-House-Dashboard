@@ -59,7 +59,6 @@ const HOUSE_NAV_ITEMS: NavItem[] = [
   // More
   { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Ideas & collections", group: "More" },
   { title: "Documents", short: "Docs", href: "/documents", icon: FolderArchive, description: "Warranties, insurance & more", group: "More" },
-  { title: "Notes & Links", short: "Notes", href: "/notes", icon: NotebookPen, description: "Quick notes and useful links", group: "More" },
   { title: "Photos", href: "/photos", icon: Camera, description: "Quick snaps to label later", group: "More" },
   { title: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later", group: "More" },
   { title: "Change log", short: "Log", href: "/activity", icon: History, description: "Who changed what, and when", group: "More" },
@@ -85,6 +84,7 @@ const LIFE_NAV_ITEMS: NavItem[] = [
   { title: "Goals", href: "/goals", icon: Target, description: "Life goals & automatic progress", group: "Planner" },
   { title: "Projects & Tasks", short: "Tasks", href: "/projects", icon: Hammer, description: "Plan projects and track to-dos", group: "Planner" },
   { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance", group: "Planner" },
+  { title: "Future Purchases", short: "Purchases", href: "/purchases", icon: ShoppingBag, description: "Your personal wishlist", group: "Planner" },
   // More
   { title: "Notes & Links", short: "Notes", href: "/notes", icon: NotebookPen, description: "Quick notes and useful links", group: "More" },
   { title: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later", group: "More" },
