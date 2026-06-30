@@ -508,6 +508,15 @@ export type HouseholdMember = {
   color: string | null;
 };
 
+export type HouseholdInvite = {
+  id: string;
+  household_id: string;
+  code: string;
+  created_by: string;
+  created_at: string;
+  expires_at: string | null;
+};
+
 export type ActivityLog = {
   id: number;
   user_id: string | null;
@@ -831,6 +840,7 @@ export type Database = {
       calendar_events: Row<CalendarEvent>;
       project_tasks: Row<ProjectTask>;
       household_members: Row<HouseholdMember>;
+      household_invites: Row<HouseholdInvite>;
       activity_log: Row<ActivityLog>;
       maintenance_tasks: Row<MaintenanceTask>;
       documents: Row<Document>;
@@ -868,7 +878,12 @@ export type Database = {
       budgets: Row<Budget>;
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      redeem_household_invite: {
+        Args: { p_code: string };
+        Returns: boolean;
+      };
+    };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
   };

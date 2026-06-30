@@ -1,5 +1,4 @@
-import { GoogleSignIn } from "@/components/auth/google-sign-in";
-import { PasswordSignIn } from "@/components/auth/password-sign-in";
+import { AuthTabs } from "@/components/auth/auth-tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const isLife = process.env.NEXT_PUBLIC_APP === "life";
@@ -32,15 +31,7 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {configured ? (
-            <>
-              <PasswordSignIn />
-              <div className="flex items-center gap-3">
-                <span className="h-px flex-1 bg-border" />
-                <span className="text-xs text-muted-foreground">or</span>
-                <span className="h-px flex-1 bg-border" />
-              </div>
-              <GoogleSignIn />
-            </>
+            <AuthTabs />
           ) : (
             <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
               This deployment needs <code>NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
