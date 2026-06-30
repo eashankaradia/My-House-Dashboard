@@ -49,16 +49,27 @@ export default async function SavingsPage() {
             <StatCard label="Monthly contributions" value={formatCurrency(totalMonthly)} icon={TrendingUp} />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {pots.map((pot) => (
-              <PotCard
-                key={pot.id}
-                pot={pot}
-                accounts={accounts.filter((a) => a.pot_id === pot.id)}
-                contributions={contributions.filter((c) => c.pot_id === pot.id)}
-              />
-            ))}
-          </div>
+          {(["savings", "investment"] as const).map((type) => {
+            const typePots = pots.filter((p) => (p.pot_type ?? "savings") === type);
+            if (typePots.length === 0) return null;
+            return (
+              <section key={type} className="space-y-2">
+                <h2 className="px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  {type === "savings" ? "Savings pots" : "Investment pots"}
+                </h2>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {typePots.map((pot) => (
+                    <PotCard
+                      key={pot.id}
+                      pot={pot}
+                      accounts={accounts.filter((a) => a.pot_id === pot.id)}
+                      contributions={contributions.filter((c) => c.pot_id === pot.id)}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </>
       )}
       <SectionActivityLog entityTypes={["savings_pots", "savings_accounts", "savings_contributions"]} />

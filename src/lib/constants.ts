@@ -224,6 +224,13 @@ export const POT_COLORS = [
   "emerald", "sky", "violet", "amber", "rose", "teal", "indigo", "orange",
 ] as const;
 
+export const POT_TYPES = ["savings", "investment"] as const;
+
+export const POT_TYPE_LABELS: Record<string, string> = {
+  savings: "Savings",
+  investment: "Investment",
+};
+
 // ---------------------------------------------------------------------------
 // Members / household
 // ---------------------------------------------------------------------------

@@ -98,6 +98,7 @@ export type SavingsPot = Timestamps & {
   color: string;
   icon: string | null;
   notes: string | null;
+  pot_type: string;
 };
 
 export type SavingsAccount = Timestamps & {

@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (MyLife module redesign in progress — Habits v2 + Fitness/workout-plans + Nutrition/recipes shipped; landing-page branding fix shipped).
+> after **every** change. Last updated: 2026-06-30 (MyLife module redesign in progress — Habits v2 + Fitness/workout-plans + Nutrition/recipes + Finance investment pots shipped; landing-page branding fix shipped).
 
 ---
 
@@ -134,18 +134,35 @@ branch on `process.env.NEXT_PUBLIC_APP === "life"`. No DB change.
   if it has a video) — tapping a card opens the detail dialog.
 - Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
 
+### Finance: savings & investment pots — DONE — migration `0040_pot_type.sql` (already applied live via MCP)
+- Reused the existing `savings_pots` infrastructure (household-shared
+  table, accounts + contributions ledger from migration 0007, the
+  `QuickContribute` quick-add-value dialog) rather than building anything
+  new — added a single `pot_type` column ('savings' | 'investment',
+  default 'savings').
+- `src/lib/constants.ts`: `POT_TYPES`, `POT_TYPE_LABELS`.
+- `src/lib/schemas.ts`: `savingsPotSchema` gained `pot_type` (enum, default
+  'savings'); `savings/actions.ts#toRow` persists it.
+- `savings/pot-form.tsx`: a Pot type select, plus a new `defaultPotType`
+  prop so a "New pot" trigger can pre-select Investment.
+- `/savings` page now groups pots into a "Savings pots" section and an
+  "Investment pots" section (only rendered when non-empty), each still
+  using the existing `PotCard` grid.
+- `/finance` page: replaced the single read-only "Savings pots" summary
+  with two full `Card`s — **Savings pots** and **Investment pots** — each
+  rendering up to 4 `PotCard`s (imported from
+  `@/app/(app)/savings/pot-card`, same cross-route-group import pattern
+  already used by `dashboard/daily-habits.tsx`), so the existing
+  `QuickContribute` "Add" button is right there on `/finance` for fast
+  value/contribution entry on any pot, plus a "New pot" trigger pre-set to
+  the right type. `totalSaved`/`totalTarget` stats are now scoped to
+  savings-type pots only; the top "Savings rate" stat card still sums
+  monthly contributions across both types (a deliberate "money being put
+  away" metric).
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
 ### Still TODO on this redesign (next batches, same branch)
-1. **Finance: savings & investment pots**: `savings_pots` already exists
-   (household-shared table, RLS `auth.uid() = user_id or
-   is_household_member()`) with a full accounts/contributions ledger
-   (migration 0007) and an existing `QuickContribute` quick-add-value
-   component (`src/app/(app)/savings/quick-contribute.tsx`) — exactly the
-   "quickly add a value or contribution" UX already requested. Plan: add a
-   `pot_type` column ('savings' | 'investment', default 'savings') to
-   `savings_pots` and surface investment pots (reusing `PotCard`/
-   `QuickContribute`) on the `/finance` page rather than building new
-   infrastructure.
-2. **Health: reels & guides**: capture health inspiration reels/videos and
+1. **Health: reels & guides**: capture health inspiration reels/videos and
    "how to be healthy" guides. Not yet designed — likely a new table
    (similar shape to `quick_photos`/`drafts`/inspiration) scoped to health,
    or could extend the existing inspiration feed with a `category="health"`
