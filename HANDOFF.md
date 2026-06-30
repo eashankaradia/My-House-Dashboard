@@ -2,7 +2,30 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (Finance overhaul in progress: budget-vs-actual + credit cards + nav visibility + personal-purchases + income log shipped; pots/shares/personal-vs-household-filters/cross-module-inspiration queued — branch `claude/finance-overhaul`, not yet merged).
+> after **every** change. Last updated: 2026-06-30 (Finance overhaul + new Essentials tab shipped; pots/shares/personal-vs-household-filters/cross-module-inspiration/daily-routine/bored-tasks/FAB-audit queued — branch `claude/finance-overhaul`, not yet merged).
+
+## Essentials — DONE — migration `0045_essentials.sql` (applied live via MCP)
+New personal (not household-shared) `essentials` table: `category`, `name`,
+`rag` ('red'|'amber'|'green'), `have_notes`, `order_index`. New `/essentials`
+route (MyLife nav only). `essentials/essential-form.tsx` (category is a free
+text `Input` with a `<datalist>` of existing categories — not a rigid enum,
+since this is an open-ended personal list), a 3-way RAG toggle, "what you
+have" notes field. `essentials/essentials-view.tsx`: grouped-by-category
+sections with a Compact/Detailed toggle (same pattern as
+`bills-list.tsx`/`purchases-grid.tsx`) — Compact shows just a RAG dot + name
+in a grid; Detailed adds the `have_notes` text inline next to the name. A
+top summary row counts green/amber/red. Tapping any row opens
+`EssentialForm` pre-filled for editing.
+
+**Seeded with the user's real data** (101 items, 8 categories — Work,
+Fitness and Wellbeing, Wellbeing, Clothing, Everyday Use, Travel, Everyday
+Consumables, Apps and subscriptions) via a one-off `execute_sql` call
+(deliberately NOT included in the versioned migration file — seed data for
+one specific person doesn't belong in schema migrations; looked up the
+target `user_id` by `email = 'eashan@myhouse.local'` via a subquery).
+✅-marked items → `rag='green'`; unmarked → `rag='red'`; where the user wrote
+a product name after the ✅ (e.g. "Breakfast drink ✅ Fuel 10k") that became
+`have_notes` (e.g. "Fuel 10k").
 
 ---
 

@@ -23,6 +23,8 @@ import {
   Target,
   BookOpen,
   Wallet,
+  ListChecks,
+  SunMoon,
   type LucideIcon,
 } from "lucide-react";
 
@@ -73,6 +75,7 @@ const LIFE_NAV_ITEMS: NavItem[] = [
   { title: "Dashboard", short: "Home", href: "/dashboard", icon: LayoutDashboard, description: "Your daily briefing", group: "Home" },
   // Health
   { title: "Habits", href: "/habits", icon: Repeat, description: "Build consistent daily habits", group: "Health" },
+  { title: "Routine", href: "/routine", icon: SunMoon, description: "Your daily routine, step by step", group: "Health" },
   { title: "Journal", href: "/journal", icon: BookOpen, description: "Daily reflections & mood", group: "Health" },
   { title: "Fitness", href: "/fitness", icon: Dumbbell, description: "Workouts & training log", group: "Health" },
   { title: "Nutrition", href: "/nutrition", icon: Utensils, description: "Meals, macros & protein", group: "Health" },
@@ -85,6 +88,7 @@ const LIFE_NAV_ITEMS: NavItem[] = [
   { title: "Projects & Tasks", short: "Tasks", href: "/projects", icon: Hammer, description: "Plan projects and track to-dos", group: "Planner" },
   { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance", group: "Planner" },
   { title: "Future Purchases", short: "Purchases", href: "/purchases", icon: ShoppingBag, description: "Your personal wishlist", group: "Planner" },
+  { title: "Essentials", href: "/essentials", icon: ListChecks, description: "What you need, what you have", group: "Planner" },
   // More
   { title: "Notes & Links", short: "Notes", href: "/notes", icon: NotebookPen, description: "Quick notes and useful links", group: "More" },
   { title: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later", group: "More" },
@@ -375,3 +379,15 @@ export const MOOD_OPTIONS = [
   { value: "bad",      label: "Bad",      emoji: "😕", score: 2 },
   { value: "terrible", label: "Terrible", emoji: "😞", score: 1 },
 ] as const;
+
+// ---------------------------------------------------------------------------
+// Essentials
+// ---------------------------------------------------------------------------
+
+export const RAG_STATUSES = ["red", "amber", "green"] as const;
+
+export const RAG_LABELS: Record<string, string> = {
+  red: "Need it",
+  amber: "Have, not great",
+  green: "Sorted",
+};

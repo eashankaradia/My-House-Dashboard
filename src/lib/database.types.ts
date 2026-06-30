@@ -726,6 +726,18 @@ export type HealthInspiration = {
   updated_at: string;
 };
 
+export type Essential = {
+  id: string;
+  user_id: string;
+  category: string;
+  name: string;
+  rag: string;
+  have_notes: string | null;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type NutritionLog = {
   id: string;
   user_id: string;
@@ -934,6 +946,7 @@ export type Database = {
       medications: Row<Medication>;
       appointments: Row<Appointment>;
       health_inspiration: Row<HealthInspiration>;
+      essentials: Row<Essential>;
       nutrition_logs: Row<NutritionLog>;
       recipes: Row<Recipe>;
       recipe_ingredients: Row<RecipeIngredient>;
