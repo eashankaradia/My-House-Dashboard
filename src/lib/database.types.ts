@@ -671,6 +671,16 @@ export type Exercise = {
   updated_at: string;
 };
 
+export type MuscleLink = {
+  id: string;
+  user_id: string;
+  muscle_group: string;
+  url: string;
+  label: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type WorkoutPlan = {
   id: string;
   user_id: string;
@@ -1041,6 +1051,7 @@ export type Database = {
       exercises: Row<Exercise>;
       workout_plans: Row<WorkoutPlan>;
       workout_plan_exercises: Row<WorkoutPlanExercise>;
+      muscle_links: Row<MuscleLink>;
       health_records: Row<HealthRecord>;
       medications: Row<Medication>;
       appointments: Row<Appointment>;

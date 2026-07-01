@@ -2,7 +2,7 @@ import { Dumbbell } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { createClient } from "@/lib/supabase/server";
-import type { Exercise, WorkoutPlan, WorkoutPlanExercise } from "@/lib/database.types";
+import type { Exercise, MuscleLink, WorkoutPlan, WorkoutPlanExercise } from "@/lib/database.types";
 import { FitnessView } from "./fitness-view";
 import { PlanForm } from "./plan-form";
 import { ExerciseForm } from "./exercise-form";
@@ -12,15 +12,17 @@ export const metadata = { title: "Fitness" };
 export default async function FitnessPage() {
   const supabase = await createClient();
 
-  const [plansRes, planExercisesRes, exercisesRes] = await Promise.all([
+  const [plansRes, planExercisesRes, exercisesRes, muscleLinksRes] = await Promise.all([
     supabase.from("workout_plans").select("*").eq("is_active", true).order("created_at", { ascending: true }),
     supabase.from("workout_plan_exercises").select("*").order("order_index", { ascending: true }),
     supabase.from("exercises").select("*").order("name", { ascending: true }),
+    supabase.from("muscle_links").select("*").order("created_at", { ascending: false }),
   ]);
 
   const plans = (plansRes.data ?? []) as WorkoutPlan[];
   const planExercises = (planExercisesRes.data ?? []) as WorkoutPlanExercise[];
   const exercises = (exercisesRes.data ?? []) as Exercise[];
+  const muscleLinks = (muscleLinksRes.data ?? []) as MuscleLink[];
 
   return (
     <div className="space-y-6">
@@ -47,7 +49,7 @@ export default async function FitnessPage() {
           </div>
         </EmptyState>
       ) : (
-        <FitnessView plans={plans} planExercises={planExercises} exercises={exercises} />
+        <FitnessView plans={plans} planExercises={planExercises} exercises={exercises} muscleLinks={muscleLinks} />
       )}
     </div>
   );

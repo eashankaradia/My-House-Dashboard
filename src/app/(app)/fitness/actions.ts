@@ -129,3 +129,24 @@ export async function removeExerciseFromPlan(id: string) {
   if (error) return { error: error.message };
   revalidatePath("/fitness");
 }
+
+// ─── Muscle links (reference guides, e.g. Instagram tutorials) ────────────────
+
+export async function createMuscleLink(input: { muscle_group: string; url: string; label?: string }) {
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase.from("muscle_links").insert({
+    user_id: user.id,
+    muscle_group: input.muscle_group,
+    url: input.url,
+    label: input.label ?? null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/fitness");
+}
+
+export async function deleteMuscleLink(id: string) {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("muscle_links").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/fitness");
+}

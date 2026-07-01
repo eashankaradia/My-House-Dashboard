@@ -6,18 +6,20 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { MUSCLE_GROUPS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import type { Exercise, WorkoutPlan, WorkoutPlanExercise } from "@/lib/database.types";
+import type { Exercise, MuscleLink, WorkoutPlan, WorkoutPlanExercise } from "@/lib/database.types";
 import { BodyDiagram } from "./body-diagram";
 import { PlanDetailDialog } from "./plan-detail-dialog";
 import { ExerciseForm } from "./exercise-form";
+import { MuscleLinks } from "./muscle-links";
 
 type Props = {
   plans: WorkoutPlan[];
   planExercises: WorkoutPlanExercise[];
   exercises: Exercise[];
+  muscleLinks: MuscleLink[];
 };
 
-export function FitnessView({ plans, planExercises, exercises }: Props) {
+export function FitnessView({ plans, planExercises, exercises, muscleLinks }: Props) {
   const [activePlan, setActivePlan] = React.useState<WorkoutPlan | null>(null);
   const exerciseById = React.useMemo(() => new Map(exercises.map((e) => [e.id, e])), [exercises]);
   const [search, setSearch] = React.useState("");
@@ -154,8 +156,9 @@ export function FitnessView({ plans, planExercises, exercises }: Props) {
 
       <section className="space-y-2">
         <h2 className="px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">What you train</h2>
-        <div className="rounded-xl border bg-card p-4">
+        <div className="space-y-4 rounded-xl border bg-card p-4">
           <BodyDiagram highlighted={Array.from(new Set(exercises.flatMap((e) => e.muscle_groups)))} />
+          <MuscleLinks links={muscleLinks} />
         </div>
       </section>
 
