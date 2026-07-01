@@ -5,8 +5,9 @@
 > after **every** change. Last updated: 2026-07-01 (a follow-up batch after the
 > six-part request — Fitness Instagram links, Finance page cleanup, a fixed
 > mobile add-menu, discoverable habit editing, and an app-wide edit-clutter
-> audit — implemented, verified, committed and pushed to `main` at commit
-> `384513d`. Not yet re-confirmed live in Vercel production for this batch).
+> audit — implemented, verified, committed, pushed, and confirmed **READY in
+> Vercel production** on both `my-house-dashboard` and `my-life-dashboard` at
+> commit `325b1af`. Nothing outstanding from this batch).
 
 ## Follow-up batch: Fitness links, Finance cleanup, edit discoverability (2026-07-01)
 Five more asks landed right after the six-part batch shipped:
@@ -85,8 +86,9 @@ Five more asks landed right after the six-part batch shipped:
 
 **Verification for this batch**: `npm run typecheck`, `npm run lint`, and
 both `npm run build` / `NEXT_PUBLIC_APP=life npm run build` ran clean after
-every commit (`82fbc01`, `384513d`), both pushed to `main`. **Next step**:
-confirm both Vercel projects are `READY` at `384513d`.
+every commit (`82fbc01`, `384513d`, `325b1af`), all pushed to `main` and
+confirmed **READY** on both Vercel projects at `325b1af`. Nothing
+outstanding from this batch.
 
 ## Done: six-part follow-up request + inline asks (2026-07-01)
 The user sent a new dense request after the previous multi-part batch shipped
