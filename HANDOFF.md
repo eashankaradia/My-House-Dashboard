@@ -2,30 +2,131 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (mid-session on a new six-part
-> follow-up request; two items done and pushed so far — see below — the rest
-> are still outstanding, tracked in the task list).
+> after **every** change. Last updated: 2026-07-01 (every item in the six-part
+> follow-up request, plus everything sent inline mid-batch, is implemented,
+> verified, committed and pushed to `main`. Not yet re-confirmed live in
+> Vercel production for this batch — see "Next step" at the bottom).
 
-## In progress: six-part follow-up request (2026-07-01)
+## Done: six-part follow-up request + inline asks (2026-07-01)
 The user sent a new dense request after the previous multi-part batch shipped
 (commit `b0114bf`/`14c1d62`). Status of each part:
 
 1. **Purchases personal/household visibility** — DONE, pushed (commit `fd11e39`).
-2. **Income: one edit button for all fixed options** — not started.
-3. **Simplify routines: morning/evening as habit tags, dedupe** — not started.
-   Needs a design decision on `routine_items`' future shape — see task #39.
+2. **Income: one edit button for all fixed options** — DONE, pushed (commit `f392516`).
+3. **Simplify routines: morning/evening as habit tags, dedupe** — DONE, pushed
+   (commit `8651d9e`).
 4. **Clean Tasks/Projects UI (from screenshot)** — DONE, pushed (commit
    `40753e7`): the scope/onlyMine filter pills were squeezing the "Bigger
    work..." description text on mobile; both now stack instead of wrap.
-5. **Essentials: click legend colour to filter** — not started.
-6. **App-wide mobile-first/motivational pass** — not started, needs scoping.
+5. **Essentials: click legend colour to filter** — DONE, pushed (commit `527c251`).
+6. **App-wide mobile-first/motivational pass** — DONE (scoped), pushed (commit
+   `845f44a`) — see writeup below; this ask is inherently open-ended so it
+   was scoped to concrete, verified wins rather than a full redesign.
 
 Also actioned inline (not part of the six, sent mid-batch):
 - **Personal bills not linked to household** — DONE, pushed (commit `40753e7`).
 - **Purchases asymmetric scope** — DONE, pushed (commit `fd11e39`) — this
   turned out to be the same ask as #1 above; implemented together.
 - **Fitness: humanize "what you train" diagram + exercise filter/search** —
-  requested, not started, tracked as tasks #42/#43.
+  DONE, pushed (commit `7f618b5`).
+
+### Income: one edit button — DONE — no migration
+"On income I want one edit button which has all of the fixed options behind it."
+`salary-details.tsx` had its own always-visible pencil/Edit dialog trigger,
+separate from the Income card header's Edit toggle (which only gated the
+bulk-months editor). Split `SalaryDetails` into `SalaryDetailsSummary`
+(plain text, no button — used in `income-section.tsx`) and
+`SalaryDetailsForm` (the dialog, now accepting a `trigger` prop like
+`BillForm`/`PurchaseForm`). `income-header-actions.tsx` now renders both
+"Salary details" and "Bulk edit months" triggers behind the single header
+Edit toggle — one button reveals every fixed income option.
+
+### Simplify Routine into Habits tags — DONE — migration 0059, live data migrated
+"Simplify my routines, there's some duplicates in there. morning and
+evening should just be tags on habits which are then arranged into
+sections at the end."
+
+- `habits` gained a `tags text[] not null default '{}'` column (migration
+  `0059_habit_tags.sql`). `TIME_OF_DAY_TAGS = ["Morning","Day","Evening"]`
+  added to `constants.ts` as the recognised set that drives grouping.
+- `habit-form.tsx` gained a Tags field: quick-select chips for the three
+  time-of-day tags plus a free-form `TagInput` (reused from
+  `project_tasks.tags`) for anything else.
+- `habits-view.tsx` now renders a "Morning"/"Day"/"Evening" `HabitGroup`
+  for any habit carrying that tag, **after** the existing Daily/Weekly/
+  Monthly groups — "arranged into sections at the end" per the request.
+- `ROUTINE_SECTIONS` trimmed from 6 values to 3 (`consume`, `mind`,
+  `body`) in `constants.ts`. `routine-view.tsx`'s `currentTimeSection()`
+  time-awareness logic (which only existed to lead with morning/day/
+  evening) was removed entirely — Routine is now 3 flat, always-expanded
+  sections. `routine_items.section` is still a free-text column (no DB
+  constraint), so no schema migration was needed there.
+- **Live data was migrated, not just left behind**: queried the real
+  `routine_items` (26 rows) and found genuine duplicates — e.g. "5g
+  Creatine" existed in both `consume` and `morning`; "Throw one thing
+  away"/"Throw 1 thing away" in both `evening` and `mind`; "Put 1 thing
+  where it needs to be" verbatim in both `morning` and `mind`. Of the 14
+  rows across morning/day/evening: 6 were genuinely new concepts and were
+  recreated as tagged `daily`/`yes_no` habits (20 consecutive kick-ups,
+  Drink 1 protein shake, Drink 1 bottle of water → Day; 10 second plank /
+  10 bicep curls, Bed by 22:30 → Evening; Drink 2 glasses of water before
+  work → Morning); the other 8 were exact/near-duplicates of items already
+  kept in `consume`/`mind`/`body` and were dropped along with their
+  `routine_completions` rows. Executed via Supabase MCP `execute_sql`
+  against the live `vbyqbxvffaqkrltzewjz` project (same pattern used
+  earlier this session to seed `household_contributions`).
+- Only one pre-existing habit ("10x Push-Ups") and one `routine_items`
+  owner (`33fc37a9-e370-4ecd-bf2f-8bead7a73607`, Eashan) existed in
+  production, so this was a small, fully-inspectable dataset — worth
+  knowing if a future agent needs to sanity-check the mapping decisions
+  above against what's actually live.
+
+### Essentials: clickable RAG legend — DONE — no migration
+"On essentials let me filter by colour by clicking on the legend colour."
+The green/amber/red legend counts in `essentials-view.tsx` are now buttons;
+clicking one filters the list to that status (click again to clear).
+Categories with zero matching items collapse out of view while a filter
+is active, with a "Nothing at that status" empty state.
+
+### Fitness: humanize diagram + search/filter — DONE — no migration
+"The what you train diagram is too rigid, make it look more human" +
+"let me filter exercises and search through them too."
+`body-diagram.tsx` rewritten: limbs are now rounded, angled capsule
+strokes (`<path>` with `strokeLinecap="round"`, natural stance angles)
+instead of axis-aligned `<rect>` blocks; shoulders/chest/glutes are soft
+ellipses. `fitness-view.tsx` gained a name search box and clickable
+muscle-group filter chips above the exercise library grid (chips only
+show muscle groups actually present in the library).
+
+### App-wide mobile-first/motivational pass — DONE (scoped) — no migration
+This request is inherently open-ended ("make the whole app as intuitive
+and mobile first as possible"), so it was scoped to concrete, verifiable
+wins rather than attempted as an exhaustive redesign:
+- Grepped for the same anti-pattern that caused the Tasks/Projects mobile
+  bug (a `flex items-center justify-between` row pairing a paragraph of
+  text with a filter-pill group, no wrap) across the rest of the app.
+  Found a few short-text instances (bill payment dialog, calendar month
+  header) that don't have the same wrapping risk since the text side is
+  short and fixed — left alone rather than churning code with no bug to fix.
+- Added completion celebrations: the dashboard greeting subtext now says
+  "All N habits done today · X% 🎉" instead of a plain count when every
+  daily habit is complete, and the Habits page shows a "All done for
+  today — nice work! 🎉" banner in the same condition.
+- **Not done, and probably shouldn't be attempted in one batch**: a true
+  full-app mobile/motivational audit (every page, every list, every
+  form) is a multi-session effort. If the user wants more here, the right
+  next step is to ask them to point at specific pages/flows that feel
+  cramped or unmotivating, the same way the screenshot did for Tasks/
+  Projects — that's a much higher-signal way to spend further budget on
+  this than guessing at what to fix next.
+
+**Verification for this whole batch**: `npm run typecheck`, `npm run
+lint`, and both `npm run build` / `NEXT_PUBLIC_APP=life npm run build`
+were run clean after every commit in this batch (`40753e7`, `fd11e39`,
+`b928f0c`, `7f618b5`, `527c251`, `f392516`, `8651d9e`, `845f44a`), all
+pushed to `main`. **Next step**: confirm both `my-house-dashboard` and
+`my-life-dashboard` are `READY` in Vercel production at the latest commit
+(`845f44a`) — not yet re-checked after this batch.
 
 ### Personal bills + purchases scope — DONE — migrations 0057, 0058
 "Let me add personal bills that aren't linked to the household" +
