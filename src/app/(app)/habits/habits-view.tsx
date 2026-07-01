@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { CheckCircle2, Circle, Flame, ChevronRight, Timer as TimerIcon, Hash } from "lucide-react";
+import { CheckCircle2, Circle, Flame, ChevronRight, Timer as TimerIcon, Hash, LayoutList, CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Habit, HabitLog, HabitTarget } from "@/lib/database.types";
@@ -10,6 +10,7 @@ import { logHabit, unlogHabit } from "./actions";
 import { useToast } from "@/hooks/use-toast";
 import { getStreak } from "@/lib/habit-progress";
 import { HabitDetailDialog } from "./habit-detail-dialog";
+import { AllHabitsCalendar } from "./all-habits-calendar";
 
 type Props = {
   habits: Habit[];
@@ -78,16 +79,38 @@ export function HabitsView({ habits, logs, targets, completedToday }: Props) {
   const daily = habits.filter((h) => h.frequency === "daily");
   const weekly = habits.filter((h) => h.frequency === "weekly");
   const monthly = habits.filter((h) => h.frequency === "monthly");
+  const [view, setView] = useState<"list" | "calendar">("list");
 
   return (
     <div className="space-y-6">
-      {daily.length > 0 && (
+      <div className="flex items-center justify-end">
+        <div className="flex items-center rounded-lg border p-0.5">
+          <button
+            onClick={() => setView("list")}
+            aria-label="List view"
+            className={cn("rounded-md p-1.5 text-muted-foreground", view === "list" && "bg-accent text-foreground")}
+          >
+            <LayoutList className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setView("calendar")}
+            aria-label="Calendar view"
+            className={cn("rounded-md p-1.5 text-muted-foreground", view === "calendar" && "bg-accent text-foreground")}
+          >
+            <CalendarDays className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {view === "calendar" ? <AllHabitsCalendar habits={habits} logs={logs} /> : null}
+
+      {view === "list" && daily.length > 0 && (
         <HabitGroup title="Daily" habits={daily} logs={logs} optimisticDone={optimisticDone} onToggle={toggle} onExpand={setDetailHabit} />
       )}
-      {weekly.length > 0 && (
+      {view === "list" && weekly.length > 0 && (
         <HabitGroup title="Weekly" habits={weekly} logs={logs} optimisticDone={optimisticDone} onToggle={toggle} onExpand={setDetailHabit} />
       )}
-      {monthly.length > 0 && (
+      {view === "list" && monthly.length > 0 && (
         <HabitGroup title="Monthly" habits={monthly} logs={logs} optimisticDone={optimisticDone} onToggle={toggle} onExpand={setDetailHabit} />
       )}
 

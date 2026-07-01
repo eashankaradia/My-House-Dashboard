@@ -2,7 +2,44 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (Continuing the large multi-part follow-up: household contributions, purchases split, projects/tasks scope, and finance edit-mode toggle are all done and pushed. Still queued: routine UX pass, habits calendar — in progress now).
+> after **every** change. Last updated: 2026-07-01 (The full multi-part follow-up request is done: household contributions, purchases split, projects/tasks scope, finance edit-mode toggle, routine UX pass, habits calendar. This batch (routine + habits) not yet pushed — see below).
+
+## Routine view: more intuitive — DONE — no migration
+"Make my routine view more intuitive." The old view was a flat wall of
+~29 checkboxes across 3 always-expanded groups regardless of time of day
+— no way to tell what's relevant *right now* without scanning everything.
+
+- `routine-view.tsx` rewritten around **time-awareness**: a
+  `currentTimeSection()` helper (before 11am → morning, 11am–6pm → day,
+  after 6pm → evening) picks out whichever of the three time-of-day
+  sections is relevant *now* and always shows it first, expanded, with a
+  "Now" badge — the other five sections (the other two time periods, plus
+  Consume/Mind/Body) become collapsible `<details>` cards, collapsed by
+  default, each showing an icon (Utensils/Brain/Dumbbell/Sunrise/Sun/Moon)
+  and a `done/total` count so you can see progress without opening them.
+- Removed the now-unused `ROUTINE_GROUPS` constant (the flat 3-group
+  structure it drove is gone, superseded by the time-aware layout).
+- Verified: `npm run typecheck`, `npm run lint`, both variants build clean.
+
+## Calendar in habits — DONE — no migration
+"Put a calendar in habits." Each habit already had a per-habit month
+calendar inside its detail dialog (`habit-calendar.tsx`) — the gap was no
+overview across *all* habits together on the main `/habits` page.
+
+- New `all-habits-calendar.tsx`: a month-grid heatmap (like a GitHub
+  contributions graph) — each day's shade reflects what fraction of that
+  day's daily habits got done (empty/25%/60%/full), with a legend, a
+  ring around today, and a tooltip listing which habits were completed
+  that day. Independent of any single habit — reads across all of them.
+- `habits-view.tsx` gained a List/Calendar view toggle (same icon-button
+  pattern used elsewhere — `LayoutList`/`CalendarDays`) above the habit
+  groups; List is the default, Calendar swaps in the new heatmap.
+- Verified: `npm run typecheck`, `npm run lint`, both variants build clean.
+- **This closes out the entire multi-part follow-up request** — every
+  item asked for in this batch (household contributions, purchases
+  split, projects/tasks scope, finance edit-mode, routine UX, habits
+  calendar) is implemented and verified. Final step: commit, push, and
+  merge-to-main per the "merge to main always" standing instruction.
 
 ## Finance: management actions hidden behind an Edit toggle — DONE — no migration
 "I don't want an option to add new accounts or bulk edit months always in

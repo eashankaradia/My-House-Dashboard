@@ -420,8 +420,3 @@ export const ROUTINE_SECTION_LABELS: Record<string, string> = {
   evening: "Evening (after 6pm)",
 };
 
-export const ROUTINE_GROUPS = [
-  { title: "What I need to consume", sections: ["consume"] },
-  { title: "What I need to do", sections: ["mind", "body"] },
-  { title: "My routine", sections: ["morning", "day", "evening"] },
-] as const;

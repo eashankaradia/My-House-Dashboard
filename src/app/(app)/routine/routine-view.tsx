@@ -1,14 +1,33 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, Circle, Pencil } from "lucide-react";
+import { Brain, CheckCircle2, Circle, Dumbbell, Moon, Pencil, Sun, Sunrise, Utensils } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { ROUTINE_GROUPS, ROUTINE_SECTION_LABELS } from "@/lib/constants";
+import { ROUTINE_SECTIONS, ROUTINE_SECTION_LABELS } from "@/lib/constants";
 import type { RoutineItem } from "@/lib/database.types";
 import { toggleRoutineItem } from "./actions";
 import { useToast } from "@/hooks/use-toast";
 import { RoutineItemForm } from "./routine-item-form";
+
+const SECTION_ICONS: Record<string, LucideIcon> = {
+  consume: Utensils,
+  mind: Brain,
+  body: Dumbbell,
+  morning: Sunrise,
+  day: Sun,
+  evening: Moon,
+};
+
+/** Which time-of-day section is "now", so the routine can lead with what's actually relevant. */
+function currentTimeSection(): "morning" | "day" | "evening" {
+  const h = new Date().getHours();
+  if (h < 11) return "morning";
+  if (h < 18) return "day";
+  return "evening";
+}
 
 export function RoutineView({ items, completedIds, today }: { items: RoutineItem[]; completedIds: string[]; today: string }) {
   const [optimisticDone, setOptimisticDone] = React.useState<Set<string>>(new Set(completedIds));
@@ -17,6 +36,7 @@ export function RoutineView({ items, completedIds, today }: { items: RoutineItem
 
   const total = items.length;
   const done = items.filter((i) => optimisticDone.has(i.id)).length;
+  const now = currentTimeSection();
 
   function toggle(item: RoutineItem) {
     const isDone = optimisticDone.has(item.id);
@@ -34,6 +54,13 @@ export function RoutineView({ items, completedIds, today }: { items: RoutineItem
     });
   }
 
+  function sectionItems(section: string) {
+    return items.filter((i) => i.section === section);
+  }
+
+  const nowItems = sectionItems(now);
+  const otherSections = ROUTINE_SECTIONS.filter((s) => s !== now);
+
   return (
     <div className="space-y-6">
       <div className="rounded-xl border bg-card p-4">
@@ -46,55 +73,94 @@ export function RoutineView({ items, completedIds, today }: { items: RoutineItem
         <Progress value={total > 0 ? (done / total) * 100 : 0} />
       </div>
 
-      {ROUTINE_GROUPS.map((group) => {
-        const groupItems = items.filter((i) => (group.sections as readonly string[]).includes(i.section));
-        if (groupItems.length === 0) return null;
+      {/* Right now — the current time-of-day section, always expanded and leading */}
+      {nowItems.length > 0 ? (
+        <SectionCard
+          section={now}
+          items={nowItems}
+          optimisticDone={optimisticDone}
+          onToggle={toggle}
+          badge="Now"
+          defaultOpen
+        />
+      ) : null}
+
+      {otherSections.map((section) => {
+        const secItems = sectionItems(section);
+        if (secItems.length === 0) return null;
         return (
-          <section key={group.title} className="space-y-3">
-            <h2 className="px-1 text-sm font-semibold">{group.title}</h2>
-            {group.sections.map((section) => {
-              const sectionItems = items.filter((i) => i.section === section);
-              if (sectionItems.length === 0) return null;
-              return (
-                <div key={section} className="space-y-1.5">
-                  {group.sections.length > 1 && (
-                    <p className="px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                      {ROUTINE_SECTION_LABELS[section]}
-                    </p>
-                  )}
-                  {sectionItems.map((item) => {
-                    const isDone = optimisticDone.has(item.id);
-                    return (
-                      <div
-                        key={item.id}
-                        className={cn(
-                          "flex items-center gap-3 rounded-xl border bg-card px-4 py-3 transition-all",
-                          isDone && "border-primary/20 bg-primary/5",
-                        )}
-                      >
-                        <button onClick={() => toggle(item)} className="shrink-0 active:scale-90 transition-transform">
-                          {isDone ? <CheckCircle2 className="h-5 w-5 text-primary" /> : <Circle className="h-5 w-5 text-muted-foreground" />}
-                        </button>
-                        <button onClick={() => toggle(item)} className="min-w-0 flex-1 text-left">
-                          <p className={cn("text-sm", isDone && "text-muted-foreground line-through")}>{item.name}</p>
-                        </button>
-                        <RoutineItemForm
-                          item={item}
-                          trigger={
-                            <button className="shrink-0 text-muted-foreground">
-                              <Pencil className="h-3.5 w-3.5" />
-                            </button>
-                          }
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </section>
+          <SectionCard
+            key={section}
+            section={section}
+            items={secItems}
+            optimisticDone={optimisticDone}
+            onToggle={toggle}
+            defaultOpen={false}
+          />
         );
       })}
     </div>
+  );
+}
+
+function SectionCard({
+  section,
+  items,
+  optimisticDone,
+  onToggle,
+  badge,
+  defaultOpen,
+}: {
+  section: string;
+  items: RoutineItem[];
+  optimisticDone: Set<string>;
+  onToggle: (item: RoutineItem) => void;
+  badge?: string;
+  defaultOpen: boolean;
+}) {
+  const Icon = SECTION_ICONS[section];
+  const done = items.filter((i) => optimisticDone.has(i.id)).length;
+  const allDone = done === items.length;
+
+  return (
+    <details className="group rounded-xl border bg-card" open={defaultOpen}>
+      <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3">
+        {Icon ? <Icon className="h-4 w-4 shrink-0 text-muted-foreground" /> : null}
+        <span className="flex-1 text-sm font-semibold">{ROUTINE_SECTION_LABELS[section]}</span>
+        {badge ? <Badge className="shrink-0">{badge}</Badge> : null}
+        <span className={cn("shrink-0 text-xs", allDone ? "text-primary" : "text-muted-foreground")}>
+          {done}/{items.length}
+        </span>
+      </summary>
+      <div className="space-y-1.5 px-4 pb-4">
+        {items.map((item) => {
+          const isDone = optimisticDone.has(item.id);
+          return (
+            <div
+              key={item.id}
+              className={cn(
+                "flex items-center gap-3 rounded-xl border bg-card px-4 py-3 transition-all",
+                isDone && "border-primary/20 bg-primary/5",
+              )}
+            >
+              <button onClick={() => onToggle(item)} className="shrink-0 active:scale-90 transition-transform">
+                {isDone ? <CheckCircle2 className="h-5 w-5 text-primary" /> : <Circle className="h-5 w-5 text-muted-foreground" />}
+              </button>
+              <button onClick={() => onToggle(item)} className="min-w-0 flex-1 text-left">
+                <p className={cn("text-sm", isDone && "text-muted-foreground line-through")}>{item.name}</p>
+              </button>
+              <RoutineItemForm
+                item={item}
+                trigger={
+                  <button className="shrink-0 text-muted-foreground">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                }
+              />
+            </div>
+          );
+        })}
+      </div>
+    </details>
   );
 }
