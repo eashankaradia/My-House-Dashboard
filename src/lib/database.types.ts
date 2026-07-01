@@ -904,6 +904,14 @@ export type Share = {
   updated_at: string;
 };
 
+export type Favorite = {
+  id: string;
+  user_id: string;
+  entity_type: string;
+  entity_id: string;
+  created_at: string;
+};
+
 export type InspirationSource =
   | "Instagram"
   | "TikTok"
@@ -1021,6 +1029,7 @@ export type Database = {
       pot_contribution_schedules: Row<PotContributionSchedule>;
       pot_contribution_overrides: Row<PotContributionOverride>;
       shares: Row<Share>;
+      favorites: Row<Favorite>;
     };
     Views: { [_ in never]: never };
     Functions: {

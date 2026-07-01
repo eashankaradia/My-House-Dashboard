@@ -30,12 +30,14 @@ export function ProjectsViews({
   projectOptions,
   memberMap,
   currentUserId,
+  favoriteTaskIds,
 }: {
   projects: ProjectWithTasks[];
   tasks: ProjectTask[];
   projectOptions: { id: string; name: string }[];
   memberMap: MemberMap;
   currentUserId: string;
+  favoriteTaskIds: Set<string>;
 }) {
   const [projectView, setProjectView] = React.useState<"list" | "board">("list");
   const [boardFull, setBoardFull] = React.useState(false);
@@ -64,7 +66,7 @@ export function ProjectsViews({
         <p className="mb-3 text-sm text-muted-foreground">
           Quick to-dos and anything tied to a project. Tick them off as you go.
         </p>
-        <TasksView tasks={tasks} projects={projectOptions} memberMap={memberMap} currentUserId={currentUserId} />
+        <TasksView tasks={tasks} projects={projectOptions} memberMap={memberMap} currentUserId={currentUserId} favoriteTaskIds={favoriteTaskIds} />
       </TabsContent>
 
       {/* Projects — bigger pieces of work, each with its own tasks */}

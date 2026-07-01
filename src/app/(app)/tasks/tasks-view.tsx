@@ -21,6 +21,7 @@ import { Field } from "@/components/shared/form-field";
 import { AddToCalendar } from "@/components/shared/add-to-calendar";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
+import { FavoriteToggle } from "@/components/shared/favorite-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { useViewPref } from "@/hooks/use-view-prefs";
@@ -42,11 +43,13 @@ export function TasksView({
   projects,
   memberMap,
   currentUserId,
+  favoriteTaskIds,
 }: {
   tasks: ProjectTask[];
   projects: ProjectOption[];
   memberMap: MemberMap;
   currentUserId: string;
+  favoriteTaskIds: Set<string>;
 }) {
   const [onlyMine, setOnlyMine] = React.useState(false);
   const [view, setView] = useViewPref("tasks");
@@ -125,6 +128,7 @@ export function TasksView({
           members={members}
           projectName={projectName}
           memberMap={memberMap}
+          favoriteTaskIds={favoriteTaskIds}
         />
       ) : (
         <>
@@ -137,7 +141,7 @@ export function TasksView({
                 <p className="py-4 text-center text-sm text-muted-foreground">Nothing outstanding 🎉</p>
               ) : (
                 outstanding.map((task) => (
-                  <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} />
+                  <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} favoriteTaskIds={favoriteTaskIds} />
                 ))
               )}
             </CardContent>
@@ -155,7 +159,7 @@ export function TasksView({
                 <p className="py-4 text-center text-sm text-muted-foreground">Nothing here yet — mark a task &quot;when bored&quot; to stash it here.</p>
               ) : (
                 bored.map((task) => (
-                  <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} />
+                  <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} favoriteTaskIds={favoriteTaskIds} />
                 ))
               )}
             </CardContent>
@@ -169,7 +173,7 @@ export function TasksView({
               </CardHeader>
               <CardContent className="space-y-1.5">
                 {done.map((task) => (
-                  <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} />
+                  <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} favoriteTaskIds={favoriteTaskIds} />
                 ))}
               </CardContent>
             </Card>
@@ -188,6 +192,7 @@ function TaskTable({
   members,
   projectName,
   memberMap,
+  favoriteTaskIds,
 }: {
   outstanding: ProjectTask[];
   bored: ProjectTask[];
@@ -196,6 +201,7 @@ function TaskTable({
   members: Member[];
   projectName: (id: string | null) => string | null;
   memberMap: MemberMap;
+  favoriteTaskIds: Set<string>;
 }) {
   const rows = [...outstanding, ...bored, ...done];
   return (
@@ -204,6 +210,7 @@ function TaskTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-xs text-muted-foreground">
+              <th className="px-3 py-2"></th>
               <th className="px-3 py-2"></th>
               <th className="px-3 py-2 font-medium">Task</th>
               <th className="px-3 py-2 font-medium">Project</th>
@@ -220,6 +227,7 @@ function TaskTable({
                 members={members}
                 project={projectName(task.project_id)}
                 memberMap={memberMap}
+                favorited={favoriteTaskIds.has(task.id)}
               />
             ))}
           </tbody>
@@ -235,17 +243,22 @@ function TaskTableRow({
   members,
   project,
   memberMap,
+  favorited,
 }: {
   task: ProjectTask;
   projects: ProjectOption[];
   members: Member[];
   project: string | null;
   memberMap: MemberMap;
+  favorited: boolean;
 }) {
   const [pending, startTransition] = React.useTransition();
   const assignee = task.assigned_to ? memberMap[task.assigned_to] : null;
   return (
     <tr className="border-b last:border-b-0">
+      <td className="px-3 py-2">
+        <FavoriteToggle entityType="task" entityId={task.id} initialFavorited={favorited} />
+      </td>
       <td className="px-3 py-2">
         <Checkbox
           checked={task.is_done}
@@ -392,12 +405,14 @@ function TaskRow({
   members,
   project,
   memberMap,
+  favoriteTaskIds,
 }: {
   task: ProjectTask;
   projects: ProjectOption[];
   members: Member[];
   project: string | null;
   memberMap: MemberMap;
+  favoriteTaskIds: Set<string>;
 }) {
   const [pending, startTransition] = React.useTransition();
   const days = daysUntil(task.due_date);
@@ -409,6 +424,7 @@ function TaskRow({
         checked={task.is_done}
         onCheckedChange={() => startTransition(async () => void (await toggleTask(task.id, !task.is_done)))}
       />
+      <FavoriteToggle entityType="task" entityId={task.id} initialFavorited={favoriteTaskIds.has(task.id)} />
       <TaskEditDialog task={task} projects={projects} members={members}>
         <CardTrigger className="min-w-0 flex-1 rounded-md hover:underline">
           <span className={cn("flex items-center gap-1.5 truncate text-sm", task.is_done && "text-muted-foreground line-through")}>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { ColoredName } from "@/components/providers/household-colors";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,7 @@ import type {
   SavingsPot,
 } from "@/lib/database.types";
 import { monthStr, effectiveIncomeForMonth } from "@/lib/income";
+import { getPinnedItems } from "@/app/(app)/favorites/actions";
 import { DashboardWidget, EditDashboardButton } from "./dashboard-customize";
 import { CollapsibleSection } from "./collapsible-section";
 import { WeekAhead } from "./week-ahead";
@@ -76,6 +77,7 @@ export default async function DashboardPage() {
     habitLogsRes,
     goalsRes,
     incomeMonthsRes,
+    pinnedItems,
   ] = await Promise.all([
     supabase.from("bills").select("*"),
     supabase.from("savings_pots").select("*"),
@@ -93,6 +95,7 @@ export default async function DashboardPage() {
     supabase.from("habit_logs").select("*").gte("logged_date", thirtyDaysAgo),
     supabase.from("goals").select("*").eq("status", "Active").order("created_at", { ascending: false }).limit(6),
     supabase.from("income_months").select("*").order("month", { ascending: false }),
+    getPinnedItems(),
   ]);
 
   const bills = (billsRes.data ?? []) as Bill[];
@@ -344,6 +347,23 @@ export default async function DashboardPage() {
 
       {/* Needs attention — the urgent things, always first */}
       <NeedsAttention items={attention} />
+
+      {/* Pinned — anything starred across tasks, goals, etc. */}
+      {pinnedItems.length > 0 && (
+        <DashboardWidget id="pinned">
+          <CollapsibleSection title="Pinned" href="/dashboard" count={pinnedItems.length}>
+            {pinnedItems.map((p) => (
+              <RowLink key={`${p.type}-${p.id}`} href={p.href}>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{p.label}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{p.type}</p>
+                </div>
+                <Star className="h-3.5 w-3.5 shrink-0 fill-current text-amber-500" />
+              </RowLink>
+            ))}
+          </CollapsibleSection>
+        </DashboardWidget>
+      )}
 
       {/* Daily habit check-in */}
       {dailyHabits.length > 0 && (

@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
 import { getHouseholdMap } from "@/lib/household";
+import { getFavoriteIds } from "@/app/(app)/favorites/actions";
 import { ArchivedSection } from "@/components/shared/archived-section";
 import type { Project, ProjectTask, ProjectWithTasks } from "@/lib/database.types";
 import { ProjectForm } from "./project-form";
@@ -18,7 +19,7 @@ export default async function ProjectsPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [{ data }, { data: taskData }, memberMap] = await Promise.all([
+  const [{ data }, { data: taskData }, memberMap, favoriteTaskIds] = await Promise.all([
     supabase.from("projects").select("*").order("created_at", { ascending: false }),
     supabase
       .from("project_tasks")
@@ -27,6 +28,7 @@ export default async function ProjectsPage() {
       .order("due_date", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false }),
     getHouseholdMap(),
+    getFavoriteIds("task"),
   ]);
   // Archived tasks/projects are hidden from the main lists.
   const allTasks = (taskData ?? []) as ProjectTask[];
@@ -78,6 +80,7 @@ export default async function ProjectsPage() {
             projectOptions={projectOptions}
             memberMap={memberMap}
             currentUserId={currentUserId}
+            favoriteTaskIds={favoriteTaskIds}
           />
           <ArchivedSection
             items={archivedProjects.map((p) => ({ id: p.id, label: p.name }))}

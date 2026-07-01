@@ -2,7 +2,38 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (User said "do everything" on the second-brain roadmap. Done: Eisenhower axis, deep-linking. Queued next: favourites, tags, weekly/monthly reviews, then push+deploy — branch `claude/finance-overhaul`, not yet merged/deployed).
+> after **every** change. Last updated: 2026-07-01 (User said "do everything" on the second-brain roadmap. Done: Eisenhower axis, deep-linking, generic favourites. Queued next: tags, weekly/monthly reviews, then push+deploy — branch `claude/finance-overhaul`, not yet merged/deployed).
+
+## Generic pinned/favourites system — DONE — migration `0052_favorites.sql` (applied live via MCP)
+Roadmap item #4. A single `favorites` table (`user_id, entity_type,
+entity_id`, unique per user+type+id, personal RLS) rather than a per-module
+star column — new modules can opt in later with zero schema changes,
+mirroring the existing generic `links` table's `(a_type,a_id)/(b_type,b_id)`
+design in this same codebase.
+
+- `favorites/actions.ts`: `toggleFavorite`/`getFavoriteIds`/`getPinnedItems`,
+  with a `TABLES` registry (table/label column/deep-link param/path) — same
+  pattern as `links/actions.ts`'s `TABLES` map. Currently registered types:
+  `task`, `goal`, `document`, `inspiration` — only `task` and `goal` have a
+  UI toggle wired up in this batch; `document`/`inspiration` are ready to
+  wire in later (just add a `<FavoriteToggle>` to their row, no backend
+  change needed).
+- `components/shared/favorite-toggle.tsx`: reusable optimistic star button.
+  `stopPropagation`'d so it's safe to place inside a row that's also a
+  dialog trigger, but placed as a *sibling* of the trigger (not nested
+  inside it) wherever practical, per `CardTrigger`'s own guidance to keep
+  action controls outside the trigger region.
+- Wired into: `tasks-view.tsx` (`TaskRow`/`TaskTableRow`, favourite ids
+  threaded down from `projects/page.tsx` via `getFavoriteIds("task")` →
+  `ProjectsViews` → `TasksView`), and `goals/page.tsx` (favourite ids
+  fetched directly in the page, star positioned absolute top-right over
+  each goal card).
+- `dashboard/page.tsx` gained a new "Pinned" widget (collapsed by default,
+  matching every other dashboard section) listing every pinned item across
+  all types with its deep link — added to `DASHBOARD_WIDGETS` so it can be
+  hidden like any other section.
+- Verified: `npm run typecheck`, `npm run lint`, default +
+  `NEXT_PUBLIC_APP=life` `npm run build` all clean.
 
 ## Deep-linking consistency — DONE — no migration
 Roadmap item #6. Recipes/essentials/routine items/goals/habits/useful
