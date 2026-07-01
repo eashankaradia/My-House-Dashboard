@@ -2,7 +2,30 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (FAB audit shipped — this closes out the whole `claude/finance-overhaul` batch of work, 21 tasks done, branch not yet merged to main. A large "second brain / Today command centre" audit request came in next; global search coverage expanded as the first concrete improvement. Full audit + prioritized roadmap written up for the user — see bottom of this file — rest of that work is queued, not yet started).
+> after **every** change. Last updated: 2026-07-01 (User said "do everything" on the second-brain roadmap. In progress: Eisenhower axis done; deep-linking, favourites, tags, and weekly/monthly reviews queued next — branch `claude/finance-overhaul`, not yet merged/deployed).
+
+## Eisenhower "important" axis on tasks — DONE — migration `0051_task_important_flag.sql` (applied live via MCP)
+Roadmap item #5. Added `is_important boolean not null default false` to
+`project_tasks`, alongside the existing due date (urgency) and
+`is_bored_task` (deliberately low priority) — together giving a lightweight
+Eisenhower 2×2 without a dedicated matrix UI.
+
+- `database.types.ts`: `ProjectTask` gained `is_important: boolean`.
+- `projects/actions.ts`: `createTask`/`updateTask` accept and patch it.
+- `tasks/tasks-view.tsx`:
+  - Outstanding (non-bored) tasks are now sorted important-first, then by
+    due date — so "To do" surfaces what actually matters without a
+    separate quadrant view.
+  - `AddTaskForm` gained an "Important" toggle (Flag icon) next to "When
+    bored"; `TaskEditDialog` gained a matching checkbox.
+  - `TaskRow`/`TaskTableRow` show a small Flag icon next to important
+    tasks' titles.
+  - `TaskQuickForm` (the FAB's fast-add) deliberately left minimal —
+    important/bored are still one tap away via the full edit dialog.
+- Verified: `npm run typecheck`, `npm run lint`, default + `NEXT_PUBLIC_APP=life` `npm run build` all clean.
+- **Next**: task list item #22, deep-linking (`useOpenFromUrl`) for
+  recipes/essentials/routine items/goals/habits/useful links/credit
+  cards/shares.
 
 ## Global search expanded to cover every MyLife module — DONE — no migration
 First concrete step on the "second brain" audit request (see roadmap at the

@@ -316,6 +316,7 @@ export type ProjectTask = Timestamps & {
   archived_at: string | null;
   notes: string | null;
   is_bored_task: boolean;
+  is_important: boolean;
 };
 
 export type PurchaseStar = {

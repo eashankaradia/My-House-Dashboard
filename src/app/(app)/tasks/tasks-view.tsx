@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Archive, Coffee, LayoutList, Plus, Table2, Trash2, X } from "lucide-react";
+import { Archive, Coffee, Flag, LayoutList, Plus, Table2, Trash2, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,7 +71,15 @@ export function TasksView({
   );
 
   const visible = onlyMine ? tasks.filter(isMine) : tasks;
-  const outstanding = visible.filter((t) => !t.is_done && !t.is_bored_task);
+  // Eisenhower-lite: important tasks float to the top of "To do", then by due date.
+  const outstanding = visible
+    .filter((t) => !t.is_done && !t.is_bored_task)
+    .sort((a, b) => {
+      if (a.is_important !== b.is_important) return a.is_important ? -1 : 1;
+      const ad = a.due_date ? Date.parse(a.due_date) : Infinity;
+      const bd = b.due_date ? Date.parse(b.due_date) : Infinity;
+      return ad - bd;
+    });
   const bored = visible.filter((t) => !t.is_done && t.is_bored_task);
   const done = visible.filter((t) => t.is_done);
 
@@ -248,6 +256,7 @@ function TaskTableRow({
       <td className="px-3 py-2">
         <TaskEditDialog task={task} projects={projects} members={members}>
           <CardTrigger className={cn("flex items-center gap-1.5 rounded hover:underline", task.is_done && "text-muted-foreground line-through")}>
+            {task.is_important ? <Flag className="h-3.5 w-3.5 shrink-0 text-primary" /> : null}
             {task.title}
             {task.is_bored_task ? <Coffee className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
           </CardTrigger>
@@ -290,6 +299,7 @@ function AddTaskForm({ projects, members }: { projects: ProjectOption[]; members
   const [assignee, setAssignee] = React.useState("");
   const [due, setDue] = React.useState("");
   const [isBoredTask, setIsBoredTask] = React.useState(false);
+  const [isImportant, setIsImportant] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
 
@@ -303,6 +313,7 @@ function AddTaskForm({ projects, members }: { projects: ProjectOption[]; members
         due_date: due || null,
         assigned_to: assignee || null,
         is_bored_task: isBoredTask,
+        is_important: isImportant,
       });
       if (res?.error) {
         toast({ variant: "destructive", title: "Couldn't add task", description: res.error });
@@ -312,6 +323,7 @@ function AddTaskForm({ projects, members }: { projects: ProjectOption[]; members
       setDue("");
       setAssignee("");
       setIsBoredTask(false);
+      setIsImportant(false);
       toast({ title: "Task added" });
     });
   }
@@ -341,6 +353,18 @@ function AddTaskForm({ projects, members }: { projects: ProjectOption[]; members
             </NativeSelect>
           ) : null}
           <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} className="sm:w-40" />
+          <button
+            type="button"
+            onClick={() => setIsImportant((v) => !v)}
+            aria-pressed={isImportant}
+            title="Important"
+            className={cn(
+              "flex items-center gap-1.5 rounded-md border px-2.5 py-2 text-xs text-muted-foreground",
+              isImportant && "border-primary bg-accent text-foreground",
+            )}
+          >
+            <Flag className="h-4 w-4" /> Important
+          </button>
           <button
             type="button"
             onClick={() => setIsBoredTask((v) => !v)}
@@ -387,7 +411,8 @@ function TaskRow({
       />
       <TaskEditDialog task={task} projects={projects} members={members}>
         <CardTrigger className="min-w-0 flex-1 rounded-md hover:underline">
-          <span className={cn("block truncate text-sm", task.is_done && "text-muted-foreground line-through")}>
+          <span className={cn("flex items-center gap-1.5 truncate text-sm", task.is_done && "text-muted-foreground line-through")}>
+            {task.is_important ? <Flag className="h-3.5 w-3.5 shrink-0 text-primary" /> : null}
             {task.title}
           </span>
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
@@ -436,6 +461,7 @@ export function TaskEditDialog({
   const [due, setDue] = React.useState(task.due_date ?? "");
   const [notes, setNotes] = React.useState(task.notes ?? "");
   const [isBoredTask, setIsBoredTask] = React.useState(task.is_bored_task);
+  const [isImportant, setIsImportant] = React.useState(task.is_important);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
 
@@ -448,8 +474,9 @@ export function TaskEditDialog({
       setDue(task.due_date ?? "");
       setNotes(task.notes ?? "");
       setIsBoredTask(task.is_bored_task);
+      setIsImportant(task.is_important);
     }
-  }, [open, task.title, task.project_id, task.assigned_to, task.due_date, task.notes, task.is_bored_task]);
+  }, [open, task.title, task.project_id, task.assigned_to, task.due_date, task.notes, task.is_bored_task, task.is_important]);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -462,6 +489,7 @@ export function TaskEditDialog({
         assigned_to: assignee || null,
         notes: notes || null,
         is_bored_task: isBoredTask,
+        is_important: isImportant,
       });
       if (res?.error) {
         toast({ variant: "destructive", title: "Couldn't save task", description: res.error });
@@ -532,6 +560,12 @@ export function TaskEditDialog({
           <Field label="Notes" htmlFor="te-notes">
             <Textarea id="te-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Progress, context, links…" />
           </Field>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={isImportant} onCheckedChange={(v) => setIsImportant(Boolean(v))} />
+            <span className="flex items-center gap-1.5">
+              <Flag className="h-4 w-4 text-muted-foreground" /> Important
+            </span>
+          </label>
           <label className="flex items-center gap-2 text-sm">
             <Checkbox checked={isBoredTask} onCheckedChange={(v) => setIsBoredTask(Boolean(v))} />
             <span className="flex items-center gap-1.5">
