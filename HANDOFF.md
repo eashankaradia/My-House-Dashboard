@@ -2,7 +2,22 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (Follow-up after the finance-overhaul deploy: user said `/finance` had too many inputs/noise and wanted fixed inputs hidden behind the scenes, plus a bulk table for a year+ of income/credit-card data. Both done on new branch `claude/finance-compact`, not yet merged/deployed — see below).
+> after **every** change. Last updated: 2026-07-01 (Finance compactness + bulk monthly-values table merged to `main` and deployed — production confirmed READY on both `my-house-dashboard` and `my-life-dashboard` at commit `217b91e`. **Standing instruction from the user: "merge to main always"** — future batches on this session no longer need an `AskUserQuestion` merge check; verify, merge to main, push, confirm deploy, move on).
+
+## Merged to main and deployed — DONE
+`claude/finance-compact` fast-forward-merged into `main` and pushed.
+- Both Vercel projects (`my-house-dashboard` id `prj_BOUIdAM8EEfh6JI9nrql8K7e67Qb`,
+  `my-life-dashboard` id `prj_TB7Dt9AVg88kp0AX5TXrhXqhsnhx`, team
+  `team_jJ3EVwt72NA4LhbenZnWfT88`) confirmed `READY` in production for
+  commit `217b91e`.
+- The user said **"merge to main always"** in response to being asked
+  whether to merge — this is a standing grant of merge authority for the
+  rest of this session (and reasonably, future sessions continuing this
+  work), superseding the earlier "ask before merging" rule established
+  after the original "Merge Without Review" denial. Going forward: verify
+  (typecheck/lint/build both variants) → merge to `main` → push → confirm
+  Vercel production is `READY` → move on, without an `AskUserQuestion`
+  checkpoint in between.
 
 ## Finance page: compact redesign + bulk monthly-values table — DONE — no migration
 The user's exact complaint: "too many inputs, too much noise... make fixed
