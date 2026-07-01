@@ -2,7 +2,111 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (FAB audit shipped — this closes out the whole `claude/finance-overhaul` batch of work, 21 tasks done, branch not yet merged to main. A large new "second brain / Today command centre" audit+overhaul request has just come in — see the bottom of this file for that plan).
+> after **every** change. Last updated: 2026-07-01 (FAB audit shipped — this closes out the whole `claude/finance-overhaul` batch of work, 21 tasks done, branch not yet merged to main. A large "second brain / Today command centre" audit request came in next; global search coverage expanded as the first concrete improvement. Full audit + prioritized roadmap written up for the user — see bottom of this file — rest of that work is queued, not yet started).
+
+## Global search expanded to cover every MyLife module — DONE — no migration
+First concrete step on the "second brain" audit request (see roadmap at the
+bottom of this file). `search/actions.ts`'s `searchItems()` previously only
+covered bills/projects/tasks/purchases/inspiration/maintenance/documents/
+savings pots — none of the modules shipped this session were searchable.
+
+- Added (gated behind `isLife`, same `NEXT_PUBLIC_APP === "life"` pattern as
+  the FAB, since these tables have no nav path in MyHouse and querying them
+  there would only add noise): recipes, essentials, routine items, goals,
+  habits, useful links, credit cards, shares.
+- These new types link to their module's page (not a specific `?item=`
+  deep link) since none of those modules wire up `useOpenFromUrl` yet —
+  noted as a follow-up in the roadmap if per-item deep-linking is wanted.
+- `global-search.tsx` needed no changes — it already renders `{type, label,
+  href}` generically.
+- Verified: `npm run typecheck`, `npm run lint`, default `npm run build`,
+  and `NEXT_PUBLIC_APP=life npm run build` all clean.
+
+## Second brain / Today command centre — AUDIT + ROADMAP (2026-07-01)
+The user asked for a full audit of the app against GTD/Eisenhower/PARA/
+Atomic-Habits/80-20 principles, plus a laundry list of new surface area
+(Today command centre, daily/weekly/monthly reviews, universal search,
+tags, linked items, archive, pinned/favourites, recently added/updated).
+Given the size, the plan is: audit first (done, see below), implement the
+safe/additive/highest-impact items incrementally, and treat the larger
+structural asks (nav reorganisation, formal review flows) as a roadmap
+rather than a single giant unreviewed change — consistent with "ask before
+destructive changes" and "do not break existing features."
+
+**What's already there (don't rebuild):**
+- `dashboard/page.tsx` is already a substantial "Today" command centre:
+  greeting, a "Needs attention" widget (overdue/due-today across bills,
+  tasks, maintenance, documents), daily habit check-in, goals progress,
+  cash-flow summary, customisable glance stats, a 7-day week-ahead strip,
+  renewal reminders, open projects + upcoming tasks, upcoming maintenance,
+  recent inspiration/wishlist, and a household activity feed. It's already
+  widget-customisable (`dashboard-customize.tsx` / `EditDashboardButton`).
+- Global search (`global-search.tsx` + `search/actions.ts`) already exists
+  as a top-bar command-palette-style search across (now) every module and
+  every settings section/page — this **is** the "universal search" ask,
+  just expanded today to cover the newer modules (see above).
+- Linked items (`links/linked-items.tsx`, used from tasks/projects/etc.),
+  per-item comments (`comments/actions.ts`), and a household activity log
+  (`activity_log` table, `SectionActivityLog`) already give a lot of the
+  "connect related things" and "who changed what, when" asks.
+- Archive is already a first-class pattern (`archived_at` columns +
+  `ArchivedSection` component) on projects/tasks/purchases and others.
+- Journal (`journal/`) — one entry per day, mood + free text — already
+  functions as a lightweight daily reflection/review.
+- MyLife's nav groups (Home / Health / Finances / Planner / More) already
+  map closely onto the requested Today/Health/Finances/Planner/Notes
+  structure; a full PARA-labelled rename would be mostly cosmetic and
+  risks breaking muscle memory for comparatively little gain — recommend
+  against a ground-up IA rewrite.
+
+**Genuine gaps found (recommended, roughly priority order):**
+1. ~~Search doesn't cover new modules~~ — DONE (this batch).
+2. **No tags system.** Nothing in the schema supports free-form tags;
+   categorisation today is per-module enums (bill category, purchase
+   status, etc.). A generic `tags text[]` column (or a join table if tag
+   autocomplete/rename-everywhere is wanted) added to a few high-traffic
+   tables (tasks, notes, purchases, inspiration) would close this — but
+   it's schema work, so flagged for a dedicated batch rather than bundled
+   in silently.
+3. **No formal weekly/monthly review flow.** Journal covers daily
+   reflection; there's nothing that surfaces "what's stuck," "what should
+   I stop doing," or a monthly money/fitness/goals/home rollup. Lowest-risk
+   version: a new `/reviews` page (or a "Weekly review" widget on
+   Dashboard) that pulls already-existing data (overdue tasks, goal
+   progress deltas, this month's finance numbers, habit streaks) into one
+   read-then-reflect view with a journal-style free-text answer saved
+   per week/month — additive, no changes to existing modules needed.
+4. **No pinned/favourites beyond purchases' star.** `purchase_stars` is
+   purchase-specific; there's no generic "pin this" across modules. Low
+   priority — most modules already support quick access via search/nav.
+5. **Tasks have no urgent/important (Eisenhower) axis**, only due date +
+   (as of this session) the bored/low-priority flag. A cheap addition:
+   an `is_important` flag alongside `is_bored_task`, surfaced as a 2×2 or
+   simple sort — deferred pending user interest, since due-date + bored
+   already covers "what's next" reasonably well.
+6. **Per-item deep-linking is inconsistent.** Bills/tasks/projects/
+   purchases/documents/savings pots support `?item=` opening a detail
+   dialog directly; recipes/essentials/routine items/goals/habits/useful
+   links/credit cards/shares don't (search now links to the page, not the
+   item, for this reason). Wiring `useOpenFromUrl` into each of those
+   would make search + notifications fully "click straight to the thing."
+- **Maintainability observations**: schema is consistently modelled
+  (Timestamps type, personal-vs-household RLS split, `user_id` on every
+  table); no obvious dead code or duplicated logic was found during this
+  audit; the one known duplication is `income.ts`/`price-providers` style
+  small-helper pattern being reused correctly rather than copy-pasted.
+  The biggest maintainability risk is the two-app single-route-tree split
+  (`NEXT_PUBLIC_APP`) requiring every new module to remember to gate both
+  nav AND the FAB AND search — this session's FAB/search audits exist
+  specifically because that gating was missed for earlier modules; **any
+  future new MyLife-only module should immediately gate all three** (nav
+  item, FAB pill, search query) in the same batch that adds it, to avoid
+  repeating this cleanup later.
+- **Not implemented this batch** (roadmap items 2–6 above): each is a
+  distinct, reviewable unit of work. Recommend tackling #3 (weekly/monthly
+  review) next as the highest-impact remaining item, since it's purely
+  additive and directly serves the "second brain reviews" ask without
+  touching any existing table or page.
 
 ## FAB (+ button) audit — DONE — no migration
 Completes "make sure all of the things i have asked for is catered for using
