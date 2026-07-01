@@ -103,6 +103,7 @@ export async function createTask(input: {
   notes?: string | null;
   is_bored_task?: boolean;
   is_important?: boolean;
+  tags?: string[];
 }): Promise<ActionResult> {
   const clean = input.title.trim();
   if (!clean) return { error: "Task can't be empty" };
@@ -116,6 +117,7 @@ export async function createTask(input: {
     notes: input.notes || null,
     is_bored_task: input.is_bored_task ?? false,
     is_important: input.is_important ?? false,
+    tags: input.tags ?? [],
   });
   if (error) return { error: error.message };
   revalidatePath("/projects");
@@ -133,6 +135,7 @@ export async function updateTask(
     notes?: string | null;
     is_bored_task?: boolean;
     is_important?: boolean;
+    tags?: string[];
   },
 ): Promise<ActionResult> {
   const { supabase } = await getActionContext();
@@ -144,6 +147,7 @@ export async function updateTask(
     notes?: string | null;
     is_bored_task?: boolean;
     is_important?: boolean;
+    tags?: string[];
   } = {};
   if (input.title !== undefined) patch.title = input.title.trim();
   if (input.project_id !== undefined) patch.project_id = input.project_id || null;
@@ -152,6 +156,7 @@ export async function updateTask(
   if (input.notes !== undefined) patch.notes = input.notes || null;
   if (input.is_bored_task !== undefined) patch.is_bored_task = input.is_bored_task;
   if (input.is_important !== undefined) patch.is_important = input.is_important;
+  if (input.tags !== undefined) patch.tags = input.tags;
   const { error } = await supabase.from("project_tasks").update(patch).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/projects");

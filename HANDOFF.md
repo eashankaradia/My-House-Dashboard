@@ -2,7 +2,33 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (User said "do everything" on the second-brain roadmap. Done: Eisenhower axis, deep-linking, generic favourites. Queued next: tags, weekly/monthly reviews, then push+deploy — branch `claude/finance-overhaul`, not yet merged/deployed).
+> after **every** change. Last updated: 2026-07-01 (User said "do everything" on the second-brain roadmap. Done: Eisenhower axis, deep-linking, generic favourites, tags on tasks. Queued next: weekly/monthly reviews, then push+deploy — branch `claude/finance-overhaul`, not yet merged/deployed).
+
+## Tags system — DONE (Tasks only this batch) — migration `0053_task_tags.sql` (applied live via MCP)
+Roadmap item #2. Added `tags text[] not null default '{}'` to
+`project_tasks` — a plain array column, not a join table, since
+autocomplete/rename-everywhere isn't needed for v1 (same reasoning as the
+existing `essentials`/`purchases` free-text category fields elsewhere in
+this codebase).
+
+- New `components/shared/tag-input.tsx`: generic chip-based tag editor
+  (type + Enter/comma to add, × or Backspace-on-empty to remove) — built
+  reusable so it's a drop-in for other modules later, not task-specific.
+- `projects/actions.ts`: `createTask`/`updateTask` accept `tags?: string[]`.
+- `tasks-view.tsx`: `TaskEditDialog` gained a Tags field (`TagInput`);
+  `TaskRow` shows each tag as a small outlined badge; `TasksView` computes
+  the set of all tags in use and renders them as filter chips above the
+  list — clicking one filters to tasks carrying that tag (click again to
+  clear). Table view intentionally doesn't show tags (kept compact,
+  consistent with it already omitting notes/bored-status).
+- **Scoped to Tasks only this batch** — the same reasoning as the
+  favourites batch: `purchases-grid.tsx` (589 lines) and the
+  documents/inspiration modules are larger, riskier surfaces to touch
+  under time pressure. `TagInput` is generic and ready to reuse there
+  (add a `tags` column via migration, thread `tags`/`onChange` through the
+  existing add/edit form, done) — flagged as a follow-up, not started.
+- Verified: `npm run typecheck`, `npm run lint`, default +
+  `NEXT_PUBLIC_APP=life` `npm run build` all clean.
 
 ## Generic pinned/favourites system — DONE — migration `0052_favorites.sql` (applied live via MCP)
 Roadmap item #4. A single `favorites` table (`user_id, entity_type,

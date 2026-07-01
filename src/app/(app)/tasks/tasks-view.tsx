@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Archive, Coffee, Flag, LayoutList, Plus, Table2, Trash2, X } from "lucide-react";
+import { Archive, Coffee, Flag, LayoutList, Plus, Table2, Tag, Trash2, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import { AddToCalendar } from "@/components/shared/add-to-calendar";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
 import { FavoriteToggle } from "@/components/shared/favorite-toggle";
+import { TagInput } from "@/components/shared/tag-input";
 import { useToast } from "@/hooks/use-toast";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { useViewPref } from "@/hooks/use-view-prefs";
@@ -52,6 +53,7 @@ export function TasksView({
   favoriteTaskIds: Set<string>;
 }) {
   const [onlyMine, setOnlyMine] = React.useState(false);
+  const [activeTag, setActiveTag] = React.useState<string | null>(null);
   const [view, setView] = useViewPref("tasks");
   // Tables scroll sideways on phones — always use the stacked list there.
   const isMobile = useIsMobile();
@@ -73,7 +75,12 @@ export function TasksView({
     [currentUserId],
   );
 
-  const visible = onlyMine ? tasks.filter(isMine) : tasks;
+  const allTags = React.useMemo(
+    () => Array.from(new Set(tasks.flatMap((t) => t.tags))).sort(),
+    [tasks],
+  );
+
+  const visible = (onlyMine ? tasks.filter(isMine) : tasks).filter((t) => !activeTag || t.tags.includes(activeTag));
   // Eisenhower-lite: important tasks float to the top of "To do", then by due date.
   const outstanding = visible
     .filter((t) => !t.is_done && !t.is_bored_task)
@@ -118,6 +125,24 @@ export function TasksView({
           </button>
         </div>
       </div>
+
+      {allTags.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+          {allTags.map((tag) => (
+            <button
+              key={tag}
+              onClick={() => setActiveTag((t) => (t === tag ? null : tag))}
+              className={cn(
+                "rounded-full border px-2.5 py-0.5 text-xs",
+                activeTag === tag ? "border-primary bg-accent" : "text-muted-foreground",
+              )}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {effectiveView === "table" ? (
         <TaskTable
@@ -435,6 +460,11 @@ function TaskRow({
             {project ? <Badge variant="secondary">{project}</Badge> : null}
             {assignee ? <Badge variant="outline">{assignee}</Badge> : null}
             {task.due_date ? <span>Due {formatDate(task.due_date)}</span> : null}
+            {task.tags.map((tag) => (
+              <Badge key={tag} variant="outline" className="gap-1">
+                <Tag className="h-3 w-3" /> {tag}
+              </Badge>
+            ))}
             <AddedBy name={memberMap[task.user_id]} />
           </div>
         </CardTrigger>
@@ -478,6 +508,7 @@ export function TaskEditDialog({
   const [notes, setNotes] = React.useState(task.notes ?? "");
   const [isBoredTask, setIsBoredTask] = React.useState(task.is_bored_task);
   const [isImportant, setIsImportant] = React.useState(task.is_important);
+  const [tags, setTags] = React.useState(task.tags);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
 
@@ -491,8 +522,9 @@ export function TaskEditDialog({
       setNotes(task.notes ?? "");
       setIsBoredTask(task.is_bored_task);
       setIsImportant(task.is_important);
+      setTags(task.tags);
     }
-  }, [open, task.title, task.project_id, task.assigned_to, task.due_date, task.notes, task.is_bored_task, task.is_important]);
+  }, [open, task.title, task.project_id, task.assigned_to, task.due_date, task.notes, task.is_bored_task, task.is_important, task.tags]);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -506,6 +538,7 @@ export function TaskEditDialog({
         notes: notes || null,
         is_bored_task: isBoredTask,
         is_important: isImportant,
+        tags,
       });
       if (res?.error) {
         toast({ variant: "destructive", title: "Couldn't save task", description: res.error });
@@ -575,6 +608,9 @@ export function TaskEditDialog({
           ) : null}
           <Field label="Notes" htmlFor="te-notes">
             <Textarea id="te-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Progress, context, links…" />
+          </Field>
+          <Field label="Tags">
+            <TagInput value={tags} onChange={setTags} placeholder="e.g. errand, waiting-for…" />
           </Field>
           <label className="flex items-center gap-2 text-sm">
             <Checkbox checked={isImportant} onCheckedChange={(v) => setIsImportant(Boolean(v))} />

@@ -317,6 +317,7 @@ export type ProjectTask = Timestamps & {
   notes: string | null;
   is_bored_task: boolean;
   is_important: boolean;
+  tags: string[];
 };
 
 export type PurchaseStar = {
