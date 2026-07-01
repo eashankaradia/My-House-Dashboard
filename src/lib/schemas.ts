@@ -76,6 +76,7 @@ export type SavingsPotInput = z.infer<typeof savingsPotSchema>;
 
 export const savingsAccountSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
+  provider: optionalString,
   notes: optionalString,
   // Optional opening balance — logged as the account's first contribution.
   opening_balance: money.optional(),

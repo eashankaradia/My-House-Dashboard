@@ -64,6 +64,12 @@ export function PotDetailDialog({
 
   const assigned = accounts.reduce((s, a) => s + balanceOf(a.id), 0);
   const unassigned = Number(pot.current_amount) - assigned;
+  const [accountsCompact, setAccountsCompact] = React.useState(true);
+
+  // Value vs contributed: only genuine deposits/withdrawals count (value-only
+  // adjustments never touch the contributions ledger).
+  const totalContributed = contributions.reduce((s, c) => s + Number(c.amount), 0);
+  const growth = Number(pot.current_amount) - totalContributed;
 
   // Build a cumulative balance line that ends at the pot's current total.
   const series = React.useMemo(() => {
@@ -108,6 +114,27 @@ export function PotDetailDialog({
             </div>
           </div>
 
+          {/* Value vs contributed */}
+          {contributions.length > 0 && (
+            <div className="grid grid-cols-3 gap-3 rounded-lg border bg-muted/30 p-3 text-center">
+              <div>
+                <p className="text-xs text-muted-foreground">Value</p>
+                <p className="font-semibold">{formatCurrency(pot.current_amount)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Contributed</p>
+                <p className="font-semibold">{formatCurrency(totalContributed)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">{growth >= 0 ? "Growth" : "Down"}</p>
+                <p className={cn("font-semibold", growth >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
+                  {growth >= 0 ? "+" : ""}
+                  {formatCurrency(growth)}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Balance over time */}
           {series.length > 1 ? (
             <div>
@@ -120,25 +147,63 @@ export function PotDetailDialog({
           <section className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium">Accounts</h3>
-              <AccountForm
-                potId={pot.id}
-                trigger={
-                  <Button variant="outline" size="sm" className="h-7 gap-1 text-xs">
-                    <Plus className="h-3.5 w-3.5" /> Add account
-                  </Button>
-                }
-              />
+              <div className="flex items-center gap-2">
+                <div className="flex items-center rounded-lg border p-0.5 text-[11px]">
+                  <button onClick={() => setAccountsCompact(false)} className={cn("rounded-md px-1.5 py-0.5", !accountsCompact && "bg-accent")}>
+                    Detailed
+                  </button>
+                  <button onClick={() => setAccountsCompact(true)} className={cn("rounded-md px-1.5 py-0.5", accountsCompact && "bg-accent")}>
+                    Compact
+                  </button>
+                </div>
+                <AccountForm
+                  potId={pot.id}
+                  trigger={
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-xs">
+                      <Plus className="h-3.5 w-3.5" /> Add account
+                    </Button>
+                  }
+                />
+              </div>
             </div>
             {accounts.length === 0 ? (
               <p className="text-xs text-muted-foreground">
                 No accounts yet — add one to record which account holds this pot&apos;s money.
               </p>
+            ) : accountsCompact ? (
+              <div className="space-y-1">
+                {accounts.map((a) => (
+                  <AccountForm
+                    key={a.id}
+                    potId={pot.id}
+                    account={a}
+                    trigger={
+                      <button className="flex w-full items-center justify-between rounded-lg border px-2.5 py-2 text-sm">
+                        <span className="min-w-0 truncate">
+                          {a.name}
+                          {a.provider ? <span className="text-muted-foreground"> · {a.provider}</span> : null}
+                        </span>
+                        <span className="shrink-0 font-medium">{formatCurrency(balanceOf(a.id))}</span>
+                      </button>
+                    }
+                  />
+                ))}
+                {Math.abs(unassigned) > 0.005 ? (
+                  <div className="flex items-center justify-between rounded-lg border border-dashed px-2.5 py-2 text-sm text-muted-foreground">
+                    <span>Unassigned</span>
+                    <span className="font-medium">{formatCurrency(unassigned)}</span>
+                  </div>
+                ) : null}
+              </div>
             ) : (
               <div className="space-y-1.5">
                 {accounts.map((a) => (
                   <div key={a.id} className="flex items-center gap-2 rounded-lg border p-2.5 text-sm">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{a.name}</p>
+                      <p className="truncate font-medium">
+                        {a.name}
+                        {a.provider ? <span className="font-normal text-muted-foreground"> · {a.provider}</span> : null}
+                      </p>
                       {a.notes ? <p className="truncate text-xs text-muted-foreground">{a.notes}</p> : null}
                       <p className="text-[11px] text-muted-foreground">
                         Added {formatDate(a.created_at)} · updated {formatDate(a.updated_at)}
@@ -252,6 +317,7 @@ function AccountForm({
   const editing = Boolean(account);
   const [open, setOpen] = React.useState(false);
   const [name, setName] = React.useState(account?.name ?? "");
+  const [provider, setProvider] = React.useState(account?.provider ?? "");
   const [notes, setNotes] = React.useState(account?.notes ?? "");
   const [opening, setOpening] = React.useState("");
   const [openingDate, setOpeningDate] = React.useState(todayISO());
@@ -264,6 +330,7 @@ function AccountForm({
     startTransition(async () => {
       const payload = {
         name,
+        provider: provider || undefined,
         notes: notes || undefined,
         opening_balance: editing ? undefined : opening ? Number(opening) : undefined,
         opening_date: editing ? undefined : openingDate,
@@ -277,6 +344,7 @@ function AccountForm({
       setOpen(false);
       if (!editing) {
         setName("");
+        setProvider("");
         setNotes("");
         setOpening("");
       }
@@ -293,6 +361,9 @@ function AccountForm({
         <form onSubmit={onSubmit} className="space-y-4">
           <Field label="Account name" htmlFor="acc-name" required>
             <Input id="acc-name" autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Marcus, Chase ISA" />
+          </Field>
+          <Field label="Provider" htmlFor="acc-provider" hint="Which bank or trading platform">
+            <Input id="acc-provider" value={provider} onChange={(e) => setProvider(e.target.value)} placeholder="e.g. Chase, Trading 212" />
           </Field>
           <Field label="Notes" htmlFor="acc-notes">
             <Input id="acc-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional — sort code, rate…" />

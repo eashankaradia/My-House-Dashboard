@@ -122,6 +122,29 @@ export async function adjustPot(id: string, delta: number): Promise<ActionResult
   return {};
 }
 
+/**
+ * Update a pot's current value directly, without logging it as a
+ * contribution — for things like an investment's market value moving, where
+ * no money was actually put in or taken out. Kept separate from the
+ * contributions ledger so "value vs contributed" stays meaningful.
+ */
+export async function adjustPotValueOnly(id: string, delta: number): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { data: pot, error: readErr } = await supabase
+    .from("savings_pots")
+    .select("current_amount")
+    .eq("id", id)
+    .single();
+  if (readErr) return { error: readErr.message };
+  const next = Math.max(0, Number(pot.current_amount) + delta);
+  const { error: updErr } = await supabase.from("savings_pots").update({ current_amount: next }).eq("id", id);
+  if (updErr) return { error: updErr.message };
+  revalidatePath("/savings");
+  revalidatePath("/finance");
+  revalidatePath("/dashboard");
+  return {};
+}
+
 /** Add a contribution / withdrawal from the pot detail form (can be back-dated). */
 export async function addContribution(potId: string, raw: SavingsContributionInput): Promise<ActionResult> {
   const parsed = savingsContributionSchema.safeParse(raw);
@@ -174,7 +197,13 @@ export async function createAccount(potId: string, raw: SavingsAccountInput): Pr
   const { supabase, user } = await getActionContext();
   const { data: account, error } = await supabase
     .from("savings_accounts")
-    .insert({ user_id: user.id, pot_id: potId, name: parsed.data.name, notes: parsed.data.notes ?? null })
+    .insert({
+      user_id: user.id,
+      pot_id: potId,
+      name: parsed.data.name,
+      provider: parsed.data.provider ?? null,
+      notes: parsed.data.notes ?? null,
+    })
     .select("id")
     .single();
   if (error) return { error: error.message };
@@ -194,14 +223,14 @@ export async function createAccount(potId: string, raw: SavingsAccountInput): Pr
   return {};
 }
 
-/** Rename an account or edit its notes. */
+/** Rename an account or edit its provider/notes. */
 export async function updateAccount(id: string, raw: SavingsAccountInput): Promise<ActionResult> {
   const parsed = savingsAccountSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.errors[0]?.message ?? "Invalid input" };
   const { supabase } = await getActionContext();
   const { error } = await supabase
     .from("savings_accounts")
-    .update({ name: parsed.data.name, notes: parsed.data.notes ?? null })
+    .update({ name: parsed.data.name, provider: parsed.data.provider ?? null, notes: parsed.data.notes ?? null })
     .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/savings");

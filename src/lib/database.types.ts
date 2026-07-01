@@ -117,6 +117,7 @@ export type SavingsAccount = Timestamps & {
   user_id: string;
   pot_id: string;
   name: string;
+  provider: string | null;
   notes: string | null;
 };
 

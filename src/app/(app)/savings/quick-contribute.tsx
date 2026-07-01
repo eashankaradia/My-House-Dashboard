@@ -13,35 +13,35 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency } from "@/lib/utils";
 import type { SavingsPot } from "@/lib/database.types";
-import { addContribution } from "./actions";
+import { addContribution, adjustPotValueOnly } from "./actions";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
-/** A pot card's "Add" control: log a manual contribution, or add the monthly. */
+/** A pot card's "Add" control: log a contribution, or just update its value. */
 export function QuickContribute({ pot }: { pot: SavingsPot }) {
   const [open, setOpen] = React.useState(false);
+  const [mode, setMode] = React.useState<"contribution" | "value">("contribution");
   const [amount, setAmount] = React.useState("");
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
-  const monthly = Number(pot.monthly_contribution);
 
-  function add(value: number, note: string) {
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const value = Number(amount);
     if (!value || value <= 0) return;
     startTransition(async () => {
-      const res = await addContribution(pot.id, {
-        amount: value,
-        direction: "deposit",
-        occurred_on: todayISO(),
-        note,
-      });
+      const res =
+        mode === "contribution"
+          ? await addContribution(pot.id, { amount: value, direction: "deposit", occurred_on: todayISO() })
+          : await adjustPotValueOnly(pot.id, value);
       if (res?.error) {
         toast({ variant: "destructive", title: "Couldn't add", description: res.error });
         return;
       }
-      toast({ title: "Contribution added" });
+      toast({ title: mode === "contribution" ? "Contribution added" : "Value updated" });
       setAmount("");
       setOpen(false);
     });
@@ -57,32 +57,34 @@ export function QuickContribute({ pot }: { pot: SavingsPot }) {
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Add to {pot.name}</DialogTitle>
-          <DialogDescription>Log a contribution. It’s recorded with today’s date.</DialogDescription>
+          <DialogDescription>Log money you put in, or just update what it&apos;s worth now.</DialogDescription>
         </DialogHeader>
 
-        {monthly > 0 ? (
-          <Button
-            type="button"
-            variant="secondary"
-            className="w-full justify-between"
-            disabled={pending}
-            onClick={() => add(monthly, "Monthly contribution")}
-          >
-            <span>Add this month’s contribution</span>
-            <span className="font-semibold">{formatCurrency(monthly)}</span>
-          </Button>
-        ) : null}
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            add(Number(amount), "Manual contribution");
-          }}
-          className="space-y-3"
-        >
-          <Field label="Or a custom amount (£)" htmlFor="qc-amount">
+        <form onSubmit={submit} className="space-y-3">
+          <div className="flex gap-1.5">
+            <button
+              type="button"
+              onClick={() => setMode("contribution")}
+              className={cn(
+                "flex-1 rounded-lg border px-3 py-2 text-sm font-medium",
+                mode === "contribution" ? "border-primary bg-primary/10" : "text-muted-foreground",
+              )}
+            >
+              Contribution
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("value")}
+              className={cn(
+                "flex-1 rounded-lg border px-3 py-2 text-sm font-medium",
+                mode === "value" ? "border-primary bg-primary/10" : "text-muted-foreground",
+              )}
+            >
+              Value only
+            </button>
+          </div>
+          <Field label="Amount (£)" hint={mode === "value" ? "Added to the current value, not counted as a contribution" : undefined}>
             <Input
-              id="qc-amount"
               type="number"
               step="0.01"
               min="0"
@@ -93,7 +95,7 @@ export function QuickContribute({ pot }: { pot: SavingsPot }) {
             />
           </Field>
           <Button type="submit" className="w-full" disabled={pending || !amount}>
-            {pending ? "Adding…" : "Add contribution"}
+            {pending ? "Adding…" : mode === "contribution" ? "Add contribution" : "Update value"}
           </Button>
         </form>
       </DialogContent>

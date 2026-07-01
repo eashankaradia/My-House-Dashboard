@@ -84,7 +84,7 @@ export function PotForm({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{editing ? "Edit pot" : "Create a savings pot"}</DialogTitle>
-          <DialogDescription>Set a target and a monthly contribution to forecast progress.</DialogDescription>
+          <DialogDescription>Set a target to track progress toward.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Field label="Name" htmlFor="name" required error={errors.name?.message}>
@@ -107,14 +107,9 @@ export function PotForm({
               <Input id="target_amount" type="number" step="0.01" {...register("target_amount")} />
             </Field>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Monthly (£)" htmlFor="monthly_contribution" error={errors.monthly_contribution?.message}>
-              <Input id="monthly_contribution" type="number" step="0.01" {...register("monthly_contribution")} />
-            </Field>
-            <Field label="Target date" htmlFor="target_date">
-              <Input id="target_date" type="date" {...register("target_date")} />
-            </Field>
-          </div>
+          <Field label="Target date" htmlFor="target_date">
+            <Input id="target_date" type="date" {...register("target_date")} />
+          </Field>
           <Field label="Colour">
             <NativeSelect {...register("color")} className="capitalize">
               {POT_COLORS.map((c) => (

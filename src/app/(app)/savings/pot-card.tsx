@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { CardTrigger } from "@/components/shared/card-trigger";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import type { SavingsAccount, SavingsContribution, SavingsPot } from "@/lib/database.types";
 import { PotForm } from "./pot-form";
 import { PotDetailDialog } from "./pot-detail";
@@ -37,15 +37,6 @@ export function PotCard({
   const pct =
     pot.target_amount > 0 ? Math.min(100, (pot.current_amount / pot.target_amount) * 100) : 0;
   const remaining = Math.max(0, pot.target_amount - pot.current_amount);
-
-  // Forecast completion from monthly contribution.
-  let forecast: string | null = null;
-  if (remaining > 0 && pot.monthly_contribution > 0) {
-    const months = Math.ceil(remaining / pot.monthly_contribution);
-    const d = new Date();
-    d.setMonth(d.getMonth() + months);
-    forecast = formatDate(d);
-  }
 
   return (
     <Card className="relative">
@@ -84,14 +75,7 @@ export function PotCard({
           </CardTrigger>
         </PotDetailDialog>
 
-        <div className="flex items-center justify-between">
-          <div className="text-xs text-muted-foreground">
-            {pot.monthly_contribution > 0 ? (
-              <span>{formatCurrency(pot.monthly_contribution)}/mo{forecast ? ` · done ${forecast}` : ""}</span>
-            ) : (
-              <span>No monthly plan</span>
-            )}
-          </div>
+        <div className="flex items-center justify-end">
           <QuickContribute pot={pot} />
         </div>
       </CardContent>

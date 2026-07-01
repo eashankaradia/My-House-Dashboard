@@ -60,7 +60,10 @@ export default async function FinancePage() {
   const income = effectiveIncomeForMonth(incomeMonths, thisMonth);
   const monthlyIncome = income.source !== "none" ? income.net + income.bonus : null;
   const monthlyBills = bills.reduce((s, b) => s + toMonthly(Number(b.amount), b.frequency), 0) + monthlyCardStatements;
-  const monthlySavings = pots.reduce((s, p) => s + Number(p.monthly_contribution ?? 0), 0);
+  // Real contributions logged this month (not the deprecated static monthly_contribution field).
+  const monthlySavings = contributions
+    .filter((c) => c.occurred_on.startsWith(thisMonth.slice(0, 7)) && Number(c.amount) > 0)
+    .reduce((s, c) => s + Number(c.amount), 0);
   const netMonthly = monthlyIncome !== null ? monthlyIncome - monthlyBills : null;
   const savingsRate =
     monthlyIncome && monthlyIncome > 0
@@ -70,6 +73,7 @@ export default async function FinancePage() {
   const totalSaved = savingsPots.reduce((s, p) => s + Number(p.current_amount), 0);
   const totalTarget = savingsPots.reduce((s, p) => s + Number(p.target_amount ?? 0), 0);
   const totalInvested = investmentPots.reduce((s, p) => s + Number(p.current_amount), 0);
+  const netWorth = totalSaved + totalInvested;
 
   return (
     <div className="space-y-6">
@@ -80,7 +84,13 @@ export default async function FinancePage() {
       />
 
       {/* Key numbers */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <StatCard
+          label="Net worth"
+          value={formatCurrency(netWorth)}
+          hint={`${formatCurrency(totalSaved)} saved + ${formatCurrency(totalInvested)} invested`}
+          icon={PiggyBank}
+        />
         <StatCard
           label="Monthly income"
           value={monthlyIncome !== null ? formatCurrency(monthlyIncome) : "Not set"}

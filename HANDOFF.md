@@ -2,7 +2,46 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (Finance overhaul + Essentials + Daily Routine shipped; pots/shares/personal-vs-household-filters/cross-module-inspiration/bored-tasks/FAB-audit queued — branch `claude/finance-overhaul`, not yet merged).
+> after **every** change. Last updated: 2026-06-30 (Finance overhaul + Essentials + Daily Routine + pots/accounts redesign shipped; shares/personal-vs-household-filters/cross-module-inspiration/bored-tasks/FAB-audit queued — branch `claude/finance-overhaul`, not yet merged).
+
+## Pots/accounts redesign — DONE — migration `0047_account_provider.sql` (applied live via MCP)
+- `savings_accounts` gained `provider` (bank/trading platform name).
+  `AccountForm` (in `savings/pot-detail.tsx`) has a new Provider field;
+  `savingsAccountSchema` and `createAccount`/`updateAccount` updated.
+- **Simplified "Add" flow**: `savings/quick-contribute.tsx` rewritten —
+  instead of "this month's contribution" vs a custom amount, it's now a
+  2-way toggle: **Contribution** (existing `addContribution`, logged in the
+  ledger, counts toward "total contributed") vs **Value only** (new action
+  `adjustPotValueOnly` — updates `current_amount` directly, does NOT touch
+  `savings_contributions`). This distinction matters for investments: market
+  value moving isn't a contribution, so it shouldn't inflate the
+  contributed-vs-value comparison below.
+- **Removed monthly plan/contribution from the UI**: `pot-form.tsx` no
+  longer shows the "Monthly (£)" field (this supersedes the earlier plan to
+  build `pot_contribution_schedules`/`pot_contribution_overrides` UI — those
+  tables from migration 0044 are now unused, left in place, harmless).
+  `pot-card.tsx` no longer shows the monthly-plan/forecast row. The
+  `monthly_contribution` DB column is untouched (NOT NULL, so kept — old
+  rows just stop being editable/shown).
+- **"Value vs contributed"**: `pot-detail.tsx` shows a 3-stat row (Value /
+  Contributed / Growth or Down) whenever a pot has any logged contributions
+  — `contributed` is the sum of the ledger (which, per the point above, only
+  reflects genuine deposits/withdrawals now), `growth = current_amount -
+  contributed`.
+- **Compact accounts view**: the Accounts section inside `pot-detail.tsx`
+  gained a Compact/Detailed toggle (same pattern as Bills/Purchases/
+  Essentials) — Compact shows just `name · provider` + balance; Detailed
+  keeps notes/timestamps.
+- **Net worth**: added to both `/finance` (a 5th stat card, `saved +
+  invested`) and `/savings` (replaced the old 3-stat row — Combined
+  target/Monthly contributions don't make sense post-redesign — with Net
+  worth / Saved / Invested / This month).
+- **Savings-rate calc fixed**: `/finance`'s "Monthly contributions" and
+  "Savings rate" stats used to sum the now-deprecated
+  `pots.monthly_contribution` field (frozen, no longer editable). Both pages
+  now sum real `savings_contributions` rows dated in the current month
+  instead — reflects what was actually put in, not a static plan.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
 
 ## Daily Routine — DONE — migration `0046_daily_routine.sql` (applied live via MCP)
 New personal `routine_items` (section, name, order_index) +
