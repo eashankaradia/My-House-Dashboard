@@ -1,12 +1,36 @@
 "use client";
 
 import * as React from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Film, ChefHat } from "lucide-react";
 import type { Recipe, RecipeIngredient } from "@/lib/database.types";
 import { RecipeDetailDialog } from "./recipe-detail-dialog";
 
 export function NutritionView({ recipes, ingredients }: { recipes: Recipe[]; ingredients: RecipeIngredient[] }) {
   const [active, setActive] = React.useState<Recipe | null>(null);
+
+  // Deep-link support: ?recipe=<id> opens that recipe's detail dialog.
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const recipeParam = searchParams.get("recipe");
+
+  React.useEffect(() => {
+    if (recipeParam) {
+      const r = recipes.find((x) => x.id === recipeParam);
+      if (r) setActive(r);
+    }
+  }, [recipeParam, recipes]);
+
+  function closeActive() {
+    setActive(null);
+    if (recipeParam) {
+      const sp = new URLSearchParams(Array.from(searchParams.entries()));
+      sp.delete("recipe");
+      const qs = sp.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    }
+  }
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -38,7 +62,7 @@ export function NutritionView({ recipes, ingredients }: { recipes: Recipe[]; ing
         );
       })}
 
-      <RecipeDetailDialog recipe={active} ingredients={ingredients} open={Boolean(active)} onOpenChange={(v) => !v && setActive(null)} />
+      <RecipeDetailDialog recipe={active} ingredients={ingredients} open={Boolean(active)} onOpenChange={(v) => !v && closeActive()} />
     </div>
   );
 }

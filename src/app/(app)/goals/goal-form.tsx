@@ -17,6 +17,7 @@ import {
 import { Field } from "@/components/shared/form-field";
 import { FormDeleteButton } from "@/components/shared/form-delete-button";
 import { useToast } from "@/hooks/use-toast";
+import { useEditDialogOpen } from "@/hooks/use-open-from-url";
 import { GOAL_CATEGORIES, GOAL_STATUSES } from "@/lib/constants";
 import type { Goal } from "@/lib/database.types";
 import { createGoal, updateGoal, deleteGoal } from "./actions";
@@ -24,7 +25,7 @@ import { createGoal, updateGoal, deleteGoal } from "./actions";
 type Props = { goal?: Goal; trigger?: React.ReactNode };
 
 export function GoalForm({ goal, trigger }: Props) {
-  const [open, setOpen] = React.useState(false);
+  const { open, onOpenChange: setOpen } = useEditDialogOpen(goal?.id, "goal");
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
   const editing = Boolean(goal);

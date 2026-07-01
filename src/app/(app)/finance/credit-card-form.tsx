@@ -16,13 +16,14 @@ import {
 import { Field } from "@/components/shared/form-field";
 import { FormDeleteButton } from "@/components/shared/form-delete-button";
 import { useToast } from "@/hooks/use-toast";
+import { useEditDialogOpen } from "@/hooks/use-open-from-url";
 import type { CreditCard } from "@/lib/database.types";
 import { createCreditCard, updateCreditCard, deleteCreditCard } from "./actions";
 
 type Props = { card?: CreditCard; trigger?: React.ReactNode };
 
 export function CreditCardForm({ card, trigger }: Props) {
-  const [open, setOpen] = React.useState(false);
+  const { open, onOpenChange: setOpen } = useEditDialogOpen(card?.id, "card");
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
   const editing = Boolean(card);

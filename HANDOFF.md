@@ -2,7 +2,45 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (User said "do everything" on the second-brain roadmap. In progress: Eisenhower axis done; deep-linking, favourites, tags, and weekly/monthly reviews queued next — branch `claude/finance-overhaul`, not yet merged/deployed).
+> after **every** change. Last updated: 2026-07-01 (User said "do everything" on the second-brain roadmap. Done: Eisenhower axis, deep-linking. Queued next: favourites, tags, weekly/monthly reviews, then push+deploy — branch `claude/finance-overhaul`, not yet merged/deployed).
+
+## Deep-linking consistency — DONE — no migration
+Roadmap item #6. Recipes/essentials/routine items/goals/habits/useful
+links/credit cards/shares now all support `?<param>=<id>` deep-linking,
+matching the existing bills/tasks/projects/purchases/documents/savings-pots
+pattern. Search (`search/actions.ts`) now links straight to the specific
+item instead of just the module's page.
+
+- New `useEditDialogOpen(id, param)` hook in `use-open-from-url.ts`: for
+  dialogs that double as both "add new" and "edit" (single Form component,
+  switched by whether an item was passed in) — falls back to plain local
+  `useState` while creating (no id to link to yet) and only binds to the
+  URL once editing. Wired into: `essential-form.tsx` (`?essential=`),
+  `routine-item-form.tsx` (`?routine=`), `goal-form.tsx` (`?goal=`),
+  `useful-link-form.tsx` (`?link=`), `credit-card-form.tsx` (`?card=`),
+  `share-form.tsx` (`?share=`) — each of these is rendered once per row
+  with its own `Dialog`, so only the matching row's instance opens.
+- Recipes and habits are architecturally different (a separate
+  `RecipeDetailDialog`/`HabitDetailDialog`, with one shared "which item is
+  open" state at the view level, not one Dialog per row) — mirrored the
+  existing pattern instead of forcing `useEditDialogOpen` in: added a
+  `?recipe=`/`?habit=` `useSearchParams` effect directly in
+  `nutrition-view.tsx`/`habits-view.tsx` that sets the "active" item and
+  clears the query param on close.
+- **Bug caught before shipping**: initially wired `useEditDialogOpen`
+  straight into `recipe-form.tsx`, which is *also* nested inside
+  `RecipeDetailDialog` as the "Edit recipe" trigger — that would have made
+  the edit form pop open simultaneously with the detail dialog on
+  `?recipe=id` (same id, same param, both bound to the URL). Caught by
+  checking each module's actual row-click target before wiring, not just
+  assuming the "row is its own DialogTrigger" pattern held everywhere.
+- **Real gap found and fixed in passing**: `/goals` had no way to edit or
+  delete a goal at all — cards were static `<div>`s, `GoalForm` was only
+  ever rendered as the top-level "Add" trigger. Wrapped each goal card in
+  `<GoalForm goal={goal} trigger={<CardTrigger>...}>` (same pattern as
+  `ProjectCard`) so goals are now editable/deletable and deep-linkable.
+- Verified: `npm run typecheck`, `npm run lint`, default +
+  `NEXT_PUBLIC_APP=life` `npm run build` all clean.
 
 ## Eisenhower "important" axis on tasks — DONE — migration `0051_task_important_flag.sql` (applied live via MCP)
 Roadmap item #5. Added `is_important boolean not null default false` to

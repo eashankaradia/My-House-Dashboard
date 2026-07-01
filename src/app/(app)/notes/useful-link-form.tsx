@@ -18,12 +18,13 @@ import {
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
 import { useToast } from "@/hooks/use-toast";
+import { useEditDialogOpen } from "@/hooks/use-open-from-url";
 import { usefulLinkSchema, type UsefulLinkInput } from "@/lib/schemas";
 import type { UsefulLink } from "@/lib/database.types";
 import { createUsefulLink, updateUsefulLink } from "./actions";
 
 export function UsefulLinkForm({ link, trigger }: { link?: UsefulLink; trigger?: React.ReactNode }) {
-  const [open, setOpen] = React.useState(false);
+  const { open, onOpenChange: setOpen } = useEditDialogOpen(link?.id, "link");
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
   const editing = Boolean(link);

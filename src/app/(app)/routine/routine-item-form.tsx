@@ -16,6 +16,7 @@ import {
 import { Field } from "@/components/shared/form-field";
 import { FormDeleteButton } from "@/components/shared/form-delete-button";
 import { useToast } from "@/hooks/use-toast";
+import { useEditDialogOpen } from "@/hooks/use-open-from-url";
 import { ROUTINE_SECTIONS, ROUTINE_SECTION_LABELS } from "@/lib/constants";
 import type { RoutineItem } from "@/lib/database.types";
 import { createRoutineItem, updateRoutineItem, deleteRoutineItem } from "./actions";
@@ -23,7 +24,7 @@ import { createRoutineItem, updateRoutineItem, deleteRoutineItem } from "./actio
 type Props = { defaultSection?: string; item?: RoutineItem; trigger?: React.ReactNode };
 
 export function RoutineItemForm({ defaultSection, item, trigger }: Props) {
-  const [open, setOpen] = React.useState(false);
+  const { open, onOpenChange: setOpen } = useEditDialogOpen(item?.id, "routine");
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
   const editing = Boolean(item);

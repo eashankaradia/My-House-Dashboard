@@ -15,6 +15,7 @@ import {
 import { Field } from "@/components/shared/form-field";
 import { FormDeleteButton } from "@/components/shared/form-delete-button";
 import { useToast } from "@/hooks/use-toast";
+import { useEditDialogOpen } from "@/hooks/use-open-from-url";
 import { cn } from "@/lib/utils";
 import { RAG_STATUSES, RAG_LABELS } from "@/lib/constants";
 import type { Essential } from "@/lib/database.types";
@@ -29,7 +30,7 @@ const RAG_DOT: Record<string, string> = {
 type Props = { categories: string[]; defaultCategory?: string; essential?: Essential; trigger?: React.ReactNode };
 
 export function EssentialForm({ categories, defaultCategory, essential, trigger }: Props) {
-  const [open, setOpen] = React.useState(false);
+  const { open, onOpenChange: setOpen } = useEditDialogOpen(essential?.id, "essential");
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
   const editing = Boolean(essential);

@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Progress } from "@/components/ui/progress";
 import { createClient } from "@/lib/supabase/server";
+import { CardTrigger } from "@/components/shared/card-trigger";
 import type { Goal } from "@/lib/database.types";
 import { formatCurrency } from "@/lib/utils";
 import { GoalForm } from "./goal-form";
@@ -111,43 +112,49 @@ function GoalGroup({
           const pct = progress(goal);
           const colorClass = categoryColors[goal.category] ?? "text-primary";
           return (
-            <div key={goal.id} className="rounded-xl border bg-card p-5 transition-shadow hover:shadow-sm">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="font-semibold leading-snug">{goal.title}</p>
-                  {goal.description && (
-                    <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">{goal.description}</p>
+            <GoalForm
+              key={goal.id}
+              goal={goal}
+              trigger={
+                <CardTrigger className="block rounded-xl border bg-card p-5 transition-shadow hover:shadow-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-semibold leading-snug">{goal.title}</p>
+                      {goal.description && (
+                        <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">{goal.description}</p>
+                      )}
+                    </div>
+                    <Badge variant="secondary" className={`shrink-0 text-xs ${colorClass}`}>
+                      {goal.category}
+                    </Badge>
+                  </div>
+
+                  {goal.target_value && (
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Progress</span>
+                        <span className="font-medium">{pct}%</span>
+                      </div>
+                      <Progress value={pct} className="h-2" />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>
+                          {goal.unit === "£" ? formatCurrency(Number(goal.current_value)) : `${goal.current_value ?? 0} ${goal.unit ?? ""}`}
+                        </span>
+                        <span>
+                          {goal.unit === "£" ? formatCurrency(Number(goal.target_value)) : `${goal.target_value} ${goal.unit ?? ""}`}
+                        </span>
+                      </div>
+                    </div>
                   )}
-                </div>
-                <Badge variant="secondary" className={`shrink-0 text-xs ${colorClass}`}>
-                  {goal.category}
-                </Badge>
-              </div>
 
-              {goal.target_value && (
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Progress</span>
-                    <span className="font-medium">{pct}%</span>
-                  </div>
-                  <Progress value={pct} className="h-2" />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>
-                      {goal.unit === "£" ? formatCurrency(Number(goal.current_value)) : `${goal.current_value ?? 0} ${goal.unit ?? ""}`}
-                    </span>
-                    <span>
-                      {goal.unit === "£" ? formatCurrency(Number(goal.target_value)) : `${goal.target_value} ${goal.unit ?? ""}`}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {goal.target_date && (
-                <p className="mt-3 text-xs text-muted-foreground">
-                  Target: {new Date(goal.target_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                </p>
-              )}
-            </div>
+                  {goal.target_date && (
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      Target: {new Date(goal.target_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                    </p>
+                  )}
+                </CardTrigger>
+              }
+            />
           );
         })}
       </div>

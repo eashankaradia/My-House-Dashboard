@@ -74,14 +74,14 @@ export async function searchItems(query: string): Promise<SearchResult[]> {
       supabase.from("credit_cards").select("id, name").ilike("name", like).limit(5),
       supabase.from("shares").select("id, ticker").ilike("ticker", like).limit(5),
     ]);
-    for (const r of recipes.data ?? []) out.push({ type: "Recipe", id: r.id, label: r.name, href: "/nutrition" });
-    for (const e of essentials.data ?? []) out.push({ type: "Essential", id: e.id, label: e.name, href: "/essentials" });
-    for (const r of routineItems.data ?? []) out.push({ type: "Routine", id: r.id, label: r.name, href: "/routine" });
-    for (const g of goals.data ?? []) out.push({ type: "Goal", id: g.id, label: g.title, href: "/goals" });
-    for (const h of habits.data ?? []) out.push({ type: "Habit", id: h.id, label: h.name, href: "/habits" });
-    for (const l of usefulLinks.data ?? []) out.push({ type: "Link", id: l.id, label: l.title, href: "/notes" });
-    for (const c of creditCards.data ?? []) out.push({ type: "Card", id: c.id, label: c.name, href: "/finance" });
-    for (const s of shares.data ?? []) out.push({ type: "Share", id: s.id, label: s.ticker, href: "/finance" });
+    for (const r of recipes.data ?? []) out.push({ type: "Recipe", id: r.id, label: r.name, href: `/nutrition?recipe=${r.id}` });
+    for (const e of essentials.data ?? []) out.push({ type: "Essential", id: e.id, label: e.name, href: `/essentials?essential=${e.id}` });
+    for (const r of routineItems.data ?? []) out.push({ type: "Routine", id: r.id, label: r.name, href: `/routine?routine=${r.id}` });
+    for (const g of goals.data ?? []) out.push({ type: "Goal", id: g.id, label: g.title, href: `/goals?goal=${g.id}` });
+    for (const h of habits.data ?? []) out.push({ type: "Habit", id: h.id, label: h.name, href: `/habits?habit=${h.id}` });
+    for (const l of usefulLinks.data ?? []) out.push({ type: "Link", id: l.id, label: l.title, href: `/notes?link=${l.id}` });
+    for (const c of creditCards.data ?? []) out.push({ type: "Card", id: c.id, label: c.name, href: `/finance?card=${c.id}` });
+    for (const s of shares.data ?? []) out.push({ type: "Share", id: s.id, label: s.ticker, href: `/finance?share=${s.id}` });
   }
 
   // Pages and settings sections, so search can navigate anywhere.

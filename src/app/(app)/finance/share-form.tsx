@@ -16,13 +16,14 @@ import {
 import { Field } from "@/components/shared/form-field";
 import { FormDeleteButton } from "@/components/shared/form-delete-button";
 import { useToast } from "@/hooks/use-toast";
+import { useEditDialogOpen } from "@/hooks/use-open-from-url";
 import type { Share } from "@/lib/database.types";
 import { createShare, updateShare, deleteShare } from "./actions";
 
 type Props = { share?: Share; trigger?: React.ReactNode };
 
 export function ShareForm({ share, trigger }: Props) {
-  const [open, setOpen] = React.useState(false);
+  const { open, onOpenChange: setOpen } = useEditDialogOpen(share?.id, "share");
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
   const editing = Boolean(share);

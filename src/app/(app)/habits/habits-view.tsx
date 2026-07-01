@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, Circle, Flame, ChevronRight, Timer as TimerIcon, Hash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,29 @@ export function HabitsView({ habits, logs, targets, completedToday }: Props) {
   const [, startTransition] = useTransition();
   const [detailHabit, setDetailHabit] = useState<Habit | null>(null);
   const { toast } = useToast();
+
+  // Deep-link support: ?habit=<id> opens that habit's detail dialog.
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const habitParam = searchParams.get("habit");
+
+  useEffect(() => {
+    if (habitParam) {
+      const h = habits.find((x) => x.id === habitParam);
+      if (h) setDetailHabit(h);
+    }
+  }, [habitParam, habits]);
+
+  function closeDetail() {
+    setDetailHabit(null);
+    if (habitParam) {
+      const sp = new URLSearchParams(Array.from(searchParams.entries()));
+      sp.delete("habit");
+      const qs = sp.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    }
+  }
 
   const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -72,7 +96,7 @@ export function HabitsView({ habits, logs, targets, completedToday }: Props) {
         logs={logs}
         targets={targets}
         open={Boolean(detailHabit)}
-        onOpenChange={(v) => !v && setDetailHabit(null)}
+        onOpenChange={(v) => !v && closeDetail()}
       />
     </div>
   );
