@@ -2,7 +2,43 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (Finance overhaul + Essentials + Daily Routine + pots/accounts redesign + shares + finance/nutrition inspiration shipped; personal-vs-household-filters/bored-tasks/FAB-audit queued — branch `claude/finance-overhaul`, not yet merged).
+> after **every** change. Last updated: 2026-07-01 (Personal-vs-household filter added to Projects tab and Finance; Tasks/Purchases already had it. Bored-tasks view and FAB audit still queued — branch `claude/finance-overhaul`, not yet merged).
+
+## Personal vs household filter — Projects & Finance — DONE (no migration)
+Completes the request "let me filter between personal and household on
+[projects and tasks] and purchases and finances." Tasks (`tasks-view.tsx`)
+and Purchases (`purchases-grid.tsx`) already had an `onlyMine` toggle from
+earlier batches; this batch closes the remaining gap: the **Projects** tab
+and **Finance**'s household-shared sections (bills, savings/investment pots
+— both use the household-shared RLS pattern, unlike credit cards/income/
+shares/essentials/routine which are personal-only).
+
+- `projects/projects-views.tsx`: added `onlyMine` state (defaults to `true`
+  when `NEXT_PUBLIC_APP === "life"`), gated behind
+  `Object.keys(memberMap).length > 1` (only shown once there's more than one
+  household member — otherwise the toggle is meaningless). Filters
+  `projects` by `project.user_id === currentUserId` before both the List and
+  Board views (and the full-screen board). Same toggle-button visual
+  pattern as the existing Tasks-tab filter (`rounded-lg border p-0.5` two-
+  button switch).
+- `finance/page.tsx` + new `finance/finance-scope.tsx` (client component):
+  the "Key numbers" stat grid, Savings pots card, and Investment pots card
+  were extracted out of the server component into `FinanceScope`, since the
+  filter toggle needs client state and touches bills + pots + all the
+  numbers derived from them (monthly bills, net monthly, savings rate, net
+  worth, totals). `FinanceScope` receives the raw `bills`/`pots`/
+  `accounts`/`contributions`/`shares`/`sharePrices` plus already-computed
+  personal-only numbers (`monthlyCardStatements`, `monthlyIncome`,
+  `incomeSource`) and does the "Household"/"Mine" filtering + all
+  downstream math itself. Same `showFilter` gate as Projects
+  (`Object.keys(memberMap).length > 1`, computed in `finance/page.tsx` via
+  `getHouseholdMap()`). Income, Credit cards, Shares, Inspiration, and
+  Financial goals cards are untouched — those tables are personal-only by
+  RLS, so a household filter doesn't apply to them.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+- **Next step**: task #19 (a low-priority "bored" tasks view on Tasks) and
+  task #20 (audit the global `+` FAB for full coverage of every content type
+  added this session) are still pending — see the task list.
 
 ## Finance & Nutrition inspiration — DONE — migration `0049_finance_nutrition_inspiration.sql` (applied live via MCP)
 Same shape as `health_inspiration` (migration 0041), replicated as two more

@@ -39,11 +39,14 @@ export function ProjectsViews({
 }) {
   const [projectView, setProjectView] = React.useState<"list" | "board">("list");
   const [boardFull, setBoardFull] = React.useState(false);
+  const [onlyMine, setOnlyMine] = React.useState(process.env.NEXT_PUBLIC_APP === "life");
   // A ?project= deep-link opens a project detail dialog (which mounts in the
   // Projects tab), so start there when one is present.
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("project") ? "projects" : "tasks";
   const openTasks = tasks.filter((t) => !t.is_done).length;
+  const visibleProjects = onlyMine ? projects.filter((p) => p.user_id === currentUserId) : projects;
+  const showFilter = Object.keys(memberMap).length > 1;
 
   return (
     <Tabs defaultValue={initialTab} className="space-y-4">
@@ -69,6 +72,22 @@ export function ProjectsViews({
         <div className="mb-3 flex items-center justify-between gap-2">
           <p className="text-sm text-muted-foreground">Bigger work, each with its own tasks and budget.</p>
           <div className="flex items-center gap-2">
+            {showFilter ? (
+              <div className="flex items-center rounded-lg border p-0.5 text-xs">
+                <button
+                  onClick={() => setOnlyMine(false)}
+                  className={cn("rounded-md px-2.5 py-1", !onlyMine && "bg-accent")}
+                >
+                  All projects
+                </button>
+                <button
+                  onClick={() => setOnlyMine(true)}
+                  className={cn("rounded-md px-2.5 py-1", onlyMine && "bg-accent")}
+                >
+                  Mine
+                </button>
+              </div>
+            ) : null}
             {projectView === "board" ? (
               <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setBoardFull(true)}>
                 <Maximize2 className="h-4 w-4" /> Full screen
@@ -93,15 +112,19 @@ export function ProjectsViews({
           </div>
         </div>
 
-        {projects.length === 0 ? (
-          <EmptyState icon={Hammer} title="No projects yet" description="Add a project to plan bigger work and break it into tasks.">
+        {visibleProjects.length === 0 ? (
+          <EmptyState
+            icon={Hammer}
+            title={onlyMine ? "No personal projects yet" : "No projects yet"}
+            description="Add a project to plan bigger work and break it into tasks."
+          >
             <ProjectForm />
           </EmptyState>
         ) : projectView === "board" ? (
           <>
             <div className="grid grid-flow-col auto-cols-[minmax(260px,1fr)] gap-4 overflow-x-auto pb-2">
               {PROJECT_STATUSES.map((status) => {
-                const items = projects.filter((p) => p.status === status);
+                const items = visibleProjects.filter((p) => p.status === status);
                 return (
                   <div key={status} className="rounded-xl border bg-card/40">
                     <div className="flex items-center justify-between border-b px-3 py-2.5">
@@ -124,12 +147,12 @@ export function ProjectsViews({
               })}
             </div>
             {boardFull ? (
-              <BoardFullScreen projects={projects} memberMap={memberMap} onClose={() => setBoardFull(false)} />
+              <BoardFullScreen projects={visibleProjects} memberMap={memberMap} onClose={() => setBoardFull(false)} />
             ) : null}
           </>
         ) : (
           <div className="space-y-3">
-            {projects.map((project) => (
+            {visibleProjects.map((project) => (
               <ProjectCard key={project.id} project={project} memberMap={memberMap} />
             ))}
           </div>
