@@ -1,8 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { Trophy, ChevronRight } from "lucide-react";
+import { Trophy, ChevronRight, Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { MUSCLE_GROUPS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import type { Exercise, WorkoutPlan, WorkoutPlanExercise } from "@/lib/database.types";
 import { BodyDiagram } from "./body-diagram";
 import { PlanDetailDialog } from "./plan-detail-dialog";
@@ -17,6 +20,19 @@ type Props = {
 export function FitnessView({ plans, planExercises, exercises }: Props) {
   const [activePlan, setActivePlan] = React.useState<WorkoutPlan | null>(null);
   const exerciseById = React.useMemo(() => new Map(exercises.map((e) => [e.id, e])), [exercises]);
+  const [search, setSearch] = React.useState("");
+  const [muscleFilter, setMuscleFilter] = React.useState<string | null>(null);
+  const usedMuscles = React.useMemo(
+    () => MUSCLE_GROUPS.filter((m) => exercises.some((e) => e.muscle_groups.includes(m))),
+    [exercises],
+  );
+  const filteredExercises = React.useMemo(
+    () =>
+      exercises
+        .filter((e) => !muscleFilter || e.muscle_groups.includes(muscleFilter))
+        .filter((e) => !search.trim() || e.name.toLowerCase().includes(search.trim().toLowerCase())),
+    [exercises, muscleFilter, search],
+  );
 
   return (
     <div className="space-y-8">
@@ -48,8 +64,57 @@ export function FitnessView({ plans, planExercises, exercises }: Props) {
 
       <section className="space-y-2">
         <h2 className="px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Exercise library</h2>
+
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search exercises…"
+            className="pl-9"
+          />
+          {search ? (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          ) : null}
+        </div>
+
+        {usedMuscles.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setMuscleFilter(null)}
+              className={cn(
+                "rounded-full border px-2.5 py-0.5 text-xs",
+                !muscleFilter ? "border-primary bg-accent" : "text-muted-foreground",
+              )}
+            >
+              All
+            </button>
+            {usedMuscles.map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMuscleFilter((cur) => (cur === m ? null : m))}
+                className={cn(
+                  "rounded-full border px-2.5 py-0.5 text-xs",
+                  muscleFilter === m ? "border-primary bg-accent" : "text-muted-foreground",
+                )}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         <div className="grid gap-2 sm:grid-cols-2">
-          {exercises.map((ex) => (
+          {filteredExercises.map((ex) => (
             <ExerciseForm
               key={ex.id}
               exercise={ex}
@@ -76,11 +141,15 @@ export function FitnessView({ plans, planExercises, exercises }: Props) {
             />
           ))}
         </div>
-        {exercises.length === 0 && (
+        {exercises.length === 0 ? (
           <p className="rounded-xl border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
             No exercises in your library yet.
           </p>
-        )}
+        ) : filteredExercises.length === 0 ? (
+          <p className="rounded-xl border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
+            No exercises match this filter.
+          </p>
+        ) : null}
       </section>
 
       <section className="space-y-2">
