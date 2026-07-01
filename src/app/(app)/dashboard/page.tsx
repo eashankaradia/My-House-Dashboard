@@ -275,6 +275,8 @@ export default async function DashboardPage() {
     if (p.payment_date > todayKey) continue;
     const d = daysUntil(p.payment_date) ?? 0;
     attention.push({
+      id: p.id,
+      kind: "bill_payment",
       label: `Pay ${billName.get(p.bill_id) ?? "bill"}`,
       sub: d < 0 ? `${Math.abs(d)}d overdue · ${formatCurrency(p.expected_amount)}` : `Due today · ${formatCurrency(p.expected_amount)}`,
       href: `/bills?item=${p.bill_id}`,
@@ -287,6 +289,8 @@ export default async function DashboardPage() {
     const d = daysUntil(t.due_date) ?? 0;
     if (d > 0) continue;
     attention.push({
+      id: t.id,
+      kind: "task",
       label: t.title,
       sub: d < 0 ? `${Math.abs(d)}d overdue` : "Due today",
       href: `/projects?task=${t.id}`,
@@ -298,6 +302,8 @@ export default async function DashboardPage() {
     const d = daysUntil(m.next_due_date);
     if (d === null || d > 0) continue;
     attention.push({
+      id: m.id,
+      kind: "maintenance",
       label: m.task,
       sub: d < 0 ? `${Math.abs(d)}d overdue` : "Due today",
       href: `/maintenance?item=${m.id}`,
