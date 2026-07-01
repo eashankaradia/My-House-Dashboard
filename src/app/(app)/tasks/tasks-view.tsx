@@ -31,6 +31,7 @@ import { LinkedItems } from "@/app/(app)/links/linked-items";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { ItemComments } from "@/components/shared/item-comments";
 import { ShareButton } from "@/components/shared/share-button";
+import { ITEM_SCOPES, ITEM_SCOPE_LABELS } from "@/lib/constants";
 import { cn, daysUntil, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { ProjectTask } from "@/lib/database.types";
@@ -52,7 +53,9 @@ export function TasksView({
   currentUserId: string;
   favoriteTaskIds: Set<string>;
 }) {
+  const isLife = process.env.NEXT_PUBLIC_APP === "life";
   const [onlyMine, setOnlyMine] = React.useState(false);
+  const [scopeFilter, setScopeFilter] = React.useState<"all" | "personal" | "household">("all");
   const [activeTag, setActiveTag] = React.useState<string | null>(null);
   const [view, setView] = useViewPref("tasks");
   // Tables scroll sideways on phones — always use the stacked list there.
@@ -80,7 +83,9 @@ export function TasksView({
     [tasks],
   );
 
-  const visible = (onlyMine ? tasks.filter(isMine) : tasks).filter((t) => !activeTag || t.tags.includes(activeTag));
+  const visible = (onlyMine ? tasks.filter(isMine) : tasks)
+    .filter((t) => (scopeFilter === "all" ? true : t.scope === scopeFilter))
+    .filter((t) => !activeTag || t.tags.includes(activeTag));
   // Eisenhower-lite: important tasks float to the top of "To do", then by due date.
   const outstanding = visible
     .filter((t) => !t.is_done && !t.is_bored_task)
@@ -98,6 +103,19 @@ export function TasksView({
       <AddTaskForm projects={projects} members={members} />
 
       <div className="flex items-center justify-end gap-2">
+        {isLife ? (
+          <div className="flex items-center rounded-lg border p-0.5 text-xs">
+            {(["all", "household", "personal"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setScopeFilter(s)}
+                className={cn("rounded-md px-2.5 py-1", scopeFilter === s && "bg-accent")}
+              >
+                {s === "all" ? "All" : ITEM_SCOPE_LABELS[s]}
+              </button>
+            ))}
+          </div>
+        ) : null}
         {members.length > 1 ? (
           <div className="flex items-center rounded-lg border p-0.5 text-xs">
             <button onClick={() => setOnlyMine(false)} className={cn("rounded-md px-2.5 py-1", !onlyMine && "bg-accent")}>
@@ -352,6 +370,7 @@ function AddTaskForm({ projects, members }: { projects: ProjectOption[]; members
         assigned_to: assignee || null,
         is_bored_task: isBoredTask,
         is_important: isImportant,
+        scope: process.env.NEXT_PUBLIC_APP === "life" ? "personal" : "household",
       });
       if (res?.error) {
         toast({ variant: "destructive", title: "Couldn't add task", description: res.error });
@@ -509,8 +528,10 @@ export function TaskEditDialog({
   const [isBoredTask, setIsBoredTask] = React.useState(task.is_bored_task);
   const [isImportant, setIsImportant] = React.useState(task.is_important);
   const [tags, setTags] = React.useState(task.tags);
+  const [scope, setScope] = React.useState(task.scope);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
+  const isLife = process.env.NEXT_PUBLIC_APP === "life";
 
   // Reset fields to the latest task values whenever the dialog is opened.
   React.useEffect(() => {
@@ -523,8 +544,9 @@ export function TaskEditDialog({
       setIsBoredTask(task.is_bored_task);
       setIsImportant(task.is_important);
       setTags(task.tags);
+      setScope(task.scope);
     }
-  }, [open, task.title, task.project_id, task.assigned_to, task.due_date, task.notes, task.is_bored_task, task.is_important, task.tags]);
+  }, [open, task.title, task.project_id, task.assigned_to, task.due_date, task.notes, task.is_bored_task, task.is_important, task.tags, task.scope]);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -539,6 +561,7 @@ export function TaskEditDialog({
         is_bored_task: isBoredTask,
         is_important: isImportant,
         tags,
+        scope,
       });
       if (res?.error) {
         toast({ variant: "destructive", title: "Couldn't save task", description: res.error });
@@ -612,6 +635,15 @@ export function TaskEditDialog({
           <Field label="Tags">
             <TagInput value={tags} onChange={setTags} placeholder="e.g. errand, waiting-for…" />
           </Field>
+          {isLife ? (
+            <Field label="Scope" hint="Personal tasks never show in MyHouse.">
+              <NativeSelect value={scope} onChange={(e) => setScope(e.target.value as typeof scope)}>
+                {ITEM_SCOPES.map((s) => (
+                  <option key={s} value={s}>{ITEM_SCOPE_LABELS[s]}</option>
+                ))}
+              </NativeSelect>
+            </Field>
+          ) : null}
           <label className="flex items-center gap-2 text-sm">
             <Checkbox checked={isImportant} onCheckedChange={(v) => setIsImportant(Boolean(v))} />
             <span className="flex items-center gap-1.5">

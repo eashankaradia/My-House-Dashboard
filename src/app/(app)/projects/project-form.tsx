@@ -20,10 +20,12 @@ import {
 import { Field } from "@/components/shared/form-field";
 import { ImageUpload } from "@/components/shared/image-upload";
 import { useToast } from "@/hooks/use-toast";
-import { PRIORITIES, PROJECT_CATEGORIES, PROJECT_STATUSES } from "@/lib/constants";
+import { ITEM_SCOPES, ITEM_SCOPE_LABELS, PRIORITIES, PROJECT_CATEGORIES, PROJECT_STATUSES } from "@/lib/constants";
 import { projectSchema, type ProjectInput } from "@/lib/schemas";
 import type { Project } from "@/lib/database.types";
 import { createProject, deleteProject, setProjectArchived, updateProject } from "./actions";
+
+const isLife = process.env.NEXT_PUBLIC_APP === "life";
 
 type Props = {
   project?: Project;
@@ -58,6 +60,7 @@ export function ProjectForm({ project, trigger, defaults }: Props) {
       target_completion_date: project?.target_completion_date ?? "",
       notes: project?.notes ?? "",
       image_url: project?.image_url ?? "",
+      scope: project?.scope ?? (isLife ? "personal" : "household"),
     },
   });
 
@@ -130,6 +133,15 @@ export function ProjectForm({ project, trigger, defaults }: Props) {
               </NativeSelect>
             </Field>
           </div>
+          {isLife ? (
+            <Field label="Scope" hint="Personal projects never show in MyHouse.">
+              <NativeSelect {...register("scope")}>
+                {ITEM_SCOPES.map((s) => (
+                  <option key={s} value={s}>{ITEM_SCOPE_LABELS[s]}</option>
+                ))}
+              </NativeSelect>
+            </Field>
+          ) : null}
           <div className="grid grid-cols-2 gap-3">
             <Field label="Estimated (£)" htmlFor="estimated_cost" error={errors.estimated_cost?.message}>
               <Input id="estimated_cost" type="number" step="0.01" {...register("estimated_cost")} />

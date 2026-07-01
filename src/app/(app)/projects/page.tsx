@@ -19,14 +19,23 @@ export default async function ProjectsPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  // MyHouse never shows "personal" MyLife projects/tasks — hard boundary at
+  // the query itself, not just a UI filter.
+  const isHouse = process.env.NEXT_PUBLIC_APP !== "life";
+  let projectsQuery = supabase.from("projects").select("*").order("created_at", { ascending: false });
+  let tasksQuery = supabase
+    .from("project_tasks")
+    .select("*")
+    .order("is_done", { ascending: true })
+    .order("due_date", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false });
+  if (isHouse) {
+    projectsQuery = projectsQuery.eq("scope", "household");
+    tasksQuery = tasksQuery.eq("scope", "household");
+  }
   const [{ data }, { data: taskData }, memberMap, favoriteTaskIds] = await Promise.all([
-    supabase.from("projects").select("*").order("created_at", { ascending: false }),
-    supabase
-      .from("project_tasks")
-      .select("*")
-      .order("is_done", { ascending: true })
-      .order("due_date", { ascending: true, nullsFirst: false })
-      .order("created_at", { ascending: false }),
+    projectsQuery,
+    tasksQuery,
     getHouseholdMap(),
     getFavoriteIds("task"),
   ]);

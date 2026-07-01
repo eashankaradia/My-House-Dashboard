@@ -2,7 +2,70 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (Follow-up finance tweak pushed straight to `main` per the "merge to main always" standing instruction — production confirmed READY on both `my-house-dashboard` and `my-life-dashboard` at commit `3b6ada4`: income rows drop green bonus text for a neutral edit-pencil icon, and a rolling 12-month net income figure was added to the stat strip).
+> after **every** change. Last updated: 2026-07-01 (Large multi-part follow-up request in progress: household contributions ✅, purchases personal/household split ✅, projects/tasks scope hard-boundary ✅. Still queued: finance edit-mode toggle, bulk statement entry check, routine UX pass, habits calendar. Not yet pushed — see below).
+
+## Household contributions (Neelam/Eashan split) — DONE — migration `0055_household_contributions.sql` (applied live via MCP)
+The user said "you didn't add my contributions... I split the contribution
+between Neelam and I" — the *per-bill* contributor feature from PR #99
+already existed and fully supports fixed-amount/pays-the-rest/date-ranges,
+but when asked which bill this applied to, the user clarified: **"we both
+contribute to the household rather than individual bills"** — a different,
+household-wide concept, not tied to any one bill.
+
+- New `household_contributions` table — identical shape to
+  `bill_contributors` (fixed amount or `amount = null` for "pays the
+  rest", `start_date`/`end_date`) but with no `bill_id` — it's a split of
+  the household's *total* monthly bills, not one bill.
+- `bills/household-contribution-form.tsx` + `household-contributions.tsx`:
+  near-verbatim copies of `bill-contributor-form.tsx`/`bill-contributors.tsx`
+  adapted to the household-total case. New card on `/bills`, between the
+  stat cards and the category chart, only shown when there's more than one
+  household member.
+- **Seeded the user's real data** directly via Supabase MCP: Neelam £900/mo
+  fixed, Eashan (the account owner) pays the rest — both with no end date
+  (ongoing).
+- Verified: `npm run typecheck`, `npm run lint`, both variants build clean.
+
+## Future purchases: personal vs household — DONE — no migration
+The existing `onlyMine` filter on `/purchases` already did per-user
+filtering, but it was labelled "All"/"Mine" and buried inside the mobile
+Filters sheet — not a clear, prominent Personal/Household split. Renamed
+to "Household"/"Personal" and made the toggle always visible (was
+`lg:flex`-only before; removed the mobile-only duplicate in the Filters
+sheet since it's redundant now it's always shown).
+
+## Projects & Tasks: personal/household scope hard boundary — DONE — migration `0056_project_task_scope.sql` (applied live via MCP)
+"Projects and tasks should be for the household or personal, personal
+shouldn't link to myhouse." Previously there was only an "assigned to
+me"/"created by me" filter (`onlyMine`) — no concept of *which app* an
+item belongs to, so a personal MyLife task was technically visible to
+MyHouse too (RLS is household-shared).
+
+- New `scope` column (`'personal' | 'household'`, default `'household'`)
+  on both `projects` and `project_tasks`.
+- **Hard boundary, enforced server-side, not just a UI filter**:
+  `projects/actions.ts` has an `enforcedScope()` helper — when
+  `NEXT_PUBLIC_APP === "house"`, every create/update forces `scope =
+  'household'` regardless of what the client sends. `/projects/page.tsx`
+  additionally filters the query itself (`.eq("scope", "household")`) when
+  running as MyHouse, so personal items aren't even fetched, let alone
+  displayed — two independent layers, not just a client-side hide.
+  `ItemScope` type + `ITEM_SCOPES`/`ITEM_SCOPE_LABELS` constants added.
+- MyLife gets a new Household/Personal/All filter (separate from the
+  existing "assigned to me" `onlyMine` filter — they answer different
+  questions and both stay) on both the Projects tab (`projects-views.tsx`)
+  and Tasks tab (`tasks-view.tsx`), plus a Scope field in `ProjectForm` and
+  `TaskEditDialog` (both `isLife`-gated — MyHouse's forms don't show a
+  picker at all since every choice would be overridden anyway). Quick-add
+  forms (`AddTaskForm`, `TaskQuickForm`) don't show a scope picker either
+  (kept minimal, same precedent as tags/bored/important) — they default to
+  `personal` in MyLife / `household` in MyHouse, editable afterward via
+  the full edit dialog.
+- Verified: `npm run typecheck`, `npm run lint`, default +
+  `NEXT_PUBLIC_APP=life` `npm run build` all clean.
+- **Not yet pushed** — next batch will include the remaining items
+  (finance edit-mode, bulk statements check, routine/habits UX) before a
+  single combined push+merge.
 
 ## Income rows: edit icon instead of green text; rolling 12-month income stat — DONE
 Small follow-up to the finance-compact redesign, pushed straight to `main`

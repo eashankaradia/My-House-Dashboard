@@ -83,7 +83,6 @@ export function PurchasesGrid({
   const rooms = Array.from(new Set(purchases.map((p) => p.room).filter(Boolean))) as string[];
   const rank = { High: 0, Medium: 1, Low: 2 } as const;
   const activeFilters = [
-    onlyMine ? { label: "Mine", clear: () => setOnlyMine(false) } : null,
     hideNoOptions ? { label: "Has options", clear: () => setHideNoOptions(false) } : null,
     status !== "All" ? { label: status, clear: () => setStatus("All") } : null,
     room !== "All" ? { label: room, clear: () => setRoom("All") } : null,
@@ -135,25 +134,6 @@ export function PurchasesGrid({
           <SheetContent side="right" className="w-full max-w-sm overflow-y-auto">
             <SheetTitle>Purchase filters</SheetTitle>
             <div className="mt-5 space-y-4">
-              <div className="space-y-1.5">
-                <p className="text-xs font-medium text-muted-foreground">Owner</p>
-                <div className="flex items-center rounded-lg border p-0.5 text-sm">
-                  <button
-                    type="button"
-                    onClick={() => setOnlyMine(false)}
-                    className={cn("flex-1 rounded-md px-2.5 py-1.5", !onlyMine && "bg-accent")}
-                  >
-                    All
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setOnlyMine(true)}
-                    className={cn("flex-1 rounded-md px-2.5 py-1.5", onlyMine && "bg-accent")}
-                  >
-                    Mine
-                  </button>
-                </div>
-              </div>
               <FilterSelect label="Status" value={status} onChange={setStatus}>
                 <option value="All">All statuses</option>
                 {PURCHASE_STATUSES.map((s) => (
@@ -208,20 +188,20 @@ export function PurchasesGrid({
             <X className="h-3 w-3" />
           </button>
         ))}
-        <div className="hidden items-center rounded-lg border p-0.5 text-sm lg:flex">
+        <div className="flex items-center rounded-lg border p-0.5 text-sm">
           <button
             type="button"
             onClick={() => setOnlyMine(false)}
             className={cn("rounded-md px-2.5 py-1", !onlyMine && "bg-accent")}
           >
-            All
+            Household
           </button>
           <button
             type="button"
             onClick={() => setOnlyMine(true)}
             className={cn("rounded-md px-2.5 py-1", onlyMine && "bg-accent")}
           >
-            Mine
+            Personal
           </button>
         </div>
         <button

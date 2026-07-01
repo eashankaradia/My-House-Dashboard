@@ -5,6 +5,7 @@ import {
   FREQUENCIES,
   INSPIRATION_SOURCES,
   INSPIRATION_STATUSES,
+  ITEM_SCOPES,
   MAINTENANCE_FREQUENCIES,
   PRIORITIES,
   PROJECT_CATEGORIES,
@@ -105,6 +106,7 @@ export const projectSchema = z.object({
   target_completion_date: optionalDate,
   notes: optionalString,
   image_url: optionalString,
+  scope: z.enum(ITEM_SCOPES),
 });
 export type ProjectInput = z.infer<typeof projectSchema>;
 

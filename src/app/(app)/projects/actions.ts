@@ -4,6 +4,14 @@ import { revalidatePath } from "next/cache";
 import { projectSchema, type ProjectInput } from "@/lib/schemas";
 import { PROJECT_STATUSES } from "@/lib/constants";
 import { getActionContext, type ActionResult } from "@/lib/action-utils";
+import type { ItemScope } from "@/lib/database.types";
+
+// MyHouse never has a "personal" concept — hard boundary so a personal
+// MyLife project/task can never leak into MyHouse, regardless of what the
+// client sends.
+function enforcedScope(requested: ItemScope): ItemScope {
+  return process.env.NEXT_PUBLIC_APP === "house" ? "household" : requested;
+}
 
 function toRow(values: ProjectInput) {
   return {
@@ -17,6 +25,7 @@ function toRow(values: ProjectInput) {
     target_completion_date: values.target_completion_date ?? null,
     notes: values.notes ?? null,
     image_url: values.image_url ?? null,
+    scope: enforcedScope(values.scope),
   };
 }
 
@@ -104,6 +113,7 @@ export async function createTask(input: {
   is_bored_task?: boolean;
   is_important?: boolean;
   tags?: string[];
+  scope?: ItemScope;
 }): Promise<ActionResult> {
   const clean = input.title.trim();
   if (!clean) return { error: "Task can't be empty" };
@@ -118,6 +128,7 @@ export async function createTask(input: {
     is_bored_task: input.is_bored_task ?? false,
     is_important: input.is_important ?? false,
     tags: input.tags ?? [],
+    scope: enforcedScope(input.scope ?? "household"),
   });
   if (error) return { error: error.message };
   revalidatePath("/projects");
@@ -136,6 +147,7 @@ export async function updateTask(
     is_bored_task?: boolean;
     is_important?: boolean;
     tags?: string[];
+    scope?: ItemScope;
   },
 ): Promise<ActionResult> {
   const { supabase } = await getActionContext();
@@ -148,6 +160,7 @@ export async function updateTask(
     is_bored_task?: boolean;
     is_important?: boolean;
     tags?: string[];
+    scope?: ItemScope;
   } = {};
   if (input.title !== undefined) patch.title = input.title.trim();
   if (input.project_id !== undefined) patch.project_id = input.project_id || null;
@@ -157,6 +170,7 @@ export async function updateTask(
   if (input.is_bored_task !== undefined) patch.is_bored_task = input.is_bored_task;
   if (input.is_important !== undefined) patch.is_important = input.is_important;
   if (input.tags !== undefined) patch.tags = input.tags;
+  if (input.scope !== undefined) patch.scope = enforcedScope(input.scope);
   const { error } = await supabase.from("project_tasks").update(patch).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/projects");

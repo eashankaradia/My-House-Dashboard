@@ -63,6 +63,16 @@ export type BillContributor = Timestamps & {
   notes: string | null;
 };
 
+export type HouseholdContribution = Timestamps & {
+  id: string;
+  user_id: string;
+  member_id: string;
+  amount: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  notes: string | null;
+};
+
 export type NotificationPreference = Timestamps & {
   id: string;
   user_id: string;
@@ -156,6 +166,8 @@ export type Inspiration = Timestamps & {
   collection_id: string | null;
 };
 
+export type ItemScope = "personal" | "household";
+
 export type Project = Timestamps & {
   id: string;
   user_id: string;
@@ -171,6 +183,7 @@ export type Project = Timestamps & {
   image_url: string | null;
   source_inspiration_id: string | null;
   archived_at: string | null;
+  scope: ItemScope;
 };
 
 export type Purchase = Timestamps & {
@@ -318,6 +331,7 @@ export type ProjectTask = Timestamps & {
   is_bored_task: boolean;
   is_important: boolean;
   tags: string[];
+  scope: ItemScope;
 };
 
 export type PurchaseStar = {
@@ -979,6 +993,7 @@ export type Database = {
       payment_accounts: Row<PaymentAccount>;
       bill_payments: Row<BillPayment>;
       bill_contributors: Row<BillContributor>;
+      household_contributions: Row<HouseholdContribution>;
       notification_preferences: Row<NotificationPreference>;
       notifications: Row<Notification>;
       mortgages: Row<Mortgage>;

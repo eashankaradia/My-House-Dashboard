@@ -14,7 +14,7 @@ import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useToast } from "@/hooks/use-toast";
-import { PROJECT_STATUSES } from "@/lib/constants";
+import { ITEM_SCOPES, ITEM_SCOPE_LABELS, PROJECT_STATUSES } from "@/lib/constants";
 import { priorityVariant, STATUS_ACCENT, STATUS_BORDER } from "@/lib/ui";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -39,15 +39,19 @@ export function ProjectsViews({
   currentUserId: string;
   favoriteTaskIds: Set<string>;
 }) {
+  const isLife = process.env.NEXT_PUBLIC_APP === "life";
   const [projectView, setProjectView] = React.useState<"list" | "board">("list");
   const [boardFull, setBoardFull] = React.useState(false);
-  const [onlyMine, setOnlyMine] = React.useState(process.env.NEXT_PUBLIC_APP === "life");
+  const [onlyMine, setOnlyMine] = React.useState(isLife);
+  const [scopeFilter, setScopeFilter] = React.useState<"all" | "personal" | "household">("all");
   // A ?project= deep-link opens a project detail dialog (which mounts in the
   // Projects tab), so start there when one is present.
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("project") ? "projects" : "tasks";
   const openTasks = tasks.filter((t) => !t.is_done).length;
-  const visibleProjects = onlyMine ? projects.filter((p) => p.user_id === currentUserId) : projects;
+  const visibleProjects = projects
+    .filter((p) => (onlyMine ? p.user_id === currentUserId : true))
+    .filter((p) => (scopeFilter === "all" ? true : p.scope === scopeFilter));
   const showFilter = Object.keys(memberMap).length > 1;
 
   return (
@@ -74,6 +78,19 @@ export function ProjectsViews({
         <div className="mb-3 flex items-center justify-between gap-2">
           <p className="text-sm text-muted-foreground">Bigger work, each with its own tasks and budget.</p>
           <div className="flex items-center gap-2">
+            {isLife ? (
+              <div className="flex items-center rounded-lg border p-0.5 text-xs">
+                {(["all", "household", "personal"] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setScopeFilter(s)}
+                    className={cn("rounded-md px-2.5 py-1", scopeFilter === s && "bg-accent")}
+                  >
+                    {s === "all" ? "All" : ITEM_SCOPE_LABELS[s]}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             {showFilter ? (
               <div className="flex items-center rounded-lg border p-0.5 text-xs">
                 <button

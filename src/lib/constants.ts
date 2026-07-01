@@ -165,6 +165,13 @@ export const PROJECT_STATUSES = [
   "Idea", "Planning", "Quoting", "Scheduled", "In Progress", "Completed",
 ] as const;
 
+/** Personal (only relevant to you) vs household (relevant to everyone) — MyHouse only ever shows household scope. */
+export const ITEM_SCOPES = ["personal", "household"] as const;
+export const ITEM_SCOPE_LABELS: Record<(typeof ITEM_SCOPES)[number], string> = {
+  personal: "Personal",
+  household: "Household",
+};
+
 // ---------------------------------------------------------------------------
 // Purchases
 // ---------------------------------------------------------------------------
