@@ -2,12 +2,72 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (a follow-up batch after the
-> six-part request — Fitness Instagram links, Finance page cleanup, a fixed
-> mobile add-menu, discoverable habit editing, and an app-wide edit-clutter
-> audit — implemented, verified, committed, pushed, and confirmed **READY in
-> Vercel production** on both `my-house-dashboard` and `my-life-dashboard` at
-> commit `325b1af`. Nothing outstanding from this batch).
+> after **every** change. Last updated: 2026-07-01 (implemented item #1 of a
+> product-audit-driven engagement/retention plan — the Dashboard's "Today"
+> panel is now one-tap completable — committed and pushed at commit `43ff245`.
+> Items #2-5 of that plan are scoped but not started. Not yet re-confirmed
+> live in Vercel production for this specific commit).
+
+## Engagement/retention audit + "Today" panel (2026-07-01)
+The user asked for an app summary suitable for an external AI (Perplexity)
+to evaluate, then pasted back Perplexity's resulting improvement brief
+(behavioral-design framing: Atomic Habits / Deep Work / Four Thousand Weeks
+principles, focused on daily engagement, completion reinforcement, calm
+mobile-first UX, without bloating the product).
+
+**Audit finding**: the architecture and most UI conventions are already
+sound (edit-toggle pattern, deep-linking, scope enforcement, `DailyHabits`'
+one-tap optimistic toggle). The concrete, verifiable gap: the Dashboard's
+`NeedsAttention` component — correctly positioned first, correctly scoped
+to overdue/due-today items — rendered every row as a plain `<Link>`. To
+act on it (pay a bill, finish a task, log maintenance) you had to navigate
+away, find the control elsewhere, then come back. `DailyHabits`, sitting
+right below it, already did one-tap-complete-in-place with a streak badge
+— proof the pattern works, just not applied to the app's primary "what
+matters today" surface.
+
+**Prioritized plan** (top 5, #1 implemented this batch):
+1. **DONE** — Make "Today" (renamed from "Needs attention") one-tap
+   completable in place.
+2. Extend the same one-tap-complete-with-reinforcement pattern to other
+   compact list rows (bills list, tasks list) — not started.
+3. Fold "Renewal reminders" into "Today" (same shape of data: dated,
+   urgent, single-action) rather than a separate scannable section —
+   not started.
+4. A weekly "how'd it go" nudge surfaced proactively from the existing
+   Reviews module's rollup data, rather than only on-visit — not started.
+5. Smarter empty-state defaults / inferred scope — lowest priority, not
+   started.
+
+### #1: Dashboard "Today" panel — DONE — no migration
+`needs-attention.tsx` converted from a server-rendered pure list of
+`<Link>`s into a client component with inline completion:
+- `AttentionItem` gained optional `id`/`kind` fields (`kind: "bill_payment"
+  | "task" | "maintenance"`). `dashboard/page.tsx`'s three loops that build
+  overdue/due-today items (unpaid bill payments, tasks, maintenance) now
+  populate them; the fourth loop (document expiry) deliberately doesn't —
+  there's no sensible in-place "complete" action for an expiring document,
+  so those rows stay link-only with the old dot-indicator styling.
+- A `COMPLETE_ACTION` map dispatches to the three server actions that
+  already existed and already had the right `revalidatePath` calls:
+  `setPaymentPaid` (bills), `toggleTask` (projects), `completeMaintenance`
+  (maintenance) — no new server actions needed.
+- Each completable row gets a leading checkbox button (same optimistic
+  `useState`/`useTransition` + revert-on-error pattern as `DailyHabits`),
+  separate from the row's `<Link>` so both the complete action and "go to
+  detail" still work independently.
+- Completing an item strikes it through, turns it green, and removes it
+  from the "remaining" count; clearing the whole list transitions into
+  the same "all caught up" card that used to only ever be a cold-load
+  empty state — that transition *is* the completion reinforcement,
+  deliberately reusing the existing calm visual language rather than
+  adding confetti/animation libraries.
+- Title changed from "Needs attention" to "Today" in the component (no
+  file rename, to keep the diff small — `needs-attention.tsx` still
+  houses it).
+- Verified: `npm run typecheck`, `npm run lint`, both variants build
+  clean. Pushed to `main` at `43ff245`. Not yet re-confirmed live in
+  Vercel production.
 
 ## Follow-up batch: Fitness links, Finance cleanup, edit discoverability (2026-07-01)
 Five more asks landed right after the six-part batch shipped:
