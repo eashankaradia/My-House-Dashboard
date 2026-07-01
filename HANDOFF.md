@@ -2,7 +2,42 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (Personal-vs-household filter added to Projects tab and Finance; Tasks/Purchases already had it. Bored-tasks view and FAB audit still queued — branch `claude/finance-overhaul`, not yet merged).
+> after **every** change. Last updated: 2026-07-01 (Bored-tasks view shipped. Personal-vs-household filters done for Tasks/Purchases/Projects/Finance. FAB audit (task #20) still queued — branch `claude/finance-overhaul`, not yet merged).
+
+## Low-priority "when bored" tasks — DONE — migration `0050_bored_tasks.sql` (applied live via MCP)
+Completes "on tasks give me a place to put low priority tasks when bored."
+Added `is_bored_task boolean not null default false` to `project_tasks`
+(a flag, not a new table — tasks stay in the same list/table, just tagged).
+
+- `database.types.ts`: `ProjectTask` gained `is_bored_task: boolean`.
+- `projects/actions.ts`: `createTask`/`updateTask` accept an optional
+  `is_bored_task` and patch it through like any other field.
+- `tasks/tasks-view.tsx`:
+  - `AddTaskForm` gained a "When bored" toggle button (Coffee icon) next to
+    the due-date input — sets the flag at creation time.
+  - `TaskEditDialog` gained a "Low priority — do when bored" checkbox so an
+    existing task can be moved in/out of the bored list at any time.
+  - The card/list view now splits outstanding tasks into two cards: "To do"
+    (the default, `!is_bored_task`) and a new "When bored" card
+    (`is_bored_task`, Coffee icon + explainer subtitle) sitting between "To
+    do" and "Done" — so low-priority filler tasks don't clutter the main
+    list but stay one scroll away. Completed tasks (either kind) still fall
+    through to "Done" as before.
+  - Table view keeps a single table (rows = outstanding + bored + done) but
+    shows a small Coffee icon next to a bored task's title instead of
+    splitting into extra tables.
+  - The existing personal/household `onlyMine` filter and both view-mode
+    toggles compose with this unchanged — bored/not-bored is just another
+    split on top of whichever task set is already visible.
+- Dashboard's "open tasks" counts intentionally still include bored tasks
+  (they're genuinely open, just low priority) — only the Tasks page itself
+  separates them out.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+- **Next step**: task #20 — audit the global `+` (FloatingAdd) button to
+  confirm every content type added this session (credit cards, income
+  entries, essentials, routine items, recipes, health/finance/nutrition
+  inspiration, bill contributors, shares) is reachable from it. This is the
+  last item before the branch is ready for a PR.
 
 ## Personal vs household filter — Projects & Finance — DONE (no migration)
 Completes the request "let me filter between personal and household on

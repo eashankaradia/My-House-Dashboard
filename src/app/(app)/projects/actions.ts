@@ -101,6 +101,7 @@ export async function createTask(input: {
   due_date?: string | null;
   assigned_to?: string | null;
   notes?: string | null;
+  is_bored_task?: boolean;
 }): Promise<ActionResult> {
   const clean = input.title.trim();
   if (!clean) return { error: "Task can't be empty" };
@@ -112,6 +113,7 @@ export async function createTask(input: {
     due_date: input.due_date || null,
     assigned_to: input.assigned_to || null,
     notes: input.notes || null,
+    is_bored_task: input.is_bored_task ?? false,
   });
   if (error) return { error: error.message };
   revalidatePath("/projects");
@@ -127,6 +129,7 @@ export async function updateTask(
     due_date?: string | null;
     assigned_to?: string | null;
     notes?: string | null;
+    is_bored_task?: boolean;
   },
 ): Promise<ActionResult> {
   const { supabase } = await getActionContext();
@@ -136,12 +139,14 @@ export async function updateTask(
     due_date?: string | null;
     assigned_to?: string | null;
     notes?: string | null;
+    is_bored_task?: boolean;
   } = {};
   if (input.title !== undefined) patch.title = input.title.trim();
   if (input.project_id !== undefined) patch.project_id = input.project_id || null;
   if (input.due_date !== undefined) patch.due_date = input.due_date || null;
   if (input.assigned_to !== undefined) patch.assigned_to = input.assigned_to || null;
   if (input.notes !== undefined) patch.notes = input.notes || null;
+  if (input.is_bored_task !== undefined) patch.is_bored_task = input.is_bored_task;
   const { error } = await supabase.from("project_tasks").update(patch).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/projects");

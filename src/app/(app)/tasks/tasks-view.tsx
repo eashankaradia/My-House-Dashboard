@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Archive, LayoutList, Plus, Table2, Trash2, X } from "lucide-react";
+import { Archive, Coffee, LayoutList, Plus, Table2, Trash2, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,7 +71,8 @@ export function TasksView({
   );
 
   const visible = onlyMine ? tasks.filter(isMine) : tasks;
-  const outstanding = visible.filter((t) => !t.is_done);
+  const outstanding = visible.filter((t) => !t.is_done && !t.is_bored_task);
+  const bored = visible.filter((t) => !t.is_done && t.is_bored_task);
   const done = visible.filter((t) => t.is_done);
 
   return (
@@ -110,6 +111,7 @@ export function TasksView({
       {effectiveView === "table" ? (
         <TaskTable
           outstanding={outstanding}
+          bored={bored}
           done={done}
           projects={projects}
           members={members}
@@ -127,6 +129,24 @@ export function TasksView({
                 <p className="py-4 text-center text-sm text-muted-foreground">Nothing outstanding 🎉</p>
               ) : (
                 outstanding.map((task) => (
+                  <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} />
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-1.5 text-base text-muted-foreground">
+                <Coffee className="h-4 w-4" /> When bored ({bored.length})
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">Low-priority tasks to pick up when you&apos;ve got nothing better to do.</p>
+            </CardHeader>
+            <CardContent className="space-y-1.5">
+              {bored.length === 0 ? (
+                <p className="py-4 text-center text-sm text-muted-foreground">Nothing here yet — mark a task &quot;when bored&quot; to stash it here.</p>
+              ) : (
+                bored.map((task) => (
                   <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} />
                 ))
               )}
@@ -154,6 +174,7 @@ export function TasksView({
 
 function TaskTable({
   outstanding,
+  bored,
   done,
   projects,
   members,
@@ -161,13 +182,14 @@ function TaskTable({
   memberMap,
 }: {
   outstanding: ProjectTask[];
+  bored: ProjectTask[];
   done: ProjectTask[];
   projects: ProjectOption[];
   members: Member[];
   projectName: (id: string | null) => string | null;
   memberMap: MemberMap;
 }) {
-  const rows = [...outstanding, ...done];
+  const rows = [...outstanding, ...bored, ...done];
   return (
     <Card>
       <CardContent className="overflow-x-auto p-0">
@@ -225,8 +247,9 @@ function TaskTableRow({
       </td>
       <td className="px-3 py-2">
         <TaskEditDialog task={task} projects={projects} members={members}>
-          <CardTrigger className={cn("rounded hover:underline", task.is_done && "text-muted-foreground line-through")}>
+          <CardTrigger className={cn("flex items-center gap-1.5 rounded hover:underline", task.is_done && "text-muted-foreground line-through")}>
             {task.title}
+            {task.is_bored_task ? <Coffee className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
           </CardTrigger>
         </TaskEditDialog>
       </td>
@@ -266,6 +289,7 @@ function AddTaskForm({ projects, members }: { projects: ProjectOption[]; members
   const [projectId, setProjectId] = React.useState("");
   const [assignee, setAssignee] = React.useState("");
   const [due, setDue] = React.useState("");
+  const [isBoredTask, setIsBoredTask] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
 
@@ -278,6 +302,7 @@ function AddTaskForm({ projects, members }: { projects: ProjectOption[]; members
         project_id: projectId || null,
         due_date: due || null,
         assigned_to: assignee || null,
+        is_bored_task: isBoredTask,
       });
       if (res?.error) {
         toast({ variant: "destructive", title: "Couldn't add task", description: res.error });
@@ -286,13 +311,14 @@ function AddTaskForm({ projects, members }: { projects: ProjectOption[]; members
       setTitle("");
       setDue("");
       setAssignee("");
+      setIsBoredTask(false);
       toast({ title: "Task added" });
     });
   }
 
   return (
     <Card>
-      <CardContent className="p-4">
+      <CardContent className="space-y-2 p-4">
         <form onSubmit={add} className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Input
             value={title}
@@ -315,6 +341,18 @@ function AddTaskForm({ projects, members }: { projects: ProjectOption[]; members
             </NativeSelect>
           ) : null}
           <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} className="sm:w-40" />
+          <button
+            type="button"
+            onClick={() => setIsBoredTask((v) => !v)}
+            aria-pressed={isBoredTask}
+            title="Low priority — do when bored"
+            className={cn(
+              "flex items-center gap-1.5 rounded-md border px-2.5 py-2 text-xs text-muted-foreground",
+              isBoredTask && "border-primary bg-accent text-foreground",
+            )}
+          >
+            <Coffee className="h-4 w-4" /> When bored
+          </button>
           <Button type="submit" disabled={pending} className="gap-1.5">
             <Plus className="h-4 w-4" /> Add
           </Button>
@@ -397,6 +435,7 @@ export function TaskEditDialog({
   const [assignee, setAssignee] = React.useState(task.assigned_to ?? "");
   const [due, setDue] = React.useState(task.due_date ?? "");
   const [notes, setNotes] = React.useState(task.notes ?? "");
+  const [isBoredTask, setIsBoredTask] = React.useState(task.is_bored_task);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
 
@@ -408,8 +447,9 @@ export function TaskEditDialog({
       setAssignee(task.assigned_to ?? "");
       setDue(task.due_date ?? "");
       setNotes(task.notes ?? "");
+      setIsBoredTask(task.is_bored_task);
     }
-  }, [open, task.title, task.project_id, task.assigned_to, task.due_date, task.notes]);
+  }, [open, task.title, task.project_id, task.assigned_to, task.due_date, task.notes, task.is_bored_task]);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -421,6 +461,7 @@ export function TaskEditDialog({
         due_date: due || null,
         assigned_to: assignee || null,
         notes: notes || null,
+        is_bored_task: isBoredTask,
       });
       if (res?.error) {
         toast({ variant: "destructive", title: "Couldn't save task", description: res.error });
@@ -491,6 +532,12 @@ export function TaskEditDialog({
           <Field label="Notes" htmlFor="te-notes">
             <Textarea id="te-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Progress, context, links…" />
           </Field>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={isBoredTask} onCheckedChange={(v) => setIsBoredTask(Boolean(v))} />
+            <span className="flex items-center gap-1.5">
+              <Coffee className="h-4 w-4 text-muted-foreground" /> Low priority — do when bored
+            </span>
+          </label>
           <ItemTimestamps createdAt={task.created_at} updatedAt={task.updated_at} />
           <div className="border-t pt-3">
             <ItemComments entityType="project_tasks" entityId={task.id} ownerId={task.user_id} href={`/projects?task=${task.id}`} label={task.title} />
