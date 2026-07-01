@@ -75,9 +75,9 @@ export function ProjectsViews({
 
       {/* Projects — bigger pieces of work, each with its own tasks */}
       <TabsContent value="projects">
-        <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">Bigger work, each with its own tasks and budget.</p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {isLife ? (
               <div className="flex items-center rounded-lg border p-0.5 text-xs">
                 {(["all", "household", "personal"] as const).map((s) => (

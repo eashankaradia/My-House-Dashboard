@@ -46,8 +46,12 @@ export async function GET() {
   } = await supabase.auth.getUser();
   if (!user) return new Response("Unauthorized", { status: 401 });
 
+  const isHouse = process.env.NEXT_PUBLIC_APP !== "life";
+  let billsQuery = supabase.from("bills").select("*");
+  if (isHouse) billsQuery = billsQuery.eq("scope", "household");
+
   const [bills, maint, projects, docs, mortgages, pots, tasks, calEvents] = await Promise.all([
-    supabase.from("bills").select("*"),
+    billsQuery,
     supabase.from("maintenance_tasks").select("*"),
     supabase.from("projects").select("*"),
     supabase.from("documents").select("*"),

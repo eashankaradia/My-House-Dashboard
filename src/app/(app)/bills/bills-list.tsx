@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
-import { FREQUENCY_LABELS } from "@/lib/constants";
+import { FREQUENCY_LABELS, ITEM_SCOPE_LABELS } from "@/lib/constants";
 import { cn, formatCurrency, formatDate, toMonthly } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { Bill, BillContributor, BillPayment, HouseholdMember, PaymentAccount } from "@/lib/database.types";
@@ -31,13 +31,29 @@ export function BillsList({
   memberMap: MemberMap;
 }) {
   const [compact, setCompact] = React.useState(true);
+  const [scopeFilter, setScopeFilter] = React.useState<"all" | "personal" | "household">("all");
+  const isLife = process.env.NEXT_PUBLIC_APP === "life";
   const accountNames = new Map(accounts.map((account) => [account.id, account.name]));
+  const visibleBills = bills.filter((b) => (scopeFilter === "all" ? true : b.scope === scopeFilter));
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between space-y-0">
+      <CardHeader className="flex-col items-stretch gap-2 space-y-0 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle>All bills</CardTitle>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {isLife ? (
+            <div className="flex items-center rounded-lg border p-0.5 text-xs">
+              {(["all", "household", "personal"] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setScopeFilter(s)}
+                  className={cn("rounded-md px-2.5 py-1", scopeFilter === s && "bg-accent")}
+                >
+                  {s === "all" ? "All" : ITEM_SCOPE_LABELS[s]}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <div className="flex items-center rounded-lg border p-0.5 text-xs">
             <button onClick={() => setCompact(false)} className={cn("rounded-md px-2 py-1", !compact && "bg-accent")}>
               Detailed
@@ -49,13 +65,14 @@ export function BillsList({
         </div>
       </CardHeader>
       <CardContent className="divide-y">
-        {bills.map((bill) =>
+        {visibleBills.map((bill) =>
           compact ? (
             <div key={bill.id} className="flex items-center gap-3 py-2 text-sm first:pt-0 last:pb-0">
               <BillDetailDialog bill={bill} accounts={accounts} payments={payments.filter((payment) => payment.bill_id === bill.id)} contributors={contributors.filter((c) => c.bill_id === bill.id)} members={members} memberMap={memberMap}>
                 <CardTrigger className="flex min-w-0 flex-1 items-center gap-3 rounded-md">
                   <span className="min-w-0 flex-1 truncate font-medium">{bill.name}</span>
                   <Badge variant="secondary">{bill.category}</Badge>
+                  {isLife && bill.scope === "personal" ? <Badge variant="outline">Personal</Badge> : null}
                   {bill.due_date ? (
                     <span className="hidden w-20 shrink-0 text-right text-xs text-muted-foreground sm:block">
                       {formatDate(bill.due_date)}
@@ -89,6 +106,7 @@ export function BillsList({
                     <span className="truncate font-medium">{bill.name}</span>
                     <Badge variant="secondary">{bill.category}</Badge>
                     {!bill.is_fixed ? <Badge variant="outline">Variable</Badge> : null}
+                    {isLife && bill.scope === "personal" ? <Badge variant="outline">Personal</Badge> : null}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>

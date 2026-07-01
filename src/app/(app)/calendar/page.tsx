@@ -49,8 +49,11 @@ function expandRecurring(ev: CalendarEvent, start: Date, end: Date): string[] {
 
 export default async function CalendarPage() {
   const supabase = await createClient();
+  const isHouse = process.env.NEXT_PUBLIC_APP !== "life";
+  let billsQuery = supabase.from("bills").select("*");
+  if (isHouse) billsQuery = billsQuery.eq("scope", "household");
   const [bills, maint, projects, docs, mortgages, pots, tasks, calEvents] = await Promise.all([
-    supabase.from("bills").select("*"),
+    billsQuery,
     supabase.from("maintenance_tasks").select("*"),
     supabase.from("projects").select("*"),
     supabase.from("documents").select("*"),

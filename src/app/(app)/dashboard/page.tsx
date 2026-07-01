@@ -59,6 +59,9 @@ export default async function DashboardPage() {
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const isHouse = process.env.NEXT_PUBLIC_APP !== "life";
+  let billsQuery = supabase.from("bills").select("*");
+  if (isHouse) billsQuery = billsQuery.eq("scope", "household");
 
   const [
     billsRes,
@@ -79,7 +82,7 @@ export default async function DashboardPage() {
     incomeMonthsRes,
     pinnedItems,
   ] = await Promise.all([
-    supabase.from("bills").select("*"),
+    billsQuery,
     supabase.from("savings_pots").select("*"),
     supabase.from("projects").select("*").order("updated_at", { ascending: false }),
     supabase.from("project_tasks").select("*"),

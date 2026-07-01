@@ -30,6 +30,7 @@ export type Bill = Timestamps & {
   account_id: string | null;
   is_fixed: boolean;
   notes: string | null;
+  scope: ItemScope;
 };
 
 export type PaymentAccount = Timestamps & {

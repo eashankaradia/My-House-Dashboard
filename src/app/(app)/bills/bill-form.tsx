@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
 import { useToast } from "@/hooks/use-toast";
-import { BILL_CATEGORIES, FREQUENCIES, FREQUENCY_LABELS } from "@/lib/constants";
+import { BILL_CATEGORIES, FREQUENCIES, FREQUENCY_LABELS, ITEM_SCOPES, ITEM_SCOPE_LABELS } from "@/lib/constants";
 import { billSchema, type BillInput } from "@/lib/schemas";
 import type { Bill, PaymentAccount } from "@/lib/database.types";
 import { FormDeleteButton } from "@/components/shared/form-delete-button";
@@ -32,6 +32,7 @@ export function BillForm({ bill, accounts = [], trigger }: Props) {
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
   const editing = Boolean(bill);
+  const isLife = process.env.NEXT_PUBLIC_APP === "life";
 
   const {
     register,
@@ -51,6 +52,7 @@ export function BillForm({ bill, accounts = [], trigger }: Props) {
       account_id: bill?.account_id ?? "",
       is_fixed: bill?.is_fixed ?? true,
       notes: bill?.notes ?? "",
+      scope: bill?.scope ?? "household",
     },
   });
 
@@ -150,6 +152,16 @@ export function BillForm({ bill, accounts = [], trigger }: Props) {
           <Field label="Notes" htmlFor="notes">
             <Textarea id="notes" rows={2} {...register("notes")} />
           </Field>
+
+          {isLife ? (
+            <Field label="Scope" hint="Personal bills aren't shared with the household and never show in MyHouse.">
+              <NativeSelect {...register("scope")}>
+                {ITEM_SCOPES.map((s) => (
+                  <option key={s} value={s}>{ITEM_SCOPE_LABELS[s]}</option>
+                ))}
+              </NativeSelect>
+            </Field>
+          ) : null}
 
           <DialogFooter className="sm:justify-between">
             {editing && bill ? (

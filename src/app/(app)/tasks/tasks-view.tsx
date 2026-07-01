@@ -102,7 +102,7 @@ export function TasksView({
     <div className="space-y-6">
       <AddTaskForm projects={projects} members={members} />
 
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         {isLife ? (
           <div className="flex items-center rounded-lg border p-0.5 text-xs">
             {(["all", "household", "personal"] as const).map((s) => (

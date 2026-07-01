@@ -20,13 +20,17 @@ export const metadata = { title: "Bills & Expenses" };
 
 export default async function BillsPage() {
   const supabase = await createClient();
+  const isHouse = process.env.NEXT_PUBLIC_APP !== "life";
+  let billsQuery = supabase
+    .from("bills")
+    .select("*")
+    .order("category", { ascending: true })
+    .order("name", { ascending: true });
+  if (isHouse) billsQuery = billsQuery.eq("scope", "household");
+
   const [{ data }, { data: accountData }, { data: paymentData }, { data: contributorData }, { data: memberData }, memberMap, { data: householdContribData }] =
     await Promise.all([
-      supabase
-        .from("bills")
-        .select("*")
-        .order("category", { ascending: true })
-        .order("name", { ascending: true }),
+      billsQuery,
       supabase.from("payment_accounts").select("*").order("name"),
       supabase.from("bill_payments").select("*").order("payment_date", { ascending: false }),
       supabase.from("bill_contributors").select("*"),
@@ -43,6 +47,10 @@ export default async function BillsPage() {
 
   const monthlyTotal = bills.reduce((sum, b) => sum + toMonthly(b.amount, b.frequency), 0);
   const annualTotal = bills.reduce((sum, b) => sum + toAnnual(b.amount, b.frequency), 0);
+  // Personal bills aren't shared with the household, so they're excluded from the split.
+  const householdMonthlyTotal = bills
+    .filter((b) => b.scope === "household")
+    .reduce((sum, b) => sum + toMonthly(b.amount, b.frequency), 0);
 
   // Category breakdown by monthly equivalent.
   const byCategory = new Map<string, number>();
@@ -97,7 +105,7 @@ export default async function BillsPage() {
           </div>
 
           <HouseholdContributions
-            monthlyTotal={monthlyTotal}
+            monthlyTotal={householdMonthlyTotal}
             contributions={householdContributions}
             members={members}
             memberMap={memberMap}

@@ -10,7 +10,12 @@ import {
   type PaymentAccountInput,
 } from "@/lib/schemas";
 import { getActionContext, type ActionResult } from "@/lib/action-utils";
-import type { Bill, BillPayment } from "@/lib/database.types";
+import type { Bill, BillPayment, ItemScope } from "@/lib/database.types";
+
+/** MyHouse bills are always household-scoped — personal bills only ever come from MyLife. */
+function enforcedScope(requested: ItemScope): ItemScope {
+  return process.env.NEXT_PUBLIC_APP === "house" ? "household" : requested;
+}
 
 function toRow(values: BillInput) {
   return {
@@ -24,6 +29,7 @@ function toRow(values: BillInput) {
     account_id: values.account_id ?? null,
     is_fixed: values.is_fixed,
     notes: values.notes ?? null,
+    scope: enforcedScope(values.scope),
   };
 }
 

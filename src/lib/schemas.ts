@@ -30,6 +30,7 @@ export const billSchema = z.object({
   account_id: optionalString,
   is_fixed: z.coerce.boolean().default(true),
   notes: optionalString,
+  scope: z.enum(ITEM_SCOPES).default("household"),
 });
 export type BillInput = z.infer<typeof billSchema>;
 

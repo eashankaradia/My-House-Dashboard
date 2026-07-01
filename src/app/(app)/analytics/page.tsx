@@ -21,8 +21,11 @@ export const metadata = { title: "Analytics" };
 
 export default async function AnalyticsPage() {
   const supabase = await createClient();
+  const isHouse = process.env.NEXT_PUBLIC_APP !== "life";
+  let billsQuery = supabase.from("bills").select("*");
+  if (isHouse) billsQuery = billsQuery.eq("scope", "household");
   const [bills, pots, projects, maintenance, purchases, paymentsRes] = await Promise.all([
-    supabase.from("bills").select("*"),
+    billsQuery,
     supabase.from("savings_pots").select("*"),
     supabase.from("projects").select("*"),
     supabase.from("maintenance_tasks").select("*"),
