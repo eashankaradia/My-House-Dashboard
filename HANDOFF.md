@@ -2,7 +2,49 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (Bored-tasks view shipped. Personal-vs-household filters done for Tasks/Purchases/Projects/Finance. FAB audit (task #20) still queued — branch `claude/finance-overhaul`, not yet merged).
+> after **every** change. Last updated: 2026-07-01 (FAB audit shipped — this closes out the whole `claude/finance-overhaul` batch of work, 21 tasks done, branch not yet merged to main. A large new "second brain / Today command centre" audit+overhaul request has just come in — see the bottom of this file for that plan).
+
+## FAB (+ button) audit — DONE — no migration
+Completes "make sure all of the things i have asked for is catered for using
+the + button." Audited `components/layout/add-menu.tsx` (the shared pill
+list behind both the desktop `FloatingAdd` and the mobile bottom-tab +)
+against everything shipped this session, plus an existing inconsistency
+with the nav-visibility work (task #15).
+
+- **Gap found**: Note/Link pills (→ `/notes`) were shown in both apps' FAB
+  even though task #15 hid the Notes & Links nav item from MyHouse. Fixed:
+  wrapped in `isLife` (`process.env.NEXT_PUBLIC_APP === "life"`) so MyHouse
+  no longer offers to quick-add a note/link it can't navigate to.
+- Same fix applied the other way for **Maintenance**: it's a MyHouse-only
+  concept (no nav entry in MyLife), so its pill is now `!isLife`-gated
+  instead of showing in both.
+- **New pills added, all `isLife`-gated** (Money group: Card, Income,
+  Share; new "Life" group: Essential, Routine, Recipe) — closing the gap
+  where credit cards, monthly income entries, shares, essentials, routine
+  items and recipes (all shipped earlier this session) had no quick-add
+  path outside their own page:
+  - `CreditCardForm` → "Card" (adds a card; statement *values* are still
+    entered per-card/per-month from `/finance`, same as before — too
+    context-dependent for a global quick-add).
+  - `IncomeMonthForm` → "Income", defaulted to the current month
+    (`monthStr()` from `src/lib/income.ts`) — upserts, so it's safe to fire
+    from anywhere.
+  - `ShareForm`, `EssentialForm` (categories passed as `[]` — no datalist
+    suggestions from the FAB, but still fully functional free-text entry),
+    `RoutineItemForm`, `RecipeForm` — all already accept an optional
+    `trigger` prop, so no component changes were needed, only wiring.
+- **Deliberately left off the FAB**: finance/nutrition/health inspiration
+  (reel/guide capture) — each is contextual to its own module page and
+  picking the right one from a generic + would need an extra
+  module-picker step; kept as page-level "Add" buttons only, consistent
+  with how `HealthInspirationForm` already worked before this session.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` (default,
+  house) **and** `NEXT_PUBLIC_APP=life npm run build` (to catch anything
+  broken in the isLife-only code paths) all clean.
+- **This closes out every task from this session's dense request burst.**
+  The `claude/finance-overhaul` branch is now feature-complete for that
+  scope and ready for a PR whenever the user wants one (not yet opened —
+  ask before merging, per this session's established rule).
 
 ## Low-priority "when bored" tasks — DONE — migration `0050_bored_tasks.sql` (applied live via MCP)
 Completes "on tasks give me a place to put low priority tasks when bored."
