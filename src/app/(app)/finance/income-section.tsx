@@ -1,6 +1,5 @@
 "use client";
 
-import { Wallet, History } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { monthStr } from "@/lib/income";
 import type { FinanceSettings, IncomeMonth } from "@/lib/database.types";
@@ -10,61 +9,64 @@ import { IncomeMonthForm } from "./income-month-form";
 export function IncomeSection({ settings, months }: { settings: FinanceSettings | null; months: IncomeMonth[] }) {
   const thisMonth = monthStr();
   const sorted = [...months].sort((a, b) => (a.month < b.month ? 1 : -1));
-  const hasCurrent = sorted.some((m) => m.month === thisMonth);
-  const carried = !hasCurrent ? sorted.find((m) => m.month < thisMonth) : null;
+  const current = sorted.find((m) => m.month === thisMonth);
+  const carried = !current ? sorted.find((m) => m.month < thisMonth) : null;
+  const history = sorted.filter((m) => m.month !== thisMonth);
 
   return (
-    <div className="space-y-5">
-      <div className="space-y-2">
-        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          <Wallet className="h-3.5 w-3.5" /> Fixed details
-        </p>
-        <SalaryDetails settings={settings} />
+    <div className="space-y-3">
+      <SalaryDetails settings={settings} />
+
+      <div className="border-t pt-3">
+        <IncomeMonthForm
+          month={thisMonth}
+          entry={current}
+          defaultNet={carried ? Number(carried.net_income) : undefined}
+          trigger={
+            <button className="flex w-full items-center justify-between rounded-lg border bg-card px-3 py-2.5 text-left text-sm">
+              <span>
+                <span className="font-medium">This month</span>{" "}
+                {!current && carried ? (
+                  <span className="text-muted-foreground">— carried, tap to confirm</span>
+                ) : !current ? (
+                  <span className="text-muted-foreground">— tap to add</span>
+                ) : null}
+              </span>
+              <span className="font-semibold">
+                {current
+                  ? formatCurrency(Number(current.net_income))
+                  : carried
+                    ? formatCurrency(Number(carried.net_income))
+                    : "—"}
+              </span>
+            </button>
+          }
+        />
       </div>
 
-      <div className="space-y-2">
-        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          <History className="h-3.5 w-3.5" /> Monthly net income
-        </p>
-
-        {!hasCurrent && (
-          <IncomeMonthForm
-            month={thisMonth}
-            defaultNet={carried ? Number(carried.net_income) : undefined}
-            trigger={
-              <button className="flex w-full items-center justify-between rounded-lg border border-dashed px-3 py-2.5 text-left text-sm">
-                <span>
-                  <span className="font-medium">This month</span>{" "}
-                  <span className="text-muted-foreground">
-                    {carried ? `— carried from ${formatMonth(carried.month)}, tap to confirm` : "— not entered yet, tap to add"}
-                  </span>
-                </span>
-                <span className="font-semibold">{carried ? formatCurrency(Number(carried.net_income)) : "—"}</span>
-              </button>
-            }
-          />
-        )}
-
-        <div className="space-y-1">
-          {sorted.slice(0, 12).map((m) => (
-            <IncomeMonthForm
-              key={m.id}
-              month={m.month}
-              entry={m}
-              trigger={
-                <button className="flex w-full items-center justify-between rounded-lg border bg-card px-3 py-2.5 text-left text-sm">
-                  <span className="font-medium">{formatMonth(m.month)}</span>
-                  <span className="flex items-center gap-2">
-                    <span className="font-semibold">{formatCurrency(Number(m.net_income))}</span>
-                    {Number(m.bonus) > 0 && <span className="text-xs text-emerald-600">+{formatCurrency(Number(m.bonus))} bonus</span>}
-                  </span>
-                </button>
-              }
-            />
-          ))}
-          {sorted.length === 0 && <p className="text-sm text-muted-foreground">No income logged yet.</p>}
-        </div>
-      </div>
+      {history.length > 0 ? (
+        <details className="text-sm">
+          <summary className="cursor-pointer text-xs font-medium text-muted-foreground">History ({history.length})</summary>
+          <div className="mt-2 space-y-1">
+            {history.slice(0, 24).map((m) => (
+              <IncomeMonthForm
+                key={m.id}
+                month={m.month}
+                entry={m}
+                trigger={
+                  <button className="flex w-full items-center justify-between rounded-lg border bg-card px-3 py-2 text-left text-sm">
+                    <span>{formatMonth(m.month)}</span>
+                    <span className="flex items-center gap-2">
+                      <span className="font-medium">{formatCurrency(Number(m.net_income))}</span>
+                      {Number(m.bonus) > 0 && <span className="text-xs text-emerald-600">+{formatCurrency(Number(m.bonus))}</span>}
+                    </span>
+                  </button>
+                }
+              />
+            ))}
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }

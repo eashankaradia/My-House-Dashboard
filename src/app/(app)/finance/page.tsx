@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, CreditCard as CreditCardIcon } from "lucide-react";
+import { ArrowRight, BarChart3, CreditCard as CreditCardIcon, Table2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
+import { CollapsibleSection } from "@/app/(app)/dashboard/collapsible-section";
 import type {
   Bill,
   CreditCard,
@@ -25,6 +26,7 @@ import { IncomeSection } from "./income-section";
 import { FinanceScope } from "./finance-scope";
 import { CreditCardsSection } from "./credit-cards-section";
 import { CreditCardForm } from "./credit-card-form";
+import { MonthlyValuesEditor } from "./monthly-values-editor";
 import { SharesSection } from "./shares-section";
 import { ShareForm } from "./share-form";
 import { FinanceInspirationList } from "./finance-inspiration-list";
@@ -104,8 +106,18 @@ export default async function FinancePage() {
 
       {/* Income */}
       <Card>
-        <CardHeader className="pb-2">
+        <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Income</CardTitle>
+          <MonthlyValuesEditor
+            incomeMonths={incomeMonths}
+            creditCards={creditCards}
+            statements={cardStatements}
+            trigger={
+              <button className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+                <Table2 className="h-3.5 w-3.5" /> Bulk edit months
+              </button>
+            }
+          />
         </CardHeader>
         <CardContent>
           <IncomeSection settings={settings} months={incomeMonths} />
@@ -131,65 +143,37 @@ export default async function FinancePage() {
         </CardContent>
       </Card>
 
-      {/* Shares */}
-      <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-muted-foreground" /> Shares
-          </CardTitle>
-          <ShareForm />
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {shares.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              Track individual share holdings — ticker, quantity and purchase price, with live prices where available.
-            </p>
-          ) : (
-            <>
-              <div>
-                <p className="text-xs text-muted-foreground">Total value</p>
-                <p className="text-xl font-semibold">{formatCurrency(totalSharesValue)}</p>
-              </div>
-              <SharesSection shares={shares} prices={sharePrices} />
-            </>
-          )}
-        </CardContent>
-      </Card>
+      {/* Shares — collapsed by default, not everyday content */}
+      <CollapsibleSection title="Shares" href="/finance" count={shares.length}>
+        <div className="flex items-center justify-between pb-1">
+          <p className="text-sm text-muted-foreground">
+            {shares.length > 0 ? `Total value: ${formatCurrency(totalSharesValue)}` : "Ticker, quantity and purchase price, with live prices where available."}
+          </p>
+          <ShareForm trigger={<button className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"><BarChart3 className="h-3.5 w-3.5" /> Add</button>} />
+        </div>
+        {shares.length > 0 ? <SharesSection shares={shares} prices={sharePrices} /> : null}
+      </CollapsibleSection>
 
-      {/* Inspiration */}
-      <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle>Inspiration & guides</CardTitle>
-          <FinanceInspirationForm />
-        </CardHeader>
-        <CardContent>
-          {inspiration.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              Save reels and guides on budgeting, investing, or anything money-related.
-            </p>
-          ) : (
-            <FinanceInspirationList items={inspiration} />
-          )}
-        </CardContent>
-      </Card>
+      {/* Inspiration — collapsed by default */}
+      <CollapsibleSection title="Inspiration & guides" href="/finance" count={inspiration.length}>
+        <div className="flex items-center justify-between pb-1">
+          <p className="text-sm text-muted-foreground">Reels and guides on budgeting, investing, or anything money-related.</p>
+          <FinanceInspirationForm trigger={<button className="text-sm font-medium text-primary hover:underline">Add</button>} />
+        </div>
+        {inspiration.length > 0 ? <FinanceInspirationList items={inspiration} /> : null}
+      </CollapsibleSection>
 
-      {/* Financial goals */}
+      {/* Financial goals — collapsed by default */}
       {financialGoals.length > 0 && (
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>Financial goals</CardTitle>
-            <Link href="/goals" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-              All goals <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </CardHeader>
-          <CardContent className="divide-y">
+        <CollapsibleSection title="Financial goals" href="/goals" count={financialGoals.length}>
+          <div className="divide-y">
             {financialGoals.map((goal) => {
               const pct =
                 goal.target_value && goal.current_value
                   ? Math.min(100, Math.round((Number(goal.current_value) / Number(goal.target_value)) * 100))
                   : null;
               return (
-                <div key={goal.id} className="space-y-1.5 py-3">
+                <div key={goal.id} className="space-y-1.5 py-2.5">
                   <div className="flex items-center justify-between gap-2 text-sm">
                     <span className="min-w-0 truncate font-medium">{goal.title}</span>
                     {pct !== null ? (
@@ -203,8 +187,8 @@ export default async function FinancePage() {
                 </div>
               );
             })}
-          </CardContent>
-        </Card>
+          </div>
+        </CollapsibleSection>
       )}
 
       {/* Quick links */}

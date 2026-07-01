@@ -178,3 +178,43 @@ export async function deleteCreditCardStatement(id: string) {
   revalidatePath("/finance");
 }
 
+// --- Bulk monthly entry (income + every card's statement, many months at once) --
+
+export async function bulkUpsertIncomeMonths(rows: { month: string; net_income: number; bonus: number }[]) {
+  if (rows.length === 0) return {};
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase.from("income_months").upsert(
+    rows.map((r) => ({
+      user_id: user.id,
+      month: r.month,
+      net_income: r.net_income,
+      bonus: r.bonus,
+      updated_at: new Date().toISOString(),
+    })),
+    { onConflict: "user_id,month" },
+  );
+  if (error) return { error: error.message };
+  revalidatePath("/finance");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+export async function bulkUpsertCreditCardStatements(rows: { card_id: string; statement_month: string; amount: number }[]) {
+  if (rows.length === 0) return {};
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase.from("credit_card_statements").upsert(
+    rows.map((r) => ({
+      user_id: user.id,
+      card_id: r.card_id,
+      statement_month: r.statement_month,
+      amount: r.amount,
+      is_paid: false,
+      updated_at: new Date().toISOString(),
+    })),
+    { onConflict: "card_id,statement_month" },
+  );
+  if (error) return { error: error.message };
+  revalidatePath("/finance");
+  return {};
+}
+

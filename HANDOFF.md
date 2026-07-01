@@ -2,7 +2,65 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (`claude/finance-overhaul` merged to `main` and deployed — production is live on both `my-house-dashboard` and `my-life-dashboard` at commit `f816bed`. The whole finance-overhaul + second-brain roadmap batch is complete).
+> after **every** change. Last updated: 2026-07-01 (Follow-up after the finance-overhaul deploy: user said `/finance` had too many inputs/noise and wanted fixed inputs hidden behind the scenes, plus a bulk table for a year+ of income/credit-card data. Both done on new branch `claude/finance-compact`, not yet merged/deployed — see below).
+
+## Finance page: compact redesign + bulk monthly-values table — DONE — no migration
+The user's exact complaint: "too many inputs, too much noise... make fixed
+inputs hidden behind the scenes," followed immediately by "give me a table
+to input values into for each month, I have values for all of 2026 and 2025
+for credit card bills and income." Both addressed together since they meet
+at the same surface (income + credit card statements).
+
+**Compactness:**
+- `salary-details.tsx`: the always-visible 3-field form (annual salary,
+  employer, notes) is now a one-line summary (`£55,000/yr · Acme Ltd`) with
+  a small "Edit" trigger that opens the same 3 fields in a `Dialog` —
+  this is the literal "fixed inputs hidden behind the scenes" ask.
+- `income-section.tsx`: only "This month" is shown by default now; every
+  other month is behind a native `<details>` "History (N)" disclosure.
+- `finance-scope.tsx`: the 5 separate `StatCard`s (net worth/income/bills/
+  net/savings rate) collapsed into **one** compact card — a large "Net
+  worth" figure plus 4 small inline stats, instead of 5 full-height cards.
+  Savings/investment pot lists went from full `PotCard`s (color dot, edit/
+  delete buttons, progress bar, `QuickContribute` control — a lot of
+  chrome) to a new `CompactPotRow` (colour dot + name + value only,
+  clicking still opens the existing `PotDetailDialog` for full detail/
+  actions). Full pot management (add/edit/delete/contribute) still lives
+  on `/savings`; `/finance` is now just an at-a-glance view.
+- Shares, Inspiration & guides, and Financial goals are now wrapped in the
+  existing `CollapsibleSection` component (imported from
+  `dashboard/collapsible-section.tsx` — it's generic, not
+  dashboard-specific, so reused as-is rather than duplicated). It's
+  collapsed by default (confirmed by reading the component: despite its
+  doc-comment saying "open by default," the actual `useState(false)` is
+  collapsed — a pre-existing inconsistency, left alone since it happens to
+  match what "less noise" wants here). Each section's "Add" trigger moved
+  inside the collapsed content instead of the always-visible header.
+
+**Bulk monthly-values table** (the literal ask — "a table to input values
+into for each month"):
+- `finance/monthly-values-editor.tsx`: a full-screen editor (same
+  `fixed inset-0` overlay pattern as `projects-views.tsx`'s
+  `BoardFullScreen`, chosen over a `Dialog` because a spreadsheet with
+  many columns needs real width) showing one row per month — **Jan of last
+  year through Dec of this year (24 months), computed from today's date**,
+  not hardcoded to 2025/2026, so it keeps working next year — with a Net
+  income column, a Bonus column, and one column per credit card. Editing
+  is local state; "Save all" submits only the cells that have a value.
+- `finance/actions.ts`: `bulkUpsertIncomeMonths`/`bulkUpsertCreditCardStatements`
+  — true batch `.upsert()` calls (Supabase accepts an array of rows), so
+  filling in ~24 months × several columns is 2 network round-trips, not
+  dozens of individual saves through the existing one-month-at-a-time
+  `IncomeMonthForm`/`CreditCardStatementForm` dialogs (those still exist
+  for one-off edits/corrections — this is additive, not a replacement).
+- Triggered by a "Bulk edit months" button in the Income card's header —
+  the natural home since it covers both income and every credit card.
+- Verified: `npm run typecheck`, `npm run lint`, default +
+  `NEXT_PUBLIC_APP=life` `npm run build` all clean.
+- **Not yet merged to `main`/deployed** — this session's established rule
+  is to ask before merging; do that once the user has reviewed/is happy
+  with the redesign (they may want to try it live first via a preview
+  deploy, or just confirm merge-to-main-now like last time).
 
 ## Merged to main and deployed — DONE
 `claude/finance-overhaul` (18 commits since the last `main` merge) was
