@@ -4,8 +4,9 @@
 > agent (or developer) can pick up exactly where work left off. Keep it updated
 > after **every** change. Last updated: 2026-07-01 (every item in the six-part
 > follow-up request, plus everything sent inline mid-batch, is implemented,
-> verified, committed and pushed to `main`. Not yet re-confirmed live in
-> Vercel production for this batch — see "Next step" at the bottom).
+> verified, committed, pushed, and confirmed **READY in Vercel production**
+> on both `my-house-dashboard` and `my-life-dashboard` at commit `b964687`.
+> Nothing outstanding from this batch).
 
 ## Done: six-part follow-up request + inline asks (2026-07-01)
 The user sent a new dense request after the previous multi-part batch shipped
