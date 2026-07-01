@@ -2,7 +2,72 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (Every item in the large multi-part follow-up is done, pushed, and confirmed live in production on both `my-house-dashboard` and `my-life-dashboard` at commit `b0114bf`: household contributions, purchases personal/household split, finance edit-mode toggle, routine time-aware redesign, habits calendar, and the projects/tasks scope hard-boundary. Nothing outstanding).
+> after **every** change. Last updated: 2026-07-01 (mid-session on a new six-part
+> follow-up request; two items done and pushed so far — see below — the rest
+> are still outstanding, tracked in the task list).
+
+## In progress: six-part follow-up request (2026-07-01)
+The user sent a new dense request after the previous multi-part batch shipped
+(commit `b0114bf`/`14c1d62`). Status of each part:
+
+1. **Purchases personal/household visibility** — DONE, pushed (commit `fd11e39`).
+2. **Income: one edit button for all fixed options** — not started.
+3. **Simplify routines: morning/evening as habit tags, dedupe** — not started.
+   Needs a design decision on `routine_items`' future shape — see task #39.
+4. **Clean Tasks/Projects UI (from screenshot)** — DONE, pushed (commit
+   `40753e7`): the scope/onlyMine filter pills were squeezing the "Bigger
+   work..." description text on mobile; both now stack instead of wrap.
+5. **Essentials: click legend colour to filter** — not started.
+6. **App-wide mobile-first/motivational pass** — not started, needs scoping.
+
+Also actioned inline (not part of the six, sent mid-batch):
+- **Personal bills not linked to household** — DONE, pushed (commit `40753e7`).
+- **Purchases asymmetric scope** — DONE, pushed (commit `fd11e39`) — this
+  turned out to be the same ask as #1 above; implemented together.
+- **Fitness: humanize "what you train" diagram + exercise filter/search** —
+  requested, not started, tracked as tasks #42/#43.
+
+### Personal bills + purchases scope — DONE — migrations 0057, 0058
+"Let me add personal bills that aren't linked to the household" +
+"personal purchases come from my life, household come from myhouse, but
+let me choose whether something might be a household one from mylife, not
+the other way round from my house."
+
+- Both `bills` and `purchases` gained a real `scope: 'personal'|'household'`
+  column (migrations `0057_bill_scope.sql`, `0058_purchase_scope.sql`),
+  default `'household'` (preserves every existing row's visibility).
+- Same `enforcedScope()` pattern as the existing projects/tasks scope: a
+  server-side helper in each module's `actions.ts` forces `scope =
+  'household'` whenever `NEXT_PUBLIC_APP === "house"`, regardless of what
+  the client sends — MyHouse can never create/flag anything personal.
+- MyLife's `bill-form.tsx`/`purchase-form.tsx` show a Scope field
+  (isLife-gated). New MyLife bills default to `household` (bills are
+  "recurring household costs" by default; personal is an opt-in add-on,
+  matching "add personal bills **as well**"). New MyLife purchases default
+  to `personal` per the literal ask ("personal purchases come from my
+  life... by default").
+- `bills/page.tsx` and `purchases/page.tsx` add `.eq("scope","household")`
+  to their query when `isHouse`, so MyHouse never even fetches personal
+  MyLife rows. Bills' household-contribution split total
+  (`householdMonthlyTotal`) now only sums household-scope bills so a
+  personal bill never gets split among housemates.
+- Closed the same leak in every cross-cutting query that reads `bills` or
+  `purchases` on a MyHouse-only or shared page: `dashboard/page.tsx`,
+  `analytics/page.tsx` (MyHouse-only), `calendar/page.tsx`,
+  `api/calendar/route.ts`, `search/actions.ts`, and all three Room
+  Designer pages (MyHouse-only — always filtered to household scope there,
+  unconditionally). `finance/page.tsx` and `reviews/page.tsx` are
+  MyLife-only routes, so intentionally left unfiltered (should show both
+  scopes there).
+- `bills-list.tsx` and `purchases-grid.tsx` each gained an isLife-gated
+  scope filter toggle (All/Household/Personal), separate from the existing
+  ownership-based "Mine" filter — same orthogonal-filters pattern as
+  projects/tasks. Purchases' old toggle was mislabeled "Household"/
+  "Personal" but actually filtered by `user_id` (who created it) — renamed
+  back to "All"/"Mine" and the real scope filter added alongside it.
+- Verified: `npm run typecheck`, `npm run lint`, both variants (`npm run
+  build` and `NEXT_PUBLIC_APP=life npm run build`) build clean. Not yet
+  re-confirmed live in Vercel production for this specific batch.
 
 ## Routine view: more intuitive — DONE — no migration
 "Make my routine view more intuitive." The old view was a flat wall of
