@@ -99,3 +99,40 @@ export async function deleteRecipe(id: string) {
   if (error) return { error: error.message };
   revalidatePath("/nutrition");
 }
+
+// --- Inspiration (reels & guides) -------------------------------------------
+
+export async function createNutritionInspiration(input: { kind: string; title: string; url?: string; image_url?: string; source?: string; content?: string }) {
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase.from("nutrition_inspiration").insert({
+    user_id: user.id,
+    kind: input.kind,
+    title: input.title,
+    url: input.url ?? null,
+    image_url: input.image_url ?? null,
+    source: input.source ?? null,
+    content: input.content ?? null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/nutrition");
+}
+
+export async function updateNutritionInspiration(
+  id: string,
+  input: Partial<{ kind: string; title: string; url: string | null; image_url: string | null; source: string | null; content: string | null }>,
+) {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase
+    .from("nutrition_inspiration")
+    .update({ ...input, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/nutrition");
+}
+
+export async function deleteNutritionInspiration(id: string) {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("nutrition_inspiration").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/nutrition");
+}

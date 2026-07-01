@@ -3,6 +3,43 @@
 import { getActionContext } from "@/lib/action-utils";
 import { revalidatePath } from "next/cache";
 
+// --- Inspiration (reels & guides) -------------------------------------------
+
+export async function createFinanceInspiration(input: { kind: string; title: string; url?: string; image_url?: string; source?: string; content?: string }) {
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase.from("finance_inspiration").insert({
+    user_id: user.id,
+    kind: input.kind,
+    title: input.title,
+    url: input.url ?? null,
+    image_url: input.image_url ?? null,
+    source: input.source ?? null,
+    content: input.content ?? null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/finance");
+}
+
+export async function updateFinanceInspiration(
+  id: string,
+  input: Partial<{ kind: string; title: string; url: string | null; image_url: string | null; source: string | null; content: string | null }>,
+) {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase
+    .from("finance_inspiration")
+    .update({ ...input, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/finance");
+}
+
+export async function deleteFinanceInspiration(id: string) {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("finance_inspiration").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/finance");
+}
+
 // --- Shares --------------------------------------------------------------
 
 export async function createShare(input: { ticker: string; quantity: number; purchase_price: number; purchase_date?: string; notes?: string }) {

@@ -10,6 +10,7 @@ import type {
   Bill,
   CreditCard,
   CreditCardStatement,
+  FinanceInspiration,
   FinanceSettings,
   Goal,
   IncomeMonth,
@@ -27,12 +28,14 @@ import { CreditCardsSection } from "./credit-cards-section";
 import { CreditCardForm } from "./credit-card-form";
 import { SharesSection } from "./shares-section";
 import { ShareForm } from "./share-form";
+import { FinanceInspirationList } from "./finance-inspiration-list";
+import { FinanceInspirationForm } from "./finance-inspiration-form";
 
 export const metadata = { title: "Finance" };
 
 export default async function FinancePage() {
   const supabase = await createClient();
-  const [billsRes, settingsRes, potsRes, accountsRes, contribRes, goalsRes, cardsRes, statementsRes, incomeRes, sharesRes] =
+  const [billsRes, settingsRes, potsRes, accountsRes, contribRes, goalsRes, cardsRes, statementsRes, incomeRes, sharesRes, inspirationRes] =
     await Promise.all([
       supabase.from("bills").select("*"),
       supabase.from("finance_settings").select("*").limit(1).maybeSingle(),
@@ -44,6 +47,7 @@ export default async function FinancePage() {
       supabase.from("credit_card_statements").select("*").order("statement_month", { ascending: false }),
       supabase.from("income_months").select("*").order("month", { ascending: false }),
       supabase.from("shares").select("*").order("ticker"),
+      supabase.from("finance_inspiration").select("*").order("created_at", { ascending: false }),
     ]);
 
   const bills = (billsRes.data ?? []) as Bill[];
@@ -56,6 +60,7 @@ export default async function FinancePage() {
   const cardStatements = (statementsRes.data ?? []) as CreditCardStatement[];
   const incomeMonths = (incomeRes.data ?? []) as IncomeMonth[];
   const shares = (sharesRes.data ?? []) as Share[];
+  const inspiration = (inspirationRes.data ?? []) as FinanceInspiration[];
   const sharePrices = await getPrices(shares.map((s) => s.ticker));
   const savingsPots = pots.filter((p) => (p.pot_type ?? "savings") === "savings");
   const investmentPots = pots.filter((p) => p.pot_type === "investment");
@@ -281,6 +286,23 @@ export default async function FinancePage() {
               </div>
               <SharesSection shares={shares} prices={sharePrices} />
             </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Inspiration */}
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle>Inspiration & guides</CardTitle>
+          <FinanceInspirationForm />
+        </CardHeader>
+        <CardContent>
+          {inspiration.length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              Save reels and guides on budgeting, investing, or anything money-related.
+            </p>
+          ) : (
+            <FinanceInspirationList items={inspiration} />
           )}
         </CardContent>
       </Card>

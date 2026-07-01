@@ -2,7 +2,30 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (Finance overhaul + Essentials + Daily Routine + pots/accounts redesign + shares shipped; personal-vs-household-filters/cross-module-inspiration/bored-tasks/FAB-audit queued — branch `claude/finance-overhaul`, not yet merged).
+> after **every** change. Last updated: 2026-06-30 (Finance overhaul + Essentials + Daily Routine + pots/accounts redesign + shares + finance/nutrition inspiration shipped; personal-vs-household-filters/bored-tasks/FAB-audit queued — branch `claude/finance-overhaul`, not yet merged).
+
+## Finance & Nutrition inspiration — DONE — migration `0049_finance_nutrition_inspiration.sql` (applied live via MCP)
+Same shape as `health_inspiration` (migration 0041), replicated as two more
+tables: `finance_inspiration`, `nutrition_inspiration` (kind, title, url,
+image_url, source, content — all personal RLS). Deliberately kept as
+separate per-module tables rather than a shared abstraction, matching this
+codebase's existing convention (habits/fitness/nutrition/health/finance each
+own their schema independently even where the shape is identical).
+
+- `src/lib/constants.ts`: added generic aliases `INSPIRATION_KINDS`/
+  `INSPIRATION_KIND_LABELS` (= the existing `HEALTH_INSPIRATION_*` values,
+  which were already generic "reel"/"guide" — finance and nutrition import
+  the aliases rather than duplicating the constant).
+- `finance/actions.ts` and `nutrition/actions.ts` each gained
+  `create/update/delete*Inspiration` (mirroring `health/actions.ts`).
+- New `finance/finance-inspiration-form.tsx` + `-list.tsx`, and
+  `nutrition/nutrition-inspiration-form.tsx` + `-list.tsx` — near-identical
+  to the health versions (kind select changes labels/hints contextually,
+  cover photo via `ImageUpload`, source, content).
+- `/finance` gained an "Inspiration & guides" card (same position pattern as
+  the other finance cards). `/nutrition` gained an "Inspiration & guides"
+  section below the recipe grid (additive — recipes are unaffected).
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
 
 ## Shares tracking with live prices — DONE — migration `0048_shares.sql` (applied live via MCP)
 New personal `shares` table: `ticker`, `quantity`, `purchase_price`,

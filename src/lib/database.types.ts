@@ -727,6 +727,32 @@ export type HealthInspiration = {
   updated_at: string;
 };
 
+export type FinanceInspiration = {
+  id: string;
+  user_id: string;
+  kind: string;
+  title: string;
+  url: string | null;
+  image_url: string | null;
+  source: string | null;
+  content: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NutritionInspiration = {
+  id: string;
+  user_id: string;
+  kind: string;
+  title: string;
+  url: string | null;
+  image_url: string | null;
+  source: string | null;
+  content: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Essential = {
   id: string;
   user_id: string;
@@ -977,6 +1003,8 @@ export type Database = {
       medications: Row<Medication>;
       appointments: Row<Appointment>;
       health_inspiration: Row<HealthInspiration>;
+      finance_inspiration: Row<FinanceInspiration>;
+      nutrition_inspiration: Row<NutritionInspiration>;
       essentials: Row<Essential>;
       routine_items: Row<RoutineItem>;
       routine_completions: Row<RoutineCompletion>;

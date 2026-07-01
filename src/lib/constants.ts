@@ -362,6 +362,10 @@ export const HEALTH_INSPIRATION_KIND_LABELS: Record<string, string> = {
   guide: "Guide",
 };
 
+/** Generic aliases — same "reel/guide" shape used by finance/nutrition inspiration too. */
+export const INSPIRATION_KINDS = HEALTH_INSPIRATION_KINDS;
+export const INSPIRATION_KIND_LABELS = HEALTH_INSPIRATION_KIND_LABELS;
+
 // ---------------------------------------------------------------------------
 // Nutrition
 // ---------------------------------------------------------------------------
