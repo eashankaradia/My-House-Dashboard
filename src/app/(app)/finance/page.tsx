@@ -117,7 +117,7 @@ export default async function FinancePage() {
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Income</CardTitle>
-          <IncomeHeaderActions incomeMonths={incomeMonths} creditCards={creditCards} statements={cardStatements} />
+          <IncomeHeaderActions settings={settings} incomeMonths={incomeMonths} creditCards={creditCards} statements={cardStatements} />
         </CardHeader>
         <CardContent>
           <IncomeSection settings={settings} months={incomeMonths} />

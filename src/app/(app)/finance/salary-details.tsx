@@ -19,8 +19,21 @@ import { formatCurrency } from "@/lib/utils";
 import type { FinanceSettings } from "@/lib/database.types";
 import { upsertSalaryDetails } from "./actions";
 
-/** Fixed salary details — shown as a one-line summary, edited behind a dialog. */
-export function SalaryDetails({ settings }: { settings: FinanceSettings | null }) {
+/** Plain one-line summary of the fixed salary details — no edit affordance of its own. */
+export function SalaryDetailsSummary({ settings }: { settings: FinanceSettings | null }) {
+  const summary = [
+    settings?.annual_salary != null ? `${formatCurrency(settings.annual_salary)}/yr` : null,
+    settings?.employer || null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return (
+    <span className={summary ? "text-foreground" : "text-muted-foreground"}>{summary || "Salary details not set"}</span>
+  );
+}
+
+/** Fixed salary details — edited behind a dialog, opened from the Income card's single Edit toggle. */
+export function SalaryDetailsForm({ settings, trigger }: { settings: FinanceSettings | null; trigger?: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
   const [pending, startTransition] = React.useTransition();
@@ -54,23 +67,15 @@ export function SalaryDetails({ settings }: { settings: FinanceSettings | null }
     });
   }
 
-  const summary = [
-    settings?.annual_salary != null ? `${formatCurrency(settings.annual_salary)}/yr` : null,
-    settings?.employer || null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <div className="flex items-center justify-between gap-2 text-sm">
-        <span className={summary ? "text-foreground" : "text-muted-foreground"}>{summary || "Salary details not set"}</span>
-        <DialogTrigger asChild>
+      <DialogTrigger asChild>
+        {trigger ?? (
           <button className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-            <Pencil className="h-3.5 w-3.5" /> Edit
+            <Pencil className="h-3.5 w-3.5" /> Salary details
           </button>
-        </DialogTrigger>
-      </div>
+        )}
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Salary details</DialogTitle>

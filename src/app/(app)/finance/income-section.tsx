@@ -4,7 +4,7 @@ import { Pencil } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { monthStr } from "@/lib/income";
 import type { FinanceSettings, IncomeMonth } from "@/lib/database.types";
-import { SalaryDetails } from "./salary-details";
+import { SalaryDetailsSummary } from "./salary-details";
 import { IncomeMonthForm } from "./income-month-form";
 
 export function IncomeSection({ settings, months }: { settings: FinanceSettings | null; months: IncomeMonth[] }) {
@@ -16,7 +16,9 @@ export function IncomeSection({ settings, months }: { settings: FinanceSettings 
 
   return (
     <div className="space-y-3">
-      <SalaryDetails settings={settings} />
+      <div className="text-sm">
+        <SalaryDetailsSummary settings={settings} />
+      </div>
 
       <div className="border-t pt-3">
         <IncomeMonthForm

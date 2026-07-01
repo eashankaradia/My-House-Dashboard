@@ -1,17 +1,20 @@
 "use client";
 
 import * as React from "react";
-import { Pencil, Table2 } from "lucide-react";
+import { Pencil, Table2, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { CreditCard, CreditCardStatement, IncomeMonth } from "@/lib/database.types";
+import type { CreditCard, CreditCardStatement, FinanceSettings, IncomeMonth } from "@/lib/database.types";
 import { MonthlyValuesEditor } from "./monthly-values-editor";
+import { SalaryDetailsForm } from "./salary-details";
 
-/** Bulk-edit is a management action, not everyday reading — kept behind an Edit toggle. */
+/** Every fixed/setup income option lives behind this one Edit toggle. */
 export function IncomeHeaderActions({
+  settings,
   incomeMonths,
   creditCards,
   statements,
 }: {
+  settings: FinanceSettings | null;
   incomeMonths: IncomeMonth[];
   creditCards: CreditCard[];
   statements: CreditCardStatement[];
@@ -21,16 +24,26 @@ export function IncomeHeaderActions({
   return (
     <div className="flex items-center gap-2">
       {editMode ? (
-        <MonthlyValuesEditor
-          incomeMonths={incomeMonths}
-          creditCards={creditCards}
-          statements={statements}
-          trigger={
-            <button className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
-              <Table2 className="h-3.5 w-3.5" /> Bulk edit months
-            </button>
-          }
-        />
+        <>
+          <SalaryDetailsForm
+            settings={settings}
+            trigger={
+              <button className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+                <Wallet className="h-3.5 w-3.5" /> Salary details
+              </button>
+            }
+          />
+          <MonthlyValuesEditor
+            incomeMonths={incomeMonths}
+            creditCards={creditCards}
+            statements={statements}
+            trigger={
+              <button className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+                <Table2 className="h-3.5 w-3.5" /> Bulk edit months
+              </button>
+            }
+          />
+        </>
       ) : null}
       <button
         type="button"
