@@ -56,6 +56,12 @@ export default async function HabitsPage() {
         </EmptyState>
       ) : (
         <>
+          {dailyHabits.length > 0 && completedToday.length >= dailyHabits.length ? (
+            <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-center text-sm font-medium text-primary">
+              All done for today — nice work! 🎉
+            </div>
+          ) : null}
+
           {/* Today summary strip */}
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-xl border bg-card p-4">

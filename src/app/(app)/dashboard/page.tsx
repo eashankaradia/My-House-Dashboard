@@ -343,7 +343,9 @@ export default async function DashboardPage() {
           </h1>
           <p className="text-sm text-muted-foreground">
             {lifeScore !== null
-              ? `${completedTodayIds.length} of ${dailyHabits.length} habits done today · ${lifeScore}%`
+              ? dailyHabits.length > 0 && completedTodayIds.length >= dailyHabits.length
+                ? `All ${dailyHabits.length} habits done today · ${lifeScore}% 🎉`
+                : `${completedTodayIds.length} of ${dailyHabits.length} habits done today · ${lifeScore}%`
               : "Here's your day at a glance."}
           </p>
         </div>
