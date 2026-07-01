@@ -14,7 +14,7 @@ import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
 import { useViewPref } from "@/hooks/use-view-prefs";
 import { useIsMobile } from "@/hooks/use-is-mobile";
-import { PURCHASE_SIZES, PURCHASE_STATUSES } from "@/lib/constants";
+import { ITEM_SCOPE_LABELS, PURCHASE_SIZES, PURCHASE_STATUSES } from "@/lib/constants";
 import { PRIORITY_ACCENT } from "@/lib/ui";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -77,7 +77,9 @@ export function PurchasesGrid({
   // The table scrolls sideways on phones — fall back to cards there.
   const isMobile = useIsMobile();
   const effectiveView = isMobile && view === "table" ? "detailed" : view;
-  const [onlyMine, setOnlyMine] = React.useState(process.env.NEXT_PUBLIC_APP === "life");
+  const isLife = process.env.NEXT_PUBLIC_APP === "life";
+  const [onlyMine, setOnlyMine] = React.useState(false);
+  const [scopeFilter, setScopeFilter] = React.useState<"all" | "personal" | "household">("all");
   const [hideNoOptions, setHideNoOptions] = React.useState(false);
 
   const rooms = Array.from(new Set(purchases.map((p) => p.room).filter(Boolean))) as string[];
@@ -93,6 +95,7 @@ export function PurchasesGrid({
 
   const filtered = purchases
     .filter((p) => (!onlyMine ? true : p.user_id === currentUserId))
+    .filter((p) => (scopeFilter === "all" ? true : p.scope === scopeFilter))
     .filter((p) => (!hideNoOptions ? true : p.options.length > 0))
     .filter((p) => (status === "All" ? true : p.status === status))
     .filter((p) => (room === "All" ? true : p.room === room))
@@ -188,20 +191,34 @@ export function PurchasesGrid({
             <X className="h-3 w-3" />
           </button>
         ))}
+        {isLife ? (
+          <div className="flex items-center rounded-lg border p-0.5 text-sm">
+            {(["all", "household", "personal"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setScopeFilter(s)}
+                className={cn("rounded-md px-2.5 py-1", scopeFilter === s && "bg-accent")}
+              >
+                {s === "all" ? "All" : ITEM_SCOPE_LABELS[s]}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div className="flex items-center rounded-lg border p-0.5 text-sm">
           <button
             type="button"
             onClick={() => setOnlyMine(false)}
             className={cn("rounded-md px-2.5 py-1", !onlyMine && "bg-accent")}
           >
-            Household
+            All
           </button>
           <button
             type="button"
             onClick={() => setOnlyMine(true)}
             className={cn("rounded-md px-2.5 py-1", onlyMine && "bg-accent")}
           >
-            Personal
+            Mine
           </button>
         </div>
         <button
@@ -420,6 +437,9 @@ function CompactRow({
         <CardTrigger className="min-w-0 flex-1 rounded-md">
           <div className="flex items-center gap-2">
             <span className="truncate font-medium">{purchase.name}</span>
+            {process.env.NEXT_PUBLIC_APP === "life" && purchase.scope === "personal" ? (
+              <span className="shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] text-muted-foreground">Personal</span>
+            ) : null}
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="truncate">

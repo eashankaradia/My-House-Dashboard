@@ -213,6 +213,7 @@ export type Purchase = Timestamps & {
   purchased_by: string | null;
   purchased_price: number | null;
   receipt_url: string | null;
+  scope: ItemScope;
 };
 
 export type PurchaseOption = Timestamps & {

@@ -21,6 +21,8 @@ import { Field } from "@/components/shared/form-field";
 import { ImageUpload } from "@/components/shared/image-upload";
 import { useToast } from "@/hooks/use-toast";
 import {
+  ITEM_SCOPES,
+  ITEM_SCOPE_LABELS,
   PRIORITIES,
   PURCHASE_SIZES,
   PURCHASE_STATUSES,
@@ -47,6 +49,7 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [], catego
   const { toast } = useToast();
   const editing = Boolean(purchase);
   const rooms = useRooms();
+  const isLife = process.env.NEXT_PUBLIC_APP === "life";
 
   const {
     register,
@@ -72,6 +75,7 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [], catego
       purchased_by: purchase?.purchased_by ?? "",
       purchased_price: purchase?.purchased_price ?? undefined,
       receipt_url: purchase?.receipt_url ?? "",
+      scope: purchase?.scope ?? (isLife ? "personal" : "household"),
     },
   });
 
@@ -258,6 +262,16 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [], catego
               </NativeSelect>
             </Field>
           </div>
+          {isLife ? (
+            <Field label="Scope" hint="Personal items never show in MyHouse. Mark it household to share it.">
+              <NativeSelect {...register("scope")}>
+                {ITEM_SCOPES.map((s) => (
+                  <option key={s} value={s}>{ITEM_SCOPE_LABELS[s]}</option>
+                ))}
+              </NativeSelect>
+            </Field>
+          ) : null}
+
           {currentStatus === "Purchased" ? (
             <div className="space-y-4 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
               <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Purchase details (all optional)</p>

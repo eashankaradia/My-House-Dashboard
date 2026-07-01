@@ -28,8 +28,12 @@ export default async function PurchasesPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const isHouse = process.env.NEXT_PUBLIC_APP !== "life";
+  let purchasesQuery = supabase.from("purchases").select("*").order("created_at", { ascending: false });
+  if (isHouse) purchasesQuery = purchasesQuery.eq("scope", "household");
+
   const [{ data: purchaseData }, { data: optionData }, { data: categoryData }, memberMap] = await Promise.all([
-    supabase.from("purchases").select("*").order("created_at", { ascending: false }),
+    purchasesQuery,
     supabase.from("purchase_options").select("*").order("rank", { ascending: true }),
     supabase.from("purchase_categories").select("*").order("name"),
     getHouseholdMap(),

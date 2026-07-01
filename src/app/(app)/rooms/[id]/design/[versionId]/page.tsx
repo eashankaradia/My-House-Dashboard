@@ -21,7 +21,7 @@ export default async function PlannerPage({
       supabase.from("room_design_layout_items").select("*").eq("version_id", versionId).order("created_at"),
       // Saved purchase options that have a footprint can be dropped onto the plan.
       supabase.from("purchase_options").select("*").not("width_cm", "is", null).not("depth_cm", "is", null),
-      supabase.from("purchases").select("id, name"),
+      supabase.from("purchases").select("id, name").eq("scope", "household"),
     ]);
   const room = roomData as Room | null;
   const version = versionData as RoomDesignVersion | null;

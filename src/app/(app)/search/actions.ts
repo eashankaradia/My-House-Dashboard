@@ -42,12 +42,14 @@ export async function searchItems(query: string): Promise<SearchResult[]> {
 
   let billsQuery = supabase.from("bills").select("id, name").ilike("name", like).limit(5);
   if (!isLife) billsQuery = billsQuery.eq("scope", "household");
+  let purchasesQuery = supabase.from("purchases").select("id, name").is("archived_at", null).ilike("name", like).limit(5);
+  if (!isLife) purchasesQuery = purchasesQuery.eq("scope", "household");
 
   const [bills, projects, tasks, purchases, inspo, maint, docs, pots] = await Promise.all([
     billsQuery,
     supabase.from("projects").select("id, name").is("archived_at", null).ilike("name", like).limit(5),
     supabase.from("project_tasks").select("id, title").is("archived_at", null).ilike("title", like).limit(5),
-    supabase.from("purchases").select("id, name").is("archived_at", null).ilike("name", like).limit(5),
+    purchasesQuery,
     supabase.from("inspiration").select("id, title").ilike("title", like).limit(5),
     supabase.from("maintenance_tasks").select("id, task").ilike("task", like).limit(5),
     supabase.from("documents").select("id, name").ilike("name", like).limit(5),

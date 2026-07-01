@@ -62,6 +62,8 @@ export default async function DashboardPage() {
   const isHouse = process.env.NEXT_PUBLIC_APP !== "life";
   let billsQuery = supabase.from("bills").select("*");
   if (isHouse) billsQuery = billsQuery.eq("scope", "household");
+  let purchasesQuery = supabase.from("purchases").select("*").order("created_at", { ascending: false });
+  if (isHouse) purchasesQuery = purchasesQuery.eq("scope", "household");
 
   const [
     billsRes,
@@ -86,7 +88,7 @@ export default async function DashboardPage() {
     supabase.from("savings_pots").select("*"),
     supabase.from("projects").select("*").order("updated_at", { ascending: false }),
     supabase.from("project_tasks").select("*"),
-    supabase.from("purchases").select("*").order("created_at", { ascending: false }),
+    purchasesQuery,
     supabase.from("inspiration").select("*").order("updated_at", { ascending: false }).limit(5),
     supabase.from("maintenance_tasks").select("*"),
     supabase.from("documents").select("*"),

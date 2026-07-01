@@ -41,7 +41,7 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
   ] =
     await Promise.all([
       supabase.from("room_design_versions").select("*").eq("room_id", id).order("created_at", { ascending: true }),
-      supabase.from("purchases").select("*").eq("room", room.name).is("archived_at", null),
+      supabase.from("purchases").select("*").eq("room", room.name).is("archived_at", null).eq("scope", "household"),
       supabase.from("purchase_options").select("*").order("rank", { ascending: true }),
       supabase.from("room_design_layout_items").select("*"),
       supabase.from("inspiration").select("*").eq("room", room.name),
