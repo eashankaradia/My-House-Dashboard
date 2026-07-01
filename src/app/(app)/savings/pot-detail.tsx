@@ -91,13 +91,24 @@ export function PotDetailDialog({
     () => [...contributions].sort((a, b) => b.occurred_on.localeCompare(a.occurred_on)),
     [contributions],
   );
+  const [editMode, setEditMode] = React.useState(false);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-h-[88vh] max-w-lg overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="flex-row items-center justify-between space-y-0 pr-8">
           <DialogTitle>{pot.name}</DialogTitle>
+          <button
+            type="button"
+            onClick={() => setEditMode((v) => !v)}
+            className={cn(
+              "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground",
+              editMode && "bg-accent text-foreground",
+            )}
+          >
+            <Pencil className="h-3.5 w-3.5" /> {editMode ? "Done" : "Edit"}
+          </button>
         </DialogHeader>
 
         <div className="space-y-5">
@@ -156,14 +167,16 @@ export function PotDetailDialog({
                     Compact
                   </button>
                 </div>
-                <AccountForm
-                  potId={pot.id}
-                  trigger={
-                    <Button variant="outline" size="sm" className="h-7 gap-1 text-xs">
-                      <Plus className="h-3.5 w-3.5" /> Add account
-                    </Button>
-                  }
-                />
+                {editMode ? (
+                  <AccountForm
+                    potId={pot.id}
+                    trigger={
+                      <Button variant="outline" size="sm" className="h-7 gap-1 text-xs">
+                        <Plus className="h-3.5 w-3.5" /> Add account
+                      </Button>
+                    }
+                  />
+                ) : null}
               </div>
             </div>
             {accounts.length === 0 ? (
@@ -172,22 +185,32 @@ export function PotDetailDialog({
               </p>
             ) : accountsCompact ? (
               <div className="space-y-1">
-                {accounts.map((a) => (
-                  <AccountForm
-                    key={a.id}
-                    potId={pot.id}
-                    account={a}
-                    trigger={
-                      <button className="flex w-full items-center justify-between rounded-lg border px-2.5 py-2 text-sm">
-                        <span className="min-w-0 truncate">
-                          {a.name}
-                          {a.provider ? <span className="text-muted-foreground"> · {a.provider}</span> : null}
-                        </span>
-                        <span className="shrink-0 font-medium">{formatCurrency(balanceOf(a.id))}</span>
-                      </button>
-                    }
-                  />
-                ))}
+                {accounts.map((a) =>
+                  editMode ? (
+                    <AccountForm
+                      key={a.id}
+                      potId={pot.id}
+                      account={a}
+                      trigger={
+                        <button className="flex w-full items-center justify-between rounded-lg border px-2.5 py-2 text-sm">
+                          <span className="min-w-0 truncate">
+                            {a.name}
+                            {a.provider ? <span className="text-muted-foreground"> · {a.provider}</span> : null}
+                          </span>
+                          <span className="shrink-0 font-medium">{formatCurrency(balanceOf(a.id))}</span>
+                        </button>
+                      }
+                    />
+                  ) : (
+                    <div key={a.id} className="flex w-full items-center justify-between rounded-lg border px-2.5 py-2 text-sm">
+                      <span className="min-w-0 truncate">
+                        {a.name}
+                        {a.provider ? <span className="text-muted-foreground"> · {a.provider}</span> : null}
+                      </span>
+                      <span className="shrink-0 font-medium">{formatCurrency(balanceOf(a.id))}</span>
+                    </div>
+                  ),
+                )}
                 {Math.abs(unassigned) > 0.005 ? (
                   <div className="flex items-center justify-between rounded-lg border border-dashed px-2.5 py-2 text-sm text-muted-foreground">
                     <span>Unassigned</span>
@@ -210,17 +233,21 @@ export function PotDetailDialog({
                       </p>
                     </div>
                     <span className="shrink-0 font-medium">{formatCurrency(balanceOf(a.id))}</span>
-                    <AccountForm
-                      potId={pot.id}
-                      account={a}
-                      trigger={
-                        <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
-                          <Pencil className="h-3.5 w-3.5" />
-                          Edit
-                        </button>
-                      }
-                    />
-                    <ConfirmDelete itemLabel="account" action={deleteAccount.bind(null, a.id)} />
+                    {editMode ? (
+                      <>
+                        <AccountForm
+                          potId={pot.id}
+                          account={a}
+                          trigger={
+                            <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
+                              <Pencil className="h-3.5 w-3.5" />
+                              Edit
+                            </button>
+                          }
+                        />
+                        <ConfirmDelete itemLabel="account" action={deleteAccount.bind(null, a.id)} />
+                      </>
+                    ) : null}
                   </div>
                 ))}
                 {Math.abs(unassigned) > 0.005 ? (
@@ -276,8 +303,12 @@ export function PotDetailDialog({
           <ItemTimestamps createdAt={pot.created_at} updatedAt={pot.updated_at} />
           <div className="flex items-center justify-end gap-2 border-t pt-3">
             <ShareButton title={pot.name} text={`${formatCurrency(pot.current_amount)} saved of ${formatCurrency(pot.target_amount)}`} />
-            <PotForm pot={pot} />
-            <ConfirmDelete itemLabel="pot" action={deletePot.bind(null, pot.id)} variant="menu" />
+            {editMode ? (
+              <>
+                <PotForm pot={pot} />
+                <ConfirmDelete itemLabel="pot" action={deletePot.bind(null, pot.id)} variant="menu" />
+              </>
+            ) : null}
           </div>
         </div>
       </DialogContent>

@@ -2,7 +2,32 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (Large multi-part follow-up request in progress: household contributions ✅, purchases personal/household split ✅, projects/tasks scope hard-boundary ✅. Still queued: finance edit-mode toggle, bulk statement entry check, routine UX pass, habits calendar. Not yet pushed — see below).
+> after **every** change. Last updated: 2026-07-01 (Continuing the large multi-part follow-up: household contributions, purchases split, projects/tasks scope, and finance edit-mode toggle are all done and pushed. Still queued: routine UX pass, habits calendar — in progress now).
+
+## Finance: management actions hidden behind an Edit toggle — DONE — no migration
+"I don't want an option to add new accounts or bulk edit months always in
+front of me, put an edit button on the screen so I can change those
+things, otherwise it should be either read only or contribute only."
+
+- `savings/pot-detail.tsx` (`PotDetailDialog`, used from both `/savings`
+  and `/finance`): added a local `editMode` state (default off) with a
+  small "Edit"/"Done" toggle button next to the dialog title. When off:
+  "Add account" is hidden, account rows in both Compact and Detailed view
+  become plain non-interactive rows (no click-to-edit) instead of
+  `AccountForm` triggers, the Detailed view's per-account Edit/Delete
+  icon-buttons are hidden, and the footer's "Edit pot"/"Delete pot"
+  buttons are hidden. The `ContributionForm` (deposit/withdrawal log) and
+  the Compact/Detailed toggle stay visible always — matches "contribute
+  only" as the default, non-edit-mode state.
+- `finance/income-header-actions.tsx` (new): the "Bulk edit months"
+  trigger (the full-screen `MonthlyValuesEditor` from the previous batch)
+  is now hidden behind its own small Edit/Done toggle in the Income card
+  header, instead of being an always-visible button.
+- **Task #31 (bulk-add credit card statements)** is already fully covered
+  by the existing `MonthlyValuesEditor` — it has one column per credit
+  card alongside income/bonus — just confirmed it's still reachable via
+  the new Edit toggle rather than removed.
+- Verified: `npm run typecheck`, `npm run lint`, both variants build clean.
 
 ## Household contributions (Neelam/Eashan split) — DONE — migration `0055_household_contributions.sql` (applied live via MCP)
 The user said "you didn't add my contributions... I split the contribution

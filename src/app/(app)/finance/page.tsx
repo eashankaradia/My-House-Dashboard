@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, CreditCard as CreditCardIcon, Table2 } from "lucide-react";
+import { ArrowRight, BarChart3, CreditCard as CreditCardIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { Progress } from "@/components/ui/progress";
@@ -26,7 +26,7 @@ import { IncomeSection } from "./income-section";
 import { FinanceScope } from "./finance-scope";
 import { CreditCardsSection } from "./credit-cards-section";
 import { CreditCardForm } from "./credit-card-form";
-import { MonthlyValuesEditor } from "./monthly-values-editor";
+import { IncomeHeaderActions } from "./income-header-actions";
 import { SharesSection } from "./shares-section";
 import { ShareForm } from "./share-form";
 import { FinanceInspirationList } from "./finance-inspiration-list";
@@ -117,16 +117,7 @@ export default async function FinancePage() {
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Income</CardTitle>
-          <MonthlyValuesEditor
-            incomeMonths={incomeMonths}
-            creditCards={creditCards}
-            statements={cardStatements}
-            trigger={
-              <button className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
-                <Table2 className="h-3.5 w-3.5" /> Bulk edit months
-              </button>
-            }
-          />
+          <IncomeHeaderActions incomeMonths={incomeMonths} creditCards={creditCards} statements={cardStatements} />
         </CardHeader>
         <CardContent>
           <IncomeSection settings={settings} months={incomeMonths} />
