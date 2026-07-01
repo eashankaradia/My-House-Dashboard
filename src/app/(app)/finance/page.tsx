@@ -82,6 +82,14 @@ export default async function FinancePage() {
     0,
   );
 
+  // Rolling 12 months, including the current one.
+  const twelveMonthsAgo = new Date();
+  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 11);
+  const rollingCutoff = `${twelveMonthsAgo.getFullYear()}-${String(twelveMonthsAgo.getMonth() + 1).padStart(2, "0")}-01`;
+  const last12MonthsIncome = incomeMonths
+    .filter((m) => m.month >= rollingCutoff)
+    .reduce((s, m) => s + Number(m.net_income) + Number(m.bonus), 0);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -99,6 +107,7 @@ export default async function FinancePage() {
         sharePrices={sharePrices}
         monthlyCardStatements={monthlyCardStatements}
         monthlyIncome={monthlyIncome}
+        last12MonthsIncome={last12MonthsIncome}
         incomeSource={income.source}
         currentUserId={currentUserId}
         showFilter={showFilter}

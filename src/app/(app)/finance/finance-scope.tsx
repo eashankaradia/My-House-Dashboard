@@ -21,6 +21,7 @@ export function FinanceScope({
   sharePrices,
   monthlyCardStatements,
   monthlyIncome,
+  last12MonthsIncome,
   incomeSource,
   currentUserId,
   showFilter,
@@ -33,6 +34,7 @@ export function FinanceScope({
   sharePrices: Record<string, number | null>;
   monthlyCardStatements: number;
   monthlyIncome: number | null;
+  last12MonthsIncome: number;
   incomeSource: IncomeSource;
   currentUserId: string;
   showFilter: boolean;
@@ -96,6 +98,7 @@ export function FinanceScope({
               destructive={netMonthly !== null && netMonthly < 0}
             />
             <MiniStat label="Savings rate" value={savingsRate !== null ? `${savingsRate}%` : "—"} muted />
+            <MiniStat label="Net income (12mo)" value={formatCurrency(last12MonthsIncome)} muted />
           </div>
         </CardContent>
       </Card>

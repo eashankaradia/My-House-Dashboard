@@ -1,5 +1,6 @@
 "use client";
 
+import { Pencil } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { monthStr } from "@/lib/income";
 import type { FinanceSettings, IncomeMonth } from "@/lib/database.types";
@@ -32,12 +33,15 @@ export function IncomeSection({ settings, months }: { settings: FinanceSettings 
                   <span className="text-muted-foreground">— tap to add</span>
                 ) : null}
               </span>
-              <span className="font-semibold">
-                {current
-                  ? formatCurrency(Number(current.net_income))
-                  : carried
-                    ? formatCurrency(Number(carried.net_income))
-                    : "—"}
+              <span className="flex items-center gap-2">
+                <span className="font-semibold">
+                  {current
+                    ? formatCurrency(Number(current.net_income))
+                    : carried
+                      ? formatCurrency(Number(carried.net_income))
+                      : "—"}
+                </span>
+                <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
               </span>
             </button>
           }
@@ -58,7 +62,10 @@ export function IncomeSection({ settings, months }: { settings: FinanceSettings 
                     <span>{formatMonth(m.month)}</span>
                     <span className="flex items-center gap-2">
                       <span className="font-medium">{formatCurrency(Number(m.net_income))}</span>
-                      {Number(m.bonus) > 0 && <span className="text-xs text-emerald-600">+{formatCurrency(Number(m.bonus))}</span>}
+                      {Number(m.bonus) > 0 && (
+                        <span className="text-xs text-muted-foreground">+{formatCurrency(Number(m.bonus))} bonus</span>
+                      )}
+                      <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     </span>
                   </button>
                 }
