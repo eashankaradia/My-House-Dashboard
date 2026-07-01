@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (The full multi-part follow-up request is done: household contributions, purchases split, projects/tasks scope, finance edit-mode toggle, routine UX pass, habits calendar. This batch (routine + habits) not yet pushed — see below).
+> after **every** change. Last updated: 2026-07-01 (Every item in the large multi-part follow-up is done, pushed, and confirmed live in production on both `my-house-dashboard` and `my-life-dashboard` at commit `b0114bf`: household contributions, purchases personal/household split, finance edit-mode toggle, routine time-aware redesign, habits calendar, and the projects/tasks scope hard-boundary. Nothing outstanding).
 
 ## Routine view: more intuitive — DONE — no migration
 "Make my routine view more intuitive." The old view was a flat wall of
