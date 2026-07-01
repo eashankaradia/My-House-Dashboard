@@ -2,7 +2,29 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (Finance compactness + bulk monthly-values table merged to `main` and deployed — production confirmed READY on both `my-house-dashboard` and `my-life-dashboard` at commit `217b91e`. **Standing instruction from the user: "merge to main always"** — future batches on this session no longer need an `AskUserQuestion` merge check; verify, merge to main, push, confirm deploy, move on).
+> after **every** change. Last updated: 2026-07-01 (Follow-up finance tweak pushed straight to `main` per the "merge to main always" standing instruction — production confirmed READY on both `my-house-dashboard` and `my-life-dashboard` at commit `3b6ada4`: income rows drop green bonus text for a neutral edit-pencil icon, and a rolling 12-month net income figure was added to the stat strip).
+
+## Income rows: edit icon instead of green text; rolling 12-month income stat — DONE
+Small follow-up to the finance-compact redesign, pushed straight to `main`
+(no feature branch — per the user's "merge to main always" instruction,
+committed directly and pushed once verified).
+
+- `income-section.tsx`: the bonus amount in "This month" and history rows
+  no longer renders in `text-emerald-600` — it's now a neutral
+  `text-muted-foreground` label ("+£X bonus") plus a small `Pencil` icon at
+  the end of each row, signalling "click to edit" without relying on
+  colour. (Credit card Paid/Unpaid badges were deliberately left alone —
+  those are a genuine status indicator, not an editable-value highlight,
+  so removing the colour there would lose real information.)
+- `finance-scope.tsx` / `finance/page.tsx`: added a "Net income (12mo)"
+  mini-stat to the compact stat strip — rolling sum of `net_income + bonus`
+  across `income_months` from 11 months ago through the current month,
+  computed in `page.tsx` and passed down as a plain number (matching how
+  `monthlyIncome`/`monthlyCardStatements` are already threaded through).
+- Verified: `npm run typecheck`, `npm run lint`, default +
+  `NEXT_PUBLIC_APP=life` `npm run build` all clean.
+- Deployed: both Vercel projects confirmed `READY` in production for
+  commit `3b6ada4`.
 
 ## Merged to main and deployed — DONE
 `claude/finance-compact` fast-forward-merged into `main` and pushed.
