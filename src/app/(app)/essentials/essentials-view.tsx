@@ -13,6 +13,7 @@ const RAG_DOT: Record<string, string> = {
 
 export function EssentialsView({ items }: { items: Essential[] }) {
   const [compact, setCompact] = React.useState(true);
+  const [ragFilter, setRagFilter] = React.useState<"red" | "amber" | "green" | null>(null);
   const categories = Array.from(new Set(items.map((i) => i.category)));
 
   const counts = items.reduce(
@@ -22,20 +23,27 @@ export function EssentialsView({ items }: { items: Essential[] }) {
     },
     { red: 0, amber: 0, green: 0 } as Record<"red" | "amber" | "green", number>,
   );
+  const visibleItems = ragFilter ? items.filter((i) => i.rag === ragFilter) : items;
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 text-sm">
-          <span className="flex items-center gap-1.5">
-            <span className={cn("h-2.5 w-2.5 rounded-full", RAG_DOT.green)} /> {counts.green}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className={cn("h-2.5 w-2.5 rounded-full", RAG_DOT.amber)} /> {counts.amber}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className={cn("h-2.5 w-2.5 rounded-full", RAG_DOT.red)} /> {counts.red}
-          </span>
+          {(["green", "amber", "red"] as const).map((rag) => (
+            <button
+              key={rag}
+              type="button"
+              onClick={() => setRagFilter((cur) => (cur === rag ? null : rag))}
+              aria-pressed={ragFilter === rag}
+              className={cn(
+                "flex items-center gap-1.5 rounded-full border border-transparent px-1.5 py-0.5",
+                ragFilter === rag && "border-border bg-accent",
+                ragFilter && ragFilter !== rag && "opacity-40",
+              )}
+            >
+              <span className={cn("h-2.5 w-2.5 rounded-full", RAG_DOT[rag])} /> {counts[rag]}
+            </button>
+          ))}
         </div>
         <div className="flex items-center rounded-lg border p-0.5 text-xs">
           <button onClick={() => setCompact(false)} className={cn("rounded-md px-2 py-1", !compact && "bg-accent")}>
@@ -48,7 +56,8 @@ export function EssentialsView({ items }: { items: Essential[] }) {
       </div>
 
       {categories.map((category) => {
-        const categoryItems = items.filter((i) => i.category === category);
+        const categoryItems = visibleItems.filter((i) => i.category === category);
+        if (categoryItems.length === 0) return null;
         return (
           <section key={category} className="space-y-2">
             <div className="flex items-center justify-between px-1">
@@ -95,11 +104,15 @@ export function EssentialsView({ items }: { items: Essential[] }) {
         );
       })}
 
-      {items.length === 0 && (
+      {items.length === 0 ? (
         <p className="rounded-xl border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
           Add the things you need, grouped by category, and mark what you have.
         </p>
-      )}
+      ) : visibleItems.length === 0 ? (
+        <p className="rounded-xl border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
+          Nothing at that status.
+        </p>
+      ) : null}
     </div>
   );
 }
