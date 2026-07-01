@@ -391,3 +391,24 @@ export const RAG_LABELS: Record<string, string> = {
   amber: "Have, not great",
   green: "Sorted",
 };
+
+// ---------------------------------------------------------------------------
+// Daily routine
+// ---------------------------------------------------------------------------
+
+export const ROUTINE_SECTIONS = ["consume", "mind", "body", "morning", "day", "evening"] as const;
+
+export const ROUTINE_SECTION_LABELS: Record<string, string> = {
+  consume: "Consume",
+  mind: "Look after your mind",
+  body: "Look after your body",
+  morning: "Morning (before 11am)",
+  day: "Day",
+  evening: "Evening (after 6pm)",
+};
+
+export const ROUTINE_GROUPS = [
+  { title: "What I need to consume", sections: ["consume"] },
+  { title: "What I need to do", sections: ["mind", "body"] },
+  { title: "My routine", sections: ["morning", "day", "evening"] },
+] as const;

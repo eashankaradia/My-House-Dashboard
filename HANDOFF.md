@@ -2,7 +2,36 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (Finance overhaul + new Essentials tab shipped; pots/shares/personal-vs-household-filters/cross-module-inspiration/daily-routine/bored-tasks/FAB-audit queued — branch `claude/finance-overhaul`, not yet merged).
+> after **every** change. Last updated: 2026-06-30 (Finance overhaul + Essentials + Daily Routine shipped; pots/shares/personal-vs-household-filters/cross-module-inspiration/bored-tasks/FAB-audit queued — branch `claude/finance-overhaul`, not yet merged).
+
+## Daily Routine — DONE — migration `0046_daily_routine.sql` (applied live via MCP)
+New personal `routine_items` (section, name, order_index) +
+`routine_completions` (item_id, completed_date — unique per item+date; a
+row's mere presence means "done that day", deleting it = undone). New
+`/routine` route, MyLife nav only. Deliberately simpler than it could have
+been: every item is a plain checkbox, including the quantitative ones
+("100g protein", "10,000 steps") — the quantity lives in the item's `name`
+text rather than a separate `target_value`/`unit` pair with a numeric
+stepper UI, because the user asked for "a place to put a daily routine"
+(a checklist), not a habit-style progress tracker (which already exists
+separately as Habits' numeric type).
+
+- `routine/actions.ts`: `toggleRoutineItem(itemId, date)` (presence-based
+  toggle — inserts/deletes the completion row), plus
+  create/update/deleteRoutineItem for managing items.
+- `src/lib/constants.ts`: `ROUTINE_SECTIONS` (consume/mind/body/morning/day/
+  evening), `ROUTINE_SECTION_LABELS`, and `ROUTINE_GROUPS` — a 2-level
+  grouping (`"What I need to consume"` → consume;
+  `"What I need to do"` → mind + body; `"My routine"` → morning + day +
+  evening) matching how the user structured their request.
+- `routine/routine-view.tsx`: today's progress bar (X/Y done) at the top,
+  then the 3 groups, each rendering its section(s) as a checklist (tap
+  anywhere on a row to toggle, optimistic update, a small pencil opens
+  `RoutineItemForm` to edit/delete/move sections).
+- **Seeded with the user's real routine** (29 items across 6 sections) via
+  a one-off `execute_sql` call, same pattern as Essentials — not in the
+  versioned migration, looked up via the `eashan@myhouse.local` user_id
+  subquery.
 
 ## Essentials — DONE — migration `0045_essentials.sql` (applied live via MCP)
 New personal (not household-shared) `essentials` table: `category`, `name`,

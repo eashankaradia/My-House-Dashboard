@@ -738,6 +738,24 @@ export type Essential = {
   updated_at: string;
 };
 
+export type RoutineItem = {
+  id: string;
+  user_id: string;
+  section: string;
+  name: string;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RoutineCompletion = {
+  id: string;
+  user_id: string;
+  item_id: string;
+  completed_date: string;
+  created_at: string;
+};
+
 export type NutritionLog = {
   id: string;
   user_id: string;
@@ -947,6 +965,8 @@ export type Database = {
       appointments: Row<Appointment>;
       health_inspiration: Row<HealthInspiration>;
       essentials: Row<Essential>;
+      routine_items: Row<RoutineItem>;
+      routine_completions: Row<RoutineCompletion>;
       nutrition_logs: Row<NutritionLog>;
       recipes: Row<Recipe>;
       recipe_ingredients: Row<RecipeIngredient>;
