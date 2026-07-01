@@ -2,7 +2,42 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (User said "do everything" on the second-brain roadmap. Done: Eisenhower axis, deep-linking, generic favourites, tags on tasks. Queued next: weekly/monthly reviews, then push+deploy — branch `claude/finance-overhaul`, not yet merged/deployed).
+> after **every** change. Last updated: 2026-07-01 (User said "do everything" on the second-brain roadmap. All content items now done: Eisenhower axis, deep-linking, favourites, tags, weekly/monthly reviews. Last step: push+deploy — branch `claude/finance-overhaul`, not yet merged/deployed).
+
+## Weekly/monthly review flow — DONE — migration `0054_reviews.sql` (applied live via MCP), new nav item, MyLife-only
+Roadmap item #3, the last content item on the second-brain audit. New
+`/reviews` page (added to `LIFE_NAV_ITEMS` under Planner, `ClipboardCheck`
+icon — not added to the FAB, since the point is seeing the rollup stats
+alongside the form, which a generic quick-add modal can't show).
+
+- `reviews` table: `period_type` ('weekly'|'monthly'), `period_start`
+  (Monday-of-week or 1st-of-month), and four free-text prompts
+  (`went_well`, `stuck`, `stop_doing`, `priorities`) shared by both period
+  types — the UI just labels the prompts differently per type. One row per
+  user+period_type+period_start (`upsert` on that unique key), so revisiting
+  the same week/month edits in place rather than creating duplicates.
+- `src/lib/review-periods.ts`: pure helpers — `weekStart`/`monthStart`
+  (compute the current period's key) and `weekLabel`/`monthLabel` (display
+  strings) — same "small pure-function helper" pattern as `src/lib/income.ts`.
+- `reviews/page.tsx` (server): computes a **rollup pulled from data that
+  already exists, nothing new stored** —
+  - Weekly: overdue task count, tasks due this week, % of daily-habit
+    check-ins done this week (`habit_logs` count ÷ (daily habit count ×
+    days elapsed this week)).
+  - Monthly: net cash flow this month (reusing `effectiveIncomeForMonth` +
+    `toMonthly`, same calc as `/finance`/dashboard), % daily-habit
+    check-ins this month, average active-goal progress, and maintenance
+    tasks completed this month (`last_completed_date` in-month).
+- `reviews-view.tsx` (client): a Weekly/Monthly `Tabs` (same component used
+  by Projects/Tasks), each tab showing the rollup stat cards, a save form
+  for the *current* period (pre-filled if already started), and a
+  collapsible list of past reviews below.
+- `review-form.tsx`: plain 4-textarea form, `upsertReview` server action.
+- Verified: `npm run typecheck`, `npm run lint`, default +
+  `NEXT_PUBLIC_APP=life` `npm run build` all clean.
+- **This is the last content item from the second-brain roadmap** — every
+  item the user asked for ("do everything") is now implemented. Remaining
+  step: push (done, every batch pushed already) and deploy — see below.
 
 ## Tags system — DONE (Tasks only this batch) — migration `0053_task_tags.sql` (applied live via MCP)
 Roadmap item #2. Added `tags text[] not null default '{}'` to

@@ -25,6 +25,7 @@ import {
   Wallet,
   ListChecks,
   SunMoon,
+  ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -89,6 +90,7 @@ const LIFE_NAV_ITEMS: NavItem[] = [
   { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance", group: "Planner" },
   { title: "Future Purchases", short: "Purchases", href: "/purchases", icon: ShoppingBag, description: "Your personal wishlist", group: "Planner" },
   { title: "Essentials", href: "/essentials", icon: ListChecks, description: "What you need, what you have", group: "Planner" },
+  { title: "Reviews", href: "/reviews", icon: ClipboardCheck, description: "Weekly & monthly check-ins", group: "Planner" },
   // More
   { title: "Notes & Links", short: "Notes", href: "/notes", icon: NotebookPen, description: "Quick notes and useful links", group: "More" },
   { title: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later", group: "More" },

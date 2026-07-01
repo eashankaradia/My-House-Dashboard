@@ -913,6 +913,19 @@ export type Favorite = {
   created_at: string;
 };
 
+export type ReviewPeriod = "weekly" | "monthly";
+
+export type Review = Timestamps & {
+  id: string;
+  user_id: string;
+  period_type: ReviewPeriod;
+  period_start: string;
+  went_well: string | null;
+  stuck: string | null;
+  stop_doing: string | null;
+  priorities: string | null;
+};
+
 export type InspirationSource =
   | "Instagram"
   | "TikTok"
@@ -1031,6 +1044,7 @@ export type Database = {
       pot_contribution_overrides: Row<PotContributionOverride>;
       shares: Row<Share>;
       favorites: Row<Favorite>;
+      reviews: Row<Review>;
     };
     Views: { [_ in never]: never };
     Functions: {
