@@ -3,6 +3,41 @@
 import { getActionContext } from "@/lib/action-utils";
 import { revalidatePath } from "next/cache";
 
+// --- Shares --------------------------------------------------------------
+
+export async function createShare(input: { ticker: string; quantity: number; purchase_price: number; purchase_date?: string; notes?: string }) {
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase.from("shares").insert({
+    user_id: user.id,
+    ticker: input.ticker.trim().toUpperCase(),
+    quantity: input.quantity,
+    purchase_price: input.purchase_price,
+    purchase_date: input.purchase_date ?? null,
+    notes: input.notes ?? null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/finance");
+}
+
+export async function updateShare(
+  id: string,
+  input: Partial<{ ticker: string; quantity: number; purchase_price: number; purchase_date: string | null; notes: string | null }>,
+) {
+  const { supabase } = await getActionContext();
+  const patch = { ...input, updated_at: new Date().toISOString() };
+  if (patch.ticker) patch.ticker = patch.ticker.trim().toUpperCase();
+  const { error } = await supabase.from("shares").update(patch).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/finance");
+}
+
+export async function deleteShare(id: string) {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("shares").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/finance");
+}
+
 // --- Income: fixed salary details + monthly net income/bonus log -----------
 
 export async function upsertSalaryDetails(input: { annualSalary?: number | null; employer?: string; salaryNotes?: string }) {

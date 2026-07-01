@@ -2,7 +2,52 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-30 (Finance overhaul + Essentials + Daily Routine + pots/accounts redesign shipped; shares/personal-vs-household-filters/cross-module-inspiration/bored-tasks/FAB-audit queued — branch `claude/finance-overhaul`, not yet merged).
+> after **every** change. Last updated: 2026-06-30 (Finance overhaul + Essentials + Daily Routine + pots/accounts redesign + shares shipped; personal-vs-household-filters/cross-module-inspiration/bored-tasks/FAB-audit queued — branch `claude/finance-overhaul`, not yet merged).
+
+## Shares tracking with live prices — DONE — migration `0048_shares.sql` (applied live via MCP)
+New personal `shares` table: `ticker`, `quantity`, `purchase_price`,
+`purchase_date`, `notes`. No live-price data is stored — it's fetched at
+read time.
+
+**Provider decision**: I asked the user which free price-data approach to
+use (Stooq no-signup CSV vs Twelve Data with an API key vs skip live prices
+entirely); the question tool failed to deliver a response before the user
+said to continue, so I went with the recommended default: **Stooq's free,
+no-signup CSV endpoint** (`stooq.com/q/l/?s=...&e=csv`). It's end-of-day
+data, not true real-time, and somewhat less official than a paid API, but
+needs zero setup. If the user wants closer-to-real-time data later, ask them
+for a Twelve Data (or similar) API key and swap the provider — see below.
+
+Built as a **swappable provider** per `CLAUDE.md`'s "never hard-code
+providers" / "free integrations only for v1":
+- `src/lib/price-providers/types.ts`: a one-method `PriceProvider` interface.
+- `src/lib/price-providers/stooq.ts`: the only implementation so far. Parses
+  the CSV, returns `null` (not a thrown error) on any failure — unknown
+  ticker, network error, Stooq down, etc.
+- `src/lib/price-providers/index.ts`: `getPriceProvider()` — the single
+  place that picks which implementation is active (currently always Stooq;
+  swap here, or branch on an env var, to add a second provider later) —
+  and `getPrices(tickers[])`, which fans out `Promise.all` and always
+  returns a value per ticker (`null` if that one failed), so one bad ticker
+  never breaks the page.
+- Ticker format note: Stooq needs a market suffix (`AAPL.US`, `VOD.UK`) —
+  the share form hints this; there's no ticker search/autocomplete in v1.
+
+**Graceful degradation**: if a live price is unavailable, the UI falls back
+to the purchase price for value/net-worth math and shows a "price
+unavailable" badge — never blocks the page or throws.
+
+- `finance/actions.ts`: `createShare`/`updateShare`/`deleteShare` (ticker
+  is uppercased server-side).
+- `finance/share-form.tsx`, `finance/shares-section.tsx`: a new "Shares"
+  card on `/finance` — add/edit dialog, list rows showing quantity @
+  purchase price, current value, and gain/loss (only shown when a live
+  price was available, since gain/loss against the purchase price itself
+  is meaningless).
+- Folded into **net worth**: `/finance`'s net worth stat now sums savings
+  pots + investment pots + total shares value (using live price where
+  available, purchase price as fallback).
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
 
 ## Pots/accounts redesign — DONE — migration `0047_account_provider.sql` (applied live via MCP)
 - `savings_accounts` gained `provider` (bank/trading platform name).

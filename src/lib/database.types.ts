@@ -864,6 +864,18 @@ export type PotContributionOverride = {
   created_at: string;
 };
 
+export type Share = {
+  id: string;
+  user_id: string;
+  ticker: string;
+  quantity: number;
+  purchase_price: number;
+  purchase_date: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type InspirationSource =
   | "Instagram"
   | "TikTok"
@@ -978,6 +990,7 @@ export type Database = {
       credit_card_statements: Row<CreditCardStatement>;
       pot_contribution_schedules: Row<PotContributionSchedule>;
       pot_contribution_overrides: Row<PotContributionOverride>;
+      shares: Row<Share>;
     };
     Views: { [_ in never]: never };
     Functions: {
