@@ -2,7 +2,24 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (User said "do everything" on the second-brain roadmap. All content items now done: Eisenhower axis, deep-linking, favourites, tags, weekly/monthly reviews. Last step: push+deploy — branch `claude/finance-overhaul`, not yet merged/deployed).
+> after **every** change. Last updated: 2026-07-01 (`claude/finance-overhaul` merged to `main` and deployed — production is live on both `my-house-dashboard` and `my-life-dashboard` at commit `f816bed`. The whole finance-overhaul + second-brain roadmap batch is complete).
+
+## Merged to main and deployed — DONE
+`claude/finance-overhaul` (18 commits since the last `main` merge) was
+fast-forward-merged into `main` and pushed, after explicit user confirmation
+(the harness blocked a direct merge without it, per this session's
+established "ask before merging" rule — asked via `AskUserQuestion`, user
+chose "merge straight to main now" over "open a PR first").
+- Both Vercel projects (`my-house-dashboard` id `prj_BOUIdAM8EEfh6JI9nrql8K7e67Qb`,
+  `my-life-dashboard` id `prj_TB7Dt9AVg88kp0AX5TXrhXqhsnhx`, team
+  `team_jJ3EVwt72NA4LhbenZnWfT88`) auto-deploy `main` to production via their
+  GitHub integration — confirmed both production deployments reached
+  `READY` for commit `f816bed`.
+- All 11 migrations from this batch (0044–0054) were already applied live
+  via Supabase MCP as each feature was built, so the database was already
+  in sync before this merge — no migration step needed at merge time.
+- `claude/finance-overhaul` branch is now fully merged; safe to delete
+  later, but left in place for now.
 
 ## Weekly/monthly review flow — DONE — migration `0054_reviews.sql` (applied live via MCP), new nav item, MyLife-only
 Roadmap item #3, the last content item on the second-brain audit. New
