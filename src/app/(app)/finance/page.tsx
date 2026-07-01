@@ -95,7 +95,7 @@ export default async function FinancePage() {
       <PageHeader
         title="Finance"
         description="Your personal financial overview."
-        info="Log your monthly net income below to calculate your net position and savings rate."
+        info="Log your monthly net income below to calculate your net position."
       />
 
       <FinanceScope
@@ -124,24 +124,14 @@ export default async function FinancePage() {
         </CardContent>
       </Card>
 
-      {/* Credit cards */}
-      <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="flex items-center gap-2">
-            <CreditCardIcon className="h-4 w-4 text-muted-foreground" /> Credit cards
-          </CardTitle>
-          <CreditCardForm />
-        </CardHeader>
-        <CardContent>
-          {creditCards.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              Add your credit cards to log each month&apos;s statement as an expense.
-            </p>
-          ) : (
-            <CreditCardsSection cards={creditCards} statements={cardStatements} />
-          )}
-        </CardContent>
-      </Card>
+      {/* Credit cards — collapsed by default, not everyday content */}
+      <CollapsibleSection title="Credit cards" href="/finance" count={creditCards.length}>
+        <div className="flex items-center justify-between pb-1">
+          <p className="text-sm text-muted-foreground">Log each month&apos;s statement as an expense.</p>
+          <CreditCardForm trigger={<button className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"><CreditCardIcon className="h-3.5 w-3.5" /> Add</button>} />
+        </div>
+        {creditCards.length > 0 ? <CreditCardsSection cards={creditCards} statements={cardStatements} /> : null}
+      </CollapsibleSection>
 
       {/* Shares — collapsed by default, not everyday content */}
       <CollapsibleSection title="Shares" href="/finance" count={shares.length}>

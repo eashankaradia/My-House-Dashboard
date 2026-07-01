@@ -21,7 +21,7 @@ import { addContribution, adjustPotValueOnly } from "./actions";
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 /** A pot card's "Add" control: log a contribution, or just update its value. */
-export function QuickContribute({ pot }: { pot: SavingsPot }) {
+export function QuickContribute({ pot, trigger }: { pot: SavingsPot; trigger?: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
   const [mode, setMode] = React.useState<"contribution" | "value">("contribution");
   const [amount, setAmount] = React.useState("");
@@ -50,9 +50,11 @@ export function QuickContribute({ pot }: { pot: SavingsPot }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1.5">
-          <Plus className="h-4 w-4" /> Add
-        </Button>
+        {trigger ?? (
+          <Button variant="outline" size="sm" className="h-8 gap-1.5">
+            <Plus className="h-4 w-4" /> Add
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-sm">
         <DialogHeader>

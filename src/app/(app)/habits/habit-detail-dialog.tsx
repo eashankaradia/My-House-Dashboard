@@ -51,8 +51,17 @@ export function HabitDetailDialog({ habit, logs, targets, open, onOpenChange }: 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
-        <DialogHeader>
+        <DialogHeader className="flex-row items-center justify-between space-y-0 pr-8">
           <DialogTitle>{habit.name}</DialogTitle>
+          <HabitForm
+            habit={habit}
+            targets={targets.filter((t) => t.habit_id === habit.id)}
+            trigger={
+              <Button variant="ghost" size="sm" className="shrink-0 gap-1.5 text-muted-foreground">
+                <Pencil className="h-3.5 w-3.5" /> Edit
+              </Button>
+            }
+          />
         </DialogHeader>
         <div className="space-y-4">
           {habit.why && (
@@ -113,18 +122,6 @@ export function HabitDetailDialog({ habit, logs, targets, open, onOpenChange }: 
           <div className="space-y-1.5">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">History</p>
             <HabitCalendar habit={habit} logs={logs} />
-          </div>
-
-          <div className="flex justify-end border-t pt-3">
-            <HabitForm
-              habit={habit}
-              targets={habitTargets}
-              trigger={
-                <Button variant="outline" size="sm" className="gap-1.5">
-                  <Pencil className="h-4 w-4" /> Edit habit
-                </Button>
-              }
-            />
           </div>
         </div>
       </DialogContent>

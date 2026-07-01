@@ -56,8 +56,8 @@ export function BottomNav() {
             onClick={() => setAddOpen(false)}
             className="fixed inset-0 z-40 bg-black/30 lg:hidden"
           />
-          <div className="fixed inset-x-0 bottom-16 z-50 flex justify-center lg:hidden">
-            <AddPills className="flex max-w-[92vw] flex-wrap items-center justify-center gap-2 rounded-2xl border bg-background/95 p-3 shadow-lg backdrop-blur" />
+          <div className="fixed inset-x-0 bottom-16 z-50 flex justify-center px-3 lg:hidden">
+            <AddPills className="flex max-h-[65vh] w-full max-w-sm flex-col gap-3 overflow-y-auto rounded-2xl border bg-background/95 p-3 shadow-lg backdrop-blur" />
           </div>
         </>
       ) : null}
