@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Brain, CheckCircle2, Circle, Dumbbell, Moon, Pencil, Sun, Sunrise, Utensils } from "lucide-react";
+import { Brain, CheckCircle2, Circle, Dumbbell, Pencil, Utensils } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { ROUTINE_SECTIONS, ROUTINE_SECTION_LABELS } from "@/lib/constants";
@@ -16,18 +15,7 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
   consume: Utensils,
   mind: Brain,
   body: Dumbbell,
-  morning: Sunrise,
-  day: Sun,
-  evening: Moon,
 };
-
-/** Which time-of-day section is "now", so the routine can lead with what's actually relevant. */
-function currentTimeSection(): "morning" | "day" | "evening" {
-  const h = new Date().getHours();
-  if (h < 11) return "morning";
-  if (h < 18) return "day";
-  return "evening";
-}
 
 export function RoutineView({ items, completedIds, today }: { items: RoutineItem[]; completedIds: string[]; today: string }) {
   const [optimisticDone, setOptimisticDone] = React.useState<Set<string>>(new Set(completedIds));
@@ -36,7 +24,6 @@ export function RoutineView({ items, completedIds, today }: { items: RoutineItem
 
   const total = items.length;
   const done = items.filter((i) => optimisticDone.has(i.id)).length;
-  const now = currentTimeSection();
 
   function toggle(item: RoutineItem) {
     const isDone = optimisticDone.has(item.id);
@@ -58,9 +45,6 @@ export function RoutineView({ items, completedIds, today }: { items: RoutineItem
     return items.filter((i) => i.section === section);
   }
 
-  const nowItems = sectionItems(now);
-  const otherSections = ROUTINE_SECTIONS.filter((s) => s !== now);
-
   return (
     <div className="space-y-6">
       <div className="rounded-xl border bg-card p-4">
@@ -73,19 +57,7 @@ export function RoutineView({ items, completedIds, today }: { items: RoutineItem
         <Progress value={total > 0 ? (done / total) * 100 : 0} />
       </div>
 
-      {/* Right now — the current time-of-day section, always expanded and leading */}
-      {nowItems.length > 0 ? (
-        <SectionCard
-          section={now}
-          items={nowItems}
-          optimisticDone={optimisticDone}
-          onToggle={toggle}
-          badge="Now"
-          defaultOpen
-        />
-      ) : null}
-
-      {otherSections.map((section) => {
+      {ROUTINE_SECTIONS.map((section) => {
         const secItems = sectionItems(section);
         if (secItems.length === 0) return null;
         return (
@@ -95,7 +67,7 @@ export function RoutineView({ items, completedIds, today }: { items: RoutineItem
             items={secItems}
             optimisticDone={optimisticDone}
             onToggle={toggle}
-            defaultOpen={false}
+            defaultOpen
           />
         );
       })}
@@ -108,14 +80,12 @@ function SectionCard({
   items,
   optimisticDone,
   onToggle,
-  badge,
   defaultOpen,
 }: {
   section: string;
   items: RoutineItem[];
   optimisticDone: Set<string>;
   onToggle: (item: RoutineItem) => void;
-  badge?: string;
   defaultOpen: boolean;
 }) {
   const Icon = SECTION_ICONS[section];
@@ -127,7 +97,6 @@ function SectionCard({
       <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3">
         {Icon ? <Icon className="h-4 w-4 shrink-0 text-muted-foreground" /> : null}
         <span className="flex-1 text-sm font-semibold">{ROUTINE_SECTION_LABELS[section]}</span>
-        {badge ? <Badge className="shrink-0">{badge}</Badge> : null}
         <span className={cn("shrink-0 text-xs", allDone ? "text-primary" : "text-muted-foreground")}>
           {done}/{items.length}
         </span>

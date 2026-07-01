@@ -34,7 +34,7 @@ export default async function RoutinePage() {
         <EmptyState
           icon={SunMoon}
           title="No routine yet"
-          description="Add the steps of your daily routine — what to consume, what to do for your mind and body, and your morning/day/evening checklist."
+          description="Add the steps of your daily routine — what to consume, and what to do for your mind and body. Morning/day/evening habits live in Habits, tagged by time of day."
         >
           <RoutineItemForm />
         </EmptyState>

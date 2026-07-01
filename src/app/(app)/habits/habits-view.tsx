@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, Circle, Flame, ChevronRight, Timer as TimerIcon, Hash, LayoutList, CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { TIME_OF_DAY_TAGS } from "@/lib/constants";
 import type { Habit, HabitLog, HabitTarget } from "@/lib/database.types";
 import { logHabit, unlogHabit } from "./actions";
 import { useToast } from "@/hooks/use-toast";
@@ -113,6 +114,23 @@ export function HabitsView({ habits, logs, targets, completedToday }: Props) {
       {view === "list" && monthly.length > 0 && (
         <HabitGroup title="Monthly" habits={monthly} logs={logs} optimisticDone={optimisticDone} onToggle={toggle} onExpand={setDetailHabit} />
       )}
+
+      {view === "list" &&
+        TIME_OF_DAY_TAGS.map((tag) => {
+          const tagged = habits.filter((h) => h.tags.includes(tag));
+          if (tagged.length === 0) return null;
+          return (
+            <HabitGroup
+              key={tag}
+              title={tag}
+              habits={tagged}
+              logs={logs}
+              optimisticDone={optimisticDone}
+              onToggle={toggle}
+              onExpand={setDetailHabit}
+            />
+          );
+        })}
 
       <HabitDetailDialog
         habit={detailHabit}

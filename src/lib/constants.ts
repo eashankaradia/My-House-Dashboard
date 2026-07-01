@@ -409,14 +409,19 @@ export const RAG_LABELS: Record<string, string> = {
 // Daily routine
 // ---------------------------------------------------------------------------
 
-export const ROUTINE_SECTIONS = ["consume", "mind", "body", "morning", "day", "evening"] as const;
+export const ROUTINE_SECTIONS = ["consume", "mind", "body"] as const;
 
 export const ROUTINE_SECTION_LABELS: Record<string, string> = {
   consume: "Consume",
   mind: "Look after your mind",
   body: "Look after your body",
-  morning: "Morning (before 11am)",
-  day: "Day",
-  evening: "Evening (after 6pm)",
 };
+
+// ---------------------------------------------------------------------------
+// Habit time-of-day tags — recognised tag values that drive the "By time of
+// day" sections at the end of the Habits view (replaces the old separate
+// morning/day/evening routine sections).
+// ---------------------------------------------------------------------------
+
+export const TIME_OF_DAY_TAGS = ["Morning", "Day", "Evening"] as const;
 

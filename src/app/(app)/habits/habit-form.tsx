@@ -16,7 +16,9 @@ import {
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
 import { FormDeleteButton } from "@/components/shared/form-delete-button";
+import { TagInput } from "@/components/shared/tag-input";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import {
   HABIT_FREQUENCIES,
   HABIT_COLORS,
@@ -24,6 +26,7 @@ import {
   HABIT_TYPE_LABELS,
   HABIT_TARGET_PERIODS,
   HABIT_TARGET_PERIOD_LABELS,
+  TIME_OF_DAY_TAGS,
 } from "@/lib/constants";
 import type { Habit, HabitTarget } from "@/lib/database.types";
 import { createHabit, updateHabit, deleteHabit, upsertHabitTarget, deleteHabitTarget } from "./actions";
@@ -43,6 +46,7 @@ export function HabitForm({ habit, targets = [], trigger }: Props) {
   const [habitType, setHabitType] = React.useState(habit?.habit_type ?? "yes_no");
   const [unit, setUnit] = React.useState(habit?.unit ?? "");
   const [why, setWhy] = React.useState(habit?.why ?? "");
+  const [tags, setTags] = React.useState<string[]>(habit?.tags ?? []);
 
   function handleOpen(v: boolean) {
     setOpen(v);
@@ -54,6 +58,7 @@ export function HabitForm({ habit, targets = [], trigger }: Props) {
       setHabitType(habit.habit_type ?? "yes_no");
       setUnit(habit.unit ?? "");
       setWhy(habit.why ?? "");
+      setTags(habit.tags ?? []);
     }
   }
 
@@ -69,6 +74,7 @@ export function HabitForm({ habit, targets = [], trigger }: Props) {
         habit_type: habitType,
         unit: habitType === "numeric" ? unit.trim() || undefined : undefined,
         why: why.trim() || undefined,
+        tags,
       };
       const result = editing ? await updateHabit(habit!.id, payload) : await createHabit(payload);
       if (result?.error) {
@@ -85,6 +91,7 @@ export function HabitForm({ habit, targets = [], trigger }: Props) {
         setHabitType("yes_no");
         setUnit("");
         setWhy("");
+        setTags([]);
       }
     });
   }
@@ -166,6 +173,27 @@ export function HabitForm({ habit, targets = [], trigger }: Props) {
               </NativeSelect>
             </Field>
           </div>
+
+          <Field label="Tags" hint="Tag a habit Morning/Day/Evening to group it into that section at the end of your Habits list.">
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap gap-1.5">
+                {TIME_OF_DAY_TAGS.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]))}
+                    className={cn(
+                      "rounded-full border px-2.5 py-0.5 text-xs",
+                      tags.includes(t) ? "border-primary bg-accent" : "text-muted-foreground",
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+              <TagInput value={tags} onChange={setTags} placeholder="Add another tag…" />
+            </div>
+          </Field>
 
           {editing && <TargetsEditor habitId={habit!.id} targets={targets} />}
 

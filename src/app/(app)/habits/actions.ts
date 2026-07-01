@@ -74,6 +74,7 @@ export async function createHabit(input: {
   habit_type?: string;
   why?: string;
   unit?: string;
+  tags?: string[];
 }) {
   const { supabase, user } = await getActionContext();
   const { error } = await supabase.from("habits").insert({
@@ -86,6 +87,7 @@ export async function createHabit(input: {
     habit_type: input.habit_type ?? "yes_no",
     why: input.why ?? null,
     unit: input.unit ?? null,
+    tags: input.tags ?? [],
     is_active: true,
   });
   if (error) return { error: error.message };
@@ -103,6 +105,7 @@ export async function updateHabit(
     habit_type: string;
     why: string;
     unit: string;
+    tags: string[];
   }>,
 ) {
   const { supabase } = await getActionContext();
