@@ -3,9 +3,10 @@
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
 > after **every** change. Last updated: 2026-07-01 (the engagement/retention
-> plan is now complete: items #1, #2, #4, #5 implemented and pushed at commit
-> `74b7fb3`; item #3 deliberately **not** done after closer inspection — see
-> writeup. Not yet re-confirmed live in Vercel production for this commit).
+> plan is now complete: items #1, #2, #4, #5 implemented, pushed, and
+> confirmed **READY in Vercel production** on both `my-house-dashboard` and
+> `my-life-dashboard` at commit `7e7550e`; item #3 deliberately **not** done
+> after closer inspection — see writeup. Nothing outstanding from this plan).
 
 ## Engagement/retention audit + plan (2026-07-01)
 The user asked for an app summary suitable for an external AI (Perplexity)
