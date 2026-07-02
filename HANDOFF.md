@@ -7,12 +7,13 @@
 > implemented: `npm run typecheck`, `npm run lint`, default build, and
 > `NEXT_PUBLIC_APP=life` build all pass. Migration `0061_private_section`
 > already applied directly to the live Supabase project
-> (`vbyqbxvffaqkrltzewjz`). Not yet committed/pushed/deploy-confirmed — see
-> bottom of that section for the next step. Could not browser-verify locally:
-> this sandbox has no `.env.local` Supabase credentials, so `next dev` 500s on
-> every route, including pre-existing ones — confirmed this is an environment
-> limitation, not a regression, before proceeding on typecheck/lint/build
-> confidence alone).
+> (`vbyqbxvffaqkrltzewjz`). Committed and pushed to `main`; confirmed **READY
+> in Vercel production** on both `my-house-dashboard` and `my-life-dashboard`
+> at commit `fa0430c`. Nothing outstanding from this batch. Could not
+> browser-verify locally: this sandbox has no `.env.local` Supabase
+> credentials, so `next dev` 500s on every route, including pre-existing
+> ones — confirmed this is an environment limitation, not a regression,
+> before proceeding on typecheck/lint/build confidence alone).
 
 ## Exercise links, contributions edit-toggle, Private section (2026-07-02)
 Three requests in one batch: "add links to exercises, more than one per
@@ -73,10 +74,10 @@ owner-only RLS without being a distinct "thing to look at" the way Journal/
 Health/notes/photos are (e.g. `goals`, `habits`, `reviews` are personal but
 don't carry the same "wouldn't want household to see this" character).
 
-**Next step for whoever picks this up:** commit and push this batch to
-`main` (migration is already live in Supabase — do not re-apply), run the
-Vercel `list_deployments` check for both projects at the commit this lands
-on, and report success once both are READY.
+**Deploy confirmed:** both `my-house-dashboard`
+(`prj_BOUIdAM8EEfh6JI9nrql8K7e67Qb`) and `my-life-dashboard`
+(`prj_TB7Dt9AVg88kp0AX5TXrhXqhsnhx`) are READY in Vercel production at
+commit `fa0430c`. Nothing outstanding from this batch.
 
 ## Compact view + search bars across all list tabs (2026-07-02)
 User request: "make a compact option for every tab, and search bars where
