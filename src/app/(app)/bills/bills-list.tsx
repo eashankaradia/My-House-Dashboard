@@ -1,19 +1,31 @@
 "use client";
 
 import * as React from "react";
-import { Pencil } from "lucide-react";
+import { CheckCircle2, Circle, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
 import { FREQUENCY_LABELS, ITEM_SCOPE_LABELS } from "@/lib/constants";
-import { cn, formatCurrency, formatDate, toMonthly } from "@/lib/utils";
+import { cn, daysUntil, formatCurrency, formatDate, toMonthly } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 import type { MemberMap } from "@/lib/household";
 import type { Bill, BillContributor, BillPayment, HouseholdMember, PaymentAccount } from "@/lib/database.types";
 import { BillForm } from "./bill-form";
 import { BillDetailDialog } from "./bill-detail";
-import { deleteBill } from "./actions";
+import { deleteBill, setPaymentPaid } from "./actions";
+
+const todayStr = () => new Date().toISOString().slice(0, 10);
+
+/** The earliest unpaid payment that's due now or overdue for this bill, if any. */
+function duePaymentFor(payments: BillPayment[], billId: string): BillPayment | null {
+  const today = todayStr();
+  const due = payments
+    .filter((p) => p.bill_id === billId && !p.is_paid && p.payment_date <= today)
+    .sort((a, b) => a.payment_date.localeCompare(b.payment_date));
+  return due[0] ?? null;
+}
 
 export function BillsList({
   bills,
@@ -65,8 +77,9 @@ export function BillsList({
         </div>
       </CardHeader>
       <CardContent className="divide-y">
-        {visibleBills.map((bill) =>
-          compact ? (
+        {visibleBills.map((bill) => {
+          const due = duePaymentFor(payments, bill.id);
+          return compact ? (
             <div key={bill.id} className="flex items-center gap-3 py-2 text-sm first:pt-0 last:pb-0">
               <BillDetailDialog bill={bill} accounts={accounts} payments={payments.filter((payment) => payment.bill_id === bill.id)} contributors={contributors.filter((c) => c.bill_id === bill.id)} members={members} memberMap={memberMap}>
                 <CardTrigger className="flex min-w-0 flex-1 items-center gap-3 rounded-md">
@@ -84,7 +97,8 @@ export function BillsList({
                   </span>
                 </CardTrigger>
               </BillDetailDialog>
-              <div className="flex shrink-0 items-center">
+              <div className="flex shrink-0 items-center gap-1.5">
+                {due ? <MarkPaidButton payment={due} /> : null}
                 <BillForm
                   bill={bill}
                   accounts={accounts}
@@ -120,7 +134,8 @@ export function BillsList({
                   </div>
                 </CardTrigger>
               </BillDetailDialog>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
+                {due ? <MarkPaidButton payment={due} /> : null}
                 <div className="text-right">
                   <p className="font-semibold">{formatCurrency(bill.amount)}</p>
                   <p className="text-xs text-muted-foreground">
@@ -140,9 +155,49 @@ export function BillsList({
                 <ConfirmDelete itemLabel="bill" action={deleteBill.bind(null, bill.id)} />
               </div>
             </div>
-          ),
-        )}
+          );
+        })}
       </CardContent>
     </Card>
+  );
+}
+
+/** Only rendered when a bill has a due-or-overdue unpaid payment — marks it paid in one tap. */
+function MarkPaidButton({ payment }: { payment: BillPayment }) {
+  const [done, setDone] = React.useState(false);
+  const [pending, startTransition] = React.useTransition();
+  const { toast } = useToast();
+  const days = daysUntil(payment.payment_date) ?? 0;
+  const overdue = days < 0;
+
+  if (done) {
+    return (
+      <Badge variant="success" className="shrink-0 gap-1">
+        <CheckCircle2 className="h-3 w-3" /> Paid
+      </Badge>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      onClick={() => {
+        setDone(true);
+        startTransition(async () => {
+          const res = await setPaymentPaid(payment.id, true);
+          if (res?.error) {
+            setDone(false);
+            toast({ variant: "destructive", title: "Couldn't mark paid", description: res.error });
+          }
+        });
+      }}
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
+        overdue ? "border-destructive/30 text-destructive" : "border-amber-500/30 text-amber-600 dark:text-amber-400",
+      )}
+    >
+      <Circle className="h-3 w-3" /> {overdue ? "Overdue" : "Due"} · Mark paid
+    </button>
   );
 }
