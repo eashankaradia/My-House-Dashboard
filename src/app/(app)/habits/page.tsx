@@ -6,6 +6,7 @@ import type { Habit, HabitLog, HabitTarget } from "@/lib/database.types";
 import { getStreak, sumForPeriod } from "@/lib/habit-progress";
 import { HabitsView } from "./habits-view";
 import { HabitForm } from "./habit-form";
+import { StarterHabits } from "./starter-habits";
 
 export const metadata = { title: "Habits" };
 
@@ -47,13 +48,16 @@ export default async function HabitsPage() {
       </PageHeader>
 
       {habits.length === 0 ? (
-        <EmptyState
-          icon={Repeat}
-          title="No habits yet"
-          description="Add your first habit and start building streaks. Whether it's daily exercise, reading, or drinking more water — small habits compound into big results."
-        >
-          <HabitForm />
-        </EmptyState>
+        <div className="space-y-4">
+          <EmptyState
+            icon={Repeat}
+            title="No habits yet"
+            description="Add your first habit and start building streaks. Whether it's daily exercise, reading, or drinking more water — small habits compound into big results."
+          >
+            <HabitForm />
+          </EmptyState>
+          <StarterHabits />
+        </div>
       ) : (
         <>
           {dailyHabits.length > 0 && completedToday.length >= dailyHabits.length ? (
