@@ -25,6 +25,7 @@ import type {
   SavingsPot,
 } from "@/lib/database.types";
 import { monthStr, effectiveIncomeForMonth } from "@/lib/income";
+import { weekStart, weekLabel } from "@/lib/review-periods";
 import { getPinnedItems } from "@/app/(app)/favorites/actions";
 import { DashboardWidget, EditDashboardButton } from "./dashboard-customize";
 import { CollapsibleSection } from "./collapsible-section";
@@ -60,10 +61,15 @@ export default async function DashboardPage() {
   const todayStr = new Date().toISOString().slice(0, 10);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const isHouse = process.env.NEXT_PUBLIC_APP !== "life";
+  const isLife = !isHouse;
   let billsQuery = supabase.from("bills").select("*");
   if (isHouse) billsQuery = billsQuery.eq("scope", "household");
   let purchasesQuery = supabase.from("purchases").select("*").order("created_at", { ascending: false });
   if (isHouse) purchasesQuery = purchasesQuery.eq("scope", "household");
+  const thisWeekStart = weekStart();
+  const weeklyReviewQuery = isLife
+    ? supabase.from("reviews").select("id").eq("period_type", "weekly").eq("period_start", thisWeekStart).maybeSingle()
+    : Promise.resolve({ data: null });
 
   const [
     billsRes,
@@ -83,6 +89,7 @@ export default async function DashboardPage() {
     goalsRes,
     incomeMonthsRes,
     pinnedItems,
+    weeklyReviewRes,
   ] = await Promise.all([
     billsQuery,
     supabase.from("savings_pots").select("*"),
@@ -101,6 +108,7 @@ export default async function DashboardPage() {
     supabase.from("goals").select("*").eq("status", "Active").order("created_at", { ascending: false }).limit(6),
     supabase.from("income_months").select("*").order("month", { ascending: false }),
     getPinnedItems(),
+    weeklyReviewQuery,
   ]);
 
   const bills = (billsRes.data ?? []) as Bill[];
@@ -340,6 +348,11 @@ export default async function DashboardPage() {
     ((user?.user_metadata?.full_name as string) ?? (user?.user_metadata?.name as string) ?? "").split(" ")[0] ||
     "there";
 
+  // Nudge toward the weekly review near the end of the week, only if it's not done yet —
+  // a one-off suggestion, not a daily nag.
+  const weekIsWrappingUp = [5, 6, 0].includes(new Date().getDay());
+  const showReviewNudge = isLife && weekIsWrappingUp && !weeklyReviewRes.data;
+
   return (
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-3">
@@ -360,6 +373,20 @@ export default async function DashboardPage() {
 
       {/* Needs attention — the urgent things, always first */}
       <NeedsAttention items={attention} />
+
+      {/* Weekly review nudge — only near the end of the week, only if not done yet */}
+      {showReviewNudge ? (
+        <Link
+          href="/reviews"
+          className="flex items-center justify-between gap-2 rounded-xl border bg-card px-4 py-3 text-sm transition-colors hover:bg-accent"
+        >
+          <span>
+            <span className="font-medium">How did this week go?</span>{" "}
+            <span className="text-muted-foreground">{weekLabel(thisWeekStart)} — takes a minute.</span>
+          </span>
+          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </Link>
+      ) : null}
 
       {/* Pinned — anything starred across tasks, goals, etc. */}
       {pinnedItems.length > 0 && (
