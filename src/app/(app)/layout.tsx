@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bell } from "lucide-react";
+import { Bell, Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -69,6 +69,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
             <GlobalSearch />
+            {isLife ? (
+              <Link
+                href="/private"
+                className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+                aria-label="Private"
+              >
+                <Lock className="h-5 w-5" />
+              </Link>
+            ) : null}
             <Link
               href="/notifications"
               className="relative rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"

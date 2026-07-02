@@ -2,18 +2,117 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-02 (exercise links, household
-> contributions edit-toggle, and the new Private nav section are all
-> implemented: `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. Migration `0061_private_section`
-> already applied directly to the live Supabase project
-> (`vbyqbxvffaqkrltzewjz`). Committed and pushed to `main`; confirmed **READY
-> in Vercel production** on both `my-house-dashboard` and `my-life-dashboard`
-> at commit `fa0430c`. Nothing outstanding from this batch. Could not
+> after **every** change. Last updated: 2026-07-02 (Private section is now
+> actually password-gated — server-side, via middleware + cookie, not just a
+> UI convenience — plus a mobile nav scrolling bug fix, an Inspiration nav gap
+> fix, a friction-reducing rewrite of the Inspiration capture form, and a
+> realistic redraw of the fitness body diagram. `npm run typecheck`, `npm run
+> lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass. Not yet
+> committed/pushed/deploy-confirmed — see bottom of that section for the next
+> step. Could not
 > browser-verify locally: this sandbox has no `.env.local` Supabase
 > credentials, so `next dev` 500s on every route, including pre-existing
 > ones — confirmed this is an environment limitation, not a regression,
 > before proceeding on typecheck/lint/build confidence alone).
+
+## Private hardening, mobile nav fix, Inspiration friction, realistic body diagram (2026-07-02)
+Follow-up batch after the Private section shipped. The user reported the
+mobile nav couldn't scroll to reach the new Private tabs, and asked for
+Private to become a real password gate (not just a menu item) hidden behind
+an icon where the avatar sits, with sub-tabs not named anywhere in the nav.
+Also asked for general mobile-app polish, help capturing/organising
+Instagram reels and links (reusing the purchases auto-fill pattern), and a
+more realistic fitness body diagram.
+
+### Mobile nav scroll bug — DONE
+Root cause: `SheetContent` (`src/components/ui/sheet.tsx`) had no
+`overflow-y-auto` on its `left`/`right` variants. A `fixed` + `h-full`
+container with overflowing content just clips instead of scrolling — once
+the nav list grew past one screen height (which the earlier Private group
+did), the bottom items became genuinely unreachable on a phone. Added
+`overflow-y-auto` to both variants. This was a real bug affecting the whole
+mobile drawer, not Private-specific.
+
+### Private section: real password gate — DONE, replaces the previous menu-based approach
+The previous batch's implementation (Private nav group + header icon) only
+controlled what was *visible in menus* — a bookmarked or typed URL to
+`/journal` etc. still worked with no gate at all. Rebuilt properly:
+- `src/lib/supabase/middleware.ts`: added `PRIVATE_PATHS = ["/private",
+  "/journal", "/health", "/private-notes", "/private-photos"]`. For a signed-in
+  user hitting any of these without an `private_unlocked=1` cookie, redirect
+  to `/private-unlock?next=<path>` before the route ever renders.
+- New `/private-unlock` (top-level route, outside the `(app)` layout group —
+  no chrome, same treatment as `/login`): a password form. Correct password
+  (literally `"password"`, as requested — this is a glance-deterrent, not
+  real security; Supabase RLS is still the actual access-control boundary)
+  sets an httpOnly cookie for 24h via a server action and redirects to `next`.
+- New `/private` hub page (inside `(app)`, so it keeps the normal chrome once
+  unlocked): lists Journal, Health, Private Notes, Private Photos as cards —
+  "all sub tabs... inside it," and nowhere else. Has a "Lock now" button
+  (clears the cookie immediately instead of waiting 24h).
+- Header: a plain `Lock` icon `Link` to `/private`, placed in the icon
+  cluster right before the avatar/initials menu — "where the initial icon
+  is" — MyLife only.
+- Removed the "Private" nav group entirely from `LIFE_NAV_ITEMS`/
+  `LIFE_NAV_GROUPS` (constants.ts) and the "Private" quick-add pills from
+  `add-menu.tsx` — sub-tab names no longer appear in the sidebar, mobile
+  drawer, global search (which spreads `NAV_ITEMS`), or the + menu; the lock
+  icon → hub page is the only entry point now.
+- `DEFAULT_BOTTOM_TABS` had `/journal` as a MyLife default — swapped for
+  `/projects`, since a default bottom-bar tab pointing at a now-gated,
+  unlisted route would have silently vanished from new users' bar.
+
+### Inspiration: closed a real nav gap + cut form friction — DONE
+Investigation found `Inspiration` — a fully-built feature (link/reel
+capture, collections, Instagram/TikTok/YouTube oEmbed preview, the same
+`fetchLinkPreview` auto-fill used by Purchases) — was **only in the MyHouse
+nav**, never in MyLife's. The "+" menu already had a quick-add "Idea" pill
+for both apps, so reels *could* be captured, but there was no tab to ever
+go back and browse/organise them. Added `Inspiration` to `LIFE_NAV_ITEMS`
+(group "More"). Also fixed a real bug in `inspiration-form.tsx`: the
+auto-fill fetch already pulled `res.title` from the page's OG/Twitter meta
+tags but silently discarded it, forcing every saved item's title to become
+the URL hostname or notes text instead. Now `res.title` populates the title
+field directly. Added `sourceFromUrl()` to auto-detect Instagram/TikTok/
+Pinterest/YouTube from the link so that dropdown fills itself too, and
+auto-fill now runs on blur (paste a link, tab away, it's already filled) as
+well as via the explicit button. Collapsed Category/Room/Priority/Status/
+Collection/Tags behind a "More details" disclosure (closed by default) so
+the default capture flow is paste-link → glance → save, matching the
+"reduce data input" ask. Added Fitness/Nutrition/Personal Growth/Style to
+`INSPIRATION_CATEGORIES` since the existing list was entirely home-
+renovation-flavored (Garden/Kitchen/etc.) and didn't fit MyLife content.
+
+### Fitness body diagram: realistic redraw — DONE
+`body-diagram.tsx` fully rewritten. Previously: uniform-width stroked
+capsules for every limb, a single giant rounded-rect for abs, a single wide
+oval for glutes. Now: limbs are tapered filled shapes (wider proximal,
+narrower distal, rounded joint cap — computed by hand via perpendicular
+offset from each limb's centerline, since SVG strokes can't taper), abs are
+a six-block grid, glutes are two separate rounded shapes, chest uses
+pec-shaped curves instead of plain ellipses, and the back view gained a
+traps triangle plus a V-taper lat shape instead of a flat quadrilateral.
+Same `highlighted: string[]` prop contract and `MUSCLE_GROUPS` mapping —
+purely a visual rewrite. Verified by rendering the raw SVG paths in a
+headless-Chromium screenshot (fetched `playwright-core` via `npx` since it
+isn't a project dependency) before committing — confirmed no malformed/
+self-intersecting paths and correct left-right mirroring.
+
+### Edit-toggle audit — light pass, nothing further found
+Re-scanned a few likely candidates (Goals, Essentials) after the household-
+contributions fix from the previous batch; both already follow the
+click-to-edit-via-dialog convention with no always-visible clutter. No
+further changes made — avoided manufacturing busywork just to have
+something to report here.
+
+**Verification:** `npx tsc --noEmit`, `npm run lint`, `npm run build`, and
+`NEXT_PUBLIC_APP=life npm run build` all pass clean. Could not browser-test
+in this sandbox (no local Supabase credentials — confirmed via `next dev`
+that this 500s on every route, not just new ones).
+
+**Next step for whoever picks this up:** commit and push this batch to
+`main`, run the Vercel `list_deployments` check for both projects at the
+commit this lands on, and report success once both are READY.
 
 ## Exercise links, contributions edit-toggle, Private section (2026-07-02)
 Three requests in one batch: "add links to exercises, more than one per

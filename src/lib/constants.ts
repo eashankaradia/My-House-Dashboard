@@ -17,17 +17,13 @@ import {
   FileText,
   NotebookPen,
   Dumbbell,
-  Heart,
   Utensils,
   Repeat,
   Target,
-  BookOpen,
   Wallet,
   ListChecks,
   SunMoon,
   ClipboardCheck,
-  Lock,
-  Images,
   type LucideIcon,
 } from "lucide-react";
 
@@ -71,7 +67,7 @@ const HOUSE_NAV_ITEMS: NavItem[] = [
 
 // ─── MyLife nav ───────────────────────────────────────────────────────────────
 
-const LIFE_NAV_GROUPS = ["Home", "Health", "Finances", "Planner", "Private", "More"] as const;
+const LIFE_NAV_GROUPS = ["Home", "Health", "Finances", "Planner", "More"] as const;
 
 const LIFE_NAV_ITEMS: NavItem[] = [
   // Home
@@ -91,12 +87,8 @@ const LIFE_NAV_ITEMS: NavItem[] = [
   { title: "Future Purchases", short: "Purchases", href: "/purchases", icon: ShoppingBag, description: "Your personal wishlist", group: "Planner" },
   { title: "Essentials", href: "/essentials", icon: ListChecks, description: "What you need, what you have", group: "Planner" },
   { title: "Reviews", href: "/reviews", icon: ClipboardCheck, description: "Weekly & monthly check-ins", group: "Planner" },
-  // Private — never shared with the household, only visible to you
-  { title: "Journal", href: "/journal", icon: BookOpen, description: "Daily reflections & mood", group: "Private" },
-  { title: "Health", href: "/health", icon: Heart, description: "Records, appointments & medication", group: "Private" },
-  { title: "Private Notes", short: "Priv. notes", href: "/private-notes", icon: Lock, description: "Freeform notes only you can see", group: "Private" },
-  { title: "Private Photos", short: "Priv. photos", href: "/private-photos", icon: Images, description: "Photos only you can see", group: "Private" },
   // More
+  { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Save reels, links & ideas", group: "More" },
   { title: "Notes & Links", short: "Notes", href: "/notes", icon: NotebookPen, description: "Quick notes and useful links", group: "More" },
   { title: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later", group: "More" },
 ];
@@ -202,6 +194,7 @@ export const INSPIRATION_SOURCES = [
 
 export const INSPIRATION_CATEGORIES = [
   "Garden", "Kitchen", "Living Room", "Bedroom", "Bathroom", "Storage", "DIY", "Renovation", "Decor",
+  "Fitness", "Nutrition", "Personal Growth", "Style",
 ] as const;
 
 export const INSPIRATION_STATUSES = ["Saved", "Considering", "Planned", "Implemented"] as const;

@@ -6,6 +6,10 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 const PUBLIC_PATHS = ["/login", "/auth"];
 
+/** Routes that live behind the Private password gate (see /private-unlock). */
+const PRIVATE_PATHS = ["/private", "/journal", "/health", "/private-notes", "/private-photos"];
+const PRIVATE_UNLOCK_COOKIE = "private_unlocked";
+
 /**
  * Refreshes the Supabase auth session on every request and guards the app:
  * unauthenticated users are redirected to /login, signed-in users hitting
@@ -50,6 +54,17 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
+  }
+
+  if (user) {
+    const isPrivate = PRIVATE_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+    if (isPrivate && request.cookies.get(PRIVATE_UNLOCK_COOKIE)?.value !== "1") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/private-unlock";
+      url.search = "";
+      url.searchParams.set("next", pathname);
+      return NextResponse.redirect(url);
+    }
   }
 
   return response;

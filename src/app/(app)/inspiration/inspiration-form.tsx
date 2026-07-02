@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Pencil, Plus } from "lucide-react";
+import { ChevronDown, ChevronRight, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,12 +39,27 @@ type Props = {
   trigger?: React.ReactNode;
 };
 
+/** Detect the source platform from a URL's hostname, so it doesn't need picking by hand. */
+function sourceFromUrl(link: string): (typeof INSPIRATION_SOURCES)[number] | null {
+  try {
+    const host = new URL(link).hostname.replace(/^www\./, "");
+    if (host.includes("instagram.com")) return "Instagram";
+    if (host.includes("tiktok.com")) return "TikTok";
+    if (host.includes("pinterest.") || host.includes("pin.it")) return "Pinterest";
+    if (host.includes("youtube.com") || host.includes("youtu.be")) return "YouTube";
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export function InspirationForm({ inspiration, collections, trigger }: Props) {
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
   const editing = Boolean(inspiration);
   const rooms = useRooms();
+  const [showMore, setShowMore] = React.useState(editing);
 
   const [fetching, setFetching] = React.useState(false);
   const {
@@ -58,7 +73,7 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
   } = useForm<InspirationInput>({
     resolver: zodResolver(inspirationSchema),
     defaultValues: {
-      title: inspiration?.title ?? "Saved idea",
+      title: inspiration?.title ?? "",
       link: inspiration?.link ?? "",
       source: inspiration?.source ?? "Instagram",
       category: inspiration?.category ?? "",
@@ -82,12 +97,27 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
       toast({ variant: "destructive", title: "Couldn't auto-fill", description: res.error });
       return;
     }
-    if (res.title && !getValues("notes")) setValue("notes", res.title.slice(0, 500));
+    if (res.title) setValue("title", res.title.slice(0, 160));
     if (res.image) setValue("image_url", res.image);
+    const detected = sourceFromUrl(link);
+    if (detected) setValue("source", detected);
     toast({ title: "Filled from link" });
   }
 
+  // Auto-run the fetch as soon as a link is pasted in, so saving a reel is
+  // "paste, glance, save" rather than "paste, tap Auto-fill, glance, save".
+  function onLinkBlur() {
+    const link = getValues("link");
+    if (link && !getValues("title")) autofill();
+    else if (link) {
+      const detected = sourceFromUrl(link);
+      if (detected) setValue("source", detected);
+    }
+  }
+
   function titleFrom(values: InspirationInput) {
+    const title = values.title?.trim();
+    if (title) return title.slice(0, 160);
     const link = values.link?.trim();
     if (!link) return values.notes?.trim().slice(0, 160) || "Saved idea";
     try {
@@ -129,76 +159,91 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
           <DialogDescription>Paste a link from Instagram, TikTok, Pinterest and more.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <input type="hidden" {...register("title")} />
-          <Field label="Link (URL)" htmlFor="link" tooltip="Paste a link, then tap Auto-fill to pull the description and image.">
+          <Field label="Link (URL)" htmlFor="link" tooltip="Paste a link — it fills in the title and image for you.">
             <div className="flex gap-2">
-              <Input id="link" type="url" placeholder="https://…" {...register("link")} />
+              <Input id="link" type="url" placeholder="https://…" {...register("link")} onBlur={onLinkBlur} />
               <Button type="button" variant="outline" onClick={autofill} disabled={fetching} className="shrink-0">
                 {fetching ? "…" : "Auto-fill"}
               </Button>
             </div>
           </Field>
+          <Field label="Title" htmlFor="title">
+            <Input id="title" placeholder="Filled in automatically from the link" {...register("title")} />
+          </Field>
           <Field label="Photo" hint="Upload or auto-filled from the link">
             <ImageUpload value={watch("image_url")} onChange={(url) => setValue("image_url", url ?? "")} />
             <input type="hidden" {...register("image_url")} />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Source">
-              <NativeSelect {...register("source")}>
-                {INSPIRATION_SOURCES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </NativeSelect>
-            </Field>
-            <Field label="Category">
-              <NativeSelect {...register("category")}>
-                <option value="">—</option>
-                {INSPIRATION_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </NativeSelect>
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Room">
-              <NativeSelect {...register("room")}>
-                <option value="">—</option>
-                {rooms.map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </NativeSelect>
-            </Field>
-            <Field label="Collection">
-              <NativeSelect {...register("collection_id")}>
-                <option value="">— None —</option>
-                {collections.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </NativeSelect>
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Priority">
-              <NativeSelect {...register("priority")}>
-                {PRIORITIES.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </NativeSelect>
-            </Field>
-            <Field label="Status">
-              <NativeSelect {...register("status")}>
-                {INSPIRATION_STATUSES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </NativeSelect>
-            </Field>
-          </div>
-          <Field label="Tags" htmlFor="tags" hint="Comma-separated, e.g. modern, oak, shelving">
-            <Input id="tags" placeholder="modern, oak, shelving" {...register("tags")} />
+          <Field label="Source">
+            <NativeSelect {...register("source")}>
+              {INSPIRATION_SOURCES.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </NativeSelect>
           </Field>
-          <Field label="Description" htmlFor="notes" hint="Auto-fill can pull this from the link.">
+          <Field label="Notes" htmlFor="notes">
             <Textarea id="notes" rows={2} placeholder="What stood out about this idea?" {...register("notes")} />
           </Field>
+
+          <button
+            type="button"
+            onClick={() => setShowMore((v) => !v)}
+            className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            {showMore ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            More details
+          </button>
+
+          {showMore ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Category">
+                  <NativeSelect {...register("category")}>
+                    <option value="">—</option>
+                    {INSPIRATION_CATEGORIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+                <Field label="Room">
+                  <NativeSelect {...register("room")}>
+                    <option value="">—</option>
+                    {rooms.map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Priority">
+                  <NativeSelect {...register("priority")}>
+                    {PRIORITIES.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+                <Field label="Status">
+                  <NativeSelect {...register("status")}>
+                    {INSPIRATION_STATUSES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+              </div>
+              <Field label="Collection">
+                <NativeSelect {...register("collection_id")}>
+                  <option value="">— None —</option>
+                  {collections.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </NativeSelect>
+              </Field>
+              <Field label="Tags" htmlFor="tags" hint="Comma-separated, e.g. modern, oak, shelving">
+                <Input id="tags" placeholder="modern, oak, shelving" {...register("tags")} />
+              </Field>
+            </div>
+          ) : null}
+
           <DialogFooter className="sm:justify-between">
             {editing && inspiration ? (
               <FormDeleteButton
