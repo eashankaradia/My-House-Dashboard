@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Archive, Coffee, Flag, LayoutList, Plus, Table2, Tag, Trash2, X } from "lucide-react";
+import { Archive, Coffee, Flag, LayoutList, Plus, Rows3, Table2, Tag, Trash2, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import { AddToCalendar } from "@/components/shared/add-to-calendar";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
 import { FavoriteToggle } from "@/components/shared/favorite-toggle";
+import { SearchInput } from "@/components/shared/search-input";
 import { TagInput } from "@/components/shared/tag-input";
 import { useToast } from "@/hooks/use-toast";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
@@ -57,10 +58,11 @@ export function TasksView({
   const [onlyMine, setOnlyMine] = React.useState(false);
   const [scopeFilter, setScopeFilter] = React.useState<"all" | "personal" | "household">("all");
   const [activeTag, setActiveTag] = React.useState<string | null>(null);
+  const [search, setSearch] = React.useState("");
   const [view, setView] = useViewPref("tasks");
-  // Tables scroll sideways on phones — always use the stacked list there.
+  // Tables scroll sideways on phones — fall back to compact there instead.
   const isMobile = useIsMobile();
-  const effectiveView = isMobile ? "detailed" : view;
+  const effectiveView = isMobile && view === "table" ? "compact" : view;
 
   const members: Member[] = React.useMemo(
     () => Object.entries(memberMap).map(([id, name]) => ({ id, name })),
@@ -85,7 +87,8 @@ export function TasksView({
 
   const visible = (onlyMine ? tasks.filter(isMine) : tasks)
     .filter((t) => (scopeFilter === "all" ? true : t.scope === scopeFilter))
-    .filter((t) => !activeTag || t.tags.includes(activeTag));
+    .filter((t) => !activeTag || t.tags.includes(activeTag))
+    .filter((t) => (!search.trim() ? true : t.title.toLowerCase().includes(search.trim().toLowerCase())));
   // Eisenhower-lite: important tasks float to the top of "To do", then by due date.
   const outstanding = visible
     .filter((t) => !t.is_done && !t.is_bored_task)
@@ -101,6 +104,8 @@ export function TasksView({
   return (
     <div className="space-y-6">
       <AddTaskForm projects={projects} members={members} />
+
+      <SearchInput value={search} onChange={setSearch} placeholder="Search tasks…" className="max-w-sm" />
 
       <div className="flex flex-wrap items-center justify-end gap-2">
         {isLife ? (
@@ -126,18 +131,25 @@ export function TasksView({
             </button>
           </div>
         ) : null}
-        <div className="hidden items-center rounded-lg border p-0.5 sm:flex">
+        <div className="flex items-center rounded-lg border p-0.5">
           <button
             onClick={() => setView("detailed")}
             aria-label="List view"
-            className={cn("rounded-md p-1.5 text-muted-foreground", view !== "table" && "bg-accent text-foreground")}
+            className={cn("rounded-md p-1.5 text-muted-foreground", view === "detailed" && "bg-accent text-foreground")}
           >
             <LayoutList className="h-4 w-4" />
           </button>
           <button
+            onClick={() => setView("compact")}
+            aria-label="Compact view"
+            className={cn("rounded-md p-1.5 text-muted-foreground", view === "compact" && "bg-accent text-foreground")}
+          >
+            <Rows3 className="h-4 w-4" />
+          </button>
+          <button
             onClick={() => setView("table")}
             aria-label="Table view"
-            className={cn("rounded-md p-1.5 text-muted-foreground", view === "table" && "bg-accent text-foreground")}
+            className={cn("hidden rounded-md p-1.5 text-muted-foreground sm:block", view === "table" && "bg-accent text-foreground")}
           >
             <Table2 className="h-4 w-4" />
           </button>
@@ -184,7 +196,7 @@ export function TasksView({
                 <p className="py-4 text-center text-sm text-muted-foreground">Nothing outstanding 🎉</p>
               ) : (
                 outstanding.map((task) => (
-                  <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} favoriteTaskIds={favoriteTaskIds} />
+                  <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} favoriteTaskIds={favoriteTaskIds} compact={effectiveView === "compact"} />
                 ))
               )}
             </CardContent>
@@ -202,7 +214,7 @@ export function TasksView({
                 <p className="py-4 text-center text-sm text-muted-foreground">Nothing here yet — mark a task &quot;when bored&quot; to stash it here.</p>
               ) : (
                 bored.map((task) => (
-                  <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} favoriteTaskIds={favoriteTaskIds} />
+                  <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} favoriteTaskIds={favoriteTaskIds} compact={effectiveView === "compact"} />
                 ))
               )}
             </CardContent>
@@ -216,7 +228,7 @@ export function TasksView({
               </CardHeader>
               <CardContent className="space-y-1.5">
                 {done.map((task) => (
-                  <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} favoriteTaskIds={favoriteTaskIds} />
+                  <TaskRow key={task.id} task={task} projects={projects} members={members} project={projectName(task.project_id)} memberMap={memberMap} favoriteTaskIds={favoriteTaskIds} compact={effectiveView === "compact"} />
                 ))}
               </CardContent>
             </Card>
@@ -450,6 +462,7 @@ function TaskRow({
   project,
   memberMap,
   favoriteTaskIds,
+  compact = false,
 }: {
   task: ProjectTask;
   projects: ProjectOption[];
@@ -457,35 +470,38 @@ function TaskRow({
   project: string | null;
   memberMap: MemberMap;
   favoriteTaskIds: Set<string>;
+  compact?: boolean;
 }) {
   const [pending, startTransition] = React.useTransition();
   const days = daysUntil(task.due_date);
   const assignee = task.assigned_to ? memberMap[task.assigned_to] : null;
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border p-2.5">
+    <div className={cn("flex items-center gap-3 rounded-lg border", compact ? "p-2" : "p-2.5")}>
       <Checkbox
         checked={task.is_done}
         onCheckedChange={() => startTransition(async () => void (await toggleTask(task.id, !task.is_done)))}
       />
-      <FavoriteToggle entityType="task" entityId={task.id} initialFavorited={favoriteTaskIds.has(task.id)} />
+      {!compact ? <FavoriteToggle entityType="task" entityId={task.id} initialFavorited={favoriteTaskIds.has(task.id)} /> : null}
       <TaskEditDialog task={task} projects={projects} members={members}>
         <CardTrigger className="min-w-0 flex-1 rounded-md hover:underline">
           <span className={cn("flex items-center gap-1.5 truncate text-sm", task.is_done && "text-muted-foreground line-through")}>
             {task.is_important ? <Flag className="h-3.5 w-3.5 shrink-0 text-primary" /> : null}
             {task.title}
           </span>
-          <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-            {project ? <Badge variant="secondary">{project}</Badge> : null}
-            {assignee ? <Badge variant="outline">{assignee}</Badge> : null}
-            {task.due_date ? <span>Due {formatDate(task.due_date)}</span> : null}
-            {task.tags.map((tag) => (
-              <Badge key={tag} variant="outline" className="gap-1">
-                <Tag className="h-3 w-3" /> {tag}
-              </Badge>
-            ))}
-            <AddedBy name={memberMap[task.user_id]} />
-          </div>
+          {!compact ? (
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+              {project ? <Badge variant="secondary">{project}</Badge> : null}
+              {assignee ? <Badge variant="outline">{assignee}</Badge> : null}
+              {task.due_date ? <span>Due {formatDate(task.due_date)}</span> : null}
+              {task.tags.map((tag) => (
+                <Badge key={tag} variant="outline" className="gap-1">
+                  <Tag className="h-3 w-3" /> {tag}
+                </Badge>
+              ))}
+              <AddedBy name={memberMap[task.user_id]} />
+            </div>
+          ) : null}
         </CardTrigger>
       </TaskEditDialog>
       {task.due_date && !task.is_done ? (
@@ -495,7 +511,7 @@ function TaskRow({
           <Badge variant="warning">{days}d</Badge>
         ) : null
       ) : null}
-      {task.due_date ? <AddToCalendar title={task.title} date={task.due_date} description={project ?? ""} /> : null}
+      {task.due_date && !compact ? <AddToCalendar title={task.title} date={task.due_date} description={project ?? ""} /> : null}
       <button
         onClick={() => startTransition(async () => void (await deleteTask(task.id)))}
         disabled={pending}

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
+import { SearchInput } from "@/components/shared/search-input";
 import { FREQUENCY_LABELS, ITEM_SCOPE_LABELS } from "@/lib/constants";
 import { cn, daysUntil, formatCurrency, formatDate, toMonthly } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -44,15 +45,19 @@ export function BillsList({
 }) {
   const [compact, setCompact] = React.useState(true);
   const [scopeFilter, setScopeFilter] = React.useState<"all" | "personal" | "household">("all");
+  const [search, setSearch] = React.useState("");
   const isLife = process.env.NEXT_PUBLIC_APP === "life";
   const accountNames = new Map(accounts.map((account) => [account.id, account.name]));
-  const visibleBills = bills.filter((b) => (scopeFilter === "all" ? true : b.scope === scopeFilter));
+  const visibleBills = bills
+    .filter((b) => (scopeFilter === "all" ? true : b.scope === scopeFilter))
+    .filter((b) => (!search.trim() ? true : b.name.toLowerCase().includes(search.trim().toLowerCase())));
 
   return (
     <Card>
       <CardHeader className="flex-col items-stretch gap-2 space-y-0 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle>All bills</CardTitle>
         <div className="flex flex-wrap items-center gap-2">
+          <SearchInput value={search} onChange={setSearch} placeholder="Search bills…" className="w-full sm:w-48" />
           {isLife ? (
             <div className="flex items-center rounded-lg border p-0.5 text-xs">
               {(["all", "household", "personal"] as const).map((s) => (

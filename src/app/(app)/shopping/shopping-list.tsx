@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AddedBy } from "@/components/shared/added-by";
+import { SearchInput } from "@/components/shared/search-input";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -22,14 +23,19 @@ export function ShoppingList({
 }) {
   const [name, setName] = React.useState("");
   const [quantity, setQuantity] = React.useState("");
+  const [search, setSearch] = React.useState("");
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
 
+  const visibleItems = items.filter((i) =>
+    !search.trim() ? true : i.name.toLowerCase().includes(search.trim().toLowerCase()),
+  );
+
   // Outstanding items first (newest first), then got items (most recent got).
-  const needed = items
+  const needed = visibleItems
     .filter((i) => !i.is_got)
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
-  const got = items
+  const got = visibleItems
     .filter((i) => i.is_got)
     .sort((a, b) => (b.got_at ?? "").localeCompare(a.got_at ?? ""));
 
@@ -87,31 +93,42 @@ export function ShoppingList({
           description="Add the things you need to pick up — everyone in the household sees the same list."
         />
       ) : (
-        <Card>
-          <CardContent className="divide-y p-0">
-            {needed.map((item) => (
-              <Row key={item.id} item={item} memberMap={memberMap} disabled={pending} onToggle={run} onDelete={run} />
-            ))}
-            {got.length > 0 ? (
-              <div className="flex items-center justify-between gap-2 bg-muted/30 px-4 py-2">
-                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Got it ({got.length})
-                </span>
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => run(() => clearGotItems())}
-                  className="text-xs text-muted-foreground hover:text-destructive"
-                >
-                  Clear got
-                </button>
-              </div>
-            ) : null}
-            {got.map((item) => (
-              <Row key={item.id} item={item} memberMap={memberMap} disabled={pending} onToggle={run} onDelete={run} />
-            ))}
-          </CardContent>
-        </Card>
+        <>
+          {items.length > 8 ? (
+            <SearchInput value={search} onChange={setSearch} placeholder="Search list…" className="max-w-sm" />
+          ) : null}
+          {visibleItems.length === 0 ? (
+            <p className="rounded-xl border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
+              Nothing matches that search.
+            </p>
+          ) : (
+            <Card>
+              <CardContent className="divide-y p-0">
+                {needed.map((item) => (
+                  <Row key={item.id} item={item} memberMap={memberMap} disabled={pending} onToggle={run} onDelete={run} />
+                ))}
+                {got.length > 0 ? (
+                  <div className="flex items-center justify-between gap-2 bg-muted/30 px-4 py-2">
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Got it ({got.length})
+                    </span>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => run(() => clearGotItems())}
+                      className="text-xs text-muted-foreground hover:text-destructive"
+                    >
+                      Clear got
+                    </button>
+                  </div>
+                ) : null}
+                {got.map((item) => (
+                  <Row key={item.id} item={item} memberMap={memberMap} disabled={pending} onToggle={run} onDelete={run} />
+                ))}
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </div>
   );

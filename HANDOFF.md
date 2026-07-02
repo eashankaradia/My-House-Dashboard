@@ -2,11 +2,96 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (the engagement/retention
-> plan is now complete: items #1, #2, #4, #5 implemented, pushed, and
-> confirmed **READY in Vercel production** on both `my-house-dashboard` and
-> `my-life-dashboard` at commit `7e7550e`; item #3 deliberately **not** done
-> after closer inspection — see writeup. Nothing outstanding from this plan).
+> after **every** change. Last updated: 2026-07-02 (compact-view + search-bar
+> pass across every list-style nav tab is complete: `npm run typecheck`,
+> `npm run lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass;
+> committed and pushed to `main`; Vercel production deploy pending
+> confirmation — see bottom of this section for the next step).
+
+## Compact view + search bars across all list tabs (2026-07-02)
+User request: "make a compact option for every tab, and search bars where
+necessary." Audited every nav tab (via an Explore subagent inventory) to
+find which already had a compact/detailed toggle and/or search, then filled
+every real gap. New shared component: `src/components/shared/search-input.tsx`
+(`SearchInput` — icon-left input with a clear `X` button), used everywhere
+search was added below, deduping what had been copy-pasted inline in a few
+places already.
+
+Convention used everywhere a toggle was added (matches the pre-existing
+Bills/Maintenance/Essentials pattern): a `flex items-center rounded-lg
+border p-0.5 text-xs` wrapper with "Detailed"/"Compact" text buttons toggling
+local `compact` state — no persistence, no schema/migration involved anywhere
+in this batch.
+
+**Added compact toggle + search:**
+- **Documents** (`documents/`) — extracted the previously-inline
+  server-rendered grouped list out of `page.tsx` into a new client
+  `documents-list.tsx` (owns `compact`/`search` state, same pattern as
+  `BillsList`). `ListRow` (shared component) gained a `compact?: boolean`
+  prop that tightens vertical padding and hides the meta subtext line;
+  `DocumentRow` forwards it through.
+- **Notes & Links** (`notes/`) — same extraction, new `notes-links-view.tsx`
+  client component. One shared compact toggle affects both the links grid
+  and notes grid (hides descriptions/preview text, tighter padding, denser
+  grid columns); search boxes are per-section (links vs notes) and only
+  render once a section has more than 5 items.
+- **Nutrition / recipes** (`nutrition/nutrition-view.tsx`) — compact mode
+  swaps the card-grid layout for a dense single-line list (thumbnail + name
+  + kcal/ingredient count); search filters by recipe name.
+- **Journal** (`journal/`) — extracted past-entries rendering into new
+  `journal-entries-list.tsx`; compact mode collapses each entry to one row
+  (date + mood emoji only); search matches date/content/gratitude text, only
+  shown once there are more than 5 entries.
+
+**Search bar only (rows already compact by design, so no toggle needed):**
+- **Purchases** (`purchases-grid.tsx`) — search by name.
+- **Bills** (`bills-list.tsx`) — search by name (compact toggle pre-existed).
+- **Maintenance** (`maintenance-list.tsx`) — search by task name (compact
+  toggle pre-existed); header made responsive (`flex-col` on mobile).
+- **Essentials** (`essentials-view.tsx`) — search by name, chained after the
+  existing RAG-filter (compact toggle pre-existed).
+- **Reviews** (`reviews-view.tsx`) — search past reviews (went-well/stuck/
+  stop-doing/priorities text), only shown once a tab has more than 3 past
+  entries.
+- **Groceries** (`shopping/shopping-list.tsx`) — search by item name, only
+  shown once the list has more than 8 items; no compact toggle added since
+  rows are already a single dense line (checkbox + name + qty).
+
+**Added compact toggle + search (most involved change):**
+- **Tasks** (`tasks-view.tsx`) — added a third `Rows3`-icon view button
+  (List/Compact/Table, Table hidden below `sm:`). Mobile fallback logic
+  changed from always forcing `"detailed"` to forcing `"compact"` only when
+  the (desktop-only) table view was selected — compact is a better mobile
+  default now that it exists. `TaskRow` gained a `compact?: boolean` prop:
+  hides the favourite star and the metadata sub-row (project/assignee
+  badges, due-date text, tags, AddedBy, calendar-add button) but keeps the
+  urgency badge and delete button visible in both modes. Search filters by
+  title.
+- **Projects** (`projects-views.tsx`) — Detailed/Compact toggle shown only
+  in list view (board view already has its own compact card style via the
+  pre-existing `ProjectCard compact` prop, now also wired from list view's
+  new toggle instead of being hardcoded `false`). Search filters by name.
+
+**Deliberately left unchanged:**
+- **Inspiration** (`inspiration-hub.tsx`) — already has four density modes
+  (feed/masonry/cards/list, the last of which already serves as "compact")
+  plus an existing search box covering title/notes/category/source/tags.
+  Adding another toggle would be redundant.
+- Fitness, Photos, Health, Finance, Savings, Rooms, Habits, Routine, Goals,
+  Drafts, Activity, Mortgage, Analytics, Calendar, Dashboard — judged (via
+  the Explore-agent inventory plus direct inspection) not to be dense
+  scrolling lists that benefit from a compact/search treatment; left as-is
+  to avoid adding UI that doesn't serve a real need.
+
+**Verification:** `npx tsc --noEmit` clean after every file group; final
+full-batch `npm run typecheck`, `npm run lint`, `npm run build`, and
+`NEXT_PUBLIC_APP=life npm run build` all pass clean.
+
+**Next step for whoever picks this up:** confirm Vercel production
+deployment READY on both `my-house-dashboard`
+(`prj_BOUIdAM8EEfh6JI9nrql8K7e67Qb`) and `my-life-dashboard`
+(`prj_TB7Dt9AVg88kp0AX5TXrhXqhsnhx`) at the commit this batch lands on, then
+update this banner to confirm.
 
 ## Engagement/retention audit + plan (2026-07-01)
 The user asked for an app summary suitable for an external AI (Perplexity)

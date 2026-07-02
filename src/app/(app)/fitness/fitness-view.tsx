@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Trophy, ChevronRight, Search, X } from "lucide-react";
+import { Trophy, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/shared/search-input";
 import { MUSCLE_GROUPS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Exercise, MuscleLink, WorkoutPlan, WorkoutPlanExercise } from "@/lib/database.types";
@@ -67,25 +67,7 @@ export function FitnessView({ plans, planExercises, exercises, muscleLinks }: Pr
       <section className="space-y-2">
         <h2 className="px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Exercise library</h2>
 
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search exercises…"
-            className="pl-9"
-          />
-          {search ? (
-            <button
-              type="button"
-              onClick={() => setSearch("")}
-              aria-label="Clear search"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          ) : null}
-        </div>
+        <SearchInput value={search} onChange={setSearch} placeholder="Search exercises…" />
 
         {usedMuscles.length > 0 ? (
           <div className="flex flex-wrap items-center gap-1.5">

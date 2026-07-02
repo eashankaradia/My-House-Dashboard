@@ -1,10 +1,10 @@
-import { BookOpen, Calendar } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import type { JournalEntry } from "@/lib/database.types";
-import { MOOD_OPTIONS } from "@/lib/constants";
 import { JournalForm } from "./journal-form";
+import { JournalEntriesList } from "./journal-entries-list";
 
 export const metadata = { title: "Journal" };
 
@@ -54,48 +54,7 @@ export default async function JournalPage() {
           <JournalForm />
         </EmptyState>
       ) : (
-        <div className="space-y-2">
-          <h2 className="px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Past entries
-          </h2>
-          <div className="space-y-2">
-            {entries.map((entry) => {
-              const mood = MOOD_OPTIONS.find((m) => m.value === entry.mood);
-              return (
-                <button
-                  key={entry.id}
-                  className="w-full rounded-xl border bg-card px-5 py-4 text-left transition-all hover:shadow-sm active:scale-[0.99]"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-sm font-medium">
-                        {new Date(entry.entry_date + "T00:00:00").toLocaleDateString("en-GB", {
-                          weekday: "long",
-                          day: "numeric",
-                          month: "long",
-                        })}
-                      </p>
-                    </div>
-                    {mood && (
-                      <span className="text-lg" title={mood.label}>
-                        {mood.emoji}
-                      </span>
-                    )}
-                  </div>
-                  {entry.content && (
-                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{entry.content}</p>
-                  )}
-                  {entry.gratitude && (
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">Grateful for:</span> {entry.gratitude}
-                    </p>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <JournalEntriesList entries={entries} />
       )}
     </div>
   );

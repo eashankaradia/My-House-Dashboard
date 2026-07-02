@@ -4,6 +4,7 @@ import * as React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, CalendarRange } from "lucide-react";
+import { SearchInput } from "@/components/shared/search-input";
 import type { Review } from "@/lib/database.types";
 import { weekLabel as formatWeekLabel, monthLabel as formatMonthLabel } from "@/lib/review-periods";
 import { ReviewForm } from "./review-form";
@@ -72,12 +73,25 @@ export function ReviewsView({
 }
 
 function PastReviews({ reviews, format }: { reviews: Review[]; format: (periodStart: string) => string }) {
+  const [search, setSearch] = React.useState("");
   if (reviews.length === 0) return null;
+  const visible = reviews.filter((r) => {
+    if (!search.trim()) return true;
+    const q = search.trim().toLowerCase();
+    const hay = [format(r.period_start), r.went_well, r.stuck, r.stop_doing, r.priorities].filter(Boolean).join(" ").toLowerCase();
+    return hay.includes(q);
+  });
   return (
     <div className="space-y-2">
-      <h2 className="px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Past reviews</h2>
+      <div className="flex items-center justify-between gap-2 px-1">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Past reviews</h2>
+      </div>
+      {reviews.length > 3 ? <SearchInput value={search} onChange={setSearch} placeholder="Search past reviews…" /> : null}
       <div className="space-y-2">
-        {reviews.map((r) => (
+        {visible.length === 0 ? (
+          <p className="px-1 text-sm text-muted-foreground">No reviews match that search.</p>
+        ) : null}
+        {visible.map((r) => (
           <details key={r.id} className="rounded-lg border px-4 py-2.5">
             <summary className="cursor-pointer text-sm font-medium">{format(r.period_start)}</summary>
             <div className="mt-2 space-y-2 text-sm text-muted-foreground">

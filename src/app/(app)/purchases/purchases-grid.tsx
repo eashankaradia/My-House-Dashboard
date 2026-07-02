@@ -10,6 +10,7 @@ import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
+import { SearchInput } from "@/components/shared/search-input";
 import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
 import { useViewPref } from "@/hooks/use-view-prefs";
@@ -81,6 +82,7 @@ export function PurchasesGrid({
   const [onlyMine, setOnlyMine] = React.useState(false);
   const [scopeFilter, setScopeFilter] = React.useState<"all" | "personal" | "household">("all");
   const [hideNoOptions, setHideNoOptions] = React.useState(false);
+  const [search, setSearch] = React.useState("");
 
   const rooms = Array.from(new Set(purchases.map((p) => p.room).filter(Boolean))) as string[];
   const rank = { High: 0, Medium: 1, Low: 2 } as const;
@@ -94,6 +96,7 @@ export function PurchasesGrid({
   ].filter((filter): filter is { label: string; clear: () => void } => Boolean(filter));
 
   const filtered = purchases
+    .filter((p) => (!search.trim() ? true : p.name.toLowerCase().includes(search.trim().toLowerCase())))
     .filter((p) => (!onlyMine ? true : p.user_id === currentUserId))
     .filter((p) => (scopeFilter === "all" ? true : p.scope === scopeFilter))
     .filter((p) => (!hideNoOptions ? true : p.options.length > 0))
@@ -121,6 +124,7 @@ export function PurchasesGrid({
 
   return (
     <div className="space-y-4">
+      <SearchInput value={search} onChange={setSearch} placeholder="Search purchases…" className="max-w-sm" />
       <div className="flex flex-wrap items-center gap-2">
         <Sheet>
           <SheetTrigger asChild>

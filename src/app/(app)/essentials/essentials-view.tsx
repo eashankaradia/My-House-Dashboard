@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { SearchInput } from "@/components/shared/search-input";
 import type { Essential } from "@/lib/database.types";
 import { EssentialForm } from "./essential-form";
 
@@ -14,6 +15,7 @@ const RAG_DOT: Record<string, string> = {
 export function EssentialsView({ items }: { items: Essential[] }) {
   const [compact, setCompact] = React.useState(true);
   const [ragFilter, setRagFilter] = React.useState<"red" | "amber" | "green" | null>(null);
+  const [search, setSearch] = React.useState("");
   const categories = Array.from(new Set(items.map((i) => i.category)));
 
   const counts = items.reduce(
@@ -23,11 +25,13 @@ export function EssentialsView({ items }: { items: Essential[] }) {
     },
     { red: 0, amber: 0, green: 0 } as Record<"red" | "amber" | "green", number>,
   );
-  const visibleItems = ragFilter ? items.filter((i) => i.rag === ragFilter) : items;
+  const visibleItems = items
+    .filter((i) => (ragFilter ? i.rag === ragFilter : true))
+    .filter((i) => (!search.trim() ? true : i.name.toLowerCase().includes(search.trim().toLowerCase())));
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 text-sm">
           {(["green", "amber", "red"] as const).map((rag) => (
             <button
@@ -45,13 +49,16 @@ export function EssentialsView({ items }: { items: Essential[] }) {
             </button>
           ))}
         </div>
-        <div className="flex items-center rounded-lg border p-0.5 text-xs">
-          <button onClick={() => setCompact(false)} className={cn("rounded-md px-2 py-1", !compact && "bg-accent")}>
-            Detailed
-          </button>
-          <button onClick={() => setCompact(true)} className={cn("rounded-md px-2 py-1", compact && "bg-accent")}>
-            Compact
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <SearchInput value={search} onChange={setSearch} placeholder="Search essentials…" className="w-full sm:w-48" />
+          <div className="flex items-center rounded-lg border p-0.5 text-xs">
+            <button onClick={() => setCompact(false)} className={cn("rounded-md px-2 py-1", !compact && "bg-accent")}>
+              Detailed
+            </button>
+            <button onClick={() => setCompact(true)} className={cn("rounded-md px-2 py-1", compact && "bg-accent")}>
+              Compact
+            </button>
+          </div>
         </div>
       </div>
 

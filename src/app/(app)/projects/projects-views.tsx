@@ -13,6 +13,7 @@ import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
 import { EmptyState } from "@/components/shared/empty-state";
+import { SearchInput } from "@/components/shared/search-input";
 import { useToast } from "@/hooks/use-toast";
 import { ITEM_SCOPES, ITEM_SCOPE_LABELS, PROJECT_STATUSES } from "@/lib/constants";
 import { priorityVariant, STATUS_ACCENT, STATUS_BORDER } from "@/lib/ui";
@@ -41,9 +42,11 @@ export function ProjectsViews({
 }) {
   const isLife = process.env.NEXT_PUBLIC_APP === "life";
   const [projectView, setProjectView] = React.useState<"list" | "board">("list");
+  const [projectCompact, setProjectCompact] = React.useState(false);
   const [boardFull, setBoardFull] = React.useState(false);
   const [onlyMine, setOnlyMine] = React.useState(isLife);
   const [scopeFilter, setScopeFilter] = React.useState<"all" | "personal" | "household">("all");
+  const [projectSearch, setProjectSearch] = React.useState("");
   // A ?project= deep-link opens a project detail dialog (which mounts in the
   // Projects tab), so start there when one is present.
   const searchParams = useSearchParams();
@@ -51,7 +54,8 @@ export function ProjectsViews({
   const openTasks = tasks.filter((t) => !t.is_done).length;
   const visibleProjects = projects
     .filter((p) => (onlyMine ? p.user_id === currentUserId : true))
-    .filter((p) => (scopeFilter === "all" ? true : p.scope === scopeFilter));
+    .filter((p) => (scopeFilter === "all" ? true : p.scope === scopeFilter))
+    .filter((p) => (!projectSearch.trim() ? true : p.name.toLowerCase().includes(projectSearch.trim().toLowerCase())));
   const showFilter = Object.keys(memberMap).length > 1;
 
   return (
@@ -78,6 +82,7 @@ export function ProjectsViews({
         <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">Bigger work, each with its own tasks and budget.</p>
           <div className="flex flex-wrap items-center gap-2">
+            <SearchInput value={projectSearch} onChange={setProjectSearch} placeholder="Search projects…" className="w-full sm:w-44" />
             {isLife ? (
               <div className="flex items-center rounded-lg border p-0.5 text-xs">
                 {(["all", "household", "personal"] as const).map((s) => (
@@ -111,6 +116,16 @@ export function ProjectsViews({
               <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setBoardFull(true)}>
                 <Maximize2 className="h-4 w-4" /> Full screen
               </Button>
+            ) : null}
+            {projectView === "list" ? (
+              <div className="flex items-center rounded-lg border p-0.5 text-xs">
+                <button onClick={() => setProjectCompact(false)} className={cn("rounded-md px-2 py-1", !projectCompact && "bg-accent")}>
+                  Detailed
+                </button>
+                <button onClick={() => setProjectCompact(true)} className={cn("rounded-md px-2 py-1", projectCompact && "bg-accent")}>
+                  Compact
+                </button>
+              </div>
             ) : null}
             <div className="flex items-center rounded-lg border p-0.5">
               <button
@@ -172,7 +187,7 @@ export function ProjectsViews({
         ) : (
           <div className="space-y-3">
             {visibleProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} memberMap={memberMap} />
+              <ProjectCard key={project.id} project={project} memberMap={memberMap} compact={projectCompact} />
             ))}
           </div>
         )}
