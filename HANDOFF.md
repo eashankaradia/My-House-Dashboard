@@ -5,8 +5,9 @@
 > after **every** change. Last updated: 2026-07-02 (compact-view + search-bar
 > pass across every list-style nav tab is complete: `npm run typecheck`,
 > `npm run lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass;
-> committed and pushed to `main`; Vercel production deploy pending
-> confirmation — see bottom of this section for the next step).
+> committed and pushed to `main`; confirmed **READY in Vercel production** on
+> both `my-house-dashboard` and `my-life-dashboard` at commit `855c8ae`.
+> Nothing outstanding from this batch).
 
 ## Compact view + search bars across all list tabs (2026-07-02)
 User request: "make a compact option for every tab, and search bars where
@@ -87,11 +88,10 @@ in this batch.
 full-batch `npm run typecheck`, `npm run lint`, `npm run build`, and
 `NEXT_PUBLIC_APP=life npm run build` all pass clean.
 
-**Next step for whoever picks this up:** confirm Vercel production
-deployment READY on both `my-house-dashboard`
+**Deploy confirmed:** both `my-house-dashboard`
 (`prj_BOUIdAM8EEfh6JI9nrql8K7e67Qb`) and `my-life-dashboard`
-(`prj_TB7Dt9AVg88kp0AX5TXrhXqhsnhx`) at the commit this batch lands on, then
-update this banner to confirm.
+(`prj_TB7Dt9AVg88kp0AX5TXrhXqhsnhx`) are READY in Vercel production at
+commit `855c8ae`. Nothing outstanding from this batch.
 
 ## Engagement/retention audit + plan (2026-07-01)
 The user asked for an app summary suitable for an external AI (Perplexity)
