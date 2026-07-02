@@ -2,13 +2,13 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (implemented item #1 of a
-> product-audit-driven engagement/retention plan — the Dashboard's "Today"
-> panel is now one-tap completable — committed and pushed at commit `43ff245`.
-> Items #2-5 of that plan are scoped but not started. Not yet re-confirmed
-> live in Vercel production for this specific commit).
+> after **every** change. Last updated: 2026-07-01 (worked through the
+> engagement/retention plan below: items #1, #2, #4 implemented and pushed;
+> item #3 deliberately **not** done after closer inspection — see writeup;
+> item #5 not started. Latest commit `b9c25a5`. Not yet re-confirmed live in
+> Vercel production).
 
-## Engagement/retention audit + "Today" panel (2026-07-01)
+## Engagement/retention audit + plan (2026-07-01)
 The user asked for an app summary suitable for an external AI (Perplexity)
 to evaluate, then pasted back Perplexity's resulting improvement brief
 (behavioral-design framing: Atomic Habits / Deep Work / Four Thousand Weeks
@@ -26,16 +26,15 @@ right below it, already did one-tap-complete-in-place with a streak badge
 — proof the pattern works, just not applied to the app's primary "what
 matters today" surface.
 
-**Prioritized plan** (top 5, #1 implemented this batch):
+**Prioritized plan** (top 5):
 1. **DONE** — Make "Today" (renamed from "Needs attention") one-tap
    completable in place.
-2. Extend the same one-tap-complete-with-reinforcement pattern to other
-   compact list rows (bills list, tasks list) — not started.
-3. Fold "Renewal reminders" into "Today" (same shape of data: dated,
-   urgent, single-action) rather than a separate scannable section —
-   not started.
-4. A weekly "how'd it go" nudge surfaced proactively from the existing
-   Reviews module's rollup data, rather than only on-visit — not started.
+2. **DONE** — Extend the same one-tap-complete-with-reinforcement pattern
+   to compact list rows elsewhere. Scoped down to bills (the real gap);
+   tasks already had it.
+3. **DELIBERATELY NOT DONE** — see writeup below; the plan item as
+   originally written doesn't survive contact with the actual data.
+4. **DONE** — A weekly "how'd it go" nudge surfaced proactively.
 5. Smarter empty-state defaults / inferred scope — lowest priority, not
    started.
 
@@ -66,8 +65,77 @@ matters today" surface.
   file rename, to keep the diff small — `needs-attention.tsx` still
   houses it).
 - Verified: `npm run typecheck`, `npm run lint`, both variants build
-  clean. Pushed to `main` at `43ff245`. Not yet re-confirmed live in
-  Vercel production.
+  clean. Pushed to `main` at `43ff245`.
+
+### #2: Bills list one-tap mark-paid — DONE — no migration
+Re-checked "extend the pattern to bills list, tasks list" against the
+actual code before building anything: `TaskRow` in `tasks-view.tsx`
+**already** had a `Checkbox` directly wired to `toggleTask` — one-tap
+complete already existed there, so nothing to do. Bills was the real gap:
+`bills-list.tsx` rows had no payment-status signal at all.
+- New `duePaymentFor(payments, billId)` helper: the earliest **unpaid**
+  `bill_payment` with `payment_date <= today` for that bill, or `null`.
+- New `MarkPaidButton` — only rendered when a bill actually has one (i.e.
+  most rows are completely unchanged; this is additive only where there's
+  something to act on, not permanent clutter). Shows an "Overdue/Due ·
+  Mark paid" pill, calls the existing `setPaymentPaid(id, true)`, same
+  optimistic-then-revert-on-error pattern as everywhere else, swaps to a
+  green "Paid" badge on success.
+- Wired into both the compact and detailed row layouts.
+- Verified: typecheck/lint/both builds clean. Pushed at `82510be`.
+
+### #3: Fold "Renewal reminders" into "Today" — DELIBERATELY NOT DONE
+This was written into the plan speculatively, before inspecting the
+underlying data. On closer look at `dashboard/page.tsx`, "Today"
+(`attention`) and "Renewal reminders" (`reminders`) answer genuinely
+different questions and merging them would work *against* the brief's own
+"calm, glanceable, only what's needed today" principle:
+- `attention` = act now (bill payments due/overdue **today**, tasks
+  due/overdue **today**, maintenance due/overdue **today**, documents
+  expiring within 14 days).
+- `reminders` = don't forget, upcoming (bills due within **14 days**,
+  documents expiring within **60 days**, mortgage fixed-term ending
+  within **180 days**) — a forward-looking awareness list, not an
+  action-now list.
+- Merging a 14/60/180-day-out horizon into a "what do I do right now"
+  list would make Today noisier and less trustworthy as the "everything
+  here needs action today" signal — the opposite of the stated goal.
+- Separately (worth flagging, not fixed): `attention`'s bill-related rows
+  come from `bill_payments.payment_date`, while `reminders`' bill-related
+  rows come from `bills.due_date` directly — two parallel "when is this
+  bill due" signals for the same underlying concept. That's a real, minor
+  data-model wrinkle, but fixing it is a bills-module correctness task,
+  not an engagement/UX task, and touching it wasn't worth the risk in
+  this pass. Flagging for whoever next touches bill due-date logic.
+- **Decision**: left both sections exactly as they were. If the user
+  wants Renewal reminders addressed specifically, that should be a
+  separate, explicit ask — not folded in as a side effect of an
+  engagement pass.
+
+### #4: Proactive weekly review nudge — DONE — no migration, MyLife-only
+A single-line "How did this week go? [date range] — takes a minute" card,
+positioned right after the Today panel:
+- Added one extra query — `reviews` filtered to `period_type = 'weekly'`
+  and `period_start = weekStart()` (reusing `@/lib/review-periods`,
+  already built for the Reviews module) — only run when `isLife` (the
+  Reviews module doesn't exist on the MyHouse side); resolves to a no-op
+  `Promise.resolve({ data: null })` otherwise so the `Promise.all` array
+  shape stays fixed either way.
+- Shown only when `isLife && weekIsWrappingUp (Fri/Sat/Sun) &&
+  !thisWeeksReviewExists` — a one-off end-of-week suggestion, not a daily
+  nag, and it disappears entirely the moment that week's review is saved
+  (whether via the nudge or by visiting `/reviews` directly).
+- Verified: typecheck/lint/both builds clean. Pushed at `b9c25a5`.
+
+**Not started**: #5 (smarter empty-state defaults / inferred scope) —
+lowest-priority item on the plan, left for a future pass if the user
+wants to continue down this list.
+
+**Verification for this whole engagement batch**: `npm run typecheck`,
+`npm run lint`, and both `npm run build` / `NEXT_PUBLIC_APP=life npm run
+build` ran clean after every commit (`43ff245`, `82510be`, `b9c25a5`), all
+pushed to `main`. **Next step**: confirm both Vercel projects are `READY`
+at `b9c25a5`.
 
 ## Follow-up batch: Fitness links, Finance cleanup, edit discoverability (2026-07-01)
 Five more asks landed right after the six-part batch shipped:
