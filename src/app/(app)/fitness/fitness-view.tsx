@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { Trophy, ChevronRight } from "lucide-react";
+import { Trophy, ChevronRight, Link as LinkIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SearchInput } from "@/components/shared/search-input";
 import { MUSCLE_GROUPS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import type { Exercise, MuscleLink, WorkoutPlan, WorkoutPlanExercise } from "@/lib/database.types";
+import type { Exercise, ExerciseLink, MuscleLink, WorkoutPlan, WorkoutPlanExercise } from "@/lib/database.types";
 import { BodyDiagram } from "./body-diagram";
 import { PlanDetailDialog } from "./plan-detail-dialog";
 import { ExerciseForm } from "./exercise-form";
@@ -17,11 +17,20 @@ type Props = {
   planExercises: WorkoutPlanExercise[];
   exercises: Exercise[];
   muscleLinks: MuscleLink[];
+  exerciseLinks: ExerciseLink[];
 };
 
-export function FitnessView({ plans, planExercises, exercises, muscleLinks }: Props) {
+export function FitnessView({ plans, planExercises, exercises, muscleLinks, exerciseLinks }: Props) {
   const [activePlan, setActivePlan] = React.useState<WorkoutPlan | null>(null);
   const exerciseById = React.useMemo(() => new Map(exercises.map((e) => [e.id, e])), [exercises]);
+  const linksByExercise = React.useMemo(() => {
+    const map = new Map<string, ExerciseLink[]>();
+    for (const l of exerciseLinks) {
+      if (!map.has(l.exercise_id)) map.set(l.exercise_id, []);
+      map.get(l.exercise_id)!.push(l);
+    }
+    return map;
+  }, [exerciseLinks]);
   const [search, setSearch] = React.useState("");
   const [muscleFilter, setMuscleFilter] = React.useState<string | null>(null);
   const usedMuscles = React.useMemo(
@@ -98,32 +107,41 @@ export function FitnessView({ plans, planExercises, exercises, muscleLinks }: Pr
         ) : null}
 
         <div className="grid gap-2 sm:grid-cols-2">
-          {filteredExercises.map((ex) => (
-            <ExerciseForm
-              key={ex.id}
-              exercise={ex}
-              trigger={
-                <button className="flex w-full items-center gap-3 rounded-xl border bg-card px-4 py-3 text-left">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium">{ex.name}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-1">
-                      {ex.muscle_groups.slice(0, 3).map((m) => (
-                        <Badge key={m} variant="secondary" className="text-[10px]">
-                          {m}
-                        </Badge>
-                      ))}
-                      {ex.pb_value != null && (
-                        <span className="inline-flex items-center gap-0.5 text-xs text-amber-500">
-                          <Trophy className="h-3 w-3" /> {ex.pb_value}
-                          {ex.pb_unit}
-                        </span>
-                      )}
+          {filteredExercises.map((ex) => {
+            const exLinks = linksByExercise.get(ex.id) ?? [];
+            return (
+              <ExerciseForm
+                key={ex.id}
+                exercise={ex}
+                links={exLinks}
+                trigger={
+                  <button className="flex w-full items-center gap-3 rounded-xl border bg-card px-4 py-3 text-left">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">{ex.name}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-1">
+                        {ex.muscle_groups.slice(0, 3).map((m) => (
+                          <Badge key={m} variant="secondary" className="text-[10px]">
+                            {m}
+                          </Badge>
+                        ))}
+                        {ex.pb_value != null && (
+                          <span className="inline-flex items-center gap-0.5 text-xs text-amber-500">
+                            <Trophy className="h-3 w-3" /> {ex.pb_value}
+                            {ex.pb_unit}
+                          </span>
+                        )}
+                        {exLinks.length > 0 && (
+                          <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+                            <LinkIcon className="h-3 w-3" /> {exLinks.length}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </button>
-              }
-            />
-          ))}
+                  </button>
+                }
+              />
+            );
+          })}
         </div>
         {exercises.length === 0 ? (
           <p className="rounded-xl border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">

@@ -13,6 +13,8 @@ import {
   Link2,
   ListChecks,
   ListPlus,
+  Lock,
+  PenLine,
   Receipt,
   ShoppingBag,
   StickyNote,
@@ -40,6 +42,8 @@ import { RecipeForm } from "@/app/(app)/nutrition/recipe-form";
 import { CreditCardForm } from "@/app/(app)/finance/credit-card-form";
 import { ShareForm } from "@/app/(app)/finance/share-form";
 import { IncomeMonthForm } from "@/app/(app)/finance/income-month-form";
+import { JournalForm } from "@/app/(app)/journal/journal-form";
+import { PrivateNoteForm } from "@/app/(app)/private-notes/private-note-form";
 import { monthStr } from "@/lib/income";
 
 const isLife = process.env.NEXT_PUBLIC_APP === "life";
@@ -101,6 +105,12 @@ export function AddPills({ className }: { className?: string }) {
           <EssentialForm categories={[]} trigger={<Pill icon={ListChecks} label="Essential" />} />
           <RoutineItemForm trigger={<Pill icon={SunMoon} label="Routine" />} />
           <RecipeForm trigger={<Pill icon={Utensils} label="Recipe" />} />
+        </AddGroup>
+      ) : null}
+      {isLife ? (
+        <AddGroup label="Private">
+          <JournalForm trigger={<Pill icon={PenLine} label="Journal" />} />
+          <PrivateNoteForm trigger={<Pill icon={Lock} label="Private note" />} />
         </AddGroup>
       ) : null}
     </div>

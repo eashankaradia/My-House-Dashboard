@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Pencil } from "lucide-react";
+import { ExternalLink, Plus, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,12 +19,12 @@ import { FormDeleteButton } from "@/components/shared/form-delete-button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { MUSCLE_GROUPS, PB_UNITS } from "@/lib/constants";
-import type { Exercise } from "@/lib/database.types";
-import { createExercise, updateExercise, deleteExercise } from "./actions";
+import type { Exercise, ExerciseLink } from "@/lib/database.types";
+import { createExercise, updateExercise, deleteExercise, createExerciseLink, deleteExerciseLink } from "./actions";
 
-type Props = { exercise?: Exercise; trigger?: React.ReactNode; onCreated?: (id: string) => void };
+type Props = { exercise?: Exercise; links?: ExerciseLink[]; trigger?: React.ReactNode; onCreated?: (id: string) => void };
 
-export function ExerciseForm({ exercise, trigger, onCreated }: Props) {
+export function ExerciseForm({ exercise, links = [], trigger, onCreated }: Props) {
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
@@ -152,6 +152,8 @@ export function ExerciseForm({ exercise, trigger, onCreated }: Props) {
             </Field>
           )}
 
+          {editing && exercise ? <ExerciseLinksField exerciseId={exercise.id} links={links} /> : null}
+
           <DialogFooter className={editing ? "sm:justify-between" : undefined}>
             {editing && (
               <FormDeleteButton
@@ -178,5 +180,68 @@ export function ExerciseForm({ exercise, trigger, onCreated }: Props) {
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Inline add/remove list of reference links (videos, guides, tutorials) for one exercise. */
+function ExerciseLinksField({ exerciseId, links }: { exerciseId: string; links: ExerciseLink[] }) {
+  const [url, setUrl] = React.useState("");
+  const [label, setLabel] = React.useState("");
+  const [pending, startTransition] = React.useTransition();
+  const { toast } = useToast();
+
+  function addLink() {
+    if (!url.trim()) return;
+    startTransition(async () => {
+      const result = await createExerciseLink({ exercise_id: exerciseId, url: url.trim(), label: label.trim() || undefined });
+      if (result?.error) {
+        toast({ variant: "destructive", title: "Couldn't save link", description: result.error });
+        return;
+      }
+      setUrl("");
+      setLabel("");
+    });
+  }
+
+  return (
+    <Field label="Links" hint="Videos, tutorials or guides for this exercise — add as many as you like">
+      <div className="space-y-1.5">
+        {links.map((link) => (
+          <div key={link.id} className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm">
+            <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <a href={link.url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate hover:underline">
+              {link.label || link.url}
+            </a>
+            <button
+              type="button"
+              onClick={() => startTransition(async () => void (await deleteExerciseLink(link.id)))}
+              disabled={pending}
+              className="shrink-0 text-muted-foreground hover:text-destructive"
+              aria-label="Remove link"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Input
+            type="url"
+            placeholder="https://..."
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="min-w-[140px] flex-1"
+          />
+          <Input
+            placeholder="Label (optional)"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            className="w-32"
+          />
+          <Button type="button" size="sm" variant="outline" onClick={addLink} disabled={pending || !url.trim()}>
+            <Plus className="h-4 w-4" /> Add
+          </Button>
+        </div>
+      </div>
+    </Field>
   );
 }

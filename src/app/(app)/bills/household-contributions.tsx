@@ -1,11 +1,12 @@
 "use client";
 
-import { Users } from "lucide-react";
+import * as React from "react";
+import { Pencil, Users } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MEMBER_COLOR_TEXT } from "@/lib/constants";
-import { formatCurrency, formatDate, initialsFromName } from "@/lib/utils";
+import { cn, formatCurrency, formatDate, initialsFromName } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
 import type { HouseholdContribution, HouseholdMember } from "@/lib/database.types";
 import { HouseholdContributionForm } from "./household-contribution-form";
@@ -27,6 +28,7 @@ export function HouseholdContributions({
   members: HouseholdMember[];
   memberMap: MemberMap;
 }) {
+  const [editMode, setEditMode] = React.useState(false);
   const todayStr = new Date().toISOString().slice(0, 10);
   const active = contributions.filter((c) => isActive(c, todayStr));
   const fixed = active.filter((c) => c.amount != null);
@@ -42,7 +44,24 @@ export function HouseholdContributions({
         <CardTitle className="flex items-center gap-2">
           <Users className="h-4 w-4 text-muted-foreground" /> Household contributions
         </CardTitle>
-        <HouseholdContributionForm members={members} />
+        <div className="flex items-center gap-2">
+          {editMode ? (
+            <HouseholdContributionForm
+              members={members}
+              trigger={<button className="text-sm font-medium text-primary hover:underline">Add</button>}
+            />
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setEditMode((v) => !v)}
+            className={cn(
+              "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground",
+              editMode && "bg-accent text-foreground",
+            )}
+          >
+            <Pencil className="h-3.5 w-3.5" /> {editMode ? "Done" : "Edit"}
+          </button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-2">
         {contributions.length === 0 ? (
@@ -56,37 +75,46 @@ export function HouseholdContributions({
               const color = members.find((m) => m.user_id === c.member_id)?.color;
               const effective = c.amount != null ? Number(c.amount) : remainderEach;
               const live = isActive(c, todayStr);
-              return (
+              const rowContent = (
+                <>
+                  <Avatar className="h-7 w-7 shrink-0">
+                    <AvatarFallback className="text-xs">{initialsFromName(name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-sm font-medium ${color ? MEMBER_COLOR_TEXT[color] ?? "" : ""}`}>{name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {c.start_date ? `From ${formatDate(c.start_date)}` : "Always"}
+                      {c.end_date ? ` to ${formatDate(c.end_date)}` : ""}
+                      {!live ? " · not active" : ""}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    {c.amount != null ? (
+                      <p className="font-semibold">{formatCurrency(Number(c.amount))}</p>
+                    ) : (
+                      <Badge variant="secondary">Pays the rest</Badge>
+                    )}
+                    {live && c.amount == null && remainderEach > 0 && (
+                      <p className="text-xs text-muted-foreground">≈ {formatCurrency(effective)}</p>
+                    )}
+                  </div>
+                </>
+              );
+              return editMode ? (
                 <HouseholdContributionForm
                   key={c.id}
                   members={members}
                   contribution={c}
                   trigger={
                     <button className="flex w-full items-center gap-3 rounded-lg border bg-card px-3 py-2.5 text-left">
-                      <Avatar className="h-7 w-7 shrink-0">
-                        <AvatarFallback className="text-xs">{initialsFromName(name)}</AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-sm font-medium ${color ? MEMBER_COLOR_TEXT[color] ?? "" : ""}`}>{name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {c.start_date ? `From ${formatDate(c.start_date)}` : "Always"}
-                          {c.end_date ? ` to ${formatDate(c.end_date)}` : ""}
-                          {!live ? " · not active" : ""}
-                        </p>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        {c.amount != null ? (
-                          <p className="font-semibold">{formatCurrency(Number(c.amount))}</p>
-                        ) : (
-                          <Badge variant="secondary">Pays the rest</Badge>
-                        )}
-                        {live && c.amount == null && remainderEach > 0 && (
-                          <p className="text-xs text-muted-foreground">≈ {formatCurrency(effective)}</p>
-                        )}
-                      </div>
+                      {rowContent}
                     </button>
                   }
                 />
+              ) : (
+                <div key={c.id} className="flex w-full items-center gap-3 rounded-lg border bg-card px-3 py-2.5">
+                  {rowContent}
+                </div>
               );
             })}
           </div>

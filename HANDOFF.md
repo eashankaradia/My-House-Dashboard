@@ -2,12 +2,81 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-02 (compact-view + search-bar
-> pass across every list-style nav tab is complete: `npm run typecheck`,
-> `npm run lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass;
-> committed and pushed to `main`; confirmed **READY in Vercel production** on
-> both `my-house-dashboard` and `my-life-dashboard` at commit `855c8ae`.
-> Nothing outstanding from this batch).
+> after **every** change. Last updated: 2026-07-02 (exercise links, household
+> contributions edit-toggle, and the new Private nav section are all
+> implemented: `npm run typecheck`, `npm run lint`, default build, and
+> `NEXT_PUBLIC_APP=life` build all pass. Migration `0061_private_section`
+> already applied directly to the live Supabase project
+> (`vbyqbxvffaqkrltzewjz`). Not yet committed/pushed/deploy-confirmed — see
+> bottom of that section for the next step. Could not browser-verify locally:
+> this sandbox has no `.env.local` Supabase credentials, so `next dev` 500s on
+> every route, including pre-existing ones — confirmed this is an environment
+> limitation, not a regression, before proceeding on typecheck/lint/build
+> confidence alone).
+
+## Exercise links, contributions edit-toggle, Private section (2026-07-02)
+Three requests in one batch: "add links to exercises, more than one per
+exercise"; "hide household contributions behind an edit button, for things
+that don't change often"; "make a private section... journal, private notes,
+private photos... add other life admin things I should have in private."
+
+### Exercise links — migration + no other outstanding step
+New `exercise_links` table (migration `0061_private_section.sql`, applied
+live): `id, user_id, exercise_id → exercises(id) on delete cascade, url,
+label, created_at, updated_at`, owner-only RLS — copies the existing
+`muscle_links` pattern exactly, but keyed to an individual exercise instead
+of a muscle group, since links are exercise-specific (how to do *this* lift)
+not muscle-specific (already covered by the existing "Muscle guides"
+section). `fitness/exercise-form.tsx` gained a new `ExerciseLinksField`
+(inline add/remove list, shown only when editing an existing exercise —
+video/tutorial links need an exercise to attach to). `fitness-view.tsx`
+groups `exercise_links` by `exercise_id` and shows a link-count badge on
+each library card. New actions `createExerciseLink`/`deleteExerciseLink` in
+`fitness/actions.ts`.
+
+### Household contributions — DONE
+`bills/household-contributions.tsx` gained the same `editMode` +
+Pencil-icon toggle already used for Finance's pot sections
+(`finance-scope.tsx`'s `PotSectionHeader`). Default view: contributions
+render as plain (non-interactive) rows — no add button, no click-to-edit.
+Edit mode: "Add" button appears and rows become click-to-edit again, same
+as before this change.
+
+### Private section — DONE
+New nav group `"Private"` (MyLife only, `constants.ts`) between Planner and
+More. Journal **and** Health (records/appointments/medications — already
+owner-only RLS, i.e. already private in practice, just not visually grouped
+that way) both moved from the "Health" group into "Private". Two new
+features added to it:
+- **Private Notes** (`/private-notes`) — new `private_notes` table
+  (title, content, owner-only RLS), completely separate from the existing
+  shared "Notes & Links" (household-visible `documents`/`useful_links`).
+  Simple card grid + dialog form, search box once there are 5+ notes.
+- **Private Photos** (`/private-photos`) — new `private_photos` table
+  (file_path, caption, owner-only RLS). Unlike the shared "Photos" shoebox
+  (`quick_photos`, stored in the **public** `images` bucket), files upload
+  into the **private** `documents` storage bucket under
+  `{user_id}/private-photos/...` (bucket already has an owner-only-folder
+  storage policy — reused as-is, no new bucket/policy needed). The page
+  batch-generates 1-hour signed URLs server-side via
+  `storage.createSignedUrls()` for the grid thumbnails.
+
+Both new routes got a quick-add pill in the "+" menu (`add-menu.tsx`, new
+"Private" group, Journal + Private note only — photo capture needs the
+camera/gallery picker so it stays on its own page rather than a popup pill).
+
+**Other life-admin candidates considered and left out**: nothing else in
+the schema is inherently private-but-currently-public — everything else
+either already lives in a correctly-shared household table, or (per the
+Explore-agent inventory from the compact/search batch) was already
+owner-only RLS without being a distinct "thing to look at" the way Journal/
+Health/notes/photos are (e.g. `goals`, `habits`, `reviews` are personal but
+don't carry the same "wouldn't want household to see this" character).
+
+**Next step for whoever picks this up:** commit and push this batch to
+`main` (migration is already live in Supabase — do not re-apply), run the
+Vercel `list_deployments` check for both projects at the commit this lands
+on, and report success once both are READY.
 
 ## Compact view + search bars across all list tabs (2026-07-02)
 User request: "make a compact option for every tab, and search bars where

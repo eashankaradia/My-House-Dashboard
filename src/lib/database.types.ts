@@ -631,6 +631,24 @@ export type JournalEntry = {
   updated_at: string;
 };
 
+export type PrivateNote = {
+  id: string;
+  user_id: string;
+  title: string;
+  content: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PrivatePhoto = {
+  id: string;
+  user_id: string;
+  file_path: string;
+  caption: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Workout = {
   id: string;
   user_id: string;
@@ -675,6 +693,16 @@ export type MuscleLink = {
   id: string;
   user_id: string;
   muscle_group: string;
+  url: string;
+  label: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ExerciseLink = {
+  id: string;
+  user_id: string;
+  exercise_id: string;
   url: string;
   label: string | null;
   created_at: string;
@@ -1052,6 +1080,7 @@ export type Database = {
       workout_plans: Row<WorkoutPlan>;
       workout_plan_exercises: Row<WorkoutPlanExercise>;
       muscle_links: Row<MuscleLink>;
+      exercise_links: Row<ExerciseLink>;
       health_records: Row<HealthRecord>;
       medications: Row<Medication>;
       appointments: Row<Appointment>;
@@ -1074,6 +1103,8 @@ export type Database = {
       shares: Row<Share>;
       favorites: Row<Favorite>;
       reviews: Row<Review>;
+      private_notes: Row<PrivateNote>;
+      private_photos: Row<PrivatePhoto>;
     };
     Views: { [_ in never]: never };
     Functions: {

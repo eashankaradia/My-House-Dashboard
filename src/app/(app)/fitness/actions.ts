@@ -150,3 +150,24 @@ export async function deleteMuscleLink(id: string) {
   if (error) return { error: error.message };
   revalidatePath("/fitness");
 }
+
+// ─── Exercise links (multiple reference links per exercise) ───────────────────
+
+export async function createExerciseLink(input: { exercise_id: string; url: string; label?: string }) {
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase.from("exercise_links").insert({
+    user_id: user.id,
+    exercise_id: input.exercise_id,
+    url: input.url,
+    label: input.label ?? null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/fitness");
+}
+
+export async function deleteExerciseLink(id: string) {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("exercise_links").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/fitness");
+}
