@@ -2,11 +2,10 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-01 (worked through the
-> engagement/retention plan below: items #1, #2, #4 implemented, pushed, and
-> confirmed **READY in Vercel production** on both `my-house-dashboard` and
-> `my-life-dashboard` at commit `c92c47e`. Item #3 deliberately **not** done
-> after closer inspection — see writeup. Item #5 not started).
+> after **every** change. Last updated: 2026-07-01 (the engagement/retention
+> plan is now complete: items #1, #2, #4, #5 implemented and pushed at commit
+> `74b7fb3`; item #3 deliberately **not** done after closer inspection — see
+> writeup. Not yet re-confirmed live in Vercel production for this commit).
 
 ## Engagement/retention audit + plan (2026-07-01)
 The user asked for an app summary suitable for an external AI (Perplexity)
@@ -35,8 +34,7 @@ matters today" surface.
 3. **DELIBERATELY NOT DONE** — see writeup below; the plan item as
    originally written doesn't survive contact with the actual data.
 4. **DONE** — A weekly "how'd it go" nudge surfaced proactively.
-5. Smarter empty-state defaults / inferred scope — lowest priority, not
-   started.
+5. **DONE** — Smarter empty-state defaults: one-tap starter habits.
 
 ### #1: Dashboard "Today" panel — DONE — no migration
 `needs-attention.tsx` converted from a server-rendered pure list of
@@ -127,13 +125,37 @@ positioned right after the Today panel:
   (whether via the nudge or by visiting `/reviews` directly).
 - Verified: typecheck/lint/both builds clean. Pushed at `b9c25a5`.
 
-**Not started**: #5 (smarter empty-state defaults / inferred scope) —
-lowest-priority item on the plan, left for a future pass if the user
-wants to continue down this list.
+### #5: One-tap starter habits — DONE — no migration
+The "reduce empty-state friction, prefer suggest-and-confirm over ask-
+the-user-to-build-everything-manually" part of the brief, applied to the
+single highest-identity-value module (Habits, per the Atomic Habits
+framing the brief itself used):
+- New `starter-habits.tsx`: six curated common habits (Drink water, Move
+  for 10 minutes, Read, Stretch, Plan tomorrow, No phone before bed) —
+  two pre-tagged `Morning`/`Evening` so the time-of-day grouping feature
+  (built earlier this session) also gets surfaced early rather than only
+  discovered via the edit form.
+- Rendered as a row of chip buttons under the existing `EmptyState` when
+  `habits.length === 0`. Each tap calls `createHabit` directly with
+  sensible defaults (`frequency: "daily"`, `habit_type: "yes_no"`) — no
+  form, no dialog. Optimistic "Added" state per chip; the page's own
+  `revalidatePath("/habits")` (already inside `createHabit`) handles the
+  transition out of the empty state once real habits exist, same as the
+  pre-existing "Add your first habit" `HabitForm` trigger did.
+- The full manual `HabitForm` stays as the primary CTA above the
+  suggestions — this is additive, not a replacement.
+- Verified: typecheck/lint/both builds clean. Pushed at `74b7fb3`.
+
+**Engagement/retention plan status: complete.** All 5 items resolved (4
+implemented, 1 deliberately not done with reasoning documented). If the
+user wants further work in this vein, the natural next step is a fresh,
+narrower audit rather than continuing to mine the original Perplexity
+list — it's been fully worked through.
 
 **Verification for this whole engagement batch**: `npm run typecheck`,
 `npm run lint`, and both `npm run build` / `NEXT_PUBLIC_APP=life npm run
-build` ran clean after every commit (`43ff245`, `82510be`, `b9c25a5`), all
+build` ran clean after every commit (`43ff245`, `82510be`, `b9c25a5`,
+`74b7fb3`), all
 pushed to `main`. **Next step**: confirm both Vercel projects are `READY`
 at `b9c25a5`.
 
