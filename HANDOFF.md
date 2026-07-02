@@ -7,9 +7,10 @@
 > UI convenience — plus a mobile nav scrolling bug fix, an Inspiration nav gap
 > fix, a friction-reducing rewrite of the Inspiration capture form, and a
 > realistic redraw of the fitness body diagram. `npm run typecheck`, `npm run
-> lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass. Not yet
-> committed/pushed/deploy-confirmed — see bottom of that section for the next
-> step. Could not
+> lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass. Committed
+> and pushed to `main`; confirmed **READY in Vercel production** on both
+> `my-house-dashboard` and `my-life-dashboard` at commit `c04f9b1`. Nothing
+> outstanding from this batch. Could not
 > browser-verify locally: this sandbox has no `.env.local` Supabase
 > credentials, so `next dev` 500s on every route, including pre-existing
 > ones — confirmed this is an environment limitation, not a regression,
@@ -110,9 +111,10 @@ something to report here.
 in this sandbox (no local Supabase credentials — confirmed via `next dev`
 that this 500s on every route, not just new ones).
 
-**Next step for whoever picks this up:** commit and push this batch to
-`main`, run the Vercel `list_deployments` check for both projects at the
-commit this lands on, and report success once both are READY.
+**Deploy confirmed:** both `my-house-dashboard`
+(`prj_BOUIdAM8EEfh6JI9nrql8K7e67Qb`) and `my-life-dashboard`
+(`prj_TB7Dt9AVg88kp0AX5TXrhXqhsnhx`) are READY in Vercel production at
+commit `c04f9b1`. Nothing outstanding from this batch.
 
 ## Exercise links, contributions edit-toggle, Private section (2026-07-02)
 Three requests in one batch: "add links to exercises, more than one per
