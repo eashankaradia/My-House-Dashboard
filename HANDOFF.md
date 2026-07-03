@@ -2,14 +2,33 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-03 (Two features shipped:
-> (1) Rich notes editor — markdown toolbar + live preview + formatted detail view
-> on the `/notes` page; (2) Key Contacts — new `/contacts` page on both apps
-> for household directory of tradespeople, neighbours, etc. Migration 0062 must
-> be applied. `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. Committed and pushed to
-> `claude/home-dashboard-build-yv7ewz`. Cannot browser-verify locally: this
-> sandbox has no `.env.local` Supabase credentials.)
+> after **every** change. Last updated: 2026-07-03 (pulled in another
+> session's PR #100 — rich notes editor + Key Contacts + Purchases "Ready to
+> buy" — applied its outstanding migration, and reverified. See "Merged
+> another session's notes/contacts batch" below for what this session did.
+> `npm run typecheck`, `npm run lint`, default build, and
+> `NEXT_PUBLIC_APP=life` build all pass. Committed and pushed to `main`.
+> Nothing outstanding. Cannot browser-verify locally: this sandbox has no
+> `.env.local` Supabase credentials.)
+
+## Merged another session's notes/contacts batch (2026-07-03)
+The user said "add the notes changes from the other session that i've got."
+`git fetch` showed `origin/main` had advanced past this session's local
+`main` — another session had already merged PR #100
+(`claude/home-dashboard-build-yv7ewz`) directly to `main` on GitHub. Fast-
+forwarded local `main` to match (`git merge --ff-only origin/main`, no
+conflicts — that branch was based on a later point of `main` than this
+session's last local commit, so nothing from either session's work was at
+risk). That PR's own HANDOFF entry (directly below) had flagged
+`0062_contacts.sql` as "must be applied" — applied it to the live Supabase
+project (`vbyqbxvffaqkrltzewjz`); the `contacts` table didn't exist yet.
+Also ran `npm install` since `package.json`/`package-lock.json` picked up
+new `react-markdown`/`remark-gfm` dependencies for the notes editor that
+weren't yet in this session's `node_modules`. Reran `npm run typecheck`
+(failed first with module-not-found until the install), `npm run lint`,
+`npm run build`, and `NEXT_PUBLIC_APP=life npm run build` — all pass, and
+the new `/contacts` route sits alongside the `/private*` routes from an
+earlier batch this session with no conflicts.
 
 ## Key Contacts: household directory (2026-07-03)
 User request: "add a key contacts section."
