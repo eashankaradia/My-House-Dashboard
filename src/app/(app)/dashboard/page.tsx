@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { ColoredName } from "@/components/providers/household-colors";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { priorityVariant } from "@/lib/ui";
 import { daysUntil, formatCurrency, formatDate, toAnnual, toMonthly } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
@@ -11,6 +12,10 @@ import type {
   BillPayment,
   CalendarEvent,
   Document,
+  Goal,
+  Habit,
+  HabitLog,
+  IncomeMonth,
   Inspiration,
   MaintenanceTask,
   Mortgage,
@@ -19,12 +24,16 @@ import type {
   Purchase,
   SavingsPot,
 } from "@/lib/database.types";
+import { monthStr, effectiveIncomeForMonth } from "@/lib/income";
+import { weekStart, weekLabel } from "@/lib/review-periods";
+import { getPinnedItems } from "@/app/(app)/favorites/actions";
 import { DashboardWidget, EditDashboardButton } from "./dashboard-customize";
 import { CollapsibleSection } from "./collapsible-section";
 import { WeekAhead } from "./week-ahead";
 import { NeedsAttention, type AttentionItem } from "./needs-attention";
 import { GlanceStats, type GlanceValue } from "./glance-stats";
 import { SectionActivityLog } from "@/components/shared/section-activity-log";
+import { DailyHabits } from "./daily-habits";
 
 export const metadata = { title: "Dashboard" };
 
@@ -49,6 +58,19 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const isHouse = process.env.NEXT_PUBLIC_APP !== "life";
+  const isLife = !isHouse;
+  let billsQuery = supabase.from("bills").select("*");
+  if (isHouse) billsQuery = billsQuery.eq("scope", "household");
+  let purchasesQuery = supabase.from("purchases").select("*").order("created_at", { ascending: false });
+  if (isHouse) purchasesQuery = purchasesQuery.eq("scope", "household");
+  const thisWeekStart = weekStart();
+  const weeklyReviewQuery = isLife
+    ? supabase.from("reviews").select("id").eq("period_type", "weekly").eq("period_start", thisWeekStart).maybeSingle()
+    : Promise.resolve({ data: null });
+
   const [
     billsRes,
     potsRes,
@@ -62,12 +84,18 @@ export default async function DashboardPage() {
     memberMap,
     calEventsRes,
     paymentsRes,
+    habitsRes,
+    habitLogsRes,
+    goalsRes,
+    incomeMonthsRes,
+    pinnedItems,
+    weeklyReviewRes,
   ] = await Promise.all([
-    supabase.from("bills").select("*"),
+    billsQuery,
     supabase.from("savings_pots").select("*"),
     supabase.from("projects").select("*").order("updated_at", { ascending: false }),
     supabase.from("project_tasks").select("*"),
-    supabase.from("purchases").select("*").order("created_at", { ascending: false }),
+    purchasesQuery,
     supabase.from("inspiration").select("*").order("updated_at", { ascending: false }).limit(5),
     supabase.from("maintenance_tasks").select("*"),
     supabase.from("documents").select("*"),
@@ -75,6 +103,12 @@ export default async function DashboardPage() {
     getHouseholdMap(),
     supabase.from("calendar_events").select("*"),
     supabase.from("bill_payments").select("*").eq("is_paid", false),
+    supabase.from("habits").select("*").eq("is_active", true).order("created_at", { ascending: true }),
+    supabase.from("habit_logs").select("*").gte("logged_date", thirtyDaysAgo),
+    supabase.from("goals").select("*").eq("status", "Active").order("created_at", { ascending: false }).limit(6),
+    supabase.from("income_months").select("*").order("month", { ascending: false }),
+    getPinnedItems(),
+    weeklyReviewQuery,
   ]);
 
   const bills = (billsRes.data ?? []) as Bill[];
@@ -88,6 +122,27 @@ export default async function DashboardPage() {
   const mortgage = (mortgageRes.data?.[0] as Mortgage | undefined) ?? undefined;
   const calEvents = (calEventsRes.data ?? []) as CalendarEvent[];
   const duePayments = (paymentsRes.data ?? []) as BillPayment[];
+  const habits = (habitsRes.data ?? []) as Habit[];
+  const habitLogs = (habitLogsRes.data ?? []) as HabitLog[];
+  const activeGoals = (goalsRes.data ?? []) as Goal[];
+  const incomeMonths = (incomeMonthsRes.data ?? []) as IncomeMonth[];
+
+  // --- Finance: cash flow ---------------------------------------------------
+  const income = effectiveIncomeForMonth(incomeMonths, monthStr());
+  const monthlyIncome = income.source !== "none" ? income.net + income.bonus : null;
+  const monthlyBillsTotal = bills.reduce((s, b) => s + toMonthly(Number(b.amount), b.frequency), 0);
+  const netMonthly = monthlyIncome !== null ? monthlyIncome - monthlyBillsTotal : null;
+  const monthlySavingsContribs = pots.reduce((s, p) => s + Number(p.monthly_contribution ?? 0), 0);
+  const savingsRate =
+    monthlyIncome && monthlyIncome > 0
+      ? Math.round((monthlySavingsContribs / monthlyIncome) * 100)
+      : null;
+
+  // --- Habits: daily life score ----------------------------------------------
+  const dailyHabits = habits.filter((h) => h.frequency === "daily");
+  const completedTodayIds = habitLogs.filter((l) => l.logged_date === todayStr).map((l) => l.habit_id);
+  const lifeScore =
+    dailyHabits.length > 0 ? Math.round((completedTodayIds.length / dailyHabits.length) * 100) : null;
 
   // --- Week ahead: how much is on each of the next 7 days -------------------
   const today0 = new Date();
@@ -228,6 +283,8 @@ export default async function DashboardPage() {
     if (p.payment_date > todayKey) continue;
     const d = daysUntil(p.payment_date) ?? 0;
     attention.push({
+      id: p.id,
+      kind: "bill_payment",
       label: `Pay ${billName.get(p.bill_id) ?? "bill"}`,
       sub: d < 0 ? `${Math.abs(d)}d overdue · ${formatCurrency(p.expected_amount)}` : `Due today · ${formatCurrency(p.expected_amount)}`,
       href: `/bills?item=${p.bill_id}`,
@@ -240,6 +297,8 @@ export default async function DashboardPage() {
     const d = daysUntil(t.due_date) ?? 0;
     if (d > 0) continue;
     attention.push({
+      id: t.id,
+      kind: "task",
       label: t.title,
       sub: d < 0 ? `${Math.abs(d)}d overdue` : "Due today",
       href: `/projects?task=${t.id}`,
@@ -251,6 +310,8 @@ export default async function DashboardPage() {
     const d = daysUntil(m.next_due_date);
     if (d === null || d > 0) continue;
     attention.push({
+      id: m.id,
+      kind: "maintenance",
       label: m.task,
       sub: d < 0 ? `${Math.abs(d)}d overdue` : "Due today",
       href: `/maintenance?item=${m.id}`,
@@ -287,6 +348,11 @@ export default async function DashboardPage() {
     ((user?.user_metadata?.full_name as string) ?? (user?.user_metadata?.name as string) ?? "").split(" ")[0] ||
     "there";
 
+  // Nudge toward the weekly review near the end of the week, only if it's not done yet —
+  // a one-off suggestion, not a daily nag.
+  const weekIsWrappingUp = [5, 6, 0].includes(new Date().getDay());
+  const showReviewNudge = isLife && weekIsWrappingUp && !weeklyReviewRes.data;
+
   return (
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-3">
@@ -294,13 +360,122 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {greeting}, <ColoredName name={myName} />
           </h1>
-          <p className="text-muted-foreground">Here&apos;s what needs your attention.</p>
+          <p className="text-sm text-muted-foreground">
+            {lifeScore !== null
+              ? dailyHabits.length > 0 && completedTodayIds.length >= dailyHabits.length
+                ? `All ${dailyHabits.length} habits done today · ${lifeScore}% 🎉`
+                : `${completedTodayIds.length} of ${dailyHabits.length} habits done today · ${lifeScore}%`
+              : "Here's your day at a glance."}
+          </p>
         </div>
         <EditDashboardButton />
       </div>
 
       {/* Needs attention — the urgent things, always first */}
       <NeedsAttention items={attention} />
+
+      {/* Weekly review nudge — only near the end of the week, only if not done yet */}
+      {showReviewNudge ? (
+        <Link
+          href="/reviews"
+          className="flex items-center justify-between gap-2 rounded-xl border bg-card px-4 py-3 text-sm transition-colors hover:bg-accent"
+        >
+          <span>
+            <span className="font-medium">How did this week go?</span>{" "}
+            <span className="text-muted-foreground">{weekLabel(thisWeekStart)} — takes a minute.</span>
+          </span>
+          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </Link>
+      ) : null}
+
+      {/* Pinned — anything starred across tasks, goals, etc. */}
+      {pinnedItems.length > 0 && (
+        <DashboardWidget id="pinned">
+          <CollapsibleSection title="Pinned" href="/dashboard" count={pinnedItems.length}>
+            {pinnedItems.map((p) => (
+              <RowLink key={`${p.type}-${p.id}`} href={p.href}>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{p.label}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{p.type}</p>
+                </div>
+                <Star className="h-3.5 w-3.5 shrink-0 fill-current text-amber-500" />
+              </RowLink>
+            ))}
+          </CollapsibleSection>
+        </DashboardWidget>
+      )}
+
+      {/* Daily habit check-in */}
+      {dailyHabits.length > 0 && (
+        <DashboardWidget id="habitCheckIn">
+          <CollapsibleSection
+            title="Today's habits"
+            href="/habits"
+            count={completedTodayIds.length}
+          >
+            <DailyHabits habits={habits} logs={habitLogs} completedToday={completedTodayIds} />
+          </CollapsibleSection>
+        </DashboardWidget>
+      )}
+
+      {/* Active goals progress */}
+      {activeGoals.length > 0 && (
+        <DashboardWidget id="goalsProgress">
+          <CollapsibleSection title="Goals" href="/goals" count={activeGoals.length}>
+            <div className="space-y-3">
+              {activeGoals.slice(0, 4).map((goal) => {
+                const pct =
+                  goal.target_value && goal.current_value
+                    ? Math.min(100, Math.round((Number(goal.current_value) / Number(goal.target_value)) * 100))
+                    : 0;
+                return (
+                  <Link key={goal.id} href="/goals" className="block space-y-1 rounded-md p-1 transition-colors hover:bg-accent">
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <span className="min-w-0 truncate font-medium">{goal.title}</span>
+                      {goal.target_value ? (
+                        <span className="shrink-0 text-xs text-muted-foreground">{pct}%</span>
+                      ) : (
+                        <Badge variant="secondary" className="shrink-0 text-xs">{goal.category}</Badge>
+                      )}
+                    </div>
+                    {goal.target_value ? (
+                      <Progress value={pct} className="h-1.5" />
+                    ) : null}
+                  </Link>
+                );
+              })}
+            </div>
+          </CollapsibleSection>
+        </DashboardWidget>
+      )}
+
+      {/* Cash flow summary (only shown when income is set) */}
+      {netMonthly !== null && (
+        <DashboardWidget id="cashFlow">
+          <CollapsibleSection title="Cash flow" href="/finance" count={0}>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div>
+                <p className="text-xs text-muted-foreground">Income</p>
+                <p className="text-base font-semibold">{formatCurrency(monthlyIncome!)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Bills</p>
+                <p className="text-base font-semibold">{formatCurrency(monthlyBillsTotal)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Net monthly</p>
+                <p className={`text-base font-semibold ${netMonthly < 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
+                  {netMonthly < 0 ? "−" : "+"}{formatCurrency(Math.abs(netMonthly))}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Savings rate</p>
+                <p className="text-base font-semibold">{savingsRate !== null ? `${savingsRate}%` : "—"}</p>
+              </div>
+            </div>
+          </CollapsibleSection>
+        </DashboardWidget>
+      )}
 
       {/* Glance stats (user-customisable in Settings) */}
       <DashboardWidget id="finance">

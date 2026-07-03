@@ -12,7 +12,7 @@ import type { Document } from "@/lib/database.types";
 import { DocumentDetailDialog } from "./document-detail";
 import { deleteDocument, getDocumentUrl } from "./actions";
 
-export function DocumentRow({ doc }: { doc: Document }) {
+export function DocumentRow({ doc, compact = false }: { doc: Document; compact?: boolean }) {
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
   const expiryDays = daysUntil(doc.expiry_date);
@@ -30,6 +30,7 @@ export function DocumentRow({ doc }: { doc: Document }) {
 
   return (
     <ListRow
+      compact={compact}
       icon={
         <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <FileText className="h-5 w-5" />

@@ -12,6 +12,8 @@ import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
 export const metadata = { title: "Inspiration" };
 
+const isLife = process.env.NEXT_PUBLIC_APP === "life";
+
 export default async function InspirationPage() {
   const supabase = await createClient();
   const {
@@ -34,7 +36,11 @@ export default async function InspirationPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Inspiration" description="Your personal board for every home idea." info="Save links and images from Instagram, Pinterest, TikTok and the web. Group them into collections, tag and filter them, and switch between masonry, card and list views. Use the ⋯ menu on any idea to convert it into a Project or a Purchase.">
+      <PageHeader
+        title="Inspiration"
+        description={isLife ? "Every reel, link and idea worth saving, in one place." : "Your personal board for every home idea."}
+        info="Save links and images from Instagram, Pinterest, TikTok and the web — paste a link and it fills in the title and image for you. Group them into collections, tag and filter them, and switch between masonry, card and list views."
+      >
         <InspirationActions collections={collections} />
       </PageHeader>
 
@@ -44,7 +50,11 @@ export default async function InspirationPage() {
         <EmptyState
           icon={Lightbulb}
           title="No ideas saved yet"
-          description="Save links from Instagram, TikTok, Pinterest and more. Organise them into collections and convert the best into projects or purchases."
+          description={
+            isLife
+              ? "Save the reels and links you keep meaning to come back to. Paste a link and it fills itself in — organise the best into collections."
+              : "Save links from Instagram, TikTok, Pinterest and more. Organise them into collections and convert the best into projects or purchases."
+          }
         >
           <InspirationForm collections={collections} />
         </EmptyState>

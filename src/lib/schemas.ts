@@ -5,6 +5,7 @@ import {
   FREQUENCIES,
   INSPIRATION_SOURCES,
   INSPIRATION_STATUSES,
+  ITEM_SCOPES,
   MAINTENANCE_FREQUENCIES,
   PRIORITIES,
   PROJECT_CATEGORIES,
@@ -29,6 +30,7 @@ export const billSchema = z.object({
   account_id: optionalString,
   is_fixed: z.coerce.boolean().default(true),
   notes: optionalString,
+  scope: z.enum(ITEM_SCOPES).default("household"),
 });
 export type BillInput = z.infer<typeof billSchema>;
 
@@ -70,11 +72,13 @@ export const savingsPotSchema = z.object({
   target_date: optionalDate,
   color: z.string().default("emerald"),
   notes: optionalString,
+  pot_type: z.enum(["savings", "investment"]).default("savings"),
 });
 export type SavingsPotInput = z.infer<typeof savingsPotSchema>;
 
 export const savingsAccountSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
+  provider: optionalString,
   notes: optionalString,
   // Optional opening balance — logged as the account's first contribution.
   opening_balance: money.optional(),
@@ -103,6 +107,7 @@ export const projectSchema = z.object({
   target_completion_date: optionalDate,
   notes: optionalString,
   image_url: optionalString,
+  scope: z.enum(ITEM_SCOPES),
 });
 export type ProjectInput = z.infer<typeof projectSchema>;
 
@@ -123,6 +128,7 @@ export const purchaseSchema = z.object({
   purchased_by: optionalString,
   purchased_price: z.coerce.number().min(0).max(1_000_000_000).optional(),
   receipt_url: optionalString,
+  scope: z.enum(ITEM_SCOPES).default("household"),
 });
 export type PurchaseInput = z.infer<typeof purchaseSchema>;
 

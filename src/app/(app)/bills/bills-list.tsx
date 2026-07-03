@@ -1,39 +1,76 @@
 "use client";
 
 import * as React from "react";
-import { Pencil } from "lucide-react";
+import { CheckCircle2, Circle, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
-import { FREQUENCY_LABELS } from "@/lib/constants";
-import { cn, formatCurrency, formatDate, toMonthly } from "@/lib/utils";
+import { SearchInput } from "@/components/shared/search-input";
+import { FREQUENCY_LABELS, ITEM_SCOPE_LABELS } from "@/lib/constants";
+import { cn, daysUntil, formatCurrency, formatDate, toMonthly } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 import type { MemberMap } from "@/lib/household";
-import type { Bill, BillPayment, PaymentAccount } from "@/lib/database.types";
+import type { Bill, BillContributor, BillPayment, HouseholdMember, PaymentAccount } from "@/lib/database.types";
 import { BillForm } from "./bill-form";
 import { BillDetailDialog } from "./bill-detail";
-import { deleteBill } from "./actions";
+import { deleteBill, setPaymentPaid } from "./actions";
+
+const todayStr = () => new Date().toISOString().slice(0, 10);
+
+/** The earliest unpaid payment that's due now or overdue for this bill, if any. */
+function duePaymentFor(payments: BillPayment[], billId: string): BillPayment | null {
+  const today = todayStr();
+  const due = payments
+    .filter((p) => p.bill_id === billId && !p.is_paid && p.payment_date <= today)
+    .sort((a, b) => a.payment_date.localeCompare(b.payment_date));
+  return due[0] ?? null;
+}
 
 export function BillsList({
   bills,
   accounts,
   payments,
+  contributors,
+  members,
   memberMap,
 }: {
   bills: Bill[];
   accounts: PaymentAccount[];
   payments: BillPayment[];
+  contributors: BillContributor[];
+  members: HouseholdMember[];
   memberMap: MemberMap;
 }) {
   const [compact, setCompact] = React.useState(true);
+  const [scopeFilter, setScopeFilter] = React.useState<"all" | "personal" | "household">("all");
+  const [search, setSearch] = React.useState("");
+  const isLife = process.env.NEXT_PUBLIC_APP === "life";
   const accountNames = new Map(accounts.map((account) => [account.id, account.name]));
+  const visibleBills = bills
+    .filter((b) => (scopeFilter === "all" ? true : b.scope === scopeFilter))
+    .filter((b) => (!search.trim() ? true : b.name.toLowerCase().includes(search.trim().toLowerCase())));
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between space-y-0">
+      <CardHeader className="flex-col items-stretch gap-2 space-y-0 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle>All bills</CardTitle>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <SearchInput value={search} onChange={setSearch} placeholder="Search bills…" className="w-full sm:w-48" />
+          {isLife ? (
+            <div className="flex items-center rounded-lg border p-0.5 text-xs">
+              {(["all", "household", "personal"] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setScopeFilter(s)}
+                  className={cn("rounded-md px-2.5 py-1", scopeFilter === s && "bg-accent")}
+                >
+                  {s === "all" ? "All" : ITEM_SCOPE_LABELS[s]}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <div className="flex items-center rounded-lg border p-0.5 text-xs">
             <button onClick={() => setCompact(false)} className={cn("rounded-md px-2 py-1", !compact && "bg-accent")}>
               Detailed
@@ -45,13 +82,15 @@ export function BillsList({
         </div>
       </CardHeader>
       <CardContent className="divide-y">
-        {bills.map((bill) =>
-          compact ? (
+        {visibleBills.map((bill) => {
+          const due = duePaymentFor(payments, bill.id);
+          return compact ? (
             <div key={bill.id} className="flex items-center gap-3 py-2 text-sm first:pt-0 last:pb-0">
-              <BillDetailDialog bill={bill} accounts={accounts} payments={payments.filter((payment) => payment.bill_id === bill.id)} memberMap={memberMap}>
+              <BillDetailDialog bill={bill} accounts={accounts} payments={payments.filter((payment) => payment.bill_id === bill.id)} contributors={contributors.filter((c) => c.bill_id === bill.id)} members={members} memberMap={memberMap}>
                 <CardTrigger className="flex min-w-0 flex-1 items-center gap-3 rounded-md">
                   <span className="min-w-0 flex-1 truncate font-medium">{bill.name}</span>
                   <Badge variant="secondary">{bill.category}</Badge>
+                  {isLife && bill.scope === "personal" ? <Badge variant="outline">Personal</Badge> : null}
                   {bill.due_date ? (
                     <span className="hidden w-20 shrink-0 text-right text-xs text-muted-foreground sm:block">
                       {formatDate(bill.due_date)}
@@ -63,7 +102,8 @@ export function BillsList({
                   </span>
                 </CardTrigger>
               </BillDetailDialog>
-              <div className="flex shrink-0 items-center">
+              <div className="flex shrink-0 items-center gap-1.5">
+                {due ? <MarkPaidButton payment={due} /> : null}
                 <BillForm
                   bill={bill}
                   accounts={accounts}
@@ -79,12 +119,13 @@ export function BillsList({
             </div>
           ) : (
             <div key={bill.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-              <BillDetailDialog bill={bill} accounts={accounts} payments={payments.filter((payment) => payment.bill_id === bill.id)} memberMap={memberMap}>
+              <BillDetailDialog bill={bill} accounts={accounts} payments={payments.filter((payment) => payment.bill_id === bill.id)} contributors={contributors.filter((c) => c.bill_id === bill.id)} members={members} memberMap={memberMap}>
                 <CardTrigger className="min-w-0 flex-1 rounded-md">
                   <div className="flex items-center gap-2">
                     <span className="truncate font-medium">{bill.name}</span>
                     <Badge variant="secondary">{bill.category}</Badge>
                     {!bill.is_fixed ? <Badge variant="outline">Variable</Badge> : null}
+                    {isLife && bill.scope === "personal" ? <Badge variant="outline">Personal</Badge> : null}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>
@@ -98,7 +139,8 @@ export function BillsList({
                   </div>
                 </CardTrigger>
               </BillDetailDialog>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
+                {due ? <MarkPaidButton payment={due} /> : null}
                 <div className="text-right">
                   <p className="font-semibold">{formatCurrency(bill.amount)}</p>
                   <p className="text-xs text-muted-foreground">
@@ -118,9 +160,49 @@ export function BillsList({
                 <ConfirmDelete itemLabel="bill" action={deleteBill.bind(null, bill.id)} />
               </div>
             </div>
-          ),
-        )}
+          );
+        })}
       </CardContent>
     </Card>
+  );
+}
+
+/** Only rendered when a bill has a due-or-overdue unpaid payment — marks it paid in one tap. */
+function MarkPaidButton({ payment }: { payment: BillPayment }) {
+  const [done, setDone] = React.useState(false);
+  const [pending, startTransition] = React.useTransition();
+  const { toast } = useToast();
+  const days = daysUntil(payment.payment_date) ?? 0;
+  const overdue = days < 0;
+
+  if (done) {
+    return (
+      <Badge variant="success" className="shrink-0 gap-1">
+        <CheckCircle2 className="h-3 w-3" /> Paid
+      </Badge>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      onClick={() => {
+        setDone(true);
+        startTransition(async () => {
+          const res = await setPaymentPaid(payment.id, true);
+          if (res?.error) {
+            setDone(false);
+            toast({ variant: "destructive", title: "Couldn't mark paid", description: res.error });
+          }
+        });
+      }}
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
+        overdue ? "border-destructive/30 text-destructive" : "border-amber-500/30 text-amber-600 dark:text-amber-400",
+      )}
+    >
+      <Circle className="h-3 w-3" /> {overdue ? "Overdue" : "Due"} · Mark paid
+    </button>
   );
 }

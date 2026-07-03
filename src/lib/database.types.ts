@@ -30,6 +30,7 @@ export type Bill = Timestamps & {
   account_id: string | null;
   is_fixed: boolean;
   notes: string | null;
+  scope: ItemScope;
 };
 
 export type PaymentAccount = Timestamps & {
@@ -50,6 +51,27 @@ export type BillPayment = Timestamps & {
   actual_amount: number | null;
   notes: string | null;
   is_paid: boolean;
+};
+
+export type BillContributor = Timestamps & {
+  id: string;
+  bill_id: string;
+  user_id: string;
+  member_id: string;
+  amount: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  notes: string | null;
+};
+
+export type HouseholdContribution = Timestamps & {
+  id: string;
+  user_id: string;
+  member_id: string;
+  amount: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  notes: string | null;
 };
 
 export type NotificationPreference = Timestamps & {
@@ -98,6 +120,7 @@ export type SavingsPot = Timestamps & {
   color: string;
   icon: string | null;
   notes: string | null;
+  pot_type: string;
 };
 
 export type SavingsAccount = Timestamps & {
@@ -105,6 +128,7 @@ export type SavingsAccount = Timestamps & {
   user_id: string;
   pot_id: string;
   name: string;
+  provider: string | null;
   notes: string | null;
 };
 
@@ -143,6 +167,8 @@ export type Inspiration = Timestamps & {
   collection_id: string | null;
 };
 
+export type ItemScope = "personal" | "household";
+
 export type Project = Timestamps & {
   id: string;
   user_id: string;
@@ -158,6 +184,7 @@ export type Project = Timestamps & {
   image_url: string | null;
   source_inspiration_id: string | null;
   archived_at: string | null;
+  scope: ItemScope;
 };
 
 export type Purchase = Timestamps & {
@@ -186,6 +213,7 @@ export type Purchase = Timestamps & {
   purchased_by: string | null;
   purchased_price: number | null;
   receipt_url: string | null;
+  scope: ItemScope;
 };
 
 export type PurchaseOption = Timestamps & {
@@ -302,6 +330,10 @@ export type ProjectTask = Timestamps & {
   assigned_to: string | null;
   archived_at: string | null;
   notes: string | null;
+  is_bored_task: boolean;
+  is_important: boolean;
+  tags: string[];
+  scope: ItemScope;
 };
 
 export type PurchaseStar = {
@@ -507,6 +539,15 @@ export type HouseholdMember = {
   color: string | null;
 };
 
+export type HouseholdInvite = {
+  id: string;
+  household_id: string;
+  code: string;
+  created_by: string;
+  created_at: string;
+  expires_at: string | null;
+};
+
 export type ActivityLog = {
   id: number;
   user_id: string | null;
@@ -518,6 +559,427 @@ export type ActivityLog = {
 };
 
 export type ProjectWithTasks = Project & { tasks: ProjectTask[] };
+
+// ---------------------------------------------------------------------------
+// MyLife personal modules
+// ---------------------------------------------------------------------------
+
+export type Habit = {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  frequency: string;
+  target_count: number;
+  color: string | null;
+  is_active: boolean;
+  start_date: string | null;
+  habit_type: string;
+  why: string | null;
+  unit: string | null;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type HabitLog = {
+  id: string;
+  user_id: string;
+  habit_id: string;
+  logged_date: string;
+  count: number;
+  value: number | null;
+  duration_seconds: number | null;
+  notes: string | null;
+  created_at: string;
+};
+
+export type HabitTarget = {
+  id: string;
+  user_id: string;
+  habit_id: string;
+  period: string;
+  target_value: number;
+  created_at: string;
+};
+
+export type Goal = {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  target_value: number | null;
+  current_value: number | null;
+  unit: string | null;
+  target_date: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type JournalEntry = {
+  id: string;
+  user_id: string;
+  entry_date: string;
+  mood: string | null;
+  mood_score: number | null;
+  content: string | null;
+  gratitude: string | null;
+  photo_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PrivateNote = {
+  id: string;
+  user_id: string;
+  title: string;
+  content: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PrivatePhoto = {
+  id: string;
+  user_id: string;
+  file_path: string;
+  caption: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Workout = {
+  id: string;
+  user_id: string;
+  name: string;
+  workout_date: string;
+  duration_minutes: number | null;
+  workout_type: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WorkoutExercise = {
+  id: string;
+  user_id: string;
+  workout_id: string;
+  name: string;
+  sets: number | null;
+  reps: number | null;
+  weight_kg: number | null;
+  duration_seconds: number | null;
+  distance_meters: number | null;
+  notes: string | null;
+  created_at: string;
+};
+
+export type Exercise = {
+  id: string;
+  user_id: string;
+  name: string;
+  muscle_groups: string[];
+  technique: string | null;
+  inspiration: string | null;
+  pb_value: number | null;
+  pb_unit: string | null;
+  pb_date: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MuscleLink = {
+  id: string;
+  user_id: string;
+  muscle_group: string;
+  url: string;
+  label: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ExerciseLink = {
+  id: string;
+  user_id: string;
+  exercise_id: string;
+  url: string;
+  label: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WorkoutPlan = {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WorkoutPlanExercise = {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  exercise_id: string;
+  sets: number | null;
+  reps: number | null;
+  target_weight_kg: number | null;
+  order_index: number;
+  notes: string | null;
+  created_at: string;
+};
+
+export type HealthRecord = {
+  id: string;
+  user_id: string;
+  record_type: string;
+  value: number | null;
+  value2: number | null;
+  unit: string | null;
+  notes: string | null;
+  recorded_at: string;
+  created_at: string;
+};
+
+export type Medication = {
+  id: string;
+  user_id: string;
+  name: string;
+  dosage: string | null;
+  frequency: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Appointment = {
+  id: string;
+  user_id: string;
+  title: string;
+  provider: string | null;
+  appointment_date: string;
+  appointment_time: string | null;
+  location: string | null;
+  notes: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type HealthInspiration = {
+  id: string;
+  user_id: string;
+  kind: string;
+  title: string;
+  url: string | null;
+  image_url: string | null;
+  source: string | null;
+  content: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FinanceInspiration = {
+  id: string;
+  user_id: string;
+  kind: string;
+  title: string;
+  url: string | null;
+  image_url: string | null;
+  source: string | null;
+  content: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NutritionInspiration = {
+  id: string;
+  user_id: string;
+  kind: string;
+  title: string;
+  url: string | null;
+  image_url: string | null;
+  source: string | null;
+  content: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Essential = {
+  id: string;
+  user_id: string;
+  category: string;
+  name: string;
+  rag: string;
+  have_notes: string | null;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RoutineItem = {
+  id: string;
+  user_id: string;
+  section: string;
+  name: string;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RoutineCompletion = {
+  id: string;
+  user_id: string;
+  item_id: string;
+  completed_date: string;
+  created_at: string;
+};
+
+export type NutritionLog = {
+  id: string;
+  user_id: string;
+  log_date: string;
+  meal_type: string;
+  name: string;
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+  notes: string | null;
+  created_at: string;
+};
+
+export type Recipe = {
+  id: string;
+  user_id: string;
+  name: string;
+  video_url: string | null;
+  image_url: string | null;
+  servings: number | null;
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RecipeIngredient = {
+  id: string;
+  user_id: string;
+  recipe_id: string;
+  name: string;
+  quantity: string | null;
+  order_index: number;
+  created_at: string;
+};
+
+export type FinanceSettings = {
+  id: string;
+  user_id: string;
+  monthly_income: number | null;
+  income_label: string;
+  annual_salary: number | null;
+  employer: string | null;
+  salary_notes: string | null;
+  updated_at: string;
+};
+
+export type Budget = Timestamps & {
+  id: string;
+  user_id: string;
+  category: string;
+  monthly_limit: number;
+  notes: string | null;
+};
+
+export type IncomeMonth = Timestamps & {
+  id: string;
+  user_id: string;
+  month: string;
+  net_income: number;
+  bonus: number;
+  notes: string | null;
+};
+
+export type CreditCard = Timestamps & {
+  id: string;
+  user_id: string;
+  name: string;
+  last4: string | null;
+  statement_day: number | null;
+  notes: string | null;
+};
+
+export type CreditCardStatement = Timestamps & {
+  id: string;
+  user_id: string;
+  card_id: string;
+  statement_month: string;
+  amount: number;
+  is_paid: boolean;
+  notes: string | null;
+};
+
+export type PotContributionSchedule = Timestamps & {
+  id: string;
+  user_id: string;
+  pot_id: string;
+  amount: number;
+  start_date: string | null;
+  end_date: string | null;
+  notes: string | null;
+};
+
+export type PotContributionOverride = {
+  id: string;
+  user_id: string;
+  pot_id: string;
+  month: string;
+  amount: number;
+  notes: string | null;
+  created_at: string;
+};
+
+export type Share = {
+  id: string;
+  user_id: string;
+  ticker: string;
+  quantity: number;
+  purchase_price: number;
+  purchase_date: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Favorite = {
+  id: string;
+  user_id: string;
+  entity_type: string;
+  entity_id: string;
+  created_at: string;
+};
+
+export type ReviewPeriod = "weekly" | "monthly";
+
+export type Review = Timestamps & {
+  id: string;
+  user_id: string;
+  period_type: ReviewPeriod;
+  period_start: string;
+  went_well: string | null;
+  stuck: string | null;
+  stop_doing: string | null;
+  priorities: string | null;
+};
 
 export type InspirationSource =
   | "Instagram"
@@ -571,6 +1033,8 @@ export type Database = {
       bills: Row<Bill>;
       payment_accounts: Row<PaymentAccount>;
       bill_payments: Row<BillPayment>;
+      bill_contributors: Row<BillContributor>;
+      household_contributions: Row<HouseholdContribution>;
       notification_preferences: Row<NotificationPreference>;
       notifications: Row<Notification>;
       mortgages: Row<Mortgage>;
@@ -588,6 +1052,7 @@ export type Database = {
       calendar_events: Row<CalendarEvent>;
       project_tasks: Row<ProjectTask>;
       household_members: Row<HouseholdMember>;
+      household_invites: Row<HouseholdInvite>;
       activity_log: Row<ActivityLog>;
       maintenance_tasks: Row<MaintenanceTask>;
       documents: Row<Document>;
@@ -604,9 +1069,50 @@ export type Database = {
       room_colour_palettes: Row<RoomColourPalette>;
       room_colour_swatches: Row<RoomColourSwatch>;
       room_design_inspiration_links: Row<RoomDesignInspirationLink>;
+      habits: Row<Habit>;
+      habit_logs: Row<HabitLog>;
+      habit_targets: Row<HabitTarget>;
+      goals: Row<Goal>;
+      journal_entries: Row<JournalEntry>;
+      workouts: Row<Workout>;
+      workout_exercises: Row<WorkoutExercise>;
+      exercises: Row<Exercise>;
+      workout_plans: Row<WorkoutPlan>;
+      workout_plan_exercises: Row<WorkoutPlanExercise>;
+      muscle_links: Row<MuscleLink>;
+      exercise_links: Row<ExerciseLink>;
+      health_records: Row<HealthRecord>;
+      medications: Row<Medication>;
+      appointments: Row<Appointment>;
+      health_inspiration: Row<HealthInspiration>;
+      finance_inspiration: Row<FinanceInspiration>;
+      nutrition_inspiration: Row<NutritionInspiration>;
+      essentials: Row<Essential>;
+      routine_items: Row<RoutineItem>;
+      routine_completions: Row<RoutineCompletion>;
+      nutrition_logs: Row<NutritionLog>;
+      recipes: Row<Recipe>;
+      recipe_ingredients: Row<RecipeIngredient>;
+      finance_settings: Row<FinanceSettings>;
+      budgets: Row<Budget>;
+      income_months: Row<IncomeMonth>;
+      credit_cards: Row<CreditCard>;
+      credit_card_statements: Row<CreditCardStatement>;
+      pot_contribution_schedules: Row<PotContributionSchedule>;
+      pot_contribution_overrides: Row<PotContributionOverride>;
+      shares: Row<Share>;
+      favorites: Row<Favorite>;
+      reviews: Row<Review>;
+      private_notes: Row<PrivateNote>;
+      private_photos: Row<PrivatePhoto>;
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      redeem_household_invite: {
+        Args: { p_code: string };
+        Returns: boolean;
+      };
+    };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
   };

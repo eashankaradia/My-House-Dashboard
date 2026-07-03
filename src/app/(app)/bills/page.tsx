@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { formatCurrency, formatDate, daysUntil, toAnnual, toMonthly } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
-import type { Bill, BillPayment, PaymentAccount } from "@/lib/database.types";
+import type { Bill, BillContributor, BillPayment, HouseholdContribution, HouseholdMember, PaymentAccount } from "@/lib/database.types";
 import { BillForm } from "./bill-form";
 import { BillsList } from "./bills-list";
+import { HouseholdContributions } from "./household-contributions";
 import { SectionActivityLog } from "@/components/shared/section-activity-log";
 import { BottomAdmin } from "@/components/shared/bottom-admin";
 import { PaymentAccounts } from "./payment-accounts";
@@ -19,22 +20,37 @@ export const metadata = { title: "Bills & Expenses" };
 
 export default async function BillsPage() {
   const supabase = await createClient();
-  const [{ data }, { data: accountData }, { data: paymentData }, memberMap] = await Promise.all([
-    supabase
-      .from("bills")
-      .select("*")
-      .order("category", { ascending: true })
-      .order("name", { ascending: true }),
-    supabase.from("payment_accounts").select("*").order("name"),
-    supabase.from("bill_payments").select("*").order("payment_date", { ascending: false }),
-    getHouseholdMap(),
-  ]);
+  const isHouse = process.env.NEXT_PUBLIC_APP !== "life";
+  let billsQuery = supabase
+    .from("bills")
+    .select("*")
+    .order("category", { ascending: true })
+    .order("name", { ascending: true });
+  if (isHouse) billsQuery = billsQuery.eq("scope", "household");
+
+  const [{ data }, { data: accountData }, { data: paymentData }, { data: contributorData }, { data: memberData }, memberMap, { data: householdContribData }] =
+    await Promise.all([
+      billsQuery,
+      supabase.from("payment_accounts").select("*").order("name"),
+      supabase.from("bill_payments").select("*").order("payment_date", { ascending: false }),
+      supabase.from("bill_contributors").select("*"),
+      supabase.from("household_members").select("*").order("display_name"),
+      getHouseholdMap(),
+      supabase.from("household_contributions").select("*"),
+    ]);
   const bills = (data ?? []) as Bill[];
   const accounts = (accountData ?? []) as PaymentAccount[];
   const payments = (paymentData ?? []) as BillPayment[];
+  const contributors = (contributorData ?? []) as BillContributor[];
+  const members = (memberData ?? []) as HouseholdMember[];
+  const householdContributions = (householdContribData ?? []) as HouseholdContribution[];
 
   const monthlyTotal = bills.reduce((sum, b) => sum + toMonthly(b.amount, b.frequency), 0);
   const annualTotal = bills.reduce((sum, b) => sum + toAnnual(b.amount, b.frequency), 0);
+  // Personal bills aren't shared with the household, so they're excluded from the split.
+  const householdMonthlyTotal = bills
+    .filter((b) => b.scope === "household")
+    .reduce((sum, b) => sum + toMonthly(b.amount, b.frequency), 0);
 
   // Category breakdown by monthly equivalent.
   const byCategory = new Map<string, number>();
@@ -88,6 +104,13 @@ export default async function BillsPage() {
             />
           </div>
 
+          <HouseholdContributions
+            monthlyTotal={householdMonthlyTotal}
+            contributions={householdContributions}
+            members={members}
+            memberMap={memberMap}
+          />
+
           <div className="grid gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <CardHeader>
@@ -126,7 +149,7 @@ export default async function BillsPage() {
             </Card>
           </div>
 
-          <BillsList bills={bills} accounts={accounts} payments={payments} memberMap={memberMap} />
+          <BillsList bills={bills} accounts={accounts} payments={payments} contributors={contributors} members={members} memberMap={memberMap} />
           <BottomAdmin label="Manage payment accounts">
             <PaymentAccounts accounts={accounts} memberMap={memberMap} />
           </BottomAdmin>

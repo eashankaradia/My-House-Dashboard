@@ -1,9 +1,10 @@
-import { PiggyBank, Target, TrendingUp } from "lucide-react";
+import { PiggyBank, LineChart, TrendingUp, Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
 import { formatCurrency } from "@/lib/utils";
+import { monthStr } from "@/lib/income";
 import type { SavingsAccount, SavingsContribution, SavingsPot } from "@/lib/database.types";
 import { PotForm } from "./pot-form";
 import { PotCard } from "./pot-card";
@@ -22,10 +23,13 @@ export default async function SavingsPage() {
   const accounts = (accountData ?? []) as SavingsAccount[];
   const contributions = (contribData ?? []) as SavingsContribution[];
 
-  const totalSaved = pots.reduce((s, p) => s + Number(p.current_amount), 0);
-  const totalTarget = pots.reduce((s, p) => s + Number(p.target_amount), 0);
-  const totalMonthly = pots.reduce((s, p) => s + Number(p.monthly_contribution), 0);
-  const overallPct = totalTarget > 0 ? Math.round((totalSaved / totalTarget) * 100) : 0;
+  const totalSaved = pots.filter((p) => (p.pot_type ?? "savings") === "savings").reduce((s, p) => s + Number(p.current_amount), 0);
+  const totalInvested = pots.filter((p) => p.pot_type === "investment").reduce((s, p) => s + Number(p.current_amount), 0);
+  const netWorth = totalSaved + totalInvested;
+  const thisMonthPrefix = monthStr().slice(0, 7);
+  const monthlyContributed = contributions
+    .filter((c) => c.occurred_on.startsWith(thisMonthPrefix) && Number(c.amount) > 0)
+    .reduce((s, c) => s + Number(c.amount), 0);
 
   return (
     <div className="space-y-6">
@@ -43,22 +47,34 @@ export default async function SavingsPage() {
         </EmptyState>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <StatCard label="Total saved" value={formatCurrency(totalSaved)} hint={`${overallPct}% of all targets`} icon={PiggyBank} />
-            <StatCard label="Combined target" value={formatCurrency(totalTarget)} icon={Target} accent="muted" />
-            <StatCard label="Monthly contributions" value={formatCurrency(totalMonthly)} icon={TrendingUp} />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Net worth" value={formatCurrency(netWorth)} icon={Wallet} />
+            <StatCard label="Saved" value={formatCurrency(totalSaved)} icon={PiggyBank} accent="muted" />
+            <StatCard label="Invested" value={formatCurrency(totalInvested)} icon={LineChart} accent="muted" />
+            <StatCard label="This month" value={formatCurrency(monthlyContributed)} hint="Contributed" icon={TrendingUp} />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {pots.map((pot) => (
-              <PotCard
-                key={pot.id}
-                pot={pot}
-                accounts={accounts.filter((a) => a.pot_id === pot.id)}
-                contributions={contributions.filter((c) => c.pot_id === pot.id)}
-              />
-            ))}
-          </div>
+          {(["savings", "investment"] as const).map((type) => {
+            const typePots = pots.filter((p) => (p.pot_type ?? "savings") === type);
+            if (typePots.length === 0) return null;
+            return (
+              <section key={type} className="space-y-2">
+                <h2 className="px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  {type === "savings" ? "Savings pots" : "Investment pots"}
+                </h2>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {typePots.map((pot) => (
+                    <PotCard
+                      key={pot.id}
+                      pot={pot}
+                      accounts={accounts.filter((a) => a.pot_id === pot.id)}
+                      contributions={contributions.filter((c) => c.pot_id === pot.id)}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </>
       )}
       <SectionActivityLog entityTypes={["savings_pots", "savings_accounts", "savings_contributions"]} />

@@ -8,13 +8,15 @@ type ListRowProps = {
   badges?: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
+  compact?: boolean;
 };
 
-export function ListRow({ icon, title, meta, badges, actions, className }: ListRowProps) {
+export function ListRow({ icon, title, meta, badges, actions, className, compact = false }: ListRowProps) {
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-wrap items-center gap-3 rounded-lg border bg-card px-3 py-2.5 text-sm",
+        "flex min-w-0 flex-wrap items-center gap-3 rounded-lg border bg-card px-3 text-sm",
+        compact ? "py-1.5" : "py-2.5",
         className,
       )}
     >
@@ -24,7 +26,7 @@ export function ListRow({ icon, title, meta, badges, actions, className }: ListR
           <div className="min-w-0 truncate font-medium">{title}</div>
           {badges ? <div className="hidden shrink-0 items-center gap-1 sm:flex">{badges}</div> : null}
         </div>
-        {meta ? <div className="mt-0.5 truncate text-xs text-muted-foreground">{meta}</div> : null}
+        {meta && !compact ? <div className="mt-0.5 truncate text-xs text-muted-foreground">{meta}</div> : null}
       </div>
       {badges ? <div className="flex shrink-0 items-center gap-1 sm:hidden">{badges}</div> : null}
       {actions ? <div className="flex shrink-0 items-center gap-1">{actions}</div> : null}

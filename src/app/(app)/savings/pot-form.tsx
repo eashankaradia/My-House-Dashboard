@@ -19,13 +19,21 @@ import {
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
 import { useToast } from "@/hooks/use-toast";
-import { POT_COLORS } from "@/lib/constants";
+import { POT_COLORS, POT_TYPES, POT_TYPE_LABELS } from "@/lib/constants";
 import { savingsPotSchema, type SavingsPotInput } from "@/lib/schemas";
 import type { SavingsPot } from "@/lib/database.types";
 import { FormDeleteButton } from "@/components/shared/form-delete-button";
 import { createPot, deletePot, updatePot } from "./actions";
 
-export function PotForm({ pot, trigger }: { pot?: SavingsPot; trigger?: React.ReactNode }) {
+export function PotForm({
+  pot,
+  trigger,
+  defaultPotType = "savings",
+}: {
+  pot?: SavingsPot;
+  trigger?: React.ReactNode;
+  defaultPotType?: string;
+}) {
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
@@ -46,6 +54,7 @@ export function PotForm({ pot, trigger }: { pot?: SavingsPot; trigger?: React.Re
       target_date: pot?.target_date ?? "",
       color: pot?.color ?? "emerald",
       notes: pot?.notes ?? "",
+      pot_type: (pot?.pot_type as "savings" | "investment") ?? (defaultPotType as "savings" | "investment"),
     },
   });
 
@@ -75,11 +84,20 @@ export function PotForm({ pot, trigger }: { pot?: SavingsPot; trigger?: React.Re
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{editing ? "Edit pot" : "Create a savings pot"}</DialogTitle>
-          <DialogDescription>Set a target and a monthly contribution to forecast progress.</DialogDescription>
+          <DialogDescription>Set a target to track progress toward.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Field label="Name" htmlFor="name" required error={errors.name?.message}>
             <Input id="name" placeholder="e.g. Emergency Fund" {...register("name")} />
+          </Field>
+          <Field label="Pot type">
+            <NativeSelect {...register("pot_type")}>
+              {POT_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {POT_TYPE_LABELS[t]}
+                </option>
+              ))}
+            </NativeSelect>
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Current (£)" htmlFor="current_amount" error={errors.current_amount?.message}>
@@ -89,14 +107,9 @@ export function PotForm({ pot, trigger }: { pot?: SavingsPot; trigger?: React.Re
               <Input id="target_amount" type="number" step="0.01" {...register("target_amount")} />
             </Field>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Monthly (£)" htmlFor="monthly_contribution" error={errors.monthly_contribution?.message}>
-              <Input id="monthly_contribution" type="number" step="0.01" {...register("monthly_contribution")} />
-            </Field>
-            <Field label="Target date" htmlFor="target_date">
-              <Input id="target_date" type="date" {...register("target_date")} />
-            </Field>
-          </div>
+          <Field label="Target date" htmlFor="target_date">
+            <Input id="target_date" type="date" {...register("target_date")} />
+          </Field>
           <Field label="Colour">
             <NativeSelect {...register("color")} className="capitalize">
               {POT_COLORS.map((c) => (

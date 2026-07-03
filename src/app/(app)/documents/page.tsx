@@ -4,10 +4,9 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
 import { daysUntil } from "@/lib/utils";
-import { DOCUMENT_CATEGORIES } from "@/lib/constants";
 import type { Document } from "@/lib/database.types";
 import { DocumentForm } from "./document-form";
-import { DocumentRow } from "./document-row";
+import { DocumentsList } from "./documents-list";
 import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
 export const metadata = { title: "Documents" };
@@ -25,13 +24,6 @@ export default async function DocumentsPage() {
     const days = daysUntil(d.expiry_date);
     return days !== null && days >= 0 && days <= 60;
   });
-
-  const grouped = DOCUMENT_CATEGORIES.filter((c) => c !== "Note")
-    .map((category) => ({
-      category,
-      docs: documents.filter((d) => d.category === category),
-    }))
-    .filter((g) => g.docs.length > 0);
 
   return (
     <div className="space-y-6">
@@ -59,22 +51,7 @@ export default async function DocumentsPage() {
             />
           </div>
 
-          <div className="space-y-4">
-            {grouped.map(({ category, docs }) => (
-              <section key={category}>
-                {/* Sticky section header (pins under the top bar while scrolling). */}
-                <div className="sticky top-16 z-10 -mx-1 mb-2 flex items-center gap-2 bg-background/90 px-1 py-1.5 backdrop-blur">
-                  <h2 className="text-sm font-semibold">{category}</h2>
-                  <span className="text-xs text-muted-foreground">{docs.length}</span>
-                </div>
-                <div className="space-y-2">
-                  {docs.map((doc) => (
-                    <DocumentRow key={doc.id} doc={doc} />
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
+          <DocumentsList documents={documents} />
         </>
       )}
       <SectionActivityLog entityTypes={["documents"]} />

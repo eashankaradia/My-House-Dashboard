@@ -10,6 +10,8 @@ import { MEMBER_COLOR_TEXT } from "@/lib/constants";
 import { getHouseholdMap } from "@/lib/household";
 import type { Bill, HouseholdMember, MaintenanceTask, NotificationPreference, Project, Purchase, PurchaseCategoryRow } from "@/lib/database.types";
 import { DisplayNameForm } from "./display-name-form";
+import { ChangePassword } from "./change-password";
+import { HouseholdInvite } from "./household-invite";
 import { ColorPicker } from "./color-picker";
 import { TabVisibilitySettings } from "./tab-visibility";
 import { NotificationPreferences } from "./notification-preferences";
@@ -246,6 +248,9 @@ export default async function SettingsPage() {
               </div>
             ))
           )}
+          <div className="border-t pt-4">
+            <HouseholdInvite />
+          </div>
         </CardContent>
       </Card>
 
@@ -257,8 +262,12 @@ export default async function SettingsPage() {
           </CardTitle>
           <CardDescription>{user?.email}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <form action="/auth/signout" method="post">
+        <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Change password</p>
+            <ChangePassword />
+          </div>
+          <form action="/auth/signout" method="post" className="border-t pt-4">
             <Button type="submit" variant="outline" className="gap-2">
               <LogOut className="h-4 w-4" /> Sign out
             </Button>

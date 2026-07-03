@@ -9,6 +9,7 @@ import {
 } from "@/lib/schemas";
 import { PURCHASE_STATUSES } from "@/lib/constants";
 import { getActionContext, type ActionResult } from "@/lib/action-utils";
+import type { ItemScope } from "@/lib/database.types";
 
 export type FuturePurchaseChoice = {
   id: string;
@@ -17,6 +18,11 @@ export type FuturePurchaseChoice = {
   room: string | null;
   status: string;
 };
+
+/** MyHouse purchases are always household-scoped — personal ones only ever come from MyLife. */
+function enforcedScope(requested: ItemScope): ItemScope {
+  return process.env.NEXT_PUBLIC_APP === "house" ? "household" : requested;
+}
 
 function toRow(values: PurchaseInput) {
   return {
@@ -36,6 +42,7 @@ function toRow(values: PurchaseInput) {
     purchased_by: values.status === "Purchased" ? values.purchased_by ?? null : null,
     purchased_price: values.status === "Purchased" ? values.purchased_price ?? null : null,
     receipt_url: values.status === "Purchased" ? values.receipt_url ?? null : null,
+    scope: enforcedScope(values.scope),
   };
 }
 

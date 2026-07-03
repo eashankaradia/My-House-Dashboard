@@ -44,7 +44,12 @@ export function TaskQuickForm({ trigger }: { trigger: React.ReactNode }) {
     e.preventDefault();
     if (!title.trim()) return;
     startTransition(async () => {
-      const res = await createTask({ title, project_id: projectId || null, due_date: due || null });
+      const res = await createTask({
+        title,
+        project_id: projectId || null,
+        due_date: due || null,
+        scope: process.env.NEXT_PUBLIC_APP === "life" ? "personal" : "household",
+      });
       if (res?.error) {
         toast({ variant: "destructive", title: "Couldn't add task", description: res.error });
         return;

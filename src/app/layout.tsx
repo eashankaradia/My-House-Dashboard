@@ -5,18 +5,22 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 
+const isLife = process.env.NEXT_PUBLIC_APP === "life";
+const appName = isLife ? "MyLife" : "My House";
+
 export const metadata: Metadata = {
   title: {
-    default: "My House Dashboard",
-    template: "%s · My House Dashboard",
+    default: appName,
+    template: `%s · ${appName}`,
   },
-  description:
-    "A premium command centre for managing your home — bills, mortgage, savings, projects, purchases, inspiration, maintenance and documents.",
+  description: isLife
+    ? "Your premium personal operating system — health, fitness, finance, habits, goals and home, all in one place."
+    : "Your home command centre — bills, savings, projects, purchases and inspiration in one calm place.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "My House Dashboard",
+    title: appName,
   },
   icons: {
     icon: "/icons/icon.svg",

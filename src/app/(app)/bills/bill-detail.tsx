@@ -17,23 +17,28 @@ import { ItemComments } from "@/components/shared/item-comments";
 import { FREQUENCY_LABELS } from "@/lib/constants";
 import { formatCurrency, formatDate, toAnnual, toMonthly } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
-import type { Bill, BillPayment, PaymentAccount } from "@/lib/database.types";
+import type { Bill, BillContributor, BillPayment, HouseholdMember, PaymentAccount } from "@/lib/database.types";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { LinkedItems } from "@/app/(app)/links/linked-items";
 import { BillForm } from "./bill-form";
 import { deleteBill } from "./actions";
 import { BillPayments } from "./bill-payments";
+import { BillContributors } from "./bill-contributors";
 
 export function BillDetailDialog({
   bill,
   accounts,
   payments,
+  contributors,
+  members,
   memberMap,
   children,
 }: {
   bill: Bill;
   accounts: PaymentAccount[];
   payments: BillPayment[];
+  contributors: BillContributor[];
+  members: HouseholdMember[];
   memberMap: MemberMap;
   children: React.ReactNode;
 }) {
@@ -72,6 +77,9 @@ export function BillDetailDialog({
             </div>
           ) : null}
           <ItemTimestamps createdAt={bill.created_at} updatedAt={bill.updated_at} />
+          <div className="border-t pt-3">
+            <BillContributors bill={bill} contributors={contributors} members={members} memberMap={memberMap} />
+          </div>
           <div className="border-t pt-3">
             <BillPayments bill={bill} payments={payments} accounts={accounts} />
           </div>

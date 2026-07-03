@@ -30,7 +30,9 @@ export function MobileNav() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Home className="h-5 w-5" />
           </span>
-          <span className="font-semibold">My House</span>
+          <span className="font-semibold">
+            {process.env.NEXT_PUBLIC_APP === "life" ? "MyLife" : "My House"}
+          </span>
         </Link>
         <SidebarNav onNavigate={() => setOpen(false)} />
       </SheetContent>

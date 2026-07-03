@@ -4,6 +4,7 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AddedBy } from "@/components/shared/added-by";
+import { SearchInput } from "@/components/shared/search-input";
 import { FREQUENCY_LABELS } from "@/lib/constants";
 import { cn, daysUntil, formatDate } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -19,12 +20,15 @@ export function MaintenanceList({
   memberMap: MemberMap;
 }) {
   const [compact, setCompact] = React.useState(true);
+  const [search, setSearch] = React.useState("");
+  const visibleTasks = tasks.filter((t) => (!search.trim() ? true : t.task.toLowerCase().includes(search.trim().toLowerCase())));
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between space-y-0">
+      <CardHeader className="flex-col items-stretch gap-2 space-y-0 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle>Schedule</CardTitle>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <SearchInput value={search} onChange={setSearch} placeholder="Search tasks…" className="w-full sm:w-48" />
           <div className="flex items-center rounded-lg border p-0.5 text-xs">
             <button onClick={() => setCompact(false)} className={cn("rounded-md px-2 py-1", !compact && "bg-accent")}>
               Detailed
@@ -36,7 +40,7 @@ export function MaintenanceList({
         </div>
       </CardHeader>
       <CardContent className={compact ? "divide-y p-0" : "space-y-2"}>
-        {tasks.map((task) => {
+        {visibleTasks.map((task) => {
           if (!compact) return <MaintenanceRow key={task.id} task={task} />;
           const days = daysUntil(task.next_due_date);
           return (

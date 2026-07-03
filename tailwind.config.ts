@@ -59,6 +59,10 @@ const config: Config = {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
         },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -81,11 +85,31 @@ const config: Config = {
           from: { opacity: "0", transform: "translateY(4px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "fade-in-scale": {
+          from: { opacity: "0", transform: "scale(0.96)" },
+          to: { opacity: "1", transform: "scale(1)" },
+        },
+        "slide-up": {
+          from: { opacity: "0", transform: "translateY(12px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "number-in": {
+          from: { opacity: "0", transform: "translateY(8px) scale(0.95)" },
+          to: { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
+        "shimmer": {
+          from: { backgroundPosition: "-200% 0" },
+          to: { backgroundPosition: "200% 0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in": "fade-in 0.3s ease-out",
+        "fade-in": "fade-in 0.25s ease-out",
+        "fade-in-scale": "fade-in-scale 0.2s ease-out",
+        "slide-up": "slide-up 0.3s ease-out",
+        "number-in": "number-in 0.4s ease-out",
+        "shimmer": "shimmer 2s linear infinite",
       },
     },
   },

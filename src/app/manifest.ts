@@ -1,14 +1,19 @@
 import type { MetadataRoute } from "next";
 
+const isLife = process.env.NEXT_PUBLIC_APP === "life";
+const appName = isLife ? "MyLife" : "My House";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "My House Dashboard",
-    short_name: "My House",
-    description: "Your premium home command centre.",
+    name: appName,
+    short_name: appName,
+    description: isLife
+      ? "Your premium personal operating system."
+      : "Your home command centre.",
     start_url: "/dashboard",
     display: "standalone",
-    background_color: "#0b1220",
-    theme_color: "#10b981",
+    background_color: "#0f0f0f",
+    theme_color: "#22c55e",
     orientation: "portrait",
     icons: [
       {

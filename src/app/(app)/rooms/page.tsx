@@ -30,7 +30,7 @@ export default async function RoomsPage() {
   const [rooms, { data: versionData }, { data: purchaseData }, { data: inspoData }] = await Promise.all([
     getRoomEntities(),
     supabase.from("room_design_versions").select("room_id, is_final, status"),
-    supabase.from("purchases").select("room, status").is("archived_at", null),
+    supabase.from("purchases").select("room, status").is("archived_at", null).eq("scope", "household"),
     supabase.from("inspiration").select("room"),
   ]);
   const versions = (versionData ?? []) as Pick<RoomDesignVersion, "room_id" | "is_final" | "status">[];

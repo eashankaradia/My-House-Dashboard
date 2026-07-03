@@ -1,18 +1,1997 @@
-# My House Dashboard — Engineering Handoff
+# MyLife — Engineering Handoff
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-29 (Claude — Purchases "Ready to buy" section).
+> after **every** change. Last updated: 2026-07-02 (Private section is now
+> actually password-gated — server-side, via middleware + cookie, not just a
+> UI convenience — plus a mobile nav scrolling bug fix, an Inspiration nav gap
+> fix, a friction-reducing rewrite of the Inspiration capture form, and a
+> realistic redraw of the fitness body diagram. `npm run typecheck`, `npm run
+> lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass. Committed
+> and pushed to `main`; confirmed **READY in Vercel production** on both
+> `my-house-dashboard` and `my-life-dashboard` at commit `c04f9b1`. Nothing
+> outstanding from this batch. Could not
+> browser-verify locally: this sandbox has no `.env.local` Supabase
+> credentials, so `next dev` 500s on every route, including pre-existing
+> ones — confirmed this is an environment limitation, not a regression,
+> before proceeding on typecheck/lint/build confidence alone).
 
-### Purchases "Ready to buy" section (done, no DB)
+## Private hardening, mobile nav fix, Inspiration friction, realistic body diagram (2026-07-02)
+Follow-up batch after the Private section shipped. The user reported the
+mobile nav couldn't scroll to reach the new Private tabs, and asked for
+Private to become a real password gate (not just a menu item) hidden behind
+an icon where the avatar sits, with sub-tabs not named anywhere in the nav.
+Also asked for general mobile-app polish, help capturing/organising
+Instagram reels and links (reusing the purchases auto-fill pattern), and a
+more realistic fitness body diagram.
+
+### Mobile nav scroll bug — DONE
+Root cause: `SheetContent` (`src/components/ui/sheet.tsx`) had no
+`overflow-y-auto` on its `left`/`right` variants. A `fixed` + `h-full`
+container with overflowing content just clips instead of scrolling — once
+the nav list grew past one screen height (which the earlier Private group
+did), the bottom items became genuinely unreachable on a phone. Added
+`overflow-y-auto` to both variants. This was a real bug affecting the whole
+mobile drawer, not Private-specific.
+
+### Private section: real password gate — DONE, replaces the previous menu-based approach
+The previous batch's implementation (Private nav group + header icon) only
+controlled what was *visible in menus* — a bookmarked or typed URL to
+`/journal` etc. still worked with no gate at all. Rebuilt properly:
+- `src/lib/supabase/middleware.ts`: added `PRIVATE_PATHS = ["/private",
+  "/journal", "/health", "/private-notes", "/private-photos"]`. For a signed-in
+  user hitting any of these without an `private_unlocked=1` cookie, redirect
+  to `/private-unlock?next=<path>` before the route ever renders.
+- New `/private-unlock` (top-level route, outside the `(app)` layout group —
+  no chrome, same treatment as `/login`): a password form. Correct password
+  (literally `"password"`, as requested — this is a glance-deterrent, not
+  real security; Supabase RLS is still the actual access-control boundary)
+  sets an httpOnly cookie for 24h via a server action and redirects to `next`.
+- New `/private` hub page (inside `(app)`, so it keeps the normal chrome once
+  unlocked): lists Journal, Health, Private Notes, Private Photos as cards —
+  "all sub tabs... inside it," and nowhere else. Has a "Lock now" button
+  (clears the cookie immediately instead of waiting 24h).
+- Header: a plain `Lock` icon `Link` to `/private`, placed in the icon
+  cluster right before the avatar/initials menu — "where the initial icon
+  is" — MyLife only.
+- Removed the "Private" nav group entirely from `LIFE_NAV_ITEMS`/
+  `LIFE_NAV_GROUPS` (constants.ts) and the "Private" quick-add pills from
+  `add-menu.tsx` — sub-tab names no longer appear in the sidebar, mobile
+  drawer, global search (which spreads `NAV_ITEMS`), or the + menu; the lock
+  icon → hub page is the only entry point now.
+- `DEFAULT_BOTTOM_TABS` had `/journal` as a MyLife default — swapped for
+  `/projects`, since a default bottom-bar tab pointing at a now-gated,
+  unlisted route would have silently vanished from new users' bar.
+
+### Inspiration: closed a real nav gap + cut form friction — DONE
+Investigation found `Inspiration` — a fully-built feature (link/reel
+capture, collections, Instagram/TikTok/YouTube oEmbed preview, the same
+`fetchLinkPreview` auto-fill used by Purchases) — was **only in the MyHouse
+nav**, never in MyLife's. The "+" menu already had a quick-add "Idea" pill
+for both apps, so reels *could* be captured, but there was no tab to ever
+go back and browse/organise them. Added `Inspiration` to `LIFE_NAV_ITEMS`
+(group "More"). Also fixed a real bug in `inspiration-form.tsx`: the
+auto-fill fetch already pulled `res.title` from the page's OG/Twitter meta
+tags but silently discarded it, forcing every saved item's title to become
+the URL hostname or notes text instead. Now `res.title` populates the title
+field directly. Added `sourceFromUrl()` to auto-detect Instagram/TikTok/
+Pinterest/YouTube from the link so that dropdown fills itself too, and
+auto-fill now runs on blur (paste a link, tab away, it's already filled) as
+well as via the explicit button. Collapsed Category/Room/Priority/Status/
+Collection/Tags behind a "More details" disclosure (closed by default) so
+the default capture flow is paste-link → glance → save, matching the
+"reduce data input" ask. Added Fitness/Nutrition/Personal Growth/Style to
+`INSPIRATION_CATEGORIES` since the existing list was entirely home-
+renovation-flavored (Garden/Kitchen/etc.) and didn't fit MyLife content.
+
+### Fitness body diagram: realistic redraw — DONE
+`body-diagram.tsx` fully rewritten. Previously: uniform-width stroked
+capsules for every limb, a single giant rounded-rect for abs, a single wide
+oval for glutes. Now: limbs are tapered filled shapes (wider proximal,
+narrower distal, rounded joint cap — computed by hand via perpendicular
+offset from each limb's centerline, since SVG strokes can't taper), abs are
+a six-block grid, glutes are two separate rounded shapes, chest uses
+pec-shaped curves instead of plain ellipses, and the back view gained a
+traps triangle plus a V-taper lat shape instead of a flat quadrilateral.
+Same `highlighted: string[]` prop contract and `MUSCLE_GROUPS` mapping —
+purely a visual rewrite. Verified by rendering the raw SVG paths in a
+headless-Chromium screenshot (fetched `playwright-core` via `npx` since it
+isn't a project dependency) before committing — confirmed no malformed/
+self-intersecting paths and correct left-right mirroring.
+
+### Edit-toggle audit — light pass, nothing further found
+Re-scanned a few likely candidates (Goals, Essentials) after the household-
+contributions fix from the previous batch; both already follow the
+click-to-edit-via-dialog convention with no always-visible clutter. No
+further changes made — avoided manufacturing busywork just to have
+something to report here.
+
+**Verification:** `npx tsc --noEmit`, `npm run lint`, `npm run build`, and
+`NEXT_PUBLIC_APP=life npm run build` all pass clean. Could not browser-test
+in this sandbox (no local Supabase credentials — confirmed via `next dev`
+that this 500s on every route, not just new ones).
+
+**Deploy confirmed:** both `my-house-dashboard`
+(`prj_BOUIdAM8EEfh6JI9nrql8K7e67Qb`) and `my-life-dashboard`
+(`prj_TB7Dt9AVg88kp0AX5TXrhXqhsnhx`) are READY in Vercel production at
+commit `c04f9b1`. Nothing outstanding from this batch.
+
+## Exercise links, contributions edit-toggle, Private section (2026-07-02)
+Three requests in one batch: "add links to exercises, more than one per
+exercise"; "hide household contributions behind an edit button, for things
+that don't change often"; "make a private section... journal, private notes,
+private photos... add other life admin things I should have in private."
+
+### Exercise links — migration + no other outstanding step
+New `exercise_links` table (migration `0061_private_section.sql`, applied
+live): `id, user_id, exercise_id → exercises(id) on delete cascade, url,
+label, created_at, updated_at`, owner-only RLS — copies the existing
+`muscle_links` pattern exactly, but keyed to an individual exercise instead
+of a muscle group, since links are exercise-specific (how to do *this* lift)
+not muscle-specific (already covered by the existing "Muscle guides"
+section). `fitness/exercise-form.tsx` gained a new `ExerciseLinksField`
+(inline add/remove list, shown only when editing an existing exercise —
+video/tutorial links need an exercise to attach to). `fitness-view.tsx`
+groups `exercise_links` by `exercise_id` and shows a link-count badge on
+each library card. New actions `createExerciseLink`/`deleteExerciseLink` in
+`fitness/actions.ts`.
+
+### Household contributions — DONE
+`bills/household-contributions.tsx` gained the same `editMode` +
+Pencil-icon toggle already used for Finance's pot sections
+(`finance-scope.tsx`'s `PotSectionHeader`). Default view: contributions
+render as plain (non-interactive) rows — no add button, no click-to-edit.
+Edit mode: "Add" button appears and rows become click-to-edit again, same
+as before this change.
+
+### Private section — DONE
+New nav group `"Private"` (MyLife only, `constants.ts`) between Planner and
+More. Journal **and** Health (records/appointments/medications — already
+owner-only RLS, i.e. already private in practice, just not visually grouped
+that way) both moved from the "Health" group into "Private". Two new
+features added to it:
+- **Private Notes** (`/private-notes`) — new `private_notes` table
+  (title, content, owner-only RLS), completely separate from the existing
+  shared "Notes & Links" (household-visible `documents`/`useful_links`).
+  Simple card grid + dialog form, search box once there are 5+ notes.
+- **Private Photos** (`/private-photos`) — new `private_photos` table
+  (file_path, caption, owner-only RLS). Unlike the shared "Photos" shoebox
+  (`quick_photos`, stored in the **public** `images` bucket), files upload
+  into the **private** `documents` storage bucket under
+  `{user_id}/private-photos/...` (bucket already has an owner-only-folder
+  storage policy — reused as-is, no new bucket/policy needed). The page
+  batch-generates 1-hour signed URLs server-side via
+  `storage.createSignedUrls()` for the grid thumbnails.
+
+Both new routes got a quick-add pill in the "+" menu (`add-menu.tsx`, new
+"Private" group, Journal + Private note only — photo capture needs the
+camera/gallery picker so it stays on its own page rather than a popup pill).
+
+**Other life-admin candidates considered and left out**: nothing else in
+the schema is inherently private-but-currently-public — everything else
+either already lives in a correctly-shared household table, or (per the
+Explore-agent inventory from the compact/search batch) was already
+owner-only RLS without being a distinct "thing to look at" the way Journal/
+Health/notes/photos are (e.g. `goals`, `habits`, `reviews` are personal but
+don't carry the same "wouldn't want household to see this" character).
+
+**Deploy confirmed:** both `my-house-dashboard`
+(`prj_BOUIdAM8EEfh6JI9nrql8K7e67Qb`) and `my-life-dashboard`
+(`prj_TB7Dt9AVg88kp0AX5TXrhXqhsnhx`) are READY in Vercel production at
+commit `fa0430c`. Nothing outstanding from this batch.
+
+## Compact view + search bars across all list tabs (2026-07-02)
+User request: "make a compact option for every tab, and search bars where
+necessary." Audited every nav tab (via an Explore subagent inventory) to
+find which already had a compact/detailed toggle and/or search, then filled
+every real gap. New shared component: `src/components/shared/search-input.tsx`
+(`SearchInput` — icon-left input with a clear `X` button), used everywhere
+search was added below, deduping what had been copy-pasted inline in a few
+places already.
+
+Convention used everywhere a toggle was added (matches the pre-existing
+Bills/Maintenance/Essentials pattern): a `flex items-center rounded-lg
+border p-0.5 text-xs` wrapper with "Detailed"/"Compact" text buttons toggling
+local `compact` state — no persistence, no schema/migration involved anywhere
+in this batch.
+
+**Added compact toggle + search:**
+- **Documents** (`documents/`) — extracted the previously-inline
+  server-rendered grouped list out of `page.tsx` into a new client
+  `documents-list.tsx` (owns `compact`/`search` state, same pattern as
+  `BillsList`). `ListRow` (shared component) gained a `compact?: boolean`
+  prop that tightens vertical padding and hides the meta subtext line;
+  `DocumentRow` forwards it through.
+- **Notes & Links** (`notes/`) — same extraction, new `notes-links-view.tsx`
+  client component. One shared compact toggle affects both the links grid
+  and notes grid (hides descriptions/preview text, tighter padding, denser
+  grid columns); search boxes are per-section (links vs notes) and only
+  render once a section has more than 5 items.
+- **Nutrition / recipes** (`nutrition/nutrition-view.tsx`) — compact mode
+  swaps the card-grid layout for a dense single-line list (thumbnail + name
+  + kcal/ingredient count); search filters by recipe name.
+- **Journal** (`journal/`) — extracted past-entries rendering into new
+  `journal-entries-list.tsx`; compact mode collapses each entry to one row
+  (date + mood emoji only); search matches date/content/gratitude text, only
+  shown once there are more than 5 entries.
+
+**Search bar only (rows already compact by design, so no toggle needed):**
+- **Purchases** (`purchases-grid.tsx`) — search by name.
+- **Bills** (`bills-list.tsx`) — search by name (compact toggle pre-existed).
+- **Maintenance** (`maintenance-list.tsx`) — search by task name (compact
+  toggle pre-existed); header made responsive (`flex-col` on mobile).
+- **Essentials** (`essentials-view.tsx`) — search by name, chained after the
+  existing RAG-filter (compact toggle pre-existed).
+- **Reviews** (`reviews-view.tsx`) — search past reviews (went-well/stuck/
+  stop-doing/priorities text), only shown once a tab has more than 3 past
+  entries.
+- **Groceries** (`shopping/shopping-list.tsx`) — search by item name, only
+  shown once the list has more than 8 items; no compact toggle added since
+  rows are already a single dense line (checkbox + name + qty).
+
+**Added compact toggle + search (most involved change):**
+- **Tasks** (`tasks-view.tsx`) — added a third `Rows3`-icon view button
+  (List/Compact/Table, Table hidden below `sm:`). Mobile fallback logic
+  changed from always forcing `"detailed"` to forcing `"compact"` only when
+  the (desktop-only) table view was selected — compact is a better mobile
+  default now that it exists. `TaskRow` gained a `compact?: boolean` prop:
+  hides the favourite star and the metadata sub-row (project/assignee
+  badges, due-date text, tags, AddedBy, calendar-add button) but keeps the
+  urgency badge and delete button visible in both modes. Search filters by
+  title.
+- **Projects** (`projects-views.tsx`) — Detailed/Compact toggle shown only
+  in list view (board view already has its own compact card style via the
+  pre-existing `ProjectCard compact` prop, now also wired from list view's
+  new toggle instead of being hardcoded `false`). Search filters by name.
+
+**Deliberately left unchanged:**
+- **Inspiration** (`inspiration-hub.tsx`) — already has four density modes
+  (feed/masonry/cards/list, the last of which already serves as "compact")
+  plus an existing search box covering title/notes/category/source/tags.
+  Adding another toggle would be redundant.
+- Fitness, Photos, Health, Finance, Savings, Rooms, Habits, Routine, Goals,
+  Drafts, Activity, Mortgage, Analytics, Calendar, Dashboard — judged (via
+  the Explore-agent inventory plus direct inspection) not to be dense
+  scrolling lists that benefit from a compact/search treatment; left as-is
+  to avoid adding UI that doesn't serve a real need.
+
+**Verification:** `npx tsc --noEmit` clean after every file group; final
+full-batch `npm run typecheck`, `npm run lint`, `npm run build`, and
+`NEXT_PUBLIC_APP=life npm run build` all pass clean.
+
+**Deploy confirmed:** both `my-house-dashboard`
+(`prj_BOUIdAM8EEfh6JI9nrql8K7e67Qb`) and `my-life-dashboard`
+(`prj_TB7Dt9AVg88kp0AX5TXrhXqhsnhx`) are READY in Vercel production at
+commit `855c8ae`. Nothing outstanding from this batch.
+
+## Engagement/retention audit + plan (2026-07-01)
+The user asked for an app summary suitable for an external AI (Perplexity)
+to evaluate, then pasted back Perplexity's resulting improvement brief
+(behavioral-design framing: Atomic Habits / Deep Work / Four Thousand Weeks
+principles, focused on daily engagement, completion reinforcement, calm
+mobile-first UX, without bloating the product).
+
+**Audit finding**: the architecture and most UI conventions are already
+sound (edit-toggle pattern, deep-linking, scope enforcement, `DailyHabits`'
+one-tap optimistic toggle). The concrete, verifiable gap: the Dashboard's
+`NeedsAttention` component — correctly positioned first, correctly scoped
+to overdue/due-today items — rendered every row as a plain `<Link>`. To
+act on it (pay a bill, finish a task, log maintenance) you had to navigate
+away, find the control elsewhere, then come back. `DailyHabits`, sitting
+right below it, already did one-tap-complete-in-place with a streak badge
+— proof the pattern works, just not applied to the app's primary "what
+matters today" surface.
+
+**Prioritized plan** (top 5):
+1. **DONE** — Make "Today" (renamed from "Needs attention") one-tap
+   completable in place.
+2. **DONE** — Extend the same one-tap-complete-with-reinforcement pattern
+   to compact list rows elsewhere. Scoped down to bills (the real gap);
+   tasks already had it.
+3. **DELIBERATELY NOT DONE** — see writeup below; the plan item as
+   originally written doesn't survive contact with the actual data.
+4. **DONE** — A weekly "how'd it go" nudge surfaced proactively.
+5. **DONE** — Smarter empty-state defaults: one-tap starter habits.
+
+### #1: Dashboard "Today" panel — DONE — no migration
+`needs-attention.tsx` converted from a server-rendered pure list of
+`<Link>`s into a client component with inline completion:
+- `AttentionItem` gained optional `id`/`kind` fields (`kind: "bill_payment"
+  | "task" | "maintenance"`). `dashboard/page.tsx`'s three loops that build
+  overdue/due-today items (unpaid bill payments, tasks, maintenance) now
+  populate them; the fourth loop (document expiry) deliberately doesn't —
+  there's no sensible in-place "complete" action for an expiring document,
+  so those rows stay link-only with the old dot-indicator styling.
+- A `COMPLETE_ACTION` map dispatches to the three server actions that
+  already existed and already had the right `revalidatePath` calls:
+  `setPaymentPaid` (bills), `toggleTask` (projects), `completeMaintenance`
+  (maintenance) — no new server actions needed.
+- Each completable row gets a leading checkbox button (same optimistic
+  `useState`/`useTransition` + revert-on-error pattern as `DailyHabits`),
+  separate from the row's `<Link>` so both the complete action and "go to
+  detail" still work independently.
+- Completing an item strikes it through, turns it green, and removes it
+  from the "remaining" count; clearing the whole list transitions into
+  the same "all caught up" card that used to only ever be a cold-load
+  empty state — that transition *is* the completion reinforcement,
+  deliberately reusing the existing calm visual language rather than
+  adding confetti/animation libraries.
+- Title changed from "Needs attention" to "Today" in the component (no
+  file rename, to keep the diff small — `needs-attention.tsx` still
+  houses it).
+- Verified: `npm run typecheck`, `npm run lint`, both variants build
+  clean. Pushed to `main` at `43ff245`.
+
+### #2: Bills list one-tap mark-paid — DONE — no migration
+Re-checked "extend the pattern to bills list, tasks list" against the
+actual code before building anything: `TaskRow` in `tasks-view.tsx`
+**already** had a `Checkbox` directly wired to `toggleTask` — one-tap
+complete already existed there, so nothing to do. Bills was the real gap:
+`bills-list.tsx` rows had no payment-status signal at all.
+- New `duePaymentFor(payments, billId)` helper: the earliest **unpaid**
+  `bill_payment` with `payment_date <= today` for that bill, or `null`.
+- New `MarkPaidButton` — only rendered when a bill actually has one (i.e.
+  most rows are completely unchanged; this is additive only where there's
+  something to act on, not permanent clutter). Shows an "Overdue/Due ·
+  Mark paid" pill, calls the existing `setPaymentPaid(id, true)`, same
+  optimistic-then-revert-on-error pattern as everywhere else, swaps to a
+  green "Paid" badge on success.
+- Wired into both the compact and detailed row layouts.
+- Verified: typecheck/lint/both builds clean. Pushed at `82510be`.
+
+### #3: Fold "Renewal reminders" into "Today" — DELIBERATELY NOT DONE
+This was written into the plan speculatively, before inspecting the
+underlying data. On closer look at `dashboard/page.tsx`, "Today"
+(`attention`) and "Renewal reminders" (`reminders`) answer genuinely
+different questions and merging them would work *against* the brief's own
+"calm, glanceable, only what's needed today" principle:
+- `attention` = act now (bill payments due/overdue **today**, tasks
+  due/overdue **today**, maintenance due/overdue **today**, documents
+  expiring within 14 days).
+- `reminders` = don't forget, upcoming (bills due within **14 days**,
+  documents expiring within **60 days**, mortgage fixed-term ending
+  within **180 days**) — a forward-looking awareness list, not an
+  action-now list.
+- Merging a 14/60/180-day-out horizon into a "what do I do right now"
+  list would make Today noisier and less trustworthy as the "everything
+  here needs action today" signal — the opposite of the stated goal.
+- Separately (worth flagging, not fixed): `attention`'s bill-related rows
+  come from `bill_payments.payment_date`, while `reminders`' bill-related
+  rows come from `bills.due_date` directly — two parallel "when is this
+  bill due" signals for the same underlying concept. That's a real, minor
+  data-model wrinkle, but fixing it is a bills-module correctness task,
+  not an engagement/UX task, and touching it wasn't worth the risk in
+  this pass. Flagging for whoever next touches bill due-date logic.
+- **Decision**: left both sections exactly as they were. If the user
+  wants Renewal reminders addressed specifically, that should be a
+  separate, explicit ask — not folded in as a side effect of an
+  engagement pass.
+
+### #4: Proactive weekly review nudge — DONE — no migration, MyLife-only
+A single-line "How did this week go? [date range] — takes a minute" card,
+positioned right after the Today panel:
+- Added one extra query — `reviews` filtered to `period_type = 'weekly'`
+  and `period_start = weekStart()` (reusing `@/lib/review-periods`,
+  already built for the Reviews module) — only run when `isLife` (the
+  Reviews module doesn't exist on the MyHouse side); resolves to a no-op
+  `Promise.resolve({ data: null })` otherwise so the `Promise.all` array
+  shape stays fixed either way.
+- Shown only when `isLife && weekIsWrappingUp (Fri/Sat/Sun) &&
+  !thisWeeksReviewExists` — a one-off end-of-week suggestion, not a daily
+  nag, and it disappears entirely the moment that week's review is saved
+  (whether via the nudge or by visiting `/reviews` directly).
+- Verified: typecheck/lint/both builds clean. Pushed at `b9c25a5`.
+
+### #5: One-tap starter habits — DONE — no migration
+The "reduce empty-state friction, prefer suggest-and-confirm over ask-
+the-user-to-build-everything-manually" part of the brief, applied to the
+single highest-identity-value module (Habits, per the Atomic Habits
+framing the brief itself used):
+- New `starter-habits.tsx`: six curated common habits (Drink water, Move
+  for 10 minutes, Read, Stretch, Plan tomorrow, No phone before bed) —
+  two pre-tagged `Morning`/`Evening` so the time-of-day grouping feature
+  (built earlier this session) also gets surfaced early rather than only
+  discovered via the edit form.
+- Rendered as a row of chip buttons under the existing `EmptyState` when
+  `habits.length === 0`. Each tap calls `createHabit` directly with
+  sensible defaults (`frequency: "daily"`, `habit_type: "yes_no"`) — no
+  form, no dialog. Optimistic "Added" state per chip; the page's own
+  `revalidatePath("/habits")` (already inside `createHabit`) handles the
+  transition out of the empty state once real habits exist, same as the
+  pre-existing "Add your first habit" `HabitForm` trigger did.
+- The full manual `HabitForm` stays as the primary CTA above the
+  suggestions — this is additive, not a replacement.
+- Verified: typecheck/lint/both builds clean. Pushed at `74b7fb3`.
+
+**Engagement/retention plan status: complete.** All 5 items resolved (4
+implemented, 1 deliberately not done with reasoning documented). If the
+user wants further work in this vein, the natural next step is a fresh,
+narrower audit rather than continuing to mine the original Perplexity
+list — it's been fully worked through.
+
+**Verification for this whole engagement batch**: `npm run typecheck`,
+`npm run lint`, and both `npm run build` / `NEXT_PUBLIC_APP=life npm run
+build` ran clean after every commit (`43ff245`, `82510be`, `b9c25a5`,
+`74b7fb3`), all
+pushed to `main`. **Next step**: confirm both Vercel projects are `READY`
+at `b9c25a5`.
+
+## Follow-up batch: Fitness links, Finance cleanup, edit discoverability (2026-07-01)
+Five more asks landed right after the six-part batch shipped:
+
+1. **Fitness: Instagram links per muscle** — DONE. New `muscle_links` table
+   (migration `0060_muscle_links.sql`, owner-only RLS matching `exercises`/
+   `workout_plans`). New `muscle-links.tsx`: a "Muscle guides" list grouped
+   by muscle group under "What you train," each entry a clickable link
+   (Instagram icon detected via URL) with delete; "Add link" opens a small
+   form (muscle group select, URL, optional label).
+2. **Finance page cleanup** — DONE, several sub-asks:
+   - Added a "+" quick-add button on the right of every pot row (Savings
+     and Investments both, not just Investments as literally asked, for
+     consistency) — reuses the existing `QuickContribute` component
+     (`savings/quick-contribute.tsx`, already built for `/savings` but not
+     wired into the Finance page's compact rows), now taking an optional
+     `trigger` prop so it can render as an icon-only button. Placed as a
+     sibling of `CardTrigger`, not inside it — `CardTrigger`'s own doc
+     comment says action controls must live outside it.
+   - "New" pot creation moved behind a small per-section Edit toggle
+     (`PotSectionHeader`, new) — same `pot-detail.tsx`/`income-header-
+     actions.tsx` edit-toggle pattern, applied to both the Savings and
+     Investments cards independently.
+   - Removed the "Savings rate" stat (and its now-dead `savingsRate`/
+     `monthlySavings` calculations) from the compact stats strip; also
+     fixed the page's `info` tooltip text, which referenced "savings rate."
+   - Credit cards section converted from an always-expanded `Card` to a
+     `CollapsibleSection` (collapsed by default), matching Shares/
+     Inspiration/Financial goals below it.
+3. **Fix the "+" popup formatting** — DONE. The mobile add-menu
+   (`bottom-nav.tsx`) passed `flex flex-wrap items-center justify-center`
+   as `AddPills`' className, which broke each `AddGroup`'s intended
+   label-above-pills layout into a chaotic wrapped grid once there were 4
+   groups (Capture/Money/Work/Life) with several pills each. Changed to
+   `flex flex-col gap-3` with `max-h-[65vh] overflow-y-auto` so groups
+   stack vertically and scroll if they overflow — each group's own
+   internal layout (label, then wrapped pills) now renders as intended.
+   Desktop's `FloatingAdd` wasn't affected (it already used `flex-col`).
+4. **Let me edit my habits** — DONE. Editing habits was already possible,
+   just buried: `HabitForm`'s trigger sat in a footer block *after*
+   Why/Timer-or-numeric-log/Targets/History inside `HabitDetailDialog` —
+   easy to miss on a dialog with a full month calendar to scroll past.
+   Moved the Edit trigger into the `DialogHeader`, next to the habit name
+   (same `flex-row items-center justify-between space-y-0 pr-8` header
+   pattern already used in `pot-detail.tsx`), and removed the old
+   bottom-of-dialog button.
+5. **App-wide audit: edit options out of the way, glanceable by default**
+   — DONE (scoped). This is the same open-ended shape as the earlier
+   "mobile-first" ask, so it was handled the same way: fix the concrete
+   instances found rather than attempt an exhaustive rewrite.
+   - The edit-toggle pattern (default read-only/glanceable, small
+     "Edit"/"Done" pencil button reveals management actions) now covers:
+     `pot-detail.tsx`, `income-header-actions.tsx` (both pre-existing),
+     plus the two Finance pot-section headers added in this batch.
+   - Grepped for the same "management action as a plain always-visible
+     text button in a card/section header" shape across the rest of the
+     app (`essentials-view.tsx`, `nutrition/page.tsx`, `health/page.tsx`).
+     Those are small "Add" links next to a section header for *capturing*
+     new content (inspiration, essentials) — a different, already-accepted
+     pattern used consistently everywhere (every page's `PageHeader` has a
+     prominent primary Add button; every "Inspiration/Shares/Goals"-style
+     collapsed section has a small "Add" link) — not the "always-visible
+     secondary management clutter" shape the Finance page had. Left alone.
+   - `bill-detail.tsx` was checked as a candidate (dense with Contributors/
+     Payments/Edit/Delete) but its structure is already read-only detail
+     rows first, management actions grouped in a single footer row — not
+     obviously cluttered, so left as-is rather than churning working code.
+   - **Not done, deliberately**: a page-by-page conversion of every list
+     row's always-visible per-row Edit/Delete icons (bills, purchases,
+     tasks) into an edit-toggle-gated state. That's a much bigger, riskier
+     change (those icons are relied on for the primary "manage this list"
+     workflow, not just clutter) and wasn't what any of the concrete
+     complaints were actually about — if the user wants that specifically,
+     it needs to be asked for directly, the same way the Finance page and
+     the add-menu were.
+
+**Verification for this batch**: `npm run typecheck`, `npm run lint`, and
+both `npm run build` / `NEXT_PUBLIC_APP=life npm run build` ran clean after
+every commit (`82fbc01`, `384513d`, `325b1af`), all pushed to `main` and
+confirmed **READY** on both Vercel projects at `325b1af`. Nothing
+outstanding from this batch.
+
+## Done: six-part follow-up request + inline asks (2026-07-01)
+The user sent a new dense request after the previous multi-part batch shipped
+(commit `b0114bf`/`14c1d62`). Status of each part:
+
+1. **Purchases personal/household visibility** — DONE, pushed (commit `fd11e39`).
+2. **Income: one edit button for all fixed options** — DONE, pushed (commit `f392516`).
+3. **Simplify routines: morning/evening as habit tags, dedupe** — DONE, pushed
+   (commit `8651d9e`).
+4. **Clean Tasks/Projects UI (from screenshot)** — DONE, pushed (commit
+   `40753e7`): the scope/onlyMine filter pills were squeezing the "Bigger
+   work..." description text on mobile; both now stack instead of wrap.
+5. **Essentials: click legend colour to filter** — DONE, pushed (commit `527c251`).
+6. **App-wide mobile-first/motivational pass** — DONE (scoped), pushed (commit
+   `845f44a`) — see writeup below; this ask is inherently open-ended so it
+   was scoped to concrete, verified wins rather than a full redesign.
+
+Also actioned inline (not part of the six, sent mid-batch):
+- **Personal bills not linked to household** — DONE, pushed (commit `40753e7`).
+- **Purchases asymmetric scope** — DONE, pushed (commit `fd11e39`) — this
+  turned out to be the same ask as #1 above; implemented together.
+- **Fitness: humanize "what you train" diagram + exercise filter/search** —
+  DONE, pushed (commit `7f618b5`).
+
+### Income: one edit button — DONE — no migration
+"On income I want one edit button which has all of the fixed options behind it."
+`salary-details.tsx` had its own always-visible pencil/Edit dialog trigger,
+separate from the Income card header's Edit toggle (which only gated the
+bulk-months editor). Split `SalaryDetails` into `SalaryDetailsSummary`
+(plain text, no button — used in `income-section.tsx`) and
+`SalaryDetailsForm` (the dialog, now accepting a `trigger` prop like
+`BillForm`/`PurchaseForm`). `income-header-actions.tsx` now renders both
+"Salary details" and "Bulk edit months" triggers behind the single header
+Edit toggle — one button reveals every fixed income option.
+
+### Simplify Routine into Habits tags — DONE — migration 0059, live data migrated
+"Simplify my routines, there's some duplicates in there. morning and
+evening should just be tags on habits which are then arranged into
+sections at the end."
+
+- `habits` gained a `tags text[] not null default '{}'` column (migration
+  `0059_habit_tags.sql`). `TIME_OF_DAY_TAGS = ["Morning","Day","Evening"]`
+  added to `constants.ts` as the recognised set that drives grouping.
+- `habit-form.tsx` gained a Tags field: quick-select chips for the three
+  time-of-day tags plus a free-form `TagInput` (reused from
+  `project_tasks.tags`) for anything else.
+- `habits-view.tsx` now renders a "Morning"/"Day"/"Evening" `HabitGroup`
+  for any habit carrying that tag, **after** the existing Daily/Weekly/
+  Monthly groups — "arranged into sections at the end" per the request.
+- `ROUTINE_SECTIONS` trimmed from 6 values to 3 (`consume`, `mind`,
+  `body`) in `constants.ts`. `routine-view.tsx`'s `currentTimeSection()`
+  time-awareness logic (which only existed to lead with morning/day/
+  evening) was removed entirely — Routine is now 3 flat, always-expanded
+  sections. `routine_items.section` is still a free-text column (no DB
+  constraint), so no schema migration was needed there.
+- **Live data was migrated, not just left behind**: queried the real
+  `routine_items` (26 rows) and found genuine duplicates — e.g. "5g
+  Creatine" existed in both `consume` and `morning`; "Throw one thing
+  away"/"Throw 1 thing away" in both `evening` and `mind`; "Put 1 thing
+  where it needs to be" verbatim in both `morning` and `mind`. Of the 14
+  rows across morning/day/evening: 6 were genuinely new concepts and were
+  recreated as tagged `daily`/`yes_no` habits (20 consecutive kick-ups,
+  Drink 1 protein shake, Drink 1 bottle of water → Day; 10 second plank /
+  10 bicep curls, Bed by 22:30 → Evening; Drink 2 glasses of water before
+  work → Morning); the other 8 were exact/near-duplicates of items already
+  kept in `consume`/`mind`/`body` and were dropped along with their
+  `routine_completions` rows. Executed via Supabase MCP `execute_sql`
+  against the live `vbyqbxvffaqkrltzewjz` project (same pattern used
+  earlier this session to seed `household_contributions`).
+- Only one pre-existing habit ("10x Push-Ups") and one `routine_items`
+  owner (`33fc37a9-e370-4ecd-bf2f-8bead7a73607`, Eashan) existed in
+  production, so this was a small, fully-inspectable dataset — worth
+  knowing if a future agent needs to sanity-check the mapping decisions
+  above against what's actually live.
+
+### Essentials: clickable RAG legend — DONE — no migration
+"On essentials let me filter by colour by clicking on the legend colour."
+The green/amber/red legend counts in `essentials-view.tsx` are now buttons;
+clicking one filters the list to that status (click again to clear).
+Categories with zero matching items collapse out of view while a filter
+is active, with a "Nothing at that status" empty state.
+
+### Fitness: humanize diagram + search/filter — DONE — no migration
+"The what you train diagram is too rigid, make it look more human" +
+"let me filter exercises and search through them too."
+`body-diagram.tsx` rewritten: limbs are now rounded, angled capsule
+strokes (`<path>` with `strokeLinecap="round"`, natural stance angles)
+instead of axis-aligned `<rect>` blocks; shoulders/chest/glutes are soft
+ellipses. `fitness-view.tsx` gained a name search box and clickable
+muscle-group filter chips above the exercise library grid (chips only
+show muscle groups actually present in the library).
+
+### App-wide mobile-first/motivational pass — DONE (scoped) — no migration
+This request is inherently open-ended ("make the whole app as intuitive
+and mobile first as possible"), so it was scoped to concrete, verifiable
+wins rather than attempted as an exhaustive redesign:
+- Grepped for the same anti-pattern that caused the Tasks/Projects mobile
+  bug (a `flex items-center justify-between` row pairing a paragraph of
+  text with a filter-pill group, no wrap) across the rest of the app.
+  Found a few short-text instances (bill payment dialog, calendar month
+  header) that don't have the same wrapping risk since the text side is
+  short and fixed — left alone rather than churning code with no bug to fix.
+- Added completion celebrations: the dashboard greeting subtext now says
+  "All N habits done today · X% 🎉" instead of a plain count when every
+  daily habit is complete, and the Habits page shows a "All done for
+  today — nice work! 🎉" banner in the same condition.
+- **Not done, and probably shouldn't be attempted in one batch**: a true
+  full-app mobile/motivational audit (every page, every list, every
+  form) is a multi-session effort. If the user wants more here, the right
+  next step is to ask them to point at specific pages/flows that feel
+  cramped or unmotivating, the same way the screenshot did for Tasks/
+  Projects — that's a much higher-signal way to spend further budget on
+  this than guessing at what to fix next.
+
+**Verification for this whole batch**: `npm run typecheck`, `npm run
+lint`, and both `npm run build` / `NEXT_PUBLIC_APP=life npm run build`
+were run clean after every commit in this batch (`40753e7`, `fd11e39`,
+`b928f0c`, `7f618b5`, `527c251`, `f392516`, `8651d9e`, `845f44a`), all
+pushed to `main`. **Next step**: confirm both `my-house-dashboard` and
+`my-life-dashboard` are `READY` in Vercel production at the latest commit
+(`845f44a`) — not yet re-checked after this batch.
+
+### Personal bills + purchases scope — DONE — migrations 0057, 0058
+"Let me add personal bills that aren't linked to the household" +
+"personal purchases come from my life, household come from myhouse, but
+let me choose whether something might be a household one from mylife, not
+the other way round from my house."
+
+- Both `bills` and `purchases` gained a real `scope: 'personal'|'household'`
+  column (migrations `0057_bill_scope.sql`, `0058_purchase_scope.sql`),
+  default `'household'` (preserves every existing row's visibility).
+- Same `enforcedScope()` pattern as the existing projects/tasks scope: a
+  server-side helper in each module's `actions.ts` forces `scope =
+  'household'` whenever `NEXT_PUBLIC_APP === "house"`, regardless of what
+  the client sends — MyHouse can never create/flag anything personal.
+- MyLife's `bill-form.tsx`/`purchase-form.tsx` show a Scope field
+  (isLife-gated). New MyLife bills default to `household` (bills are
+  "recurring household costs" by default; personal is an opt-in add-on,
+  matching "add personal bills **as well**"). New MyLife purchases default
+  to `personal` per the literal ask ("personal purchases come from my
+  life... by default").
+- `bills/page.tsx` and `purchases/page.tsx` add `.eq("scope","household")`
+  to their query when `isHouse`, so MyHouse never even fetches personal
+  MyLife rows. Bills' household-contribution split total
+  (`householdMonthlyTotal`) now only sums household-scope bills so a
+  personal bill never gets split among housemates.
+- Closed the same leak in every cross-cutting query that reads `bills` or
+  `purchases` on a MyHouse-only or shared page: `dashboard/page.tsx`,
+  `analytics/page.tsx` (MyHouse-only), `calendar/page.tsx`,
+  `api/calendar/route.ts`, `search/actions.ts`, and all three Room
+  Designer pages (MyHouse-only — always filtered to household scope there,
+  unconditionally). `finance/page.tsx` and `reviews/page.tsx` are
+  MyLife-only routes, so intentionally left unfiltered (should show both
+  scopes there).
+- `bills-list.tsx` and `purchases-grid.tsx` each gained an isLife-gated
+  scope filter toggle (All/Household/Personal), separate from the existing
+  ownership-based "Mine" filter — same orthogonal-filters pattern as
+  projects/tasks. Purchases' old toggle was mislabeled "Household"/
+  "Personal" but actually filtered by `user_id` (who created it) — renamed
+  back to "All"/"Mine" and the real scope filter added alongside it.
+- Verified: `npm run typecheck`, `npm run lint`, both variants (`npm run
+  build` and `NEXT_PUBLIC_APP=life npm run build`) build clean. Not yet
+  re-confirmed live in Vercel production for this specific batch.
+
+## Routine view: more intuitive — DONE — no migration
+"Make my routine view more intuitive." The old view was a flat wall of
+~29 checkboxes across 3 always-expanded groups regardless of time of day
+— no way to tell what's relevant *right now* without scanning everything.
+
+- `routine-view.tsx` rewritten around **time-awareness**: a
+  `currentTimeSection()` helper (before 11am → morning, 11am–6pm → day,
+  after 6pm → evening) picks out whichever of the three time-of-day
+  sections is relevant *now* and always shows it first, expanded, with a
+  "Now" badge — the other five sections (the other two time periods, plus
+  Consume/Mind/Body) become collapsible `<details>` cards, collapsed by
+  default, each showing an icon (Utensils/Brain/Dumbbell/Sunrise/Sun/Moon)
+  and a `done/total` count so you can see progress without opening them.
+- Removed the now-unused `ROUTINE_GROUPS` constant (the flat 3-group
+  structure it drove is gone, superseded by the time-aware layout).
+- Verified: `npm run typecheck`, `npm run lint`, both variants build clean.
+
+## Calendar in habits — DONE — no migration
+"Put a calendar in habits." Each habit already had a per-habit month
+calendar inside its detail dialog (`habit-calendar.tsx`) — the gap was no
+overview across *all* habits together on the main `/habits` page.
+
+- New `all-habits-calendar.tsx`: a month-grid heatmap (like a GitHub
+  contributions graph) — each day's shade reflects what fraction of that
+  day's daily habits got done (empty/25%/60%/full), with a legend, a
+  ring around today, and a tooltip listing which habits were completed
+  that day. Independent of any single habit — reads across all of them.
+- `habits-view.tsx` gained a List/Calendar view toggle (same icon-button
+  pattern used elsewhere — `LayoutList`/`CalendarDays`) above the habit
+  groups; List is the default, Calendar swaps in the new heatmap.
+- Verified: `npm run typecheck`, `npm run lint`, both variants build clean.
+- **This closes out the entire multi-part follow-up request** — every
+  item asked for in this batch (household contributions, purchases
+  split, projects/tasks scope, finance edit-mode, routine UX, habits
+  calendar) is implemented and verified. Final step: commit, push, and
+  merge-to-main per the "merge to main always" standing instruction.
+
+## Finance: management actions hidden behind an Edit toggle — DONE — no migration
+"I don't want an option to add new accounts or bulk edit months always in
+front of me, put an edit button on the screen so I can change those
+things, otherwise it should be either read only or contribute only."
+
+- `savings/pot-detail.tsx` (`PotDetailDialog`, used from both `/savings`
+  and `/finance`): added a local `editMode` state (default off) with a
+  small "Edit"/"Done" toggle button next to the dialog title. When off:
+  "Add account" is hidden, account rows in both Compact and Detailed view
+  become plain non-interactive rows (no click-to-edit) instead of
+  `AccountForm` triggers, the Detailed view's per-account Edit/Delete
+  icon-buttons are hidden, and the footer's "Edit pot"/"Delete pot"
+  buttons are hidden. The `ContributionForm` (deposit/withdrawal log) and
+  the Compact/Detailed toggle stay visible always — matches "contribute
+  only" as the default, non-edit-mode state.
+- `finance/income-header-actions.tsx` (new): the "Bulk edit months"
+  trigger (the full-screen `MonthlyValuesEditor` from the previous batch)
+  is now hidden behind its own small Edit/Done toggle in the Income card
+  header, instead of being an always-visible button.
+- **Task #31 (bulk-add credit card statements)** is already fully covered
+  by the existing `MonthlyValuesEditor` — it has one column per credit
+  card alongside income/bonus — just confirmed it's still reachable via
+  the new Edit toggle rather than removed.
+- Verified: `npm run typecheck`, `npm run lint`, both variants build clean.
+
+## Household contributions (Neelam/Eashan split) — DONE — migration `0055_household_contributions.sql` (applied live via MCP)
+The user said "you didn't add my contributions... I split the contribution
+between Neelam and I" — the *per-bill* contributor feature from PR #99
+already existed and fully supports fixed-amount/pays-the-rest/date-ranges,
+but when asked which bill this applied to, the user clarified: **"we both
+contribute to the household rather than individual bills"** — a different,
+household-wide concept, not tied to any one bill.
+
+- New `household_contributions` table — identical shape to
+  `bill_contributors` (fixed amount or `amount = null` for "pays the
+  rest", `start_date`/`end_date`) but with no `bill_id` — it's a split of
+  the household's *total* monthly bills, not one bill.
+- `bills/household-contribution-form.tsx` + `household-contributions.tsx`:
+  near-verbatim copies of `bill-contributor-form.tsx`/`bill-contributors.tsx`
+  adapted to the household-total case. New card on `/bills`, between the
+  stat cards and the category chart, only shown when there's more than one
+  household member.
+- **Seeded the user's real data** directly via Supabase MCP: Neelam £900/mo
+  fixed, Eashan (the account owner) pays the rest — both with no end date
+  (ongoing).
+- Verified: `npm run typecheck`, `npm run lint`, both variants build clean.
+
+## Future purchases: personal vs household — DONE — no migration
+The existing `onlyMine` filter on `/purchases` already did per-user
+filtering, but it was labelled "All"/"Mine" and buried inside the mobile
+Filters sheet — not a clear, prominent Personal/Household split. Renamed
+to "Household"/"Personal" and made the toggle always visible (was
+`lg:flex`-only before; removed the mobile-only duplicate in the Filters
+sheet since it's redundant now it's always shown).
+
+## Projects & Tasks: personal/household scope hard boundary — DONE — migration `0056_project_task_scope.sql` (applied live via MCP)
+"Projects and tasks should be for the household or personal, personal
+shouldn't link to myhouse." Previously there was only an "assigned to
+me"/"created by me" filter (`onlyMine`) — no concept of *which app* an
+item belongs to, so a personal MyLife task was technically visible to
+MyHouse too (RLS is household-shared).
+
+- New `scope` column (`'personal' | 'household'`, default `'household'`)
+  on both `projects` and `project_tasks`.
+- **Hard boundary, enforced server-side, not just a UI filter**:
+  `projects/actions.ts` has an `enforcedScope()` helper — when
+  `NEXT_PUBLIC_APP === "house"`, every create/update forces `scope =
+  'household'` regardless of what the client sends. `/projects/page.tsx`
+  additionally filters the query itself (`.eq("scope", "household")`) when
+  running as MyHouse, so personal items aren't even fetched, let alone
+  displayed — two independent layers, not just a client-side hide.
+  `ItemScope` type + `ITEM_SCOPES`/`ITEM_SCOPE_LABELS` constants added.
+- MyLife gets a new Household/Personal/All filter (separate from the
+  existing "assigned to me" `onlyMine` filter — they answer different
+  questions and both stay) on both the Projects tab (`projects-views.tsx`)
+  and Tasks tab (`tasks-view.tsx`), plus a Scope field in `ProjectForm` and
+  `TaskEditDialog` (both `isLife`-gated — MyHouse's forms don't show a
+  picker at all since every choice would be overridden anyway). Quick-add
+  forms (`AddTaskForm`, `TaskQuickForm`) don't show a scope picker either
+  (kept minimal, same precedent as tags/bored/important) — they default to
+  `personal` in MyLife / `household` in MyHouse, editable afterward via
+  the full edit dialog.
+- Verified: `npm run typecheck`, `npm run lint`, default +
+  `NEXT_PUBLIC_APP=life` `npm run build` all clean.
+- **Not yet pushed** — next batch will include the remaining items
+  (finance edit-mode, bulk statements check, routine/habits UX) before a
+  single combined push+merge.
+
+## Income rows: edit icon instead of green text; rolling 12-month income stat — DONE
+Small follow-up to the finance-compact redesign, pushed straight to `main`
+(no feature branch — per the user's "merge to main always" instruction,
+committed directly and pushed once verified).
+
+- `income-section.tsx`: the bonus amount in "This month" and history rows
+  no longer renders in `text-emerald-600` — it's now a neutral
+  `text-muted-foreground` label ("+£X bonus") plus a small `Pencil` icon at
+  the end of each row, signalling "click to edit" without relying on
+  colour. (Credit card Paid/Unpaid badges were deliberately left alone —
+  those are a genuine status indicator, not an editable-value highlight,
+  so removing the colour there would lose real information.)
+- `finance-scope.tsx` / `finance/page.tsx`: added a "Net income (12mo)"
+  mini-stat to the compact stat strip — rolling sum of `net_income + bonus`
+  across `income_months` from 11 months ago through the current month,
+  computed in `page.tsx` and passed down as a plain number (matching how
+  `monthlyIncome`/`monthlyCardStatements` are already threaded through).
+- Verified: `npm run typecheck`, `npm run lint`, default +
+  `NEXT_PUBLIC_APP=life` `npm run build` all clean.
+- Deployed: both Vercel projects confirmed `READY` in production for
+  commit `3b6ada4`.
+
+## Merged to main and deployed — DONE
+`claude/finance-compact` fast-forward-merged into `main` and pushed.
+- Both Vercel projects (`my-house-dashboard` id `prj_BOUIdAM8EEfh6JI9nrql8K7e67Qb`,
+  `my-life-dashboard` id `prj_TB7Dt9AVg88kp0AX5TXrhXqhsnhx`, team
+  `team_jJ3EVwt72NA4LhbenZnWfT88`) confirmed `READY` in production for
+  commit `217b91e`.
+- The user said **"merge to main always"** in response to being asked
+  whether to merge — this is a standing grant of merge authority for the
+  rest of this session (and reasonably, future sessions continuing this
+  work), superseding the earlier "ask before merging" rule established
+  after the original "Merge Without Review" denial. Going forward: verify
+  (typecheck/lint/build both variants) → merge to `main` → push → confirm
+  Vercel production is `READY` → move on, without an `AskUserQuestion`
+  checkpoint in between.
+
+## Finance page: compact redesign + bulk monthly-values table — DONE — no migration
+The user's exact complaint: "too many inputs, too much noise... make fixed
+inputs hidden behind the scenes," followed immediately by "give me a table
+to input values into for each month, I have values for all of 2026 and 2025
+for credit card bills and income." Both addressed together since they meet
+at the same surface (income + credit card statements).
+
+**Compactness:**
+- `salary-details.tsx`: the always-visible 3-field form (annual salary,
+  employer, notes) is now a one-line summary (`£55,000/yr · Acme Ltd`) with
+  a small "Edit" trigger that opens the same 3 fields in a `Dialog` —
+  this is the literal "fixed inputs hidden behind the scenes" ask.
+- `income-section.tsx`: only "This month" is shown by default now; every
+  other month is behind a native `<details>` "History (N)" disclosure.
+- `finance-scope.tsx`: the 5 separate `StatCard`s (net worth/income/bills/
+  net/savings rate) collapsed into **one** compact card — a large "Net
+  worth" figure plus 4 small inline stats, instead of 5 full-height cards.
+  Savings/investment pot lists went from full `PotCard`s (color dot, edit/
+  delete buttons, progress bar, `QuickContribute` control — a lot of
+  chrome) to a new `CompactPotRow` (colour dot + name + value only,
+  clicking still opens the existing `PotDetailDialog` for full detail/
+  actions). Full pot management (add/edit/delete/contribute) still lives
+  on `/savings`; `/finance` is now just an at-a-glance view.
+- Shares, Inspiration & guides, and Financial goals are now wrapped in the
+  existing `CollapsibleSection` component (imported from
+  `dashboard/collapsible-section.tsx` — it's generic, not
+  dashboard-specific, so reused as-is rather than duplicated). It's
+  collapsed by default (confirmed by reading the component: despite its
+  doc-comment saying "open by default," the actual `useState(false)` is
+  collapsed — a pre-existing inconsistency, left alone since it happens to
+  match what "less noise" wants here). Each section's "Add" trigger moved
+  inside the collapsed content instead of the always-visible header.
+
+**Bulk monthly-values table** (the literal ask — "a table to input values
+into for each month"):
+- `finance/monthly-values-editor.tsx`: a full-screen editor (same
+  `fixed inset-0` overlay pattern as `projects-views.tsx`'s
+  `BoardFullScreen`, chosen over a `Dialog` because a spreadsheet with
+  many columns needs real width) showing one row per month — **Jan of last
+  year through Dec of this year (24 months), computed from today's date**,
+  not hardcoded to 2025/2026, so it keeps working next year — with a Net
+  income column, a Bonus column, and one column per credit card. Editing
+  is local state; "Save all" submits only the cells that have a value.
+- `finance/actions.ts`: `bulkUpsertIncomeMonths`/`bulkUpsertCreditCardStatements`
+  — true batch `.upsert()` calls (Supabase accepts an array of rows), so
+  filling in ~24 months × several columns is 2 network round-trips, not
+  dozens of individual saves through the existing one-month-at-a-time
+  `IncomeMonthForm`/`CreditCardStatementForm` dialogs (those still exist
+  for one-off edits/corrections — this is additive, not a replacement).
+- Triggered by a "Bulk edit months" button in the Income card's header —
+  the natural home since it covers both income and every credit card.
+- Verified: `npm run typecheck`, `npm run lint`, default +
+  `NEXT_PUBLIC_APP=life` `npm run build` all clean.
+- **Not yet merged to `main`/deployed** — this session's established rule
+  is to ask before merging; do that once the user has reviewed/is happy
+  with the redesign (they may want to try it live first via a preview
+  deploy, or just confirm merge-to-main-now like last time).
+
+## Merged to main and deployed — DONE
+`claude/finance-overhaul` (18 commits since the last `main` merge) was
+fast-forward-merged into `main` and pushed, after explicit user confirmation
+(the harness blocked a direct merge without it, per this session's
+established "ask before merging" rule — asked via `AskUserQuestion`, user
+chose "merge straight to main now" over "open a PR first").
+- Both Vercel projects (`my-house-dashboard` id `prj_BOUIdAM8EEfh6JI9nrql8K7e67Qb`,
+  `my-life-dashboard` id `prj_TB7Dt9AVg88kp0AX5TXrhXqhsnhx`, team
+  `team_jJ3EVwt72NA4LhbenZnWfT88`) auto-deploy `main` to production via their
+  GitHub integration — confirmed both production deployments reached
+  `READY` for commit `f816bed`.
+- All 11 migrations from this batch (0044–0054) were already applied live
+  via Supabase MCP as each feature was built, so the database was already
+  in sync before this merge — no migration step needed at merge time.
+- `claude/finance-overhaul` branch is now fully merged; safe to delete
+  later, but left in place for now.
+
+## Weekly/monthly review flow — DONE — migration `0054_reviews.sql` (applied live via MCP), new nav item, MyLife-only
+Roadmap item #3, the last content item on the second-brain audit. New
+`/reviews` page (added to `LIFE_NAV_ITEMS` under Planner, `ClipboardCheck`
+icon — not added to the FAB, since the point is seeing the rollup stats
+alongside the form, which a generic quick-add modal can't show).
+
+- `reviews` table: `period_type` ('weekly'|'monthly'), `period_start`
+  (Monday-of-week or 1st-of-month), and four free-text prompts
+  (`went_well`, `stuck`, `stop_doing`, `priorities`) shared by both period
+  types — the UI just labels the prompts differently per type. One row per
+  user+period_type+period_start (`upsert` on that unique key), so revisiting
+  the same week/month edits in place rather than creating duplicates.
+- `src/lib/review-periods.ts`: pure helpers — `weekStart`/`monthStart`
+  (compute the current period's key) and `weekLabel`/`monthLabel` (display
+  strings) — same "small pure-function helper" pattern as `src/lib/income.ts`.
+- `reviews/page.tsx` (server): computes a **rollup pulled from data that
+  already exists, nothing new stored** —
+  - Weekly: overdue task count, tasks due this week, % of daily-habit
+    check-ins done this week (`habit_logs` count ÷ (daily habit count ×
+    days elapsed this week)).
+  - Monthly: net cash flow this month (reusing `effectiveIncomeForMonth` +
+    `toMonthly`, same calc as `/finance`/dashboard), % daily-habit
+    check-ins this month, average active-goal progress, and maintenance
+    tasks completed this month (`last_completed_date` in-month).
+- `reviews-view.tsx` (client): a Weekly/Monthly `Tabs` (same component used
+  by Projects/Tasks), each tab showing the rollup stat cards, a save form
+  for the *current* period (pre-filled if already started), and a
+  collapsible list of past reviews below.
+- `review-form.tsx`: plain 4-textarea form, `upsertReview` server action.
+- Verified: `npm run typecheck`, `npm run lint`, default +
+  `NEXT_PUBLIC_APP=life` `npm run build` all clean.
+- **This is the last content item from the second-brain roadmap** — every
+  item the user asked for ("do everything") is now implemented. Remaining
+  step: push (done, every batch pushed already) and deploy — see below.
+
+## Tags system — DONE (Tasks only this batch) — migration `0053_task_tags.sql` (applied live via MCP)
+Roadmap item #2. Added `tags text[] not null default '{}'` to
+`project_tasks` — a plain array column, not a join table, since
+autocomplete/rename-everywhere isn't needed for v1 (same reasoning as the
+existing `essentials`/`purchases` free-text category fields elsewhere in
+this codebase).
+
+- New `components/shared/tag-input.tsx`: generic chip-based tag editor
+  (type + Enter/comma to add, × or Backspace-on-empty to remove) — built
+  reusable so it's a drop-in for other modules later, not task-specific.
+- `projects/actions.ts`: `createTask`/`updateTask` accept `tags?: string[]`.
+- `tasks-view.tsx`: `TaskEditDialog` gained a Tags field (`TagInput`);
+  `TaskRow` shows each tag as a small outlined badge; `TasksView` computes
+  the set of all tags in use and renders them as filter chips above the
+  list — clicking one filters to tasks carrying that tag (click again to
+  clear). Table view intentionally doesn't show tags (kept compact,
+  consistent with it already omitting notes/bored-status).
+- **Scoped to Tasks only this batch** — the same reasoning as the
+  favourites batch: `purchases-grid.tsx` (589 lines) and the
+  documents/inspiration modules are larger, riskier surfaces to touch
+  under time pressure. `TagInput` is generic and ready to reuse there
+  (add a `tags` column via migration, thread `tags`/`onChange` through the
+  existing add/edit form, done) — flagged as a follow-up, not started.
+- Verified: `npm run typecheck`, `npm run lint`, default +
+  `NEXT_PUBLIC_APP=life` `npm run build` all clean.
+
+## Generic pinned/favourites system — DONE — migration `0052_favorites.sql` (applied live via MCP)
+Roadmap item #4. A single `favorites` table (`user_id, entity_type,
+entity_id`, unique per user+type+id, personal RLS) rather than a per-module
+star column — new modules can opt in later with zero schema changes,
+mirroring the existing generic `links` table's `(a_type,a_id)/(b_type,b_id)`
+design in this same codebase.
+
+- `favorites/actions.ts`: `toggleFavorite`/`getFavoriteIds`/`getPinnedItems`,
+  with a `TABLES` registry (table/label column/deep-link param/path) — same
+  pattern as `links/actions.ts`'s `TABLES` map. Currently registered types:
+  `task`, `goal`, `document`, `inspiration` — only `task` and `goal` have a
+  UI toggle wired up in this batch; `document`/`inspiration` are ready to
+  wire in later (just add a `<FavoriteToggle>` to their row, no backend
+  change needed).
+- `components/shared/favorite-toggle.tsx`: reusable optimistic star button.
+  `stopPropagation`'d so it's safe to place inside a row that's also a
+  dialog trigger, but placed as a *sibling* of the trigger (not nested
+  inside it) wherever practical, per `CardTrigger`'s own guidance to keep
+  action controls outside the trigger region.
+- Wired into: `tasks-view.tsx` (`TaskRow`/`TaskTableRow`, favourite ids
+  threaded down from `projects/page.tsx` via `getFavoriteIds("task")` →
+  `ProjectsViews` → `TasksView`), and `goals/page.tsx` (favourite ids
+  fetched directly in the page, star positioned absolute top-right over
+  each goal card).
+- `dashboard/page.tsx` gained a new "Pinned" widget (collapsed by default,
+  matching every other dashboard section) listing every pinned item across
+  all types with its deep link — added to `DASHBOARD_WIDGETS` so it can be
+  hidden like any other section.
+- Verified: `npm run typecheck`, `npm run lint`, default +
+  `NEXT_PUBLIC_APP=life` `npm run build` all clean.
+
+## Deep-linking consistency — DONE — no migration
+Roadmap item #6. Recipes/essentials/routine items/goals/habits/useful
+links/credit cards/shares now all support `?<param>=<id>` deep-linking,
+matching the existing bills/tasks/projects/purchases/documents/savings-pots
+pattern. Search (`search/actions.ts`) now links straight to the specific
+item instead of just the module's page.
+
+- New `useEditDialogOpen(id, param)` hook in `use-open-from-url.ts`: for
+  dialogs that double as both "add new" and "edit" (single Form component,
+  switched by whether an item was passed in) — falls back to plain local
+  `useState` while creating (no id to link to yet) and only binds to the
+  URL once editing. Wired into: `essential-form.tsx` (`?essential=`),
+  `routine-item-form.tsx` (`?routine=`), `goal-form.tsx` (`?goal=`),
+  `useful-link-form.tsx` (`?link=`), `credit-card-form.tsx` (`?card=`),
+  `share-form.tsx` (`?share=`) — each of these is rendered once per row
+  with its own `Dialog`, so only the matching row's instance opens.
+- Recipes and habits are architecturally different (a separate
+  `RecipeDetailDialog`/`HabitDetailDialog`, with one shared "which item is
+  open" state at the view level, not one Dialog per row) — mirrored the
+  existing pattern instead of forcing `useEditDialogOpen` in: added a
+  `?recipe=`/`?habit=` `useSearchParams` effect directly in
+  `nutrition-view.tsx`/`habits-view.tsx` that sets the "active" item and
+  clears the query param on close.
+- **Bug caught before shipping**: initially wired `useEditDialogOpen`
+  straight into `recipe-form.tsx`, which is *also* nested inside
+  `RecipeDetailDialog` as the "Edit recipe" trigger — that would have made
+  the edit form pop open simultaneously with the detail dialog on
+  `?recipe=id` (same id, same param, both bound to the URL). Caught by
+  checking each module's actual row-click target before wiring, not just
+  assuming the "row is its own DialogTrigger" pattern held everywhere.
+- **Real gap found and fixed in passing**: `/goals` had no way to edit or
+  delete a goal at all — cards were static `<div>`s, `GoalForm` was only
+  ever rendered as the top-level "Add" trigger. Wrapped each goal card in
+  `<GoalForm goal={goal} trigger={<CardTrigger>...}>` (same pattern as
+  `ProjectCard`) so goals are now editable/deletable and deep-linkable.
+- Verified: `npm run typecheck`, `npm run lint`, default +
+  `NEXT_PUBLIC_APP=life` `npm run build` all clean.
+
+## Eisenhower "important" axis on tasks — DONE — migration `0051_task_important_flag.sql` (applied live via MCP)
+Roadmap item #5. Added `is_important boolean not null default false` to
+`project_tasks`, alongside the existing due date (urgency) and
+`is_bored_task` (deliberately low priority) — together giving a lightweight
+Eisenhower 2×2 without a dedicated matrix UI.
+
+- `database.types.ts`: `ProjectTask` gained `is_important: boolean`.
+- `projects/actions.ts`: `createTask`/`updateTask` accept and patch it.
+- `tasks/tasks-view.tsx`:
+  - Outstanding (non-bored) tasks are now sorted important-first, then by
+    due date — so "To do" surfaces what actually matters without a
+    separate quadrant view.
+  - `AddTaskForm` gained an "Important" toggle (Flag icon) next to "When
+    bored"; `TaskEditDialog` gained a matching checkbox.
+  - `TaskRow`/`TaskTableRow` show a small Flag icon next to important
+    tasks' titles.
+  - `TaskQuickForm` (the FAB's fast-add) deliberately left minimal —
+    important/bored are still one tap away via the full edit dialog.
+- Verified: `npm run typecheck`, `npm run lint`, default + `NEXT_PUBLIC_APP=life` `npm run build` all clean.
+- **Next**: task list item #22, deep-linking (`useOpenFromUrl`) for
+  recipes/essentials/routine items/goals/habits/useful links/credit
+  cards/shares.
+
+## Global search expanded to cover every MyLife module — DONE — no migration
+First concrete step on the "second brain" audit request (see roadmap at the
+bottom of this file). `search/actions.ts`'s `searchItems()` previously only
+covered bills/projects/tasks/purchases/inspiration/maintenance/documents/
+savings pots — none of the modules shipped this session were searchable.
+
+- Added (gated behind `isLife`, same `NEXT_PUBLIC_APP === "life"` pattern as
+  the FAB, since these tables have no nav path in MyHouse and querying them
+  there would only add noise): recipes, essentials, routine items, goals,
+  habits, useful links, credit cards, shares.
+- These new types link to their module's page (not a specific `?item=`
+  deep link) since none of those modules wire up `useOpenFromUrl` yet —
+  noted as a follow-up in the roadmap if per-item deep-linking is wanted.
+- `global-search.tsx` needed no changes — it already renders `{type, label,
+  href}` generically.
+- Verified: `npm run typecheck`, `npm run lint`, default `npm run build`,
+  and `NEXT_PUBLIC_APP=life npm run build` all clean.
+
+## Second brain / Today command centre — AUDIT + ROADMAP (2026-07-01)
+The user asked for a full audit of the app against GTD/Eisenhower/PARA/
+Atomic-Habits/80-20 principles, plus a laundry list of new surface area
+(Today command centre, daily/weekly/monthly reviews, universal search,
+tags, linked items, archive, pinned/favourites, recently added/updated).
+Given the size, the plan is: audit first (done, see below), implement the
+safe/additive/highest-impact items incrementally, and treat the larger
+structural asks (nav reorganisation, formal review flows) as a roadmap
+rather than a single giant unreviewed change — consistent with "ask before
+destructive changes" and "do not break existing features."
+
+**What's already there (don't rebuild):**
+- `dashboard/page.tsx` is already a substantial "Today" command centre:
+  greeting, a "Needs attention" widget (overdue/due-today across bills,
+  tasks, maintenance, documents), daily habit check-in, goals progress,
+  cash-flow summary, customisable glance stats, a 7-day week-ahead strip,
+  renewal reminders, open projects + upcoming tasks, upcoming maintenance,
+  recent inspiration/wishlist, and a household activity feed. It's already
+  widget-customisable (`dashboard-customize.tsx` / `EditDashboardButton`).
+- Global search (`global-search.tsx` + `search/actions.ts`) already exists
+  as a top-bar command-palette-style search across (now) every module and
+  every settings section/page — this **is** the "universal search" ask,
+  just expanded today to cover the newer modules (see above).
+- Linked items (`links/linked-items.tsx`, used from tasks/projects/etc.),
+  per-item comments (`comments/actions.ts`), and a household activity log
+  (`activity_log` table, `SectionActivityLog`) already give a lot of the
+  "connect related things" and "who changed what, when" asks.
+- Archive is already a first-class pattern (`archived_at` columns +
+  `ArchivedSection` component) on projects/tasks/purchases and others.
+- Journal (`journal/`) — one entry per day, mood + free text — already
+  functions as a lightweight daily reflection/review.
+- MyLife's nav groups (Home / Health / Finances / Planner / More) already
+  map closely onto the requested Today/Health/Finances/Planner/Notes
+  structure; a full PARA-labelled rename would be mostly cosmetic and
+  risks breaking muscle memory for comparatively little gain — recommend
+  against a ground-up IA rewrite.
+
+**Genuine gaps found (recommended, roughly priority order):**
+1. ~~Search doesn't cover new modules~~ — DONE (this batch).
+2. **No tags system.** Nothing in the schema supports free-form tags;
+   categorisation today is per-module enums (bill category, purchase
+   status, etc.). A generic `tags text[]` column (or a join table if tag
+   autocomplete/rename-everywhere is wanted) added to a few high-traffic
+   tables (tasks, notes, purchases, inspiration) would close this — but
+   it's schema work, so flagged for a dedicated batch rather than bundled
+   in silently.
+3. **No formal weekly/monthly review flow.** Journal covers daily
+   reflection; there's nothing that surfaces "what's stuck," "what should
+   I stop doing," or a monthly money/fitness/goals/home rollup. Lowest-risk
+   version: a new `/reviews` page (or a "Weekly review" widget on
+   Dashboard) that pulls already-existing data (overdue tasks, goal
+   progress deltas, this month's finance numbers, habit streaks) into one
+   read-then-reflect view with a journal-style free-text answer saved
+   per week/month — additive, no changes to existing modules needed.
+4. **No pinned/favourites beyond purchases' star.** `purchase_stars` is
+   purchase-specific; there's no generic "pin this" across modules. Low
+   priority — most modules already support quick access via search/nav.
+5. **Tasks have no urgent/important (Eisenhower) axis**, only due date +
+   (as of this session) the bored/low-priority flag. A cheap addition:
+   an `is_important` flag alongside `is_bored_task`, surfaced as a 2×2 or
+   simple sort — deferred pending user interest, since due-date + bored
+   already covers "what's next" reasonably well.
+6. **Per-item deep-linking is inconsistent.** Bills/tasks/projects/
+   purchases/documents/savings pots support `?item=` opening a detail
+   dialog directly; recipes/essentials/routine items/goals/habits/useful
+   links/credit cards/shares don't (search now links to the page, not the
+   item, for this reason). Wiring `useOpenFromUrl` into each of those
+   would make search + notifications fully "click straight to the thing."
+- **Maintainability observations**: schema is consistently modelled
+  (Timestamps type, personal-vs-household RLS split, `user_id` on every
+  table); no obvious dead code or duplicated logic was found during this
+  audit; the one known duplication is `income.ts`/`price-providers` style
+  small-helper pattern being reused correctly rather than copy-pasted.
+  The biggest maintainability risk is the two-app single-route-tree split
+  (`NEXT_PUBLIC_APP`) requiring every new module to remember to gate both
+  nav AND the FAB AND search — this session's FAB/search audits exist
+  specifically because that gating was missed for earlier modules; **any
+  future new MyLife-only module should immediately gate all three** (nav
+  item, FAB pill, search query) in the same batch that adds it, to avoid
+  repeating this cleanup later.
+- **Not implemented this batch** (roadmap items 2–6 above): each is a
+  distinct, reviewable unit of work. Recommend tackling #3 (weekly/monthly
+  review) next as the highest-impact remaining item, since it's purely
+  additive and directly serves the "second brain reviews" ask without
+  touching any existing table or page.
+
+## FAB (+ button) audit — DONE — no migration
+Completes "make sure all of the things i have asked for is catered for using
+the + button." Audited `components/layout/add-menu.tsx` (the shared pill
+list behind both the desktop `FloatingAdd` and the mobile bottom-tab +)
+against everything shipped this session, plus an existing inconsistency
+with the nav-visibility work (task #15).
+
+- **Gap found**: Note/Link pills (→ `/notes`) were shown in both apps' FAB
+  even though task #15 hid the Notes & Links nav item from MyHouse. Fixed:
+  wrapped in `isLife` (`process.env.NEXT_PUBLIC_APP === "life"`) so MyHouse
+  no longer offers to quick-add a note/link it can't navigate to.
+- Same fix applied the other way for **Maintenance**: it's a MyHouse-only
+  concept (no nav entry in MyLife), so its pill is now `!isLife`-gated
+  instead of showing in both.
+- **New pills added, all `isLife`-gated** (Money group: Card, Income,
+  Share; new "Life" group: Essential, Routine, Recipe) — closing the gap
+  where credit cards, monthly income entries, shares, essentials, routine
+  items and recipes (all shipped earlier this session) had no quick-add
+  path outside their own page:
+  - `CreditCardForm` → "Card" (adds a card; statement *values* are still
+    entered per-card/per-month from `/finance`, same as before — too
+    context-dependent for a global quick-add).
+  - `IncomeMonthForm` → "Income", defaulted to the current month
+    (`monthStr()` from `src/lib/income.ts`) — upserts, so it's safe to fire
+    from anywhere.
+  - `ShareForm`, `EssentialForm` (categories passed as `[]` — no datalist
+    suggestions from the FAB, but still fully functional free-text entry),
+    `RoutineItemForm`, `RecipeForm` — all already accept an optional
+    `trigger` prop, so no component changes were needed, only wiring.
+- **Deliberately left off the FAB**: finance/nutrition/health inspiration
+  (reel/guide capture) — each is contextual to its own module page and
+  picking the right one from a generic + would need an extra
+  module-picker step; kept as page-level "Add" buttons only, consistent
+  with how `HealthInspirationForm` already worked before this session.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` (default,
+  house) **and** `NEXT_PUBLIC_APP=life npm run build` (to catch anything
+  broken in the isLife-only code paths) all clean.
+- **This closes out every task from this session's dense request burst.**
+  The `claude/finance-overhaul` branch is now feature-complete for that
+  scope and ready for a PR whenever the user wants one (not yet opened —
+  ask before merging, per this session's established rule).
+
+## Low-priority "when bored" tasks — DONE — migration `0050_bored_tasks.sql` (applied live via MCP)
+Completes "on tasks give me a place to put low priority tasks when bored."
+Added `is_bored_task boolean not null default false` to `project_tasks`
+(a flag, not a new table — tasks stay in the same list/table, just tagged).
+
+- `database.types.ts`: `ProjectTask` gained `is_bored_task: boolean`.
+- `projects/actions.ts`: `createTask`/`updateTask` accept an optional
+  `is_bored_task` and patch it through like any other field.
+- `tasks/tasks-view.tsx`:
+  - `AddTaskForm` gained a "When bored" toggle button (Coffee icon) next to
+    the due-date input — sets the flag at creation time.
+  - `TaskEditDialog` gained a "Low priority — do when bored" checkbox so an
+    existing task can be moved in/out of the bored list at any time.
+  - The card/list view now splits outstanding tasks into two cards: "To do"
+    (the default, `!is_bored_task`) and a new "When bored" card
+    (`is_bored_task`, Coffee icon + explainer subtitle) sitting between "To
+    do" and "Done" — so low-priority filler tasks don't clutter the main
+    list but stay one scroll away. Completed tasks (either kind) still fall
+    through to "Done" as before.
+  - Table view keeps a single table (rows = outstanding + bored + done) but
+    shows a small Coffee icon next to a bored task's title instead of
+    splitting into extra tables.
+  - The existing personal/household `onlyMine` filter and both view-mode
+    toggles compose with this unchanged — bored/not-bored is just another
+    split on top of whichever task set is already visible.
+- Dashboard's "open tasks" counts intentionally still include bored tasks
+  (they're genuinely open, just low priority) — only the Tasks page itself
+  separates them out.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+- **Next step**: task #20 — audit the global `+` (FloatingAdd) button to
+  confirm every content type added this session (credit cards, income
+  entries, essentials, routine items, recipes, health/finance/nutrition
+  inspiration, bill contributors, shares) is reachable from it. This is the
+  last item before the branch is ready for a PR.
+
+## Personal vs household filter — Projects & Finance — DONE (no migration)
+Completes the request "let me filter between personal and household on
+[projects and tasks] and purchases and finances." Tasks (`tasks-view.tsx`)
+and Purchases (`purchases-grid.tsx`) already had an `onlyMine` toggle from
+earlier batches; this batch closes the remaining gap: the **Projects** tab
+and **Finance**'s household-shared sections (bills, savings/investment pots
+— both use the household-shared RLS pattern, unlike credit cards/income/
+shares/essentials/routine which are personal-only).
+
+- `projects/projects-views.tsx`: added `onlyMine` state (defaults to `true`
+  when `NEXT_PUBLIC_APP === "life"`), gated behind
+  `Object.keys(memberMap).length > 1` (only shown once there's more than one
+  household member — otherwise the toggle is meaningless). Filters
+  `projects` by `project.user_id === currentUserId` before both the List and
+  Board views (and the full-screen board). Same toggle-button visual
+  pattern as the existing Tasks-tab filter (`rounded-lg border p-0.5` two-
+  button switch).
+- `finance/page.tsx` + new `finance/finance-scope.tsx` (client component):
+  the "Key numbers" stat grid, Savings pots card, and Investment pots card
+  were extracted out of the server component into `FinanceScope`, since the
+  filter toggle needs client state and touches bills + pots + all the
+  numbers derived from them (monthly bills, net monthly, savings rate, net
+  worth, totals). `FinanceScope` receives the raw `bills`/`pots`/
+  `accounts`/`contributions`/`shares`/`sharePrices` plus already-computed
+  personal-only numbers (`monthlyCardStatements`, `monthlyIncome`,
+  `incomeSource`) and does the "Household"/"Mine" filtering + all
+  downstream math itself. Same `showFilter` gate as Projects
+  (`Object.keys(memberMap).length > 1`, computed in `finance/page.tsx` via
+  `getHouseholdMap()`). Income, Credit cards, Shares, Inspiration, and
+  Financial goals cards are untouched — those tables are personal-only by
+  RLS, so a household filter doesn't apply to them.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+- **Next step**: task #19 (a low-priority "bored" tasks view on Tasks) and
+  task #20 (audit the global `+` FAB for full coverage of every content type
+  added this session) are still pending — see the task list.
+
+## Finance & Nutrition inspiration — DONE — migration `0049_finance_nutrition_inspiration.sql` (applied live via MCP)
+Same shape as `health_inspiration` (migration 0041), replicated as two more
+tables: `finance_inspiration`, `nutrition_inspiration` (kind, title, url,
+image_url, source, content — all personal RLS). Deliberately kept as
+separate per-module tables rather than a shared abstraction, matching this
+codebase's existing convention (habits/fitness/nutrition/health/finance each
+own their schema independently even where the shape is identical).
+
+- `src/lib/constants.ts`: added generic aliases `INSPIRATION_KINDS`/
+  `INSPIRATION_KIND_LABELS` (= the existing `HEALTH_INSPIRATION_*` values,
+  which were already generic "reel"/"guide" — finance and nutrition import
+  the aliases rather than duplicating the constant).
+- `finance/actions.ts` and `nutrition/actions.ts` each gained
+  `create/update/delete*Inspiration` (mirroring `health/actions.ts`).
+- New `finance/finance-inspiration-form.tsx` + `-list.tsx`, and
+  `nutrition/nutrition-inspiration-form.tsx` + `-list.tsx` — near-identical
+  to the health versions (kind select changes labels/hints contextually,
+  cover photo via `ImageUpload`, source, content).
+- `/finance` gained an "Inspiration & guides" card (same position pattern as
+  the other finance cards). `/nutrition` gained an "Inspiration & guides"
+  section below the recipe grid (additive — recipes are unaffected).
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+## Shares tracking with live prices — DONE — migration `0048_shares.sql` (applied live via MCP)
+New personal `shares` table: `ticker`, `quantity`, `purchase_price`,
+`purchase_date`, `notes`. No live-price data is stored — it's fetched at
+read time.
+
+**Provider decision**: I asked the user which free price-data approach to
+use (Stooq no-signup CSV vs Twelve Data with an API key vs skip live prices
+entirely); the question tool failed to deliver a response before the user
+said to continue, so I went with the recommended default: **Stooq's free,
+no-signup CSV endpoint** (`stooq.com/q/l/?s=...&e=csv`). It's end-of-day
+data, not true real-time, and somewhat less official than a paid API, but
+needs zero setup. If the user wants closer-to-real-time data later, ask them
+for a Twelve Data (or similar) API key and swap the provider — see below.
+
+Built as a **swappable provider** per `CLAUDE.md`'s "never hard-code
+providers" / "free integrations only for v1":
+- `src/lib/price-providers/types.ts`: a one-method `PriceProvider` interface.
+- `src/lib/price-providers/stooq.ts`: the only implementation so far. Parses
+  the CSV, returns `null` (not a thrown error) on any failure — unknown
+  ticker, network error, Stooq down, etc.
+- `src/lib/price-providers/index.ts`: `getPriceProvider()` — the single
+  place that picks which implementation is active (currently always Stooq;
+  swap here, or branch on an env var, to add a second provider later) —
+  and `getPrices(tickers[])`, which fans out `Promise.all` and always
+  returns a value per ticker (`null` if that one failed), so one bad ticker
+  never breaks the page.
+- Ticker format note: Stooq needs a market suffix (`AAPL.US`, `VOD.UK`) —
+  the share form hints this; there's no ticker search/autocomplete in v1.
+
+**Graceful degradation**: if a live price is unavailable, the UI falls back
+to the purchase price for value/net-worth math and shows a "price
+unavailable" badge — never blocks the page or throws.
+
+- `finance/actions.ts`: `createShare`/`updateShare`/`deleteShare` (ticker
+  is uppercased server-side).
+- `finance/share-form.tsx`, `finance/shares-section.tsx`: a new "Shares"
+  card on `/finance` — add/edit dialog, list rows showing quantity @
+  purchase price, current value, and gain/loss (only shown when a live
+  price was available, since gain/loss against the purchase price itself
+  is meaningless).
+- Folded into **net worth**: `/finance`'s net worth stat now sums savings
+  pots + investment pots + total shares value (using live price where
+  available, purchase price as fallback).
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+## Pots/accounts redesign — DONE — migration `0047_account_provider.sql` (applied live via MCP)
+- `savings_accounts` gained `provider` (bank/trading platform name).
+  `AccountForm` (in `savings/pot-detail.tsx`) has a new Provider field;
+  `savingsAccountSchema` and `createAccount`/`updateAccount` updated.
+- **Simplified "Add" flow**: `savings/quick-contribute.tsx` rewritten —
+  instead of "this month's contribution" vs a custom amount, it's now a
+  2-way toggle: **Contribution** (existing `addContribution`, logged in the
+  ledger, counts toward "total contributed") vs **Value only** (new action
+  `adjustPotValueOnly` — updates `current_amount` directly, does NOT touch
+  `savings_contributions`). This distinction matters for investments: market
+  value moving isn't a contribution, so it shouldn't inflate the
+  contributed-vs-value comparison below.
+- **Removed monthly plan/contribution from the UI**: `pot-form.tsx` no
+  longer shows the "Monthly (£)" field (this supersedes the earlier plan to
+  build `pot_contribution_schedules`/`pot_contribution_overrides` UI — those
+  tables from migration 0044 are now unused, left in place, harmless).
+  `pot-card.tsx` no longer shows the monthly-plan/forecast row. The
+  `monthly_contribution` DB column is untouched (NOT NULL, so kept — old
+  rows just stop being editable/shown).
+- **"Value vs contributed"**: `pot-detail.tsx` shows a 3-stat row (Value /
+  Contributed / Growth or Down) whenever a pot has any logged contributions
+  — `contributed` is the sum of the ledger (which, per the point above, only
+  reflects genuine deposits/withdrawals now), `growth = current_amount -
+  contributed`.
+- **Compact accounts view**: the Accounts section inside `pot-detail.tsx`
+  gained a Compact/Detailed toggle (same pattern as Bills/Purchases/
+  Essentials) — Compact shows just `name · provider` + balance; Detailed
+  keeps notes/timestamps.
+- **Net worth**: added to both `/finance` (a 5th stat card, `saved +
+  invested`) and `/savings` (replaced the old 3-stat row — Combined
+  target/Monthly contributions don't make sense post-redesign — with Net
+  worth / Saved / Invested / This month).
+- **Savings-rate calc fixed**: `/finance`'s "Monthly contributions" and
+  "Savings rate" stats used to sum the now-deprecated
+  `pots.monthly_contribution` field (frozen, no longer editable). Both pages
+  now sum real `savings_contributions` rows dated in the current month
+  instead — reflects what was actually put in, not a static plan.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+## Daily Routine — DONE — migration `0046_daily_routine.sql` (applied live via MCP)
+New personal `routine_items` (section, name, order_index) +
+`routine_completions` (item_id, completed_date — unique per item+date; a
+row's mere presence means "done that day", deleting it = undone). New
+`/routine` route, MyLife nav only. Deliberately simpler than it could have
+been: every item is a plain checkbox, including the quantitative ones
+("100g protein", "10,000 steps") — the quantity lives in the item's `name`
+text rather than a separate `target_value`/`unit` pair with a numeric
+stepper UI, because the user asked for "a place to put a daily routine"
+(a checklist), not a habit-style progress tracker (which already exists
+separately as Habits' numeric type).
+
+- `routine/actions.ts`: `toggleRoutineItem(itemId, date)` (presence-based
+  toggle — inserts/deletes the completion row), plus
+  create/update/deleteRoutineItem for managing items.
+- `src/lib/constants.ts`: `ROUTINE_SECTIONS` (consume/mind/body/morning/day/
+  evening), `ROUTINE_SECTION_LABELS`, and `ROUTINE_GROUPS` — a 2-level
+  grouping (`"What I need to consume"` → consume;
+  `"What I need to do"` → mind + body; `"My routine"` → morning + day +
+  evening) matching how the user structured their request.
+- `routine/routine-view.tsx`: today's progress bar (X/Y done) at the top,
+  then the 3 groups, each rendering its section(s) as a checklist (tap
+  anywhere on a row to toggle, optimistic update, a small pencil opens
+  `RoutineItemForm` to edit/delete/move sections).
+- **Seeded with the user's real routine** (29 items across 6 sections) via
+  a one-off `execute_sql` call, same pattern as Essentials — not in the
+  versioned migration, looked up via the `eashan@myhouse.local` user_id
+  subquery.
+
+## Essentials — DONE — migration `0045_essentials.sql` (applied live via MCP)
+New personal (not household-shared) `essentials` table: `category`, `name`,
+`rag` ('red'|'amber'|'green'), `have_notes`, `order_index`. New `/essentials`
+route (MyLife nav only). `essentials/essential-form.tsx` (category is a free
+text `Input` with a `<datalist>` of existing categories — not a rigid enum,
+since this is an open-ended personal list), a 3-way RAG toggle, "what you
+have" notes field. `essentials/essentials-view.tsx`: grouped-by-category
+sections with a Compact/Detailed toggle (same pattern as
+`bills-list.tsx`/`purchases-grid.tsx`) — Compact shows just a RAG dot + name
+in a grid; Detailed adds the `have_notes` text inline next to the name. A
+top summary row counts green/amber/red. Tapping any row opens
+`EssentialForm` pre-filled for editing.
+
+**Seeded with the user's real data** (101 items, 8 categories — Work,
+Fitness and Wellbeing, Wellbeing, Clothing, Everyday Use, Travel, Everyday
+Consumables, Apps and subscriptions) via a one-off `execute_sql` call
+(deliberately NOT included in the versioned migration file — seed data for
+one specific person doesn't belong in schema migrations; looked up the
+target `user_id` by `email = 'eashan@myhouse.local'` via a subquery).
+✅-marked items → `rag='green'`; unmarked → `rag='red'`; where the user wrote
+a product name after the ✅ (e.g. "Breakfast drink ✅ Fuel 10k") that became
+`have_notes` (e.g. "Fuel 10k").
+
+---
+
+## Finance overhaul — IN PROGRESS (branch `claude/finance-overhaul`)
+
+User sent a rapid sequence of finance-related requests in one session. Schema
+for the whole batch was landed in one migration (`0044_finance_overhaul.sql`,
+applied live via MCP) so later UI batches don't need new migrations for the
+already-queued pieces (income, pot contribution schedules). Working through
+the UI in verified batches; tracked via the session's task list.
+
+### Done
+- **Budget vs Actual removed**: the whole card, `BudgetForm`, and
+  `upsertBudget`/`deleteBudget` actions are gone (`budgets` table left in
+  place, unused — same pattern as other deprecated columns in this codebase).
+- **Credit cards**: new `credit_cards` (name, last4, statement_day) +
+  `credit_card_statements` (card_id, statement_month, amount, is_paid) —
+  both **personal** RLS (`auth.uid() = user_id` only, matching
+  `finance_settings`/`budgets`, not household-shared like bills/pots — credit
+  cards are typically personal even within a shared household).
+  `finance/credit-card-form.tsx` (add/edit a card),
+  `finance/credit-card-statement-form.tsx` (log/edit one month's amount, a
+  paid checkbox), `finance/credit-cards-section.tsx` (expandable per-card row:
+  this month's amount + paid/unpaid/not-logged badge, history of up to 12
+  past statements below). The current month's total statement amount across
+  all cards is folded into the existing `monthlyBills` figure (and therefore
+  `netMonthly`) on `/finance`.
+
+### Done (this batch)
+- **Nav visibility**: removed `Notes & Links` from `HOUSE_NAV_ITEMS`
+  (`src/lib/constants.ts`) — it now only appears in `LIFE_NAV_ITEMS`. Finance
+  was already Life-only. Underlying data is unaffected either way (same
+  Supabase backend, nav is purely cosmetic — the routes themselves aren't
+  gated by `NEXT_PUBLIC_APP`).
+- **Future Purchases in MyLife**: added to `LIFE_NAV_ITEMS` (Planner group),
+  pointing at the existing `/purchases` route. It already had a "Mine"
+  filter toggle (`onlyMine` state in `purchases-grid.tsx`) from an earlier
+  batch — now defaults to `true` when `NEXT_PUBLIC_APP === "life"` (still
+  toggleable, not hard-locked, so a MyLife user can still see household
+  purchases if they want).
+
+### Queued (not started yet, in this order)
+1. **Personal vs household filter — Projects/Tasks, Purchases, Finance**:
+   user asked for this as a generalisation right after the Future Purchases
+   work above. `project_tasks`/`projects` are currently fully
+   household-shared (no per-user filter at all, unlike purchases). Needs:
+   (a) a "Personal / Household" filter added to `/projects` (probably
+   mirroring the `onlyMine` pattern from `purchases-grid.tsx`), (b) confirm
+   Purchases' existing `onlyMine` toggle covers this adequately, (c) add an
+   equivalent filter to Finance's household-shared sections (bills shown via
+   the monthly-bills figure, savings/investment pots) — exact UI not yet
+   designed.
+2. **Income overhaul**: replace the `IncomeForm` "Edit income" button with a
+   dedicated section — fixed salary details (already added to
+   `finance_settings`: `annual_salary`, `employer`, `salary_notes`) plus a
+   monthly net-income log (`income_months` table — already created: month,
+   net_income, bonus, notes, unique per user+month) that carries forward last
+   month's value as an editable default when the current month has no entry
+   yet. Need to update `dashboard/page.tsx`'s cash-flow widget too, since it
+   currently reads `finance_settings.monthly_income` directly — should read
+   the effective current-month income from `income_months` instead (with a
+   shared helper, e.g. `src/lib/income.ts`).
+3. **Pots/accounts redesign + net worth**: `savings_accounts` gains `name`
+   (already has it) + a new `provider` field (bank/platform); simplify
+   `PotCard` (remove the monthly-contribution display from the compact
+   card — `pot_contribution_schedules`/`pot_contribution_overrides` tables
+   already exist for this, to be surfaced in the pot *detail* view instead);
+   a compact accounts view (name + value only); an aggregated **net worth**
+   stat (savings + investment pots, and later shares); pot detail should show
+   value vs total contributed (sum of `savings_contributions`).
+4. **Shares tracking with live prices**: new feature, not yet designed.
+   Needs a `shares` table (ticker, quantity, purchase price) and a **modular,
+   swappable** free price-data provider per `CLAUDE.md` ("Never hard-code
+   providers", "Version 1 should only implement free integrations") — likely
+   an env-var-gated API key, with graceful degradation (show purchase value
+   only, no live gain/loss) when no key is configured. Needs a design
+   decision on which free provider to default to before implementing.
+5. **Inspiration capture for finance and nutrition**: mirror the
+   `health_inspiration` reels/guides pattern (see the "Health: reels &
+   guides" section below) as `finance_inspiration` and `nutrition_inspiration`
+   — kept as separate per-module tables rather than a shared abstraction,
+   consistent with how habits/fitness/nutrition/health/finance already each
+   own their schema independently in this codebase.
+
+---
+
+## Bill contributors (split who pays a bill) — COMPLETE, awaiting PR/merge (branch `claude/bill-contributions`)
+
+User's exact scenario: a bill split between two household members, one with a
+fixed monthly amount that may change over time (so needs a start/end date),
+the other paying "the rest". Generalised to: any bill can have any number of
+contributors, each either a fixed amount or flagged as the remainder payer.
+
+**Migration `0043_bill_contributors.sql`** (already applied live via MCP):
+new table `bill_contributors` — `bill_id`, `user_id` (creator, for RLS —
+mirrors the `hh_select`/`hh_insert`/etc. pattern used by every other
+household table since migration 0008), `member_id` (the household member
+this row is *about* — a separate column from `user_id` since Eashan can add a
+contributor row that represents Neelam), `amount` (numeric, **null means
+"pays the rest"**), `start_date`/`end_date` (both nullable — a row with no
+dates is always active; changing an amount means ending the old row and
+adding a new one, not overwriting, so history is preserved), `notes`.
+No DB-level constraint enforcing "only one remainder contributor" — handled
+at the UI/calc layer instead (if more than one remainder row is active
+simultaneously, the leftover is split evenly between them; this is a
+reasonable fallback for user error, not a case anyone should hit normally).
+
+- `bills/actions.ts`: `createBillContributor(billId, input)`,
+  `updateBillContributor(id, input)`, `deleteBillContributor(id)`.
+- `bills/bill-contributor-form.tsx`: member picker (from the household's
+  `HouseholdMember[]`), a "Fixed amount" / "Pays the rest" toggle (amount
+  input only shown for the fixed case), start/end date.
+- `bills/bill-contributors.tsx`: the "Who pays" section inside the bill
+  detail dialog. `isActive(contributor, today)` checks the date range;
+  active fixed contributors sum to `fixedTotal`, active remainder
+  contributors each get `max(0, bill.amount - fixedTotal) / remainder.length`.
+  Each row is itself a `BillContributorForm` trigger (tap to edit), shows the
+  member's avatar/colour (reusing `MEMBER_COLOR_TEXT`/`initialsFromName`,
+  same as Settings' household list), the date range, and either the fixed
+  amount or a "Pays the rest" badge with the live computed `≈ £X` underneath.
+  A summary line at the bottom spells out the current split in one sentence.
+- Threaded `contributors: BillContributor[]` and `members: HouseholdMember[]`
+  from `bills/page.tsx` → `bills-list.tsx` → `bill-detail.tsx` →
+  `bill-contributors.tsx` (contributors filtered per-bill at each list site,
+  same pattern already used for `payments`).
+- `database.types.ts`: `BillContributor` type + registered in the `Database`
+  map.
+
+Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean
+(35 routes compile).
+
+---
+
+## Account & household management — COMPLETE, awaiting PR/merge (branch `claude/account-household-mgmt`)
+
+User asked for three things after the module redesign (PR #97) was merged:
+1. A settings page to change password.
+2. A "create new user" interface on the landing page.
+3. A way in settings to join or add someone to your household.
+
+### Change password — DONE, no migration
+- `settings/change-password.tsx`: re-authenticates with the current password via
+  `supabase.auth.signInWithPassword` (this app's accounts are
+  username→`@myhouse.local` email, so this re-auth is the only practical "are
+  you sure" check available) before calling
+  `supabase.auth.updateUser({ password })`. Wired into the existing Account
+  card on `/settings`, above the Sign out button.
+- Only meaningfully works for password-based accounts (the username/password
+  flow), not Google-OAuth-only users — acceptable since password auth is this
+  app's primary mechanism.
+
+### Household invite/join — DONE — migration `0042_household_invites.sql` (already applied live via MCP)
+- New table `household_invites` (household_id, code, created_by, expires_at
+  — 7 days). RLS only lets you see/insert/delete invites you created.
+- New `SECURITY DEFINER` function `public.redeem_household_invite(p_code)` —
+  looks up the code (ignoring expired ones), then updates the caller's
+  `household_members.household_id` to match. SECURITY DEFINER is required
+  here (same pattern as the existing `same_household`/`is_household_member`
+  helpers) because the joining user has no RLS visibility into a household
+  they're not yet part of.
+- `settings/actions.ts`: `createHouseholdInvite()` (requires the caller
+  already has a `household_members` row — i.e. has set a display name —
+  generates a 6-char code from an ambiguity-free alphabet, no 0/O/1/I),
+  `joinHousehold(code)` (calls the RPC, surfaces a friendly error if the
+  code's invalid/expired or the caller hasn't set a display name yet).
+- `database.types.ts`: added `HouseholdInvite` type, registered
+  `household_invites` in the Database map, and — new — populated the
+  previously-empty `Functions` map with `redeem_household_invite` so
+  `supabase.rpc(...)` typechecks (no other RPC call existed in the codebase
+  before this).
+- `settings/household-invite.tsx`: two-column UI in the existing Household
+  card — "Invite someone" (generate + copy a code) and "Join a household"
+  (paste a code + Join).
+
+### Sign-up UI on the landing page — DONE, no migration
+- `components/auth/sign-up.tsx`: name + username + password + confirm,
+  reuses the existing `usernameToEmail()` mapping so created accounts are
+  consistent with the existing `PasswordSignIn` flow. On success with a
+  session, calls the existing `updateDisplayName` server action (imported
+  from `settings/actions.ts` — same cross-route-group import pattern used
+  elsewhere) so the new user's `household_members` row exists immediately,
+  then redirects to `/dashboard`.
+- **Open question for the user**: this project's existing 3 accounts
+  (eashan/neelam/demo) all have `confirmed_at` set, but I can't tell from
+  available tooling whether that's because "Confirm email" is OFF
+  project-wide, or because each was manually ticked "Auto Confirm User" in
+  the Supabase dashboard (the comment in `password-sign-in.tsx` suggests the
+  latter — accounts were historically dashboard-created). If confirmation is
+  required, `supabase.auth.signUp()` returns no session for a fresh
+  `@myhouse.local` address (which can never receive a real confirmation
+  email) and the account would be stuck. `sign-up.tsx` handles both cases:
+  if a session comes back, it logs the user in immediately; if not, it shows
+  an explanation telling them to ask an admin to confirm the account in
+  Supabase, or to turn off "Confirm email" under Authentication → Providers
+  → Email so self-serve signup works without an admin step. **I don't have a
+  tool to read or change that GoTrue setting** — whoever picks this up
+  should test signup once deployed and toggle it in the dashboard if needed.
+- `components/auth/auth-tabs.tsx`: a "Sign in" / "Create account" toggle on
+  `/login`, replacing the previously-static `PasswordSignIn` + `GoogleSignIn`
+  block (now nested inside the "Sign in" tab).
+
+Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean on
+every batch (35 routes compile).
+
+---
+
+## MyLife module redesign — COMPLETE, merged to main (PR #97)
+
+User asked for a deep redesign of 5 MyLife modules (habits, fitness, nutrition,
+finance, health) plus a landing-page branding bug. Working through it as
+separate verified, pushed batches. Tracking via the session's internal task
+list (5 tasks: Habits, Workouts→plans, Nutrition→recipes, Finance pots,
+Health reels/guides).
+
+### Landing page branding fix — DONE
+`src/app/login/page.tsx`, `src/app/layout.tsx` (root metadata), and
+`src/app/manifest.ts` were hardcoded to "My House"/"MyLife" text instead of
+switching on `NEXT_PUBLIC_APP` like the rest of the app shell. All three now
+branch on `process.env.NEXT_PUBLIC_APP === "life"`. No DB change.
+
+### Habits v2 — DONE — migration `0037_habits_v2.sql` (already applied live via MCP)
+- `habits` gained `habit_type` ('yes_no' | 'numeric' | 'timer', default
+  'yes_no'), `why` (text, the inspiration/motivation field), `unit` (text,
+  for numeric habits e.g. "glasses").
+- `habit_logs` gained `value` (numeric, for numeric-type logs) and
+  `duration_seconds` (int, for timer-type logs). `count` is kept for
+  backward compat but no longer carries meaning beyond "a log exists".
+- New table `habit_targets` (habit_id, period, target_value) — a habit can
+  have **one target per period**, periods are day/week/month/year/all_time/
+  single (unique constraint on habit_id+period, so re-saving a period
+  upserts it). `single` and `all_time` are computed identically (cumulative
+  sum of all logs) — `single` is just framed as a one-shot goal in the UI.
+- `src/lib/habit-progress.ts` (new, shared by page/dashboard/dialog):
+  `logAmount(habit, log)` (1 for yes_no, `value` for numeric, minutes for
+  timer), `getStreak(habit, logs)`, `sumForPeriod(habit, logs, period, today)`.
+- `src/app/(app)/habits/actions.ts`: added `logHabitValue` (numeric upsert),
+  `logHabitDuration` (timer upsert, `{add: true}` accumulates onto today's
+  existing duration), `upsertHabitTarget`/`deleteHabitTarget`. Existing
+  `logHabit`/`unlogHabit` (yes/no toggle) unchanged — still used by the
+  dashboard quick-checkin widget.
+- New `habit-calendar.tsx` (month-grid tracker, prev/next nav, filled cells
+  = logged days, today gets a ring), `habit-timer.tsx` (start/pause/stop,
+  mm:ss display, stop logs via `logHabitDuration` with `add:true`),
+  `habit-detail-dialog.tsx` (why quote, type-appropriate quick-log control,
+  target progress bars via `sumForPeriod`, the calendar, an Edit button that
+  opens `HabitForm` nested inside — same nested-dialog pattern as
+  `option-detail.tsx`).
+- `habit-form.tsx`: added Type/Unit/Why fields; a `TargetsEditor` sub-section
+  (only shown when editing an existing habit, since targets need a habit id)
+  lets you set/replace/delete a target per period.
+- `habits-view.tsx`: rows are now type-aware — yes_no keeps the tap-to-toggle
+  circle; numeric/timer rows show today's logged amount and a chevron that
+  opens `HabitDetailDialog` (where the actual numeric/timer logging happens).
+  Tapping a habit's name always opens the detail dialog now (previously there
+  was no per-habit edit entry point at all — `HabitForm` with a `habit` prop
+  was unreferenced dead code).
+- `habits/page.tsx`: now fetches **all** habit_logs (not just the last 30
+  days) and `habit_targets`, since `all_time`/`single` targets and the
+  calendar's month navigation need full history. "Best streak" and "This
+  week" stat cards were previously hardcoded `—` — now computed for real via
+  `habit-progress.ts`.
+- `dashboard/daily-habits.tsx`: the dashboard quick-checkin widget now only
+  shows `habit_type === "yes_no"` daily habits (numeric/timer habits need
+  their dedicated logging UI, not a single tap-toggle).
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+### Fitness → workout plans — DONE — migration `0038_workout_plans.sql` (already applied live via MCP)
+- Replaced per-session workout logging entirely with a reusable **exercise
+  library + workout plan builder**. New tables: `exercises` (name,
+  `muscle_groups text[]`, `technique`, `inspiration`, `pb_value`/`pb_unit`/
+  `pb_date`), `workout_plans` (name, description, is_active), and
+  `workout_plan_exercises` (join: plan_id, exercise_id, sets, reps,
+  target_weight_kg, order_index, notes). The old `workouts`/
+  `workout_exercises` tables are left in place but fully unused (nothing
+  referenced them outside the fitness module — verified via grep before
+  deleting `workout-form.tsx`).
+- `src/lib/constants.ts`: `MUSCLE_GROUPS` (11 groups: Chest, Back,
+  Shoulders, Biceps, Triceps, Forearms, Abs, Quads, Hamstrings, Glutes,
+  Calves) and `PB_UNITS` (kg/lb/reps/seconds/minutes/km/m).
+- `fitness/actions.ts` rewritten: `createExercise`/`updateExercise`/
+  `deleteExercise` (now operate on the new `exercises` table — same
+  function names as before but different table/shape, no other module
+  imports them), `createWorkoutPlan`/`updateWorkoutPlan`/`deleteWorkoutPlan`,
+  `addExerciseToPlan`/`updatePlanExercise`/`removeExerciseFromPlan`.
+- `fitness/body-diagram.tsx`: a simplified front+back SVG human silhouette
+  (geometric shapes, not anatomically precise) with one highlightable zone
+  per `MUSCLE_GROUPS` entry — fills `fill-primary` when that muscle is
+  worked. Used both per-plan (aggregated from its exercises) and at the
+  bottom of the page (aggregated across the whole library).
+- `fitness/exercise-form.tsx`: name, a toggle-pill multi-select for muscle
+  groups, technique notes, inspiration, and an optional PB (value + unit +
+  date, date only shown once a value is entered). Has an `onCreated`
+  callback so it can be used both standalone and nested inside the plan
+  picker (create-and-attach in one step).
+- `fitness/plan-form.tsx`: name + description only (kept deliberately
+  minimal — exercises are attached after creation via the detail dialog).
+- `fitness/plan-detail-dialog.tsx`: shows the plan's exercises (sets/reps/
+  weight, PB badge, muscle badges), the body diagram for just this plan's
+  muscles, a "choose from library" select to attach an existing exercise, and
+  a nested `ExerciseForm` to create-and-attach a brand new one. Same
+  nested-dialog pattern as `habit-detail-dialog.tsx`/`option-detail.tsx`.
+- `fitness/fitness-view.tsx` (client) + `fitness/page.tsx` (server): Plans
+  grid (tap a card to open `PlanDetailDialog`), an Exercise library grid
+  (tap a card to open `ExerciseForm` pre-filled for editing — same
+  previously-dead-code-now-wired pattern as the habits edit fix), and a
+  library-wide body diagram at the bottom.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+### Nutrition → recipes — DONE — migration `0039_recipes.sql` (already applied live via MCP)
+- Replaced meal logging with recipe capture. New tables: `recipes` (name,
+  `video_url`, `image_url`, `servings`, `calories`/`protein_g`/`carbs_g`/
+  `fat_g` — nutritional value per recipe, `notes` for method/steps) and
+  `recipe_ingredients` (recipe_id, `name`, `quantity` as free text e.g. "2
+  cups" or "a pinch" — deliberately not split into numeric+unit, ingredient
+  quantities are too irregular for that, `order_index`). Old
+  `nutrition_logs` table left in place but unused (confirmed via grep: not
+  referenced by the dashboard or anywhere else).
+- `nutrition/actions.ts` rewritten: `createRecipe`/`updateRecipe` accept the
+  recipe fields plus an `ingredients[]` array and write both tables in one
+  call (update replaces all ingredient rows — delete-then-reinsert, simplest
+  correct approach for a small reorderable list), `deleteRecipe`.
+- `nutrition/recipe-form.tsx`: name, `ImageUpload` photo (same component
+  used by projects/photos), video link (plain URL field — no embed
+  fetching/oEmbed, just a "watch the video" link out), a dynamic
+  add/remove ingredients list (name + free-text quantity per row),
+  servings, the 4 macro fields, and a method/notes textarea.
+- `nutrition/recipe-detail-dialog.tsx`: photo, video link, a 4-stat macro
+  strip, ingredients list, method, and a nested Edit button (same pattern
+  as habits/fitness).
+- `nutrition/nutrition-view.tsx` + `nutrition/page.tsx`: a recipe card grid
+  (photo or a ChefHat placeholder, calories, ingredient count, a film icon
+  if it has a video) — tapping a card opens the detail dialog.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+### Finance: savings & investment pots — DONE — migration `0040_pot_type.sql` (already applied live via MCP)
+- Reused the existing `savings_pots` infrastructure (household-shared
+  table, accounts + contributions ledger from migration 0007, the
+  `QuickContribute` quick-add-value dialog) rather than building anything
+  new — added a single `pot_type` column ('savings' | 'investment',
+  default 'savings').
+- `src/lib/constants.ts`: `POT_TYPES`, `POT_TYPE_LABELS`.
+- `src/lib/schemas.ts`: `savingsPotSchema` gained `pot_type` (enum, default
+  'savings'); `savings/actions.ts#toRow` persists it.
+- `savings/pot-form.tsx`: a Pot type select, plus a new `defaultPotType`
+  prop so a "New pot" trigger can pre-select Investment.
+- `/savings` page now groups pots into a "Savings pots" section and an
+  "Investment pots" section (only rendered when non-empty), each still
+  using the existing `PotCard` grid.
+- `/finance` page: replaced the single read-only "Savings pots" summary
+  with two full `Card`s — **Savings pots** and **Investment pots** — each
+  rendering up to 4 `PotCard`s (imported from
+  `@/app/(app)/savings/pot-card`, same cross-route-group import pattern
+  already used by `dashboard/daily-habits.tsx`), so the existing
+  `QuickContribute` "Add" button is right there on `/finance` for fast
+  value/contribution entry on any pot, plus a "New pot" trigger pre-set to
+  the right type. `totalSaved`/`totalTarget` stats are now scoped to
+  savings-type pots only; the top "Savings rate" stat card still sums
+  monthly contributions across both types (a deliberate "money being put
+  away" metric).
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+### Health: reels & guides — DONE — migration `0041_health_inspiration.sql` (already applied live via MCP)
+- Additive (unlike the other 4 modules — health keeps all its existing
+  records/medications/appointments functionality, this just adds a new
+  section). New table `health_inspiration`: `kind` ('reel' | 'guide'),
+  `title`, `url` (video link for reels, optional link for guides),
+  `image_url`, `source` (e.g. "Instagram", "a friend"), `content` (notes
+  for a reel, the body for a guide).
+- `src/lib/constants.ts`: `HEALTH_INSPIRATION_KINDS`,
+  `HEALTH_INSPIRATION_KIND_LABELS`.
+- `health/actions.ts`: `createHealthInspiration`/`updateHealthInspiration`/
+  `deleteHealthInspiration` appended to the existing file.
+- `health/health-inspiration-form.tsx`: kind select (changes labels/hints
+  contextually — "Video link" for reels vs an optional link for guides,
+  "Guide content" vs "Notes" for the textarea), title, `ImageUpload` cover
+  photo, source, content. Added to `HealthAddMenu` alongside the existing
+  record/medication/appointment triggers.
+- `health/health-inspiration-list.tsx`: a card grid (cover photo or a
+  Film/BookOpen placeholder icon by kind) — tapping a card opens the form
+  pre-filled for editing.
+- `health/page.tsx`: new "Inspiration & guides" section (its own Add
+  button + empty state), `hasData` now also considers inspiration items so
+  the page's empty state only shows when there's truly nothing.
+- Verified: `npm run typecheck`, `npm run lint`, `npm run build` all clean.
+
+### Branch status
+All 5 module redesigns shipped via PR #97, merged to `main`, and confirmed
+live in production on both Vercel projects (`my-house-dashboard` and
+`my-life-dashboard`) off the merge commit. Migrations 0037–0041 were applied
+live on the Supabase project via MCP — nothing further to run.
+
+Smaller pre-existing gaps not part of this redesign (still open):
+- Journal entries: past entries show non-clickable rows; `JournalForm` isn't
+  wired into the entry list for editing.
+- Goals: cards have no per-card edit button.
+
+---
+
+## MyHouse / MyLife app split — COMPLETE (merged to main, PR #95)
+
+**What shipped:**
+- Single codebase, single Supabase database, **two Vercel deployments** distinguished
+  by one build-time env var: `NEXT_PUBLIC_APP=house` (existing `my-house-dashboard`
+  project, default when unset) vs `NEXT_PUBLIC_APP=life` (new MyLife project, not yet
+  created in Vercel — see below).
+- `src/lib/constants.ts`: replaced the single flat `NAV_ITEMS`/`NAV_GROUPS` with two
+  full sets — `HOUSE_NAV_GROUPS`/`HOUSE_NAV_ITEMS` (household-focused: Bills, Mortgage,
+  Savings, Projects, Rooms, Inspiration, etc.) and `LIFE_NAV_GROUPS`/`LIFE_NAV_ITEMS`
+  (personal OS: Habits, Journal, Fitness, Nutrition, Health, Finance, Goals, Tasks).
+  A `_isLife = process.env.NEXT_PUBLIC_APP === "life"` switch picks which set is
+  exported as `NAV_ITEMS`/`NAV_GROUPS` (same names, so every existing import site is
+  unaffected).
+- `src/hooks/use-bottom-tabs.ts`: `DEFAULT_BOTTOM_TABS` now branches the same way
+  (`["/dashboard","/habits","/fitness","/journal"]` for life vs
+  `["/dashboard","/projects","/bills","/rooms"]` for house).
+- `src/app/(app)/layout.tsx` + `src/components/layout/mobile-nav.tsx`: branding
+  ("My House" vs "MyLife") and the footer tagline now read from the same env var
+  instead of being hardcoded.
+- Both apps share the same Supabase URL/anon key, so tasks/bills/calendar created in
+  one are visible in the other — only nav and branding differ.
+- No DB migration for this batch (pure nav/branding).
+
+**Verification:** `npm run typecheck`, `npm run lint`, `npm run build` all clean
+(35 routes compiled).
+
+**Merge history note:** PR #95 was originally opened on top of the 3 separate
+MyLife milestone commits, but `main` had since absorbed those as one squashed commit
+(`445ea2d`, from PR #94), causing a real merge conflict. Fixed by resetting the
+feature branch to `origin/main` and cherry-picking just the app-split commit on top
+(no conflicts — it touches the same files as the squash but the squash already
+contains that content). Force-pushed, status checks passed, merged via squash.
+
+**Still TODO (needs the user, outside this codebase):**
+- Create the second Vercel project: Add New Project → import
+  `eashankaradia/My-House-Dashboard` → set `NEXT_PUBLIC_APP=life` → copy across the
+  existing Supabase env vars (URL + anon key) → Deploy. The existing
+  `my-house-dashboard` project needs no changes (unset env var defaults to house).
+
+---
+
+## MyLife Milestone 3: Finance — COMPLETE
+
+**What shipped:**
+- **New `/finance` page** — Personal financial overview hub with:
+  - 4 stat cards: Monthly income, Monthly bills, Net monthly (income − bills), Savings rate
+  - Budget vs actual: per-category comparison with progress bars and Over/Near badges
+  - Savings pots overview: total saved, target, monthly contributions + per-pot progress bars
+  - Financial goals: active goals with `category === "Financial"` + progress
+  - Quick links to Bills, Savings, Analytics
+  - `finance/loading.tsx` skeleton screen
+- **Income tracking** — `finance_settings` table (one row per user). `IncomeForm` dialog to set/edit monthly take-home income + label.
+- **Budget management** — `budgets` table (one row per user per category, unique constraint). `BudgetForm` dialog to add/edit/delete monthly budget limits per category. `BUDGET_CATEGORIES` constant extends `BILL_CATEGORIES` with personal spending categories (Food & Groceries, Transport, Eating Out, Entertainment, Clothing, Personal Care, Healthcare).
+- **Server actions** — `finance/actions.ts`: `upsertFinanceSettings`, `upsertBudget`, `deleteBudget`.
+- **Nav item** — `/finance` added at top of Finances group with `Wallet` icon.
+- **Dashboard cash flow widget** — `cashFlow` widget (id registered in `DASHBOARD_WIDGETS`). Only renders when income is set. Shows income / bills / net monthly / savings rate in a compact 4-column grid inside a `CollapsibleSection` linking to `/finance`.
+- **Types** — `FinanceSettings` and `Budget` types added to `database.types.ts` + Database Tables map.
+
+**Verification:** `npm run build` ✓ clean (all 36 routes compiled).
+
+**DB migration — run this in Supabase SQL editor:**
+
+```sql
+-- 0036_finance_budgets.sql
+create table if not exists finance_settings (
+  id             uuid         primary key default gen_random_uuid(),
+  user_id        uuid         not null unique references auth.users(id) on delete cascade,
+  monthly_income numeric(12, 2),
+  income_label   text         not null default 'Monthly income',
+  updated_at     timestamptz  not null default now()
+);
+alter table finance_settings enable row level security;
+create policy "Users manage own finance settings" on finance_settings
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create table if not exists budgets (
+  id            uuid         primary key default gen_random_uuid(),
+  user_id       uuid         not null references auth.users(id) on delete cascade,
+  category      text         not null,
+  monthly_limit numeric(12, 2) not null default 0,
+  notes         text,
+  created_at    timestamptz  not null default now(),
+  updated_at    timestamptz  not null default now(),
+  unique (user_id, category)
+);
+alter table budgets enable row level security;
+create policy "Users manage own budgets" on budgets
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create trigger set_finance_settings_updated_at
+  before update on finance_settings
+  for each row execute function set_updated_at();
+create trigger set_budgets_updated_at
+  before update on budgets
+  for each row execute function set_updated_at();
+```
+
+**Next milestone (Milestone 4):** Per the roadmap this would be Fitness (enhanced workout tracking, exercise library, progress charts) or Health (health records dashboard, medication reminders, appointment timeline). Alternatively: wire journal entries to be clickable/editable from the list (currently read-only), or add edit buttons to goal cards.
+
+---
+
+## MyLife Milestone 2: Core Platform — COMPLETE
+
+**What shipped:**
+- **Form dialogs** wired up for all 6 new modules — every "Add" button now opens a working form:
+  - `habits/habit-form.tsx` — create/edit habits (name, description, frequency, colour, delete)
+  - `goals/goal-form.tsx` — create/edit goals (title, description, category, target/current value, unit, target date, status when editing, delete)
+  - `journal/journal-form.tsx` — write/edit journal entries (date, mood picker with emoji, content, gratitude; upserts so one entry per day)
+  - `fitness/workout-form.tsx` — log/edit workouts (name, type, date, duration, notes, delete)
+  - `health/health-forms.tsx` — three separate forms: `LogHealthRecordForm` (type, value/value2 for BP, unit), `AddMedicationForm` (name, dosage, frequency, start date), `AddAppointmentForm` (title, provider, date, time, location); `HealthAddMenu` combines all three in the page header
+  - `nutrition/meal-form.tsx` — log a meal (name, type, date, calories, protein, carbs, fat)
+- **All module pages updated** to replace static `<Button>` placeholders with the real form dialog components (habits, goals, journal, fitness, health, nutrition pages all updated).
+- **Loading skeletons** added for all 6 new modules: `habits/loading.tsx`, `goals/loading.tsx`, `journal/loading.tsx`, `fitness/loading.tsx`, `health/loading.tsx`, `nutrition/loading.tsx`.
+- **Dashboard redesign** — MyLife daily briefing added:
+  - Subtitle under greeting now shows life score: "X of Y habits done today · N%"
+  - New `dashboard/daily-habits.tsx` — client component for interactive habit check-in on the dashboard (tap to complete/un-complete daily habits, with streak badges, optimistic updates)
+  - New "Today's habits" dashboard widget (`habitCheckIn`) — compact collapsible with `DailyHabits` component
+  - New "Goals progress" dashboard widget (`goalsProgress`) — compact collapsible with active goals, progress bars, category badges
+  - Both new widgets added to `DASHBOARD_WIDGETS` in `dashboard-customize.tsx` (visible by default, user can toggle off)
+  - Dashboard fetches habits + habit_logs (last 30 days) + active goals in the existing `Promise.all`
+
+**Verification:** `npm run build` ✓ clean (all 34 routes compiled).
+
+**No new DB migrations** — all form components call the server actions from Milestone 1. Migration 0035 (from Milestone 1) must still be run live for the forms to actually save data.
+
+**Next milestone (Milestone 3):** Per the roadmap this would be Finance (bill intelligence, spending analysis, savings automation). Alternatively, the journal entries list currently shows non-clickable buttons — wiring `JournalForm` into the existing journal entry rows (edit flow) would be a quick win. Goals page could also show edit buttons on each card.
+
+---
+
+## MyLife Milestone 1: Foundation — COMPLETE
+
+**What shipped:**
+- **Rebrand**: App renamed from "My House Dashboard" → "MyLife" throughout (metadata, sidebar, topbar, footer, manifest).
+- **Dark mode default**: `defaultTheme="dark"` in providers (users can still toggle).
+- **Design system**: Updated CSS custom properties — deep neutral dark mode (premium feel, not navy-tinted), `info` semantic color added, `--radius` updated. `tailwind.config.ts` now has `info` color + richer animation keyframes (`fade-in-scale`, `slide-up`, `number-in`, `shimmer`). Typography scale CSS classes added (`.text-display`, `.text-heading`, `.text-title`, `.text-body`, `.text-caption`, `.skeleton`).
+- **Navigation restructure**: `NAV_GROUPS` changed from `["Overview","Money","Planning","Home","Capture","Calendar"]` → `["Home","Finances","Health","Planner","More"]`. All 23 nav items reorganised. New icons: Dumbbell, Heart, Utensils, Repeat, Target, BookOpen. Default bottom tabs updated to `["/dashboard", "/bills", "/fitness", "/habits"]`. Sidebar now shows group headings for all 5 groups.
+- **6 new module pages** (all build, all have proper empty states + stat cards):
+  - `/fitness` — workout log, exercise sets, monthly stats
+  - `/health` — health records, medications, appointments
+  - `/habits` — daily/weekly/monthly habit tracker with streak + optimistic toggle
+  - `/goals` — goal cards with progress bars, category colours
+  - `/journal` — daily reflections with mood emoji, entry list
+  - `/nutrition` — meal logging, macro tracking, daily targets
+- **Server actions** for all 6 modules: `habits/actions.ts`, `goals/actions.ts`, `journal/actions.ts`, `fitness/actions.ts`, `health/actions.ts`, `nutrition/actions.ts`.
+- **Migration `0035_mylife_foundation.sql`** — **RUN THIS LIVE** in Supabase SQL editor. Adds:
+  - `habits` + `habit_logs` (personal RLS: `auth.uid() = user_id`)
+  - `goals`
+  - `journal_entries` (unique per user per date)
+  - `workouts` + `workout_exercises`
+  - `health_records`, `medications`, `appointments`
+  - `nutrition_logs`
+  - All tables have indexes + `updated_at` triggers (reuses existing `set_updated_at()` function).
+- **`database.types.ts`** updated with 10 new type exports + all new tables registered in the `Database` map.
+- **`constants.ts`** extended with `HABIT_FREQUENCIES`, `HABIT_COLORS`, `GOAL_CATEGORIES`, `GOAL_STATUSES`, `WORKOUT_TYPES`, `HEALTH_RECORD_TYPES`, `HEALTH_RECORD_LABELS`, `APPOINTMENT_STATUSES`, `MEAL_TYPES`, `MOOD_OPTIONS`.
+
+**Verification:** `npm run build` ✓ clean (all 29 routes compiled).
+
+**Next milestone (Milestone 2: Core Platform):** Dashboard redesign to the MyLife daily briefing — personalised greeting, life score, "Needs attention", quick habit check-in, goals progress ring, and a morning briefing card. Also: form dialogs for all 6 new modules (currently pages show empty states or read-only views with no forms wired up yet).
+
+---
+
+### Purchases "Ready to buy" section (done, no DB — applies to both MyHouse & MyLife)
 - New `purchases/ready-to-buy.tsx` (client) renders a prominent card above the grid
   listing every item with status `Ready To Buy`, each with a direct **Buy** link to
-  the specific option to purchase (the chosen option, else the top-ranked/cheapest;
-  falls back to the item URL) + a one-tap **Bought** action (`updatePurchaseStatus →
-  Purchased`). Wired into `purchases/page.tsx` (uses existing `readyToBuy` list).
-- NOTE: user also wants this on their separate **"Life" app** (a different repo not
-  in this session). Not done here — needs that repo added to mirror the component.
-- Verified: typecheck, lint, build clean.
+  the specific option to purchase (chosen option, else top-ranked/cheapest; falls
+  back to the item URL) + a one-tap **Bought** action. Wired into `purchases/page.tsx`.
+  Since MyHouse and MyLife share this codebase (gated by `NEXT_PUBLIC_APP`), it
+  ships to both automatically.
 
 ### Notes & Links (done) — **needs migration 0034**
 - `0034_useful_links.sql` adds `useful_links` (title, url, description) + household

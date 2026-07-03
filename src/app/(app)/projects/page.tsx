@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
 import { getHouseholdMap } from "@/lib/household";
+import { getFavoriteIds } from "@/app/(app)/favorites/actions";
 import { ArchivedSection } from "@/components/shared/archived-section";
 import type { Project, ProjectTask, ProjectWithTasks } from "@/lib/database.types";
 import { ProjectForm } from "./project-form";
@@ -18,15 +19,25 @@ export default async function ProjectsPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [{ data }, { data: taskData }, memberMap] = await Promise.all([
-    supabase.from("projects").select("*").order("created_at", { ascending: false }),
-    supabase
-      .from("project_tasks")
-      .select("*")
-      .order("is_done", { ascending: true })
-      .order("due_date", { ascending: true, nullsFirst: false })
-      .order("created_at", { ascending: false }),
+  // MyHouse never shows "personal" MyLife projects/tasks — hard boundary at
+  // the query itself, not just a UI filter.
+  const isHouse = process.env.NEXT_PUBLIC_APP !== "life";
+  let projectsQuery = supabase.from("projects").select("*").order("created_at", { ascending: false });
+  let tasksQuery = supabase
+    .from("project_tasks")
+    .select("*")
+    .order("is_done", { ascending: true })
+    .order("due_date", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false });
+  if (isHouse) {
+    projectsQuery = projectsQuery.eq("scope", "household");
+    tasksQuery = tasksQuery.eq("scope", "household");
+  }
+  const [{ data }, { data: taskData }, memberMap, favoriteTaskIds] = await Promise.all([
+    projectsQuery,
+    tasksQuery,
     getHouseholdMap(),
+    getFavoriteIds("task"),
   ]);
   // Archived tasks/projects are hidden from the main lists.
   const allTasks = (taskData ?? []) as ProjectTask[];
@@ -78,6 +89,7 @@ export default async function ProjectsPage() {
             projectOptions={projectOptions}
             memberMap={memberMap}
             currentUserId={currentUserId}
+            favoriteTaskIds={favoriteTaskIds}
           />
           <ArchivedSection
             items={archivedProjects.map((p) => ({ id: p.id, label: p.name }))}

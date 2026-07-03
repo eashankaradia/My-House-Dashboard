@@ -40,3 +40,16 @@ export function useOpenFromUrl(id: string, param = "item") {
 
   return { open, onOpenChange };
 }
+
+/**
+ * For dialogs that double as both "add new" and "edit" (a single Form
+ * component, switched by whether an existing item was passed in): deep-links
+ * only make sense once there's an id to link to, so this falls back to plain
+ * local state while creating and only binds to the URL once editing.
+ */
+export function useEditDialogOpen(id: string | null | undefined, param: string) {
+  const deepLink = useOpenFromUrl(id ?? "", param);
+  const [localOpen, setLocalOpen] = React.useState(false);
+  if (id) return { open: deepLink.open, onOpenChange: deepLink.onOpenChange };
+  return { open: localOpen, onOpenChange: setLocalOpen };
+}

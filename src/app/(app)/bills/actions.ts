@@ -10,7 +10,12 @@ import {
   type PaymentAccountInput,
 } from "@/lib/schemas";
 import { getActionContext, type ActionResult } from "@/lib/action-utils";
-import type { Bill, BillPayment } from "@/lib/database.types";
+import type { Bill, BillPayment, ItemScope } from "@/lib/database.types";
+
+/** MyHouse bills are always household-scoped — personal bills only ever come from MyLife. */
+function enforcedScope(requested: ItemScope): ItemScope {
+  return process.env.NEXT_PUBLIC_APP === "house" ? "household" : requested;
+}
 
 function toRow(values: BillInput) {
   return {
@@ -24,6 +29,7 @@ function toRow(values: BillInput) {
     account_id: values.account_id ?? null,
     is_fixed: values.is_fixed,
     notes: values.notes ?? null,
+    scope: enforcedScope(values.scope),
   };
 }
 
@@ -252,6 +258,86 @@ export async function updateBillPaymentDetail(
   if ("account_id" in detail) patch.account_id = detail.account_id || null;
   if ("notes" in detail) patch.notes = detail.notes || null;
   const { error } = await supabase.from("bill_payments").update(patch).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/bills");
+  return {};
+}
+
+// --- Bill contributors (split who pays what) --------------------------------
+
+export async function createBillContributor(
+  billId: string,
+  input: { member_id: string; amount?: number | null; start_date?: string; end_date?: string; notes?: string },
+): Promise<ActionResult> {
+  if (!input.member_id) return { error: "Choose a household member" };
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase.from("bill_contributors").insert({
+    bill_id: billId,
+    user_id: user.id,
+    member_id: input.member_id,
+    amount: input.amount ?? null,
+    start_date: input.start_date || null,
+    end_date: input.end_date || null,
+    notes: input.notes?.trim() || null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/bills");
+  return {};
+}
+
+export async function updateBillContributor(
+  id: string,
+  input: Partial<{ member_id: string; amount: number | null; start_date: string | null; end_date: string | null; notes: string | null }>,
+): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("bill_contributors").update(input).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/bills");
+  return {};
+}
+
+export async function deleteBillContributor(id: string): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("bill_contributors").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/bills");
+  return {};
+}
+
+// --- Household-wide contribution split (not tied to a specific bill) -------
+
+export async function createHouseholdContribution(
+  input: { member_id: string; amount?: number | null; start_date?: string; end_date?: string; notes?: string },
+): Promise<ActionResult> {
+  if (!input.member_id) return { error: "Choose a household member" };
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase.from("household_contributions").insert({
+    user_id: user.id,
+    member_id: input.member_id,
+    amount: input.amount ?? null,
+    start_date: input.start_date || null,
+    end_date: input.end_date || null,
+    notes: input.notes?.trim() || null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/bills");
+  return {};
+}
+
+export async function updateHouseholdContribution(
+  id: string,
+  input: Partial<{ member_id: string; amount: number | null; start_date: string | null; end_date: string | null; notes: string | null }>,
+): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("household_contributions").update(input).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/bills");
+  return {};
+}
+
+export async function deleteHouseholdContribution(id: string): Promise<ActionResult> {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("household_contributions").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/bills");
   return {};
