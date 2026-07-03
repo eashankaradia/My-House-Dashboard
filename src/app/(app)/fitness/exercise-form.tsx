@@ -17,6 +17,7 @@ import {
 import { Field } from "@/components/shared/form-field";
 import { FormDeleteButton } from "@/components/shared/form-delete-button";
 import { useToast } from "@/hooks/use-toast";
+import { fetchLinkPreview } from "@/app/actions/link-preview";
 import { cn } from "@/lib/utils";
 import { MUSCLE_GROUPS, PB_UNITS } from "@/lib/constants";
 import type { Exercise, ExerciseLink } from "@/lib/database.types";
@@ -188,7 +189,16 @@ function ExerciseLinksField({ exerciseId, links }: { exerciseId: string; links: 
   const [url, setUrl] = React.useState("");
   const [label, setLabel] = React.useState("");
   const [pending, startTransition] = React.useTransition();
+  const [fetching, setFetching] = React.useState(false);
   const { toast } = useToast();
+
+  async function autofill() {
+    if (!url.trim() || label) return;
+    setFetching(true);
+    const res = await fetchLinkPreview(url);
+    setFetching(false);
+    if (res.title) setLabel(res.title.slice(0, 160));
+  }
 
   function addLink() {
     if (!url.trim()) return;
@@ -229,10 +239,11 @@ function ExerciseLinksField({ exerciseId, links }: { exerciseId: string; links: 
             placeholder="https://..."
             value={url}
             onChange={(e) => setUrl(e.target.value)}
+            onBlur={autofill}
             className="min-w-[140px] flex-1"
           />
           <Input
-            placeholder="Label (optional)"
+            placeholder={fetching ? "Filling in…" : "Label (optional)"}
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             className="w-32"

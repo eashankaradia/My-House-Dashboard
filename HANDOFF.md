@@ -2,14 +2,75 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-03 (App logo/icon redesigned —
-> the house pictogram is replaced with a sparkle glyph, still an "M" as before.
-> No DB migration. `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. About to commit/push/deploy-confirm,
-> then continue with two more in-flight requests: auto-refreshing Purchases
-> option prices on tab visit, and rolling the "Auto-fill from link" pattern out
-> to more forms across the app. See "Logo redesign" section below for details;
-> further sections will be added as those land.)
+> after **every** change. Last updated: 2026-07-03 (Two more batches landed:
+> (1) Purchases now auto-refreshes each option's price from its saved link
+> whenever the Purchases page loads (throttled to once per 15 min per option),
+> via new migration `0064_purchase_option_price_checked_at`. (2) The
+> "Auto-fill from link" pattern (title/photo/source pulled from a pasted URL)
+> is now on six more forms: Notes & Links useful-link-form, nutrition/health
+> inspiration forms, recipe-form (video link), and fitness muscle-links /
+> exercise links. `npm run typecheck`, `npm run lint`, default build, and
+> `NEXT_PUBLIC_APP=life` build all pass. Migration `0064` needs to be applied
+> to the live Supabase project before/at deploy — **confirm this before
+> reporting done**. See sections below for both batches plus the earlier logo
+> redesign, which is already confirmed deployed.)
+
+## Purchases: auto-refresh option prices + wider auto-fill rollout (2026-07-03)
+User: "I like auto fill on my purchases, whenever I click on the tab I want
+all of my purchases to refresh to find the latest price if it can" — then,
+separately: "if you see opportunities to use auto fill anywhere else in
+MyLife or MyHouse use implement it."
+
+**Price auto-refresh (Purchases tab):**
+- Migration `0064_purchase_option_price_checked_at.sql` — adds
+  `purchase_options.price_checked_at timestamptz`. Applied live via MCP.
+- `src/app/(app)/purchases/actions.ts` — new `refreshOptionPrices()` server
+  action: selects every option with a `url`, skips ones checked in the last
+  15 minutes (`PRICE_STALE_MS`), caps a single run to 25 options
+  (`PRICE_REFRESH_LIMIT`) so one page load can't trigger a huge fetch burst,
+  then re-runs the same `fetchLinkPreview()` used by the "Auto-fill" button
+  in parallel for the rest. Updates `price` only if a new price was found and
+  it differs from the current one; always stamps `price_checked_at` so a page
+  whose product listing doesn't expose a price meta tag isn't re-hit every
+  visit. Returns `{ checked, updated }`.
+- `src/app/(app)/purchases/price-refresh.tsx` (new) — client component,
+  fires once on mount (guarded by a ref against React Strict Mode's double
+  effect), calls the action, and if anything changed shows a toast
+  ("Updated N prices") and `router.refresh()`s so the new prices render
+  immediately. Rendered at the top of `purchases/page.tsx`.
+- `src/lib/database.types.ts` — added `price_checked_at` to `PurchaseOption`.
+- Why throttled rather than literally every click: refetching every option's
+  product page on every single tab visit would be slow (network-bound) and
+  could get the app rate-limited/blocked by some retailers; 15 minutes is
+  short enough that "walk away and come back later" always gets a fresh
+  check, while flicking between tabs repeatedly doesn't re-hit the same URLs.
+
+**Auto-fill rollout (six more forms):**
+- Extracted `sourceFromUrl()` (Instagram/TikTok/Pinterest/YouTube detection
+  from a hostname) out of `inspiration-form.tsx` into a new
+  `src/lib/link-source.ts` so it can be shared — note it could **not** live
+  in `src/app/actions/link-preview.ts` (a `"use server"` file, which requires
+  every export to be an async function; a sync helper there breaks the
+  build with "Server Actions must be async functions").
+- `src/app/(app)/notes/useful-link-form.tsx` — paste a URL, tap Auto-fill (or
+  blur out of an empty title) to pull the page title.
+- `src/app/(app)/nutrition/nutrition-inspiration-form.tsx` and
+  `src/app/(app)/health/health-inspiration-form.tsx` — video/link field now
+  auto-fills title, cover photo and source, same as the main Inspiration tab.
+- `src/app/(app)/nutrition/recipe-form.tsx` — video link auto-fills the
+  recipe name and photo.
+- `src/app/(app)/fitness/muscle-links.tsx` and the inline links field in
+  `src/app/(app)/fitness/exercise-form.tsx` — link auto-fills the label.
+- All of these only fill a field if it's currently empty (never clobbers
+  something the user already typed), matching the existing Inspiration-form
+  behavior.
+- **Verification:** `npm run typecheck`, `npm run lint`, default build, and
+  `NEXT_PUBLIC_APP=life` build all pass. Not yet browser-verified (no
+  `.env.local` Supabase credentials in this sandbox) — should be smoke-tested
+  once deployed: visit Purchases with an option that has a link, confirm no
+  console errors and (if the link exposes a price meta tag) the price
+  updates; paste a link into one of the six updated forms and confirm the
+  relevant fields fill in.
 
 ## Logo redesign: sparkle instead of house (2026-07-03)
 User report: "change the logo so it's a similar design but not a house but

@@ -10,6 +10,7 @@ import {
 import { PURCHASE_STATUSES } from "@/lib/constants";
 import { getActionContext, type ActionResult } from "@/lib/action-utils";
 import type { ItemScope } from "@/lib/database.types";
+import { fetchLinkPreview } from "@/app/actions/link-preview";
 
 export type FuturePurchaseChoice = {
   id: string;
@@ -300,6 +301,56 @@ export async function moveOption(
   }
   revalidatePath("/purchases");
   return {};
+}
+
+// --- Price auto-refresh -----------------------------------------------------
+
+/** Skip re-checking an option's price if it was checked more recently than this. */
+const PRICE_STALE_MS = 15 * 60 * 1000;
+/** Cap how many links we hit per refresh call, so one page visit can't trigger a huge burst of fetches. */
+const PRICE_REFRESH_LIMIT = 25;
+
+export type RefreshPricesResult = { checked: number; updated: number };
+
+/**
+ * Re-fetches the latest price from each option's link (same source as the
+ * "Auto-fill" button) and updates it if changed. Runs whenever the Purchases
+ * page loads; options checked within the last 15 minutes are skipped so
+ * switching tabs repeatedly doesn't hammer the same product pages.
+ */
+export async function refreshOptionPrices(): Promise<RefreshPricesResult> {
+  const { supabase } = await getActionContext();
+  const { data, error } = await supabase
+    .from("purchase_options")
+    .select("id, url, price, price_checked_at")
+    .not("url", "is", null);
+  if (error || !data) return { checked: 0, updated: 0 };
+
+  const now = Date.now();
+  const stale = data
+    .filter((o) => o.url && (!o.price_checked_at || now - new Date(o.price_checked_at).getTime() > PRICE_STALE_MS))
+    .slice(0, PRICE_REFRESH_LIMIT);
+  if (stale.length === 0) return { checked: 0, updated: 0 };
+
+  let updated = 0;
+  await Promise.all(
+    stale.map(async (option) => {
+      const preview = await fetchLinkPreview(option.url!);
+      const priceChanged =
+        preview.price != null && preview.price > 0 && preview.price !== Number(option.price);
+      if (priceChanged) updated++;
+      await supabase
+        .from("purchase_options")
+        .update({
+          price_checked_at: new Date().toISOString(),
+          ...(priceChanged ? { price: preview.price } : {}),
+        })
+        .eq("id", option.id);
+    }),
+  );
+
+  if (updated > 0) revalidatePath("/purchases");
+  return { checked: stale.length, updated };
 }
 
 /** Mark one option as the chosen one (and clear the others on the same item). */

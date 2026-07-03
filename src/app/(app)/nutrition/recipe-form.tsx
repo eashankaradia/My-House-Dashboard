@@ -17,6 +17,7 @@ import { Field } from "@/components/shared/form-field";
 import { FormDeleteButton } from "@/components/shared/form-delete-button";
 import { ImageUpload } from "@/components/shared/image-upload";
 import { useToast } from "@/hooks/use-toast";
+import { fetchLinkPreview } from "@/app/actions/link-preview";
 import type { Recipe, RecipeIngredient } from "@/lib/database.types";
 import { createRecipe, updateRecipe, deleteRecipe } from "./actions";
 
@@ -27,12 +28,27 @@ type IngredientRow = { name: string; quantity: string };
 export function RecipeForm({ recipe, ingredients = [], trigger }: Props) {
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
+  const [fetching, setFetching] = React.useState(false);
   const { toast } = useToast();
   const editing = Boolean(recipe);
 
   const [name, setName] = React.useState(recipe?.name ?? "");
   const [videoUrl, setVideoUrl] = React.useState(recipe?.video_url ?? "");
   const [imageUrl, setImageUrl] = React.useState<string | null>(recipe?.image_url ?? null);
+
+  async function autofill(link: string) {
+    if (!link) return;
+    setFetching(true);
+    const res = await fetchLinkPreview(link);
+    setFetching(false);
+    if (res.error) {
+      toast({ variant: "destructive", title: "Couldn't auto-fill", description: res.error });
+      return;
+    }
+    if (res.title && !name) setName(res.title.slice(0, 160));
+    if (res.image && !imageUrl) setImageUrl(res.image);
+    toast({ title: "Filled from link" });
+  }
   const [servings, setServings] = React.useState(recipe?.servings != null ? String(recipe.servings) : "");
   const [calories, setCalories] = React.useState(recipe?.calories != null ? String(recipe.calories) : "");
   const [protein, setProtein] = React.useState(recipe?.protein_g != null ? String(recipe.protein_g) : "");
@@ -133,8 +149,13 @@ export function RecipeForm({ recipe, ingredients = [], trigger }: Props) {
             <ImageUpload value={imageUrl} onChange={setImageUrl} />
           </Field>
 
-          <Field label="Video link" hint="A YouTube/TikTok/Instagram link to the recipe video">
-            <Input placeholder="https://..." value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
+          <Field label="Video link" hint="A YouTube/TikTok/Instagram link — auto-fills the name and photo">
+            <div className="flex gap-2">
+              <Input placeholder="https://..." value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} onBlur={() => autofill(videoUrl)} />
+              <Button type="button" variant="outline" onClick={() => autofill(videoUrl)} disabled={fetching} className="shrink-0">
+                {fetching ? "…" : "Auto-fill"}
+              </Button>
+            </div>
           </Field>
 
           <Field label="Ingredients">

@@ -21,6 +21,7 @@ import { Field } from "@/components/shared/form-field";
 import { ImageUpload } from "@/components/shared/image-upload";
 import { useToast } from "@/hooks/use-toast";
 import { fetchLinkPreview } from "@/app/actions/link-preview";
+import { sourceFromUrl } from "@/lib/link-source";
 import {
   INSPIRATION_CATEGORIES,
   INSPIRATION_SOURCES,
@@ -38,20 +39,6 @@ type Props = {
   collections: Collection[];
   trigger?: React.ReactNode;
 };
-
-/** Detect the source platform from a URL's hostname, so it doesn't need picking by hand. */
-function sourceFromUrl(link: string): (typeof INSPIRATION_SOURCES)[number] | null {
-  try {
-    const host = new URL(link).hostname.replace(/^www\./, "");
-    if (host.includes("instagram.com")) return "Instagram";
-    if (host.includes("tiktok.com")) return "TikTok";
-    if (host.includes("pinterest.") || host.includes("pin.it")) return "Pinterest";
-    if (host.includes("youtube.com") || host.includes("youtu.be")) return "YouTube";
-    return null;
-  } catch {
-    return null;
-  }
-}
 
 export function InspirationForm({ inspiration, collections, trigger }: Props) {
   const [open, setOpen] = React.useState(false);

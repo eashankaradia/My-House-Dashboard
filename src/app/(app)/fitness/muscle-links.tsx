@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
 import { useToast } from "@/hooks/use-toast";
+import { fetchLinkPreview } from "@/app/actions/link-preview";
 import { MUSCLE_GROUPS } from "@/lib/constants";
 import type { MuscleLink } from "@/lib/database.types";
 import { createMuscleLink, deleteMuscleLink } from "./actions";
@@ -103,7 +104,16 @@ function MuscleLinkForm({ trigger }: { trigger: React.ReactNode }) {
   const [url, setUrl] = React.useState("");
   const [label, setLabel] = React.useState("");
   const [pending, startTransition] = React.useTransition();
+  const [fetching, setFetching] = React.useState(false);
   const { toast } = useToast();
+
+  async function autofill() {
+    if (!url.trim() || label) return;
+    setFetching(true);
+    const res = await fetchLinkPreview(url);
+    setFetching(false);
+    if (res.title) setLabel(res.title.slice(0, 160));
+  }
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -137,17 +147,18 @@ function MuscleLinkForm({ trigger }: { trigger: React.ReactNode }) {
               ))}
             </NativeSelect>
           </Field>
-          <Field label="Link" required>
+          <Field label="Link" required hint="Auto-fills the label for you">
             <Input
               type="url"
               autoFocus
               placeholder="https://instagram.com/..."
               value={url}
               onChange={(e) => setUrl(e.target.value)}
+              onBlur={autofill}
             />
           </Field>
           <Field label="Label (optional)">
-            <Input placeholder="e.g. Chest drop-set technique" value={label} onChange={(e) => setLabel(e.target.value)} />
+            <Input placeholder={fetching ? "Filling in…" : "e.g. Chest drop-set technique"} value={label} onChange={(e) => setLabel(e.target.value)} />
           </Field>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>

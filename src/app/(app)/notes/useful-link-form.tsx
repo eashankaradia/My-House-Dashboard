@@ -19,6 +19,7 @@ import {
 import { Field } from "@/components/shared/form-field";
 import { useToast } from "@/hooks/use-toast";
 import { useEditDialogOpen } from "@/hooks/use-open-from-url";
+import { fetchLinkPreview } from "@/app/actions/link-preview";
 import { usefulLinkSchema, type UsefulLinkInput } from "@/lib/schemas";
 import type { UsefulLink } from "@/lib/database.types";
 import { createUsefulLink, updateUsefulLink } from "./actions";
@@ -26,6 +27,7 @@ import { createUsefulLink, updateUsefulLink } from "./actions";
 export function UsefulLinkForm({ link, trigger }: { link?: UsefulLink; trigger?: React.ReactNode }) {
   const { open, onOpenChange: setOpen } = useEditDialogOpen(link?.id, "link");
   const [pending, startTransition] = React.useTransition();
+  const [fetching, setFetching] = React.useState(false);
   const { toast } = useToast();
   const editing = Boolean(link);
 
@@ -33,6 +35,8 @@ export function UsefulLinkForm({ link, trigger }: { link?: UsefulLink; trigger?:
     register,
     handleSubmit,
     reset,
+    getValues,
+    setValue,
     formState: { errors },
   } = useForm<UsefulLinkInput>({
     resolver: zodResolver(usefulLinkSchema),
@@ -42,6 +46,25 @@ export function UsefulLinkForm({ link, trigger }: { link?: UsefulLink; trigger?:
       description: link?.description ?? "",
     },
   });
+
+  async function autofill() {
+    const url = getValues("url");
+    if (!url) return;
+    setFetching(true);
+    const res = await fetchLinkPreview(url);
+    setFetching(false);
+    if (res.error) {
+      toast({ variant: "destructive", title: "Couldn't auto-fill", description: res.error });
+      return;
+    }
+    if (res.title) setValue("title", res.title.slice(0, 160));
+    toast({ title: "Filled from link" });
+  }
+
+  function onUrlBlur() {
+    const url = getValues("url");
+    if (url && !getValues("title")) autofill();
+  }
 
   function onSubmit(values: UsefulLinkInput) {
     startTransition(async () => {
@@ -71,11 +94,16 @@ export function UsefulLinkForm({ link, trigger }: { link?: UsefulLink; trigger?:
           <DialogDescription>A handy web page the household refers to — a portal, a council page, a how-to.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <Field label="URL" htmlFor="link-url" required error={errors.url?.message} tooltip="Paste the page, then tap Auto-fill to pull the title for you.">
+            <div className="flex gap-2">
+              <Input id="link-url" type="url" placeholder="https://…" {...register("url")} onBlur={onUrlBlur} />
+              <Button type="button" variant="outline" onClick={autofill} disabled={fetching} className="shrink-0">
+                {fetching ? "…" : "Auto-fill"}
+              </Button>
+            </div>
+          </Field>
           <Field label="Title" htmlFor="link-title" required error={errors.title?.message}>
             <Input id="link-title" placeholder="e.g. Council bin calendar" {...register("title")} />
-          </Field>
-          <Field label="URL" htmlFor="link-url" required error={errors.url?.message}>
-            <Input id="link-url" type="url" placeholder="https://…" {...register("url")} />
           </Field>
           <Field label="Note (optional)" htmlFor="link-desc" error={errors.description?.message}>
             <Textarea id="link-desc" rows={2} placeholder="What it's for…" {...register("description")} />

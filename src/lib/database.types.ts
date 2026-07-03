@@ -238,6 +238,8 @@ export type PurchaseOption = Timestamps & {
   width_cm: number | null;
   depth_cm: number | null;
   height_cm: number | null;
+  /** Last time the price was auto-refreshed from `url` (null = never checked). */
+  price_checked_at: string | null;
 };
 
 export type PurchaseCategoryRow = {

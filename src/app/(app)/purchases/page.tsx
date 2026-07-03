@@ -12,6 +12,7 @@ import { PurchaseForm } from "./purchase-form";
 import { PurchasesGrid } from "./purchases-grid";
 import { ReadyToBuy } from "./ready-to-buy";
 import { deletePurchase, restorePurchase } from "./actions";
+import { PriceRefresh } from "./price-refresh";
 import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
 export const metadata = { title: "Future Purchases" };
@@ -57,6 +58,7 @@ export default async function PurchasesPage() {
 
   return (
     <div className="space-y-6">
+      <PriceRefresh />
       <PageHeader title="Future Purchases" description="A wishlist for everything your home needs." info="Add the thing you want (e.g. a Sofa), then add several Options under it — specific products from different shops with their own prices, links and photos — to compare them side by side. Give items and options an out-of-5 star rating, then filter and sort by it. The card view keeps your top-rated item open and the rest collapsed.">
         <PurchaseForm members={members} categories={categories} />
       </PageHeader>

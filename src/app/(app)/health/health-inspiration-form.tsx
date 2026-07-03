@@ -18,6 +18,8 @@ import { Field } from "@/components/shared/form-field";
 import { FormDeleteButton } from "@/components/shared/form-delete-button";
 import { ImageUpload } from "@/components/shared/image-upload";
 import { useToast } from "@/hooks/use-toast";
+import { fetchLinkPreview } from "@/app/actions/link-preview";
+import { sourceFromUrl } from "@/lib/link-source";
 import { HEALTH_INSPIRATION_KINDS, HEALTH_INSPIRATION_KIND_LABELS } from "@/lib/constants";
 import type { HealthInspiration } from "@/lib/database.types";
 import { createHealthInspiration, updateHealthInspiration, deleteHealthInspiration } from "./actions";
@@ -27,6 +29,7 @@ type Props = { item?: HealthInspiration; trigger?: React.ReactNode };
 export function HealthInspirationForm({ item, trigger }: Props) {
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
+  const [fetching, setFetching] = React.useState(false);
   const { toast } = useToast();
   const editing = Boolean(item);
 
@@ -36,6 +39,22 @@ export function HealthInspirationForm({ item, trigger }: Props) {
   const [imageUrl, setImageUrl] = React.useState<string | null>(item?.image_url ?? null);
   const [source, setSource] = React.useState(item?.source ?? "");
   const [content, setContent] = React.useState(item?.content ?? "");
+
+  async function autofill(link: string) {
+    if (!link) return;
+    setFetching(true);
+    const res = await fetchLinkPreview(link);
+    setFetching(false);
+    if (res.error) {
+      toast({ variant: "destructive", title: "Couldn't auto-fill", description: res.error });
+      return;
+    }
+    if (res.title && !title) setTitle(res.title.slice(0, 160));
+    if (res.image && !imageUrl) setImageUrl(res.image);
+    const detected = sourceFromUrl(link);
+    if (detected && !source) setSource(detected);
+    toast({ title: "Filled from link" });
+  }
 
   function handleOpen(v: boolean) {
     setOpen(v);
@@ -107,12 +126,22 @@ export function HealthInspirationForm({ item, trigger }: Props) {
             <Input placeholder="e.g. 10-minute morning mobility routine" value={title} onChange={(e) => setTitle(e.target.value)} required autoFocus />
           </Field>
           {kind === "reel" ? (
-            <Field label="Video link" hint="A YouTube/TikTok/Instagram link">
-              <Input placeholder="https://..." value={url} onChange={(e) => setUrl(e.target.value)} />
+            <Field label="Video link" hint="A YouTube/TikTok/Instagram link — auto-fills the title, photo and source">
+              <div className="flex gap-2">
+                <Input placeholder="https://..." value={url} onChange={(e) => setUrl(e.target.value)} onBlur={() => autofill(url)} />
+                <Button type="button" variant="outline" onClick={() => autofill(url)} disabled={fetching} className="shrink-0">
+                  {fetching ? "…" : "Auto-fill"}
+                </Button>
+              </div>
             </Field>
           ) : (
             <Field label="Link (optional)">
-              <Input placeholder="https://..." value={url} onChange={(e) => setUrl(e.target.value)} />
+              <div className="flex gap-2">
+                <Input placeholder="https://..." value={url} onChange={(e) => setUrl(e.target.value)} onBlur={() => autofill(url)} />
+                <Button type="button" variant="outline" onClick={() => autofill(url)} disabled={fetching} className="shrink-0">
+                  {fetching ? "…" : "Auto-fill"}
+                </Button>
+              </div>
             </Field>
           )}
           <Field label="Cover photo">
