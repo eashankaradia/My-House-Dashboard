@@ -1985,6 +1985,14 @@ create trigger set_budgets_updated_at
 
 ---
 
+### Purchases "Ready to buy" section (done, no DB — applies to both MyHouse & MyLife)
+- New `purchases/ready-to-buy.tsx` (client) renders a prominent card above the grid
+  listing every item with status `Ready To Buy`, each with a direct **Buy** link to
+  the specific option to purchase (chosen option, else top-ranked/cheapest; falls
+  back to the item URL) + a one-tap **Bought** action. Wired into `purchases/page.tsx`.
+  Since MyHouse and MyLife share this codebase (gated by `NEXT_PUBLIC_APP`), it
+  ships to both automatically.
+
 ### Notes & Links (done) — **needs migration 0034**
 - `0034_useful_links.sql` adds `useful_links` (title, url, description) + household
   RLS + updated_at trigger. **RUN THIS LIVE** (SQL given inline).
