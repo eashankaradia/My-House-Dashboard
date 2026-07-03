@@ -5,15 +5,17 @@
 > after **every** change. Last updated: 2026-07-03 (Two more batches landed:
 > (1) Purchases now auto-refreshes each option's price from its saved link
 > whenever the Purchases page loads (throttled to once per 15 min per option),
-> via new migration `0064_purchase_option_price_checked_at`. (2) The
-> "Auto-fill from link" pattern (title/photo/source pulled from a pasted URL)
-> is now on six more forms: Notes & Links useful-link-form, nutrition/health
-> inspiration forms, recipe-form (video link), and fitness muscle-links /
-> exercise links. `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. Migration `0064` needs to be applied
-> to the live Supabase project before/at deploy — **confirm this before
-> reporting done**. See sections below for both batches plus the earlier logo
-> redesign, which is already confirmed deployed.)
+> via migration `0064_purchase_option_price_checked_at` (already applied live).
+> (2) The "Auto-fill from link" pattern (title/photo/source pulled from a
+> pasted URL) is now on six more forms: Notes & Links useful-link-form,
+> nutrition/health inspiration forms, recipe-form (video link), and fitness
+> muscle-links / exercise links. `npm run typecheck`, `npm run lint`, default
+> build, and `NEXT_PUBLIC_APP=life` build all pass. Committed and pushed to
+> `main`; confirmed **READY in Vercel production** on both
+> `my-house-dashboard` and `my-life-dashboard` at commit `85bb048`. Nothing
+> outstanding. See sections below for both batches plus the earlier logo
+> redesign, also already confirmed deployed. Cannot browser-verify locally:
+> this sandbox has no `.env.local` Supabase credentials.)
 
 ## Purchases: auto-refresh option prices + wider auto-fill rollout (2026-07-03)
 User: "I like auto fill on my purchases, whenever I click on the tab I want
