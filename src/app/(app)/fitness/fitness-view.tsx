@@ -6,10 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { SearchInput } from "@/components/shared/search-input";
 import { MUSCLE_GROUPS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import type { Exercise, ExerciseLink, MuscleLink, WorkoutPlan, WorkoutPlanExercise } from "@/lib/database.types";
+import type { Exercise, ExerciseLink, ExercisePersonalBest, MuscleLink, WorkoutPlan, WorkoutPlanExercise } from "@/lib/database.types";
 import { BodyDiagram } from "./body-diagram";
 import { PlanDetailDialog } from "./plan-detail-dialog";
-import { ExerciseForm } from "./exercise-form";
+import { ExerciseDetailDialog } from "./exercise-detail-dialog";
 import { MuscleLinks } from "./muscle-links";
 
 type Props = {
@@ -18,10 +18,12 @@ type Props = {
   exercises: Exercise[];
   muscleLinks: MuscleLink[];
   exerciseLinks: ExerciseLink[];
+  personalBests: ExercisePersonalBest[];
 };
 
-export function FitnessView({ plans, planExercises, exercises, muscleLinks, exerciseLinks }: Props) {
+export function FitnessView({ plans, planExercises, exercises, muscleLinks, exerciseLinks, personalBests }: Props) {
   const [activePlan, setActivePlan] = React.useState<WorkoutPlan | null>(null);
+  const [activeExercise, setActiveExercise] = React.useState<Exercise | null>(null);
   const exerciseById = React.useMemo(() => new Map(exercises.map((e) => [e.id, e])), [exercises]);
   const linksByExercise = React.useMemo(() => {
     const map = new Map<string, ExerciseLink[]>();
@@ -31,6 +33,14 @@ export function FitnessView({ plans, planExercises, exercises, muscleLinks, exer
     }
     return map;
   }, [exerciseLinks]);
+  const pbsByExercise = React.useMemo(() => {
+    const map = new Map<string, ExercisePersonalBest[]>();
+    for (const pb of personalBests) {
+      if (!map.has(pb.exercise_id)) map.set(pb.exercise_id, []);
+      map.get(pb.exercise_id)!.push(pb);
+    }
+    return map;
+  }, [personalBests]);
   const [search, setSearch] = React.useState("");
   const [muscleFilter, setMuscleFilter] = React.useState<string | null>(null);
   const usedMuscles = React.useMemo(
@@ -110,36 +120,33 @@ export function FitnessView({ plans, planExercises, exercises, muscleLinks, exer
           {filteredExercises.map((ex) => {
             const exLinks = linksByExercise.get(ex.id) ?? [];
             return (
-              <ExerciseForm
+              <button
                 key={ex.id}
-                exercise={ex}
-                links={exLinks}
-                trigger={
-                  <button className="flex w-full items-center gap-3 rounded-xl border bg-card px-4 py-3 text-left">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium">{ex.name}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-1">
-                        {ex.muscle_groups.slice(0, 3).map((m) => (
-                          <Badge key={m} variant="secondary" className="text-[10px]">
-                            {m}
-                          </Badge>
-                        ))}
-                        {ex.pb_value != null && (
-                          <span className="inline-flex items-center gap-0.5 text-xs text-amber-500">
-                            <Trophy className="h-3 w-3" /> {ex.pb_value}
-                            {ex.pb_unit}
-                          </span>
-                        )}
-                        {exLinks.length > 0 && (
-                          <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
-                            <LinkIcon className="h-3 w-3" /> {exLinks.length}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                }
-              />
+                onClick={() => setActiveExercise(ex)}
+                className="flex w-full items-center gap-3 rounded-xl border bg-card px-4 py-3 text-left"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">{ex.name}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-1">
+                    {ex.muscle_groups.slice(0, 3).map((m) => (
+                      <Badge key={m} variant="secondary" className="text-[10px]">
+                        {m}
+                      </Badge>
+                    ))}
+                    {ex.pb_value != null && (
+                      <span className="inline-flex items-center gap-0.5 text-xs text-amber-500">
+                        <Trophy className="h-3 w-3" /> {ex.pb_value}
+                        {ex.pb_unit}
+                      </span>
+                    )}
+                    {exLinks.length > 0 && (
+                      <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+                        <LinkIcon className="h-3 w-3" /> {exLinks.length}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
             );
           })}
         </div>
@@ -168,6 +175,14 @@ export function FitnessView({ plans, planExercises, exercises, muscleLinks, exer
         exercises={exercises}
         open={Boolean(activePlan)}
         onOpenChange={(v) => !v && setActivePlan(null)}
+      />
+
+      <ExerciseDetailDialog
+        exercise={activeExercise}
+        links={activeExercise ? linksByExercise.get(activeExercise.id) ?? [] : []}
+        personalBests={activeExercise ? pbsByExercise.get(activeExercise.id) ?? [] : []}
+        open={Boolean(activeExercise)}
+        onOpenChange={(v) => !v && setActiveExercise(null)}
       />
     </div>
   );

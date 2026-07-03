@@ -171,3 +171,32 @@ export async function deleteExerciseLink(id: string) {
   if (error) return { error: error.message };
   revalidatePath("/fitness");
 }
+
+// ─── Personal bests (a running log, not just one overwritable value) ──────────
+
+export async function addPersonalBest(input: { exercise_id: string; value: number; unit: string; achieved_on: string; notes?: string }) {
+  const { supabase, user } = await getActionContext();
+  const { error: logError } = await supabase.from("exercise_personal_bests").insert({
+    user_id: user.id,
+    exercise_id: input.exercise_id,
+    value: input.value,
+    unit: input.unit,
+    achieved_on: input.achieved_on,
+    notes: input.notes ?? null,
+  });
+  if (logError) return { error: logError.message };
+  // The newest logged PB becomes the exercise's headline value shown elsewhere (cards, plan details).
+  const { error: updateError } = await supabase
+    .from("exercises")
+    .update({ pb_value: input.value, pb_unit: input.unit, pb_date: input.achieved_on, updated_at: new Date().toISOString() })
+    .eq("id", input.exercise_id);
+  if (updateError) return { error: updateError.message };
+  revalidatePath("/fitness");
+}
+
+export async function deletePersonalBest(id: string) {
+  const { supabase } = await getActionContext();
+  const { error } = await supabase.from("exercise_personal_bests").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/fitness");
+}

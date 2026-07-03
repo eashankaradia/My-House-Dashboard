@@ -2,14 +2,56 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-03 (pulled in another
-> session's PR #100 — rich notes editor + Key Contacts + Purchases "Ready to
-> buy" — applied its outstanding migration, and reverified. See "Merged
-> another session's notes/contacts batch" below for what this session did.
-> `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. Committed and pushed to `main`.
-> Nothing outstanding. Cannot browser-verify locally: this sandbox has no
-> `.env.local` Supabase credentials.)
+> after **every** change. Last updated: 2026-07-03 (Fitness exercise cards no
+> longer open straight into an edit form — clicking one now opens a read-only
+> detail view with a personal-best *log* you can add to, plus a separate Edit
+> button. Migration `0063_exercise_personal_bests` already applied to the live
+> Supabase project. `npm run typecheck`, `npm run lint`, default build, and
+> `NEXT_PUBLIC_APP=life` build all pass. Not yet committed/pushed/deploy-
+> confirmed — see bottom of "Exercise detail view + personal-best log" below.
+> Cannot browser-verify locally: this sandbox has no `.env.local` Supabase
+> credentials.)
+
+## Exercise detail view + personal-best log (2026-07-03)
+User report: "when you click on a workout it shouldn't open in edit mode. it
+should open to be read and contributed to, let me add personal bests."
+Clicking an exercise card in the Fitness "Exercise library" opened
+`ExerciseForm` directly — a full edit form — with no read-only view at all.
+
+- New `exercise_personal_bests` table (migration `0063`, applied live):
+  `id, user_id, exercise_id → exercises(id) on delete cascade, value, unit,
+  achieved_on, notes, created_at, updated_at`, owner-only RLS. A running log
+  rather than a single overwritable field — "let me add personal bests"
+  (plural) read as wanting progress history, not just editing one number.
+- New `exercise-detail-dialog.tsx` (`ExerciseDetailDialog`): read-only view —
+  muscle badges, technique, inspiration, links (view-only) — plus a
+  "Personal bests" section showing the most recent PB as a headline card,
+  an inline "Add PB" quick-form (value/unit/date, no dialog-in-dialog), and
+  older entries listed below with individual delete. An "Edit" button in the
+  header opens the existing `ExerciseForm` as a separate dialog — editing is
+  now an explicit action, not the default click behavior.
+- `addPersonalBest` server action (`fitness/actions.ts`) inserts the log row
+  *and* updates `exercises.pb_value/pb_unit/pb_date` to match, so the
+  existing "Trophy 100kg" badges elsewhere (exercise cards, plan detail
+  rows) keep working unchanged — they still just read the exercise's
+  headline PB fields. `deletePersonalBest` removes a log entry only; it does
+  not retroactively recompute the headline value.
+- `fitness-view.tsx`: exercise cards now call `setActiveExercise` to open
+  `ExerciseDetailDialog` instead of rendering `ExerciseForm` as the trigger.
+  `fitness/page.tsx` fetches `exercise_personal_bests` and passes it down,
+  grouped by `exercise_id` via a `useMemo` map (same pattern as the existing
+  `exercise_links` grouping).
+- Checked `PlanDetailDialog`'s exercise rows for the same issue — they were
+  already plain (non-clickable) rows with just a remove button, no edit-mode
+  bug there.
+
+**Verification:** `npx tsc --noEmit`, `npm run lint`, `npm run build`, and
+`NEXT_PUBLIC_APP=life npm run build` all pass clean.
+
+**Next step for whoever picks this up:** commit and push this batch to
+`main` (migration is already live in Supabase — do not re-apply), run the
+Vercel `list_deployments` check for both projects at the commit this lands
+on, and report success once both are READY.
 
 ## Merged another session's notes/contacts batch (2026-07-03)
 The user said "add the notes changes from the other session that i've got."
