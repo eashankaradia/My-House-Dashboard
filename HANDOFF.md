@@ -2,19 +2,85 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-02 (Private section is now
-> actually password-gated — server-side, via middleware + cookie, not just a
-> UI convenience — plus a mobile nav scrolling bug fix, an Inspiration nav gap
-> fix, a friction-reducing rewrite of the Inspiration capture form, and a
-> realistic redraw of the fitness body diagram. `npm run typecheck`, `npm run
-> lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass. Committed
-> and pushed to `main`; confirmed **READY in Vercel production** on both
-> `my-house-dashboard` and `my-life-dashboard` at commit `c04f9b1`. Nothing
-> outstanding from this batch. Could not
-> browser-verify locally: this sandbox has no `.env.local` Supabase
-> credentials, so `next dev` 500s on every route, including pre-existing
-> ones — confirmed this is an environment limitation, not a regression,
-> before proceeding on typecheck/lint/build confidence alone).
+> after **every** change. Last updated: 2026-07-03 (Rich notes editor shipped —
+> markdown toolbar + live preview + formatted detail view on the `/notes` page.
+> `npm run typecheck`, `npm run lint`, default build, and `NEXT_PUBLIC_APP=life`
+> build all pass. Committed and pushed to `claude/home-dashboard-build-yv7ewz`.
+> Nothing outstanding. No migration needed — notes are still stored in the
+> existing `documents` table with `category = "Note"`, only the UI changed.
+> Cannot browser-verify locally: this sandbox has no `.env.local` Supabase
+> credentials.)
+
+## Rich notes: markdown editor + formatted reading view (2026-07-03)
+User request: "on myhouse give me a notes section where i can capture long
+notes, let me format them well."
+
+The `/notes` page already existed (from a prior batch) and stored notes as
+rows in the `documents` table with `category = "Note"`. This batch upgrades
+the editor and viewer:
+
+### What changed
+
+**`src/lib/schemas.ts`** — new `noteSchema`: `name` (max 120) + `notes` body
+(max 100,000 chars). Separate from `documentSchema` (which keeps its
+`optionalString` max-2000 limit for the `notes` annotation field on real
+documents).
+
+**`src/app/(app)/documents/actions.ts`** — two new server actions:
+- `createNote(name, body)` — validates with `noteSchema`, inserts a
+  `category = "Note"` document row, revalidates `/notes` and `/dashboard`.
+- `updateNote(id, name, body)` — validates with `noteSchema`, updates the
+  `name` and `notes` columns for that row.
+Both take plain string args (not FormData) since the form uses controlled state.
+
+**`src/components/shared/markdown-prose.tsx`** (new) — `MarkdownProse`
+component: wraps `react-markdown` + `remark-gfm` with styled component
+overrides for h1/h2/h3, p, ul/ol/li, blockquote, strong/em, hr, a, pre/code
+(language-xxx class detects fenced code blocks vs inline code), and tables.
+Used by both the editor preview tab and the detail dialog.
+
+**`src/app/(app)/documents/note-form.tsx`** (rewritten) — `NoteForm` now:
+- Accepts an optional `note?: Document` prop for edit mode (previously
+  create-only).
+- Uses controlled state (`name`, `body`) populated from `note` on open.
+- Has a formatting toolbar: Bold, Italic, H2, H3, Bullet list, Numbered list,
+  Blockquote, Inline code, Link — each uses `wrapSelection`/`prefixLine`
+  helpers that insert markdown at cursor position without blurring the textarea
+  (uses `onMouseDown` + `e.preventDefault()` on toolbar buttons).
+- Has a Write/Preview tab toggle: Write shows the raw textarea; Preview shows
+  the body rendered with `MarkdownProse`.
+- Dialog is wider: `sm:max-w-2xl`. The editor textarea has `min-h-[220px]`
+  (mobile) / `min-h-[280px]` (desktop).
+- Calls `createNote` or `updateNote` on submit, not `createDocument`.
+
+**`src/app/(app)/notes/note-detail-dialog.tsx`** (new) — `NoteDetailDialog`:
+a `sm:max-w-2xl` dialog that:
+- Renders the full note body with `MarkdownProse`.
+- Shows the note title and last-updated date.
+- Has an Edit button (pencil icon) that opens `NoteForm` with the note
+  pre-filled; `onSaved` closes the detail dialog automatically.
+- Has a Delete button via `ConfirmDelete`.
+
+**`src/app/(app)/notes/notes-links-view.tsx`** (updated) — Notes section now:
+- Each note card is a button that opens `NoteDetailDialog`.
+- Cards show a plain-text preview (markdown stripped via `stripMarkdown()`,
+  max 3 lines).
+- Quick-delete via a hover-visible `ConfirmDelete` (absolute top-right, hidden
+  until hover — avoids cluttering the card).
+- Edit is accessed via the detail dialog's pencil button (not on the card
+  directly — reduces mobile clutter).
+
+**Dependencies added:** `react-markdown@^10.1.0`, `remark-gfm@^4.0.1`
+
+### No migration needed
+Notes are stored in the existing `documents` table. The only schema change
+is the validation limit on the `notes` column going from 2000 chars (in
+`documentSchema`) to 100,000 chars (in the new `noteSchema`). Existing note
+rows are unaffected.
+
+**Verification:** `npx tsc --noEmit`, `npm run lint`, `npm run build`, and
+`NEXT_PUBLIC_APP=life npm run build` all pass clean. Committed and pushed to
+`claude/home-dashboard-build-yv7ewz` at `5e2f464`. Nothing outstanding.
 
 ## Private hardening, mobile nav fix, Inspiration friction, realistic body diagram (2026-07-02)
 Follow-up batch after the Private section shipped. The user reported the
