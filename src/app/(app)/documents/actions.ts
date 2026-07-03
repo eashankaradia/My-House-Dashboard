@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { documentSchema } from "@/lib/schemas";
+import { documentSchema, noteSchema } from "@/lib/schemas";
 import { getActionContext, type ActionResult } from "@/lib/action-utils";
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10MB
@@ -67,6 +67,40 @@ export async function deleteDocument(id: string): Promise<ActionResult> {
   const { error } = await supabase.from("documents").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/documents");
+  revalidatePath("/notes");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+export async function createNote(name: string, body: string): Promise<ActionResult> {
+  const parsed = noteSchema.safeParse({ name, notes: body });
+  if (!parsed.success) return { error: parsed.error.errors[0]?.message ?? "Invalid input" };
+  const { supabase, user } = await getActionContext();
+  const { error } = await supabase.from("documents").insert({
+    user_id: user.id,
+    name: parsed.data.name,
+    category: "Note",
+    notes: parsed.data.notes,
+    file_path: null,
+    file_size: null,
+    mime_type: null,
+    expiry_date: null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/notes");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+export async function updateNote(id: string, name: string, body: string): Promise<ActionResult> {
+  const parsed = noteSchema.safeParse({ name, notes: body });
+  if (!parsed.success) return { error: parsed.error.errors[0]?.message ?? "Invalid input" };
+  const { supabase } = await getActionContext();
+  const { error } = await supabase
+    .from("documents")
+    .update({ name: parsed.data.name, notes: parsed.data.notes })
+    .eq("id", id);
+  if (error) return { error: error.message };
   revalidatePath("/notes");
   revalidatePath("/dashboard");
   return {};

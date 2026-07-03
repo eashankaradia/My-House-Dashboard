@@ -195,3 +195,40 @@ export const documentSchema = z.object({
   notes: optionalString,
 });
 export type DocumentInput = z.infer<typeof documentSchema>;
+
+export const noteSchema = z.object({
+  name: z.string().trim().min(1, "Title is required").max(120),
+  notes: z.string().trim().min(1, "Write something in the note").max(100_000),
+});
+export type NoteInput = z.infer<typeof noteSchema>;
+
+const optionalPhone = z
+  .string()
+  .trim()
+  .max(40)
+  .optional()
+  .or(z.literal(""))
+  .transform((v) => v || undefined);
+
+export const contactSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(120),
+  role: optionalString,
+  phone: optionalPhone,
+  email: z
+    .string()
+    .trim()
+    .email("Enter a valid email")
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => v || undefined),
+  address: optionalString,
+  url: z
+    .string()
+    .trim()
+    .url("Enter a valid URL (include https://)")
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => v || undefined),
+  notes: optionalString,
+});
+export type ContactInput = z.infer<typeof contactSchema>;
