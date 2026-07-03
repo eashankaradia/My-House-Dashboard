@@ -195,3 +195,9 @@ export const documentSchema = z.object({
   notes: optionalString,
 });
 export type DocumentInput = z.infer<typeof documentSchema>;
+
+export const noteSchema = z.object({
+  name: z.string().trim().min(1, "Title is required").max(120),
+  notes: z.string().trim().min(1, "Write something in the note").max(100_000),
+});
+export type NoteInput = z.infer<typeof noteSchema>;
