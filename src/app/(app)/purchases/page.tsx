@@ -10,6 +10,7 @@ import { ArchivedSection } from "@/components/shared/archived-section";
 import type { Purchase, PurchaseCategoryRow, PurchaseOption, PurchaseWithOptions } from "@/lib/database.types";
 import { PurchaseForm } from "./purchase-form";
 import { PurchasesGrid } from "./purchases-grid";
+import { ReadyToBuy } from "./ready-to-buy";
 import { deletePurchase, restorePurchase } from "./actions";
 import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
@@ -72,6 +73,7 @@ export default async function PurchasesPage() {
                 <StatCard label="Wishlist items" value={String(wishlist.length)} icon={ShoppingBag} />
                 <StatCard label="Ready to buy" value={formatCurrency(readyToBuyValue)} hint={`${readyToBuy.length} item${readyToBuy.length === 1 ? "" : "s"}`} icon={Wallet} />
               </div>
+              <ReadyToBuy items={readyToBuy} />
               <PurchasesGrid purchases={purchases} memberMap={memberMap} currentUserId={user?.id} categories={categories} />
             </>
           ) : null}

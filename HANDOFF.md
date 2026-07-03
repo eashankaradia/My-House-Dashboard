@@ -2,7 +2,17 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-06-29 (Claude — Notes & Links section; documents split out).
+> after **every** change. Last updated: 2026-06-29 (Claude — Purchases "Ready to buy" section).
+
+### Purchases "Ready to buy" section (done, no DB)
+- New `purchases/ready-to-buy.tsx` (client) renders a prominent card above the grid
+  listing every item with status `Ready To Buy`, each with a direct **Buy** link to
+  the specific option to purchase (the chosen option, else the top-ranked/cheapest;
+  falls back to the item URL) + a one-tap **Bought** action (`updatePurchaseStatus →
+  Purchased`). Wired into `purchases/page.tsx` (uses existing `readyToBuy` list).
+- NOTE: user also wants this on their separate **"Life" app** (a different repo not
+  in this session). Not done here — needs that repo added to mirror the component.
+- Verified: typecheck, lint, build clean.
 
 ### Notes & Links (done) — **needs migration 0034**
 - `0034_useful_links.sql` adds `useful_links` (title, url, description) + household
