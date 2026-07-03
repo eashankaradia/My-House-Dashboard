@@ -24,6 +24,7 @@ import {
   ListChecks,
   SunMoon,
   ClipboardCheck,
+  BookUser,
   type LucideIcon,
 } from "lucide-react";
 
@@ -60,6 +61,8 @@ const HOUSE_NAV_ITEMS: NavItem[] = [
   // More
   { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Ideas & collections", group: "More" },
   { title: "Documents", short: "Docs", href: "/documents", icon: FolderArchive, description: "Warranties, insurance & more", group: "More" },
+  { title: "Notes & Links", short: "Notes", href: "/notes", icon: NotebookPen, description: "Formatted notes and useful links", group: "More" },
+  { title: "Key Contacts", short: "Contacts", href: "/contacts", icon: BookUser, description: "Tradespeople, neighbours & more", group: "More" },
   { title: "Photos", href: "/photos", icon: Camera, description: "Quick snaps to label later", group: "More" },
   { title: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later", group: "More" },
   { title: "Change log", short: "Log", href: "/activity", icon: History, description: "Who changed what, and when", group: "More" },
@@ -90,6 +93,7 @@ const LIFE_NAV_ITEMS: NavItem[] = [
   // More
   { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Save reels, links & ideas", group: "More" },
   { title: "Notes & Links", short: "Notes", href: "/notes", icon: NotebookPen, description: "Quick notes and useful links", group: "More" },
+  { title: "Key Contacts", short: "Contacts", href: "/contacts", icon: BookUser, description: "Important people & services", group: "More" },
   { title: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later", group: "More" },
 ];
 
@@ -215,6 +219,22 @@ export const DOCUMENT_CATEGORIES = [
   "Mortgage", "Insurance", "Warranties", "Manuals", "Quotes", "Certificates", "Receipts",
   "Tax", "Utilities", "Contracts", "Legal", "Vehicle", "Medical", "Identity", "Banking",
   "Appliances", "Garden", "Pets", "Travel", "Note", "Other",
+] as const;
+
+// ---------------------------------------------------------------------------
+// Contacts
+// ---------------------------------------------------------------------------
+
+/** Suggested roles for contacts — free-text in the form but offered as a datalist. */
+export const CONTACT_ROLES = [
+  "Plumber", "Electrician", "Boiler engineer", "Gas engineer",
+  "Carpenter", "Painter & decorator", "Handyman",
+  "Letting agent", "Estate agent", "Landlord", "Solicitor",
+  "Accountant", "Insurance broker",
+  "GP / Doctor", "Dentist", "Specialist",
+  "Neighbour", "Emergency contact",
+  "Council / Local authority", "Utility supplier",
+  "Other",
 ] as const;
 
 // ---------------------------------------------------------------------------

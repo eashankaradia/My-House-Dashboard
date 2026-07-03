@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   BarChart3,
+  BookUser,
   Camera,
   CheckSquare,
   CreditCard,
@@ -34,6 +35,7 @@ import { MaintenanceForm } from "@/app/(app)/maintenance/maintenance-form";
 import { DocumentForm } from "@/app/(app)/documents/document-form";
 import { NoteForm } from "@/app/(app)/documents/note-form";
 import { UsefulLinkForm } from "@/app/(app)/notes/useful-link-form";
+import { ContactForm } from "@/app/(app)/contacts/contact-form";
 import { EssentialForm } from "@/app/(app)/essentials/essential-form";
 import { RoutineItemForm } from "@/app/(app)/routine/routine-item-form";
 import { RecipeForm } from "@/app/(app)/nutrition/recipe-form";
@@ -71,12 +73,9 @@ export function AddPills({ className }: { className?: string }) {
         <QuickPhotoDialog trigger={<Pill icon={Camera} label="Photo" />} />
         <DraftDialog trigger={<Pill icon={FileText} label="Draft" />} />
         <InspirationForm collections={[]} trigger={<Pill icon={Lightbulb} label="Idea" />} />
-        {isLife ? (
-          <>
-            <NoteForm trigger={<Pill icon={StickyNote} label="Note" />} />
-            <UsefulLinkForm trigger={<Pill icon={Link2} label="Link" />} />
-          </>
-        ) : null}
+        <NoteForm trigger={<Pill icon={StickyNote} label="Note" />} />
+        <UsefulLinkForm trigger={<Pill icon={Link2} label="Link" />} />
+        <ContactForm trigger={<Pill icon={BookUser} label="Contact" />} />
       </AddGroup>
       <AddGroup label="Money">
         <BillForm trigger={<Pill icon={Receipt} label="Expense" />} />

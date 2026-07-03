@@ -276,6 +276,18 @@ export type Document = Timestamps & {
   notes: string | null;
 };
 
+export type Contact = Timestamps & {
+  id: string;
+  user_id: string;
+  name: string;
+  role: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  url: string | null;
+  notes: string | null;
+};
+
 // --- Enumerations (kept in sync with the CHECK constraints in schema.sql) ----
 
 export type Frequency = "weekly" | "monthly" | "quarterly" | "annually" | "one-off";
@@ -1105,6 +1117,7 @@ export type Database = {
       reviews: Row<Review>;
       private_notes: Row<PrivateNote>;
       private_photos: Row<PrivatePhoto>;
+      contacts: Row<Contact>;
     };
     Views: { [_ in never]: never };
     Functions: {
