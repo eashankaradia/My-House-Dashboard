@@ -7,9 +7,10 @@
 > detail view with a personal-best *log* you can add to, plus a separate Edit
 > button. Migration `0063_exercise_personal_bests` already applied to the live
 > Supabase project. `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. Not yet committed/pushed/deploy-
-> confirmed — see bottom of "Exercise detail view + personal-best log" below.
-> Cannot browser-verify locally: this sandbox has no `.env.local` Supabase
+> `NEXT_PUBLIC_APP=life` build all pass. Committed and pushed to `main`;
+> confirmed **READY in Vercel production** on both `my-house-dashboard` and
+> `my-life-dashboard` at commit `6eab807`. Nothing outstanding. Cannot
+> browser-verify locally: this sandbox has no `.env.local` Supabase
 > credentials.)
 
 ## Exercise detail view + personal-best log (2026-07-03)
@@ -48,10 +49,10 @@ Clicking an exercise card in the Fitness "Exercise library" opened
 **Verification:** `npx tsc --noEmit`, `npm run lint`, `npm run build`, and
 `NEXT_PUBLIC_APP=life npm run build` all pass clean.
 
-**Next step for whoever picks this up:** commit and push this batch to
-`main` (migration is already live in Supabase — do not re-apply), run the
-Vercel `list_deployments` check for both projects at the commit this lands
-on, and report success once both are READY.
+**Deploy confirmed:** both `my-house-dashboard`
+(`prj_BOUIdAM8EEfh6JI9nrql8K7e67Qb`) and `my-life-dashboard`
+(`prj_TB7Dt9AVg88kp0AX5TXrhXqhsnhx`) are READY in Vercel production at
+commit `6eab807`. Nothing outstanding from this batch.
 
 ## Merged another session's notes/contacts batch (2026-07-03)
 The user said "add the notes changes from the other session that i've got."
