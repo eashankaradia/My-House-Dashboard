@@ -2,14 +2,72 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-03 (Rich notes editor shipped —
-> markdown toolbar + live preview + formatted detail view on the `/notes` page.
-> `npm run typecheck`, `npm run lint`, default build, and `NEXT_PUBLIC_APP=life`
-> build all pass. Committed and pushed to `claude/home-dashboard-build-yv7ewz`.
-> Nothing outstanding. No migration needed — notes are still stored in the
-> existing `documents` table with `category = "Note"`, only the UI changed.
-> Cannot browser-verify locally: this sandbox has no `.env.local` Supabase
-> credentials.)
+> after **every** change. Last updated: 2026-07-03 (Two features shipped:
+> (1) Rich notes editor — markdown toolbar + live preview + formatted detail view
+> on the `/notes` page; (2) Key Contacts — new `/contacts` page on both apps
+> for household directory of tradespeople, neighbours, etc. Migration 0062 must
+> be applied. `npm run typecheck`, `npm run lint`, default build, and
+> `NEXT_PUBLIC_APP=life` build all pass. Committed and pushed to
+> `claude/home-dashboard-build-yv7ewz`. Cannot browser-verify locally: this
+> sandbox has no `.env.local` Supabase credentials.)
+
+## Key Contacts: household directory (2026-07-03)
+User request: "add a key contacts section."
+
+New `/contacts` page added to both MyHouse ("More" group) and MyLife ("More"
+group). Contact cards show a colored-initials avatar, a role badge, one-tap
+phone/email/website action buttons, and an expandable section for address +
+notes. The edit/delete controls appear on hover.
+
+### Migration needed
+**`supabase/migrations/0062_contacts.sql`** must be applied before `/contacts`
+works in production. Table `contacts`: `id, user_id, name, role, phone, email,
+address, url, notes, created_at, updated_at`. RLS: `same_household` read,
+owner-only write. The `set_updated_at` trigger is applied.
+
+### What changed
+
+**`src/lib/database.types.ts`** — new `Contact` type; registered as
+`contacts: Row<Contact>` in the Database registry.
+
+**`src/lib/schemas.ts`** — new `contactSchema`: name required, role/phone/email
+(validated)/address/url (validated)/notes all optional. Phone uses a 40-char
+optional field without strict format enforcement. Email uses `.email()` Zod
+validator; URL uses `.url()`.
+
+**`src/lib/constants.ts`** — added `BookUser` lucide import; added
+`CONTACT_ROLES` constant (21 suggested role strings — Plumber, Electrician,
+GP, Letting agent, Neighbour, etc.); added `/contacts` to both
+`HOUSE_NAV_ITEMS` and `LIFE_NAV_ITEMS` under group "More"; also re-added
+`/notes` to `HOUSE_NAV_ITEMS` (it was lost in a merge conflict resolution but
+the page exists and the user explicitly asked for notes on MyHouse).
+
+**`src/app/(app)/contacts/actions.ts`** — `createContact`, `updateContact`,
+`deleteContact` server actions; all revalidate `/contacts`.
+
+**`src/app/(app)/contacts/contact-form.tsx`** — `ContactForm` dialog (create
+and edit via optional `contact` prop). Uses a `<datalist>` of CONTACT_ROLES for
+the role field (free-text with suggestions).
+
+**`src/app/(app)/contacts/contact-card.tsx`** — `ContactCard`: colored initial
+avatar (color derived from first char of name), role badge, tel:/mailto:/website
+action pills, expandable address/notes via "More ▼" toggle, hover-reveal
+pencil edit + confirm-delete.
+
+**`src/app/(app)/contacts/contacts-view.tsx`** — `ContactsView` client
+component: search by name or role (shown once there are more than 5 contacts).
+
+**`src/app/(app)/contacts/page.tsx`** — server page that fetches all contacts,
+renders `EmptyState` or `ContactsView` + `ContactForm` add button.
+
+**`src/components/layout/add-menu.tsx`** — Note, Link, and Contact quick-add
+pills moved out of the `isLife` gate; now shown in both House and Life FAB
+(the `/notes` and `/contacts` pages exist and are navable on both apps).
+
+**Verification:** `npx tsc --noEmit`, `npm run lint`, `npm run build`, and
+`NEXT_PUBLIC_APP=life npm run build` all pass clean. Committed and pushed at
+`a2ecf45`. Migration not yet applied to live DB — user must run 0062 in the
+Supabase console before `/contacts` is usable.
 
 ## Rich notes: markdown editor + formatted reading view (2026-07-03)
 User request: "on myhouse give me a notes section where i can capture long
