@@ -1,11 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="512" height="512">
   <rect width="24" height="24" rx="5.25" fill="#24a371"/>
   <path
-    d="m3.5 9.4 8.5-6.6 8.5 6.6v9.7a1.9 1.9 0 0 1-1.9 1.9h-3.8a1.9 1.9 0 0 1-1.9-1.9v-3.6h-1.8v3.6A1.9 1.9 0 0 1 9.2 21H5.4a1.9 1.9 0 0 1-1.9-1.9Z"
+    d="M6 18V9l6 5 6-5v9"
     fill="none"
     stroke="#ffffff"
-    stroke-width="1.85"
+    stroke-width="1.7"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
+  <g transform="translate(8.5,2.5) scale(0.29)" fill="#ffffff">
+    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+  </g>
 </svg>

@@ -2,16 +2,43 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-03 (Fitness exercise cards no
-> longer open straight into an edit form — clicking one now opens a read-only
-> detail view with a personal-best *log* you can add to, plus a separate Edit
-> button. Migration `0063_exercise_personal_bests` already applied to the live
-> Supabase project. `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. Committed and pushed to `main`;
-> confirmed **READY in Vercel production** on both `my-house-dashboard` and
-> `my-life-dashboard` at commit `6eab807`. Nothing outstanding. Cannot
-> browser-verify locally: this sandbox has no `.env.local` Supabase
-> credentials.)
+> after **every** change. Last updated: 2026-07-03 (App logo/icon redesigned —
+> the house pictogram is replaced with a sparkle glyph, still an "M" as before.
+> No DB migration. `npm run typecheck`, `npm run lint`, default build, and
+> `NEXT_PUBLIC_APP=life` build all pass. About to commit/push/deploy-confirm,
+> then continue with two more in-flight requests: auto-refreshing Purchases
+> option prices on tab visit, and rolling the "Auto-fill from link" pattern out
+> to more forms across the app. See "Logo redesign" section below for details;
+> further sections will be added as those land.)
+
+## Logo redesign: sparkle instead of house (2026-07-03)
+User report: "change the logo so it's a similar design but not a house but
+something related to the app." The shared logo (used by both the MyHouse and
+MyLife branded deployments) was a house pictogram with an integrated "M"
+glyph — thematically mismatched for the MyLife side, and not actually tied to
+the app itself.
+
+**What changed:** kept the bold "M" glyph (the brand initial) and the same
+color palette (cream `#FAF9F7` card / sage `#7C9A7F` line art for
+`logo.png`/`icon.png`; solid green `#24a371` / white for the `icon.svg`
+favicon), but replaced the house roofline+chimney with Lucide's `Sparkle`
+icon glyph. Rationale: lucide-react is the icon library used everywhere in
+this app's UI, so a sparkle is literally "related to the app," not just
+thematically plausible — and it preserves the original composition's
+"peak-shape above the M" silhouette.
+- `public/icons/logo.png` / `public/icons/icon.png` — regenerated (still
+  byte-identical, 1254×1254, RGB/no-alpha, matching the original convention).
+- `public/icons/icon.svg` — regenerated (24×24 viewBox, matching the
+  original convention: solid green background, white stroke line-art).
+- No consumer code changes needed — `manifest.ts`, `layout.tsx` (both app and
+  root), and `login/page.tsx` already reference these same three file paths.
+- Verification: hand-authored SVG, rendered via headless Chromium
+  (`playwright-core@1.49.0` at `/opt/pw-browsers/chromium-1194/...`) to a
+  scratch PNG, visually inspected at 256px and 64px (sidebar-ish size) before
+  finalizing — confirmed the sparkle reads clearly and isn't visually busy
+  alongside the M at small sizes.
+- **Verification:** `npm run typecheck`, `npm run lint`, default build, and
+  `NEXT_PUBLIC_APP=life` build all pass (pure static-asset change).
 
 ## Exercise detail view + personal-best log (2026-07-03)
 User report: "when you click on a workout it shouldn't open in edit mode. it
