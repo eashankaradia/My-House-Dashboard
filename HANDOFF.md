@@ -7,13 +7,14 @@
 > `StatusSelect` already used in list rows, extracted to its own file), so
 > clicking a purchase and changing its status no longer requires opening the
 > full edit form. No migration. `npm run typecheck`, `npm run lint`, default
-> build, and `NEXT_PUBLIC_APP=life` build all pass. About to
-> commit/push/deploy-confirm. See "Purchases: quick status change" section
-> below for details; earlier sections (mask finance numbers, link/title
-> truncation fix, Purchases auto-refresh, auto-fill rollout, logo redesign)
-> are all already confirmed
-> deployed. Cannot browser-verify locally: this sandbox has no
-> `.env.local` Supabase credentials.)
+> build, and `NEXT_PUBLIC_APP=life` build all pass. Committed and pushed to
+> `main`; confirmed **READY in Vercel production** on both
+> `my-house-dashboard` and `my-life-dashboard` at commit `56cf71a`. Nothing
+> outstanding. See "Purchases: quick status change" section below for
+> details; earlier sections (mask finance numbers, link/title truncation
+> fix, Purchases auto-refresh, auto-fill rollout, logo redesign) are all
+> already confirmed deployed. Cannot browser-verify locally: this sandbox
+> has no `.env.local` Supabase credentials.)
 
 ## Purchases: quick status change from the detail dialog (2026-07-03)
 User: "when I click on a future purchases let me easily change it's status."
