@@ -11,11 +11,12 @@
 > — see "Strip redundant Edit/Add/Open button text" section below for the
 > full list of what changed and what was deliberately left alone. No
 > migration. `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. About to commit/push, then confirm
-> Vercel deploy for both this batch and the prior Room Designer batch (already
-> committed/pushed as `6d093b3` but not yet deploy-confirmed) together. See
-> "Strip redundant Edit/Add/Open button text" and "Room Designer compact
-> toggle" sections below for what each batch changed. Earlier sections
+> `NEXT_PUBLIC_APP=life` build all pass. Committed and pushed to `main`;
+> confirmed **READY in Vercel production** on both `my-house-dashboard` and
+> `my-life-dashboard` at commit `925b6d1` (and the prior Room Designer batch,
+> `6d093b3`, is confirmed READY too). Nothing outstanding. See "Strip
+> redundant Edit/Add/Open button text" and "Room Designer compact toggle"
+> sections below for what each batch changed. Earlier sections
 > (Purchases quick status change, mask finance numbers, link/title truncation
 > fix, Purchases auto-refresh, auto-fill rollout, logo redesign) are all
 > already confirmed deployed. Cannot browser-verify locally: this sandbox has
