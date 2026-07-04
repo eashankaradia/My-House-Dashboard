@@ -9,11 +9,13 @@
 > instead of truncating with an ellipsis. Audited every other truncated
 > title/link display in the app; all others already had the right
 > `min-w-0`/`shrink-0` combination. `npm run typecheck`, `npm run lint`,
-> default build, and `NEXT_PUBLIC_APP=life` build all pass. About to
-> commit/push/deploy-confirm. See "Truncate link titles" section below for
-> details; earlier sections (Purchases auto-refresh, auto-fill rollout, logo
-> redesign) are already confirmed deployed. Cannot browser-verify locally:
-> this sandbox has no `.env.local` Supabase credentials.)
+> default build, and `NEXT_PUBLIC_APP=life` build all pass. Committed and
+> pushed to `main`; confirmed **READY in Vercel production** on both
+> `my-house-dashboard` and `my-life-dashboard` at commit `ace2220`. Nothing
+> outstanding. See "Truncate link titles" section below for details; earlier
+> sections (Purchases auto-refresh, auto-fill rollout, logo redesign) are
+> also already confirmed deployed. Cannot browser-verify locally: this
+> sandbox has no `.env.local` Supabase credentials.)
 
 ## Truncate link titles: fix a real overflow bug (2026-07-03)
 User: "truncate link names and titles so they don't make the screen have to
