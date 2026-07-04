@@ -2,19 +2,48 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-03 (Future Purchases: the
-> detail dialog's static "Status" text is now a live dropdown (the same
-> `StatusSelect` already used in list rows, extracted to its own file), so
-> clicking a purchase and changing its status no longer requires opening the
-> full edit form. No migration. `npm run typecheck`, `npm run lint`, default
-> build, and `NEXT_PUBLIC_APP=life` build all pass. Committed and pushed to
-> `main`; confirmed **READY in Vercel production** on both
-> `my-house-dashboard` and `my-life-dashboard` at commit `56cf71a`. Nothing
-> outstanding. See "Purchases: quick status change" section below for
-> details; earlier sections (mask finance numbers, link/title truncation
-> fix, Purchases auto-refresh, auto-fill rollout, logo redesign) are all
+> after **every** change. Last updated: 2026-07-03 (Room Designer: added a
+> Detailed/Compact toggle to the room grid, same pattern as Documents/Tasks/
+> Projects. Compact view shows just room name, design count, and an arrow to
+> open the workspace; Detailed keeps the existing rich cards unchanged. No
+> migration. `npm run typecheck`, `npm run lint`, default build, and
+> `NEXT_PUBLIC_APP=life` build all pass. About to commit/push/deploy-confirm.
+> Separately, an app-wide sweep is IN PROGRESS (not yet committed) to strip
+> redundant "Edit"/"Add X"/"Open" text from small in-context trigger buttons
+> (list rows, detail dialogs, inline add-within-section buttons) — page-header
+> primary CTAs and empty-state buttons are explicitly OUT of scope and must
+> keep their text. A background research agent is auditing every instance
+> before edits are made; that batch is not started yet. See "Room Designer
+> compact toggle" section below for what's done; earlier sections (Purchases
+> quick status change, mask finance numbers, link/title truncation fix,
+> Purchases auto-refresh, auto-fill rollout, logo redesign) are all
 > already confirmed deployed. Cannot browser-verify locally: this sandbox
 > has no `.env.local` Supabase credentials.)
+
+## Room Designer: compact toggle with name/count/arrow (2026-07-03)
+User: "make room designer tab compact toggle, show name, count for designs
+and an arrow to go."
+
+The Room Designer grid only had one dense card layout (dimensions, design/
+item/idea badges, in-progress status) — no lighter view for someone who
+just wants to jump into a room's workspace. Added the same Detailed/Compact
+toggle pattern already used on Documents/Tasks/Projects/etc.
+- `src/app/(app)/rooms/rooms-grid.tsx` (new) — client component,
+  `React.useState` toggle (matches `documents-list.tsx`'s convention, not
+  the cookie-persisted `useViewPref`, since this is the first time this
+  page has had a view toggle and per-device persistence wasn't asked for).
+  Compact view: one row per room — name, design count, `ArrowRight` icon,
+  links straight to `/rooms/[id]`. Detailed view: the original rich card,
+  moved here unchanged (dimensions, in-progress/final badges, design/item/
+  idea count badges, "Open workspace" footer).
+- `src/app/(app)/rooms/page.tsx` — kept all existing data-fetching/scoring
+  logic (unchanged), now maps it into a `RoomSummary[]` passed to
+  `RoomsGrid` instead of rendering the grid inline.
+- **Verification:** `npm run typecheck`, `npm run lint`, default build, and
+  `NEXT_PUBLIC_APP=life` build all pass. Not yet browser-verified (no
+  `.env.local` Supabase credentials in this sandbox) — should be
+  smoke-tested once deployed: toggle Compact on /rooms, confirm each row
+  shows name + design count + arrow and navigates to the right room.
 
 ## Purchases: quick status change from the detail dialog (2026-07-03)
 User: "when I click on a future purchases let me easily change it's status."

@@ -1,11 +1,9 @@
-import Link from "next/link";
-import { ArrowRight, Ruler, Sofa } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import type { Inspiration, Purchase, RoomDesignVersion } from "@/lib/database.types";
 import { getRoomEntities } from "./actions";
+import { RoomsGrid, type RoomSummary } from "./rooms-grid";
 
 export const metadata = { title: "Room Designer" };
 
@@ -41,6 +39,27 @@ export default async function RoomsPage() {
     return delta || a.name.localeCompare(b.name);
   });
 
+  const roomSummaries: RoomSummary[] = sortedRooms.map((room) => {
+    const vs = versions.filter((v) => v.room_id === room.id);
+    const finalCount = vs.filter((v) => v.is_final).length;
+    const activeDesigns = vs.filter((v) => !v.is_final && v.status !== "archived").length;
+    const roomPurchases = purchases.filter((p) => p.room === room.name);
+    const bought = roomPurchases.filter((p) => p.status === "Purchased").length;
+    const activeItems = roomPurchases.length - bought;
+    const insp = inspo.filter((i) => i.room === room.name).length;
+    return {
+      id: room.id,
+      name: room.name,
+      sized: dims(room.width_cm, room.length_cm),
+      designCount: vs.length,
+      finalCount,
+      itemCount: roomPurchases.length,
+      bought,
+      ideaCount: insp,
+      inProgress: activeDesigns > 0 || activeItems > 0,
+    };
+  });
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -56,58 +75,7 @@ export default async function RoomsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sortedRooms.map((room) => {
-            const vs = versions.filter((v) => v.room_id === room.id);
-            const finalCount = vs.filter((v) => v.is_final).length;
-            const activeDesigns = vs.filter((v) => !v.is_final && v.status !== "archived").length;
-            const roomPurchases = purchases.filter((p) => p.room === room.name);
-            const bought = roomPurchases.filter((p) => p.status === "Purchased").length;
-            const activeItems = roomPurchases.length - bought;
-            const insp = inspo.filter((i) => i.room === room.name).length;
-            const sized = dims(room.width_cm, room.length_cm);
-            const inProgress = activeDesigns > 0 || activeItems > 0;
-
-            return (
-              <Link key={room.id} href={`/rooms/${room.id}`}>
-                <Card className="h-full transition-shadow hover:shadow-md">
-                  <CardContent className="space-y-3 p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="flex items-center gap-2 font-medium">
-                          <Sofa className="h-4 w-4 shrink-0 text-muted-foreground" /> <span className="truncate">{room.name}</span>
-                        </p>
-                        <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                          <Ruler className="h-3 w-3 shrink-0" /> {sized ?? "No dimensions yet"}
-                        </p>
-                      </div>
-                      {inProgress ? (
-                        <Badge>In progress</Badge>
-                      ) : finalCount > 0 ? (
-                        <Badge variant="success">Final chosen</Badge>
-                      ) : null}
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 text-xs">
-                      <Badge variant="secondary">
-                        {vs.length} design{vs.length === 1 ? "" : "s"}
-                      </Badge>
-                      <Badge variant="outline">
-                        {roomPurchases.length} item{roomPurchases.length === 1 ? "" : "s"}
-                        {bought ? ` - ${bought} bought` : ""}
-                      </Badge>
-                      <Badge variant="outline">
-                        {insp} idea{insp === 1 ? "" : "s"}
-                      </Badge>
-                    </div>
-                    <p className="flex items-center justify-end gap-1 text-xs font-medium text-primary">
-                      Open workspace <ArrowRight className="h-3.5 w-3.5" />
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
+        <RoomsGrid rooms={roomSummaries} />
       )}
     </div>
   );
