@@ -15,14 +15,17 @@ import {
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
 import { useToast } from "@/hooks/use-toast";
+import { useMaskFinance } from "@/hooks/use-mask-finance";
+import { MASKED_AMOUNT } from "@/lib/mask-money-text";
 import { formatCurrency } from "@/lib/utils";
 import type { FinanceSettings } from "@/lib/database.types";
 import { upsertSalaryDetails } from "./actions";
 
 /** Plain one-line summary of the fixed salary details — no edit affordance of its own. */
 export function SalaryDetailsSummary({ settings }: { settings: FinanceSettings | null }) {
+  const { masked } = useMaskFinance();
   const summary = [
-    settings?.annual_salary != null ? `${formatCurrency(settings.annual_salary)}/yr` : null,
+    settings?.annual_salary != null ? `${masked ? MASKED_AMOUNT : formatCurrency(settings.annual_salary)}/yr` : null,
     settings?.employer || null,
   ]
     .filter(Boolean)

@@ -2,20 +2,66 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-03 (Fixed a real overflow bug:
-> two list rows (Notes & Links' useful-link titles, Drafts' titles) were
-> missing `min-w-0` on a truncating flex child, so a long link title/page
-> title could stretch the row — and the page — wider than the viewport
-> instead of truncating with an ellipsis. Audited every other truncated
-> title/link display in the app; all others already had the right
-> `min-w-0`/`shrink-0` combination. `npm run typecheck`, `npm run lint`,
-> default build, and `NEXT_PUBLIC_APP=life` build all pass. Committed and
-> pushed to `main`; confirmed **READY in Vercel production** on both
-> `my-house-dashboard` and `my-life-dashboard` at commit `ace2220`. Nothing
-> outstanding. See "Truncate link titles" section below for details; earlier
-> sections (Purchases auto-refresh, auto-fill rollout, logo redesign) are
+> after **every** change. Last updated: 2026-07-03 (Added a "Hide finance
+> numbers" toggle (eye icon, Finance page header): masks all amounts on the
+> Finance page and the Dashboard's Cash flow / glance-stat cards behind
+> bullets, per-device via the existing prefs cookie. No migration. `npm run
+> typecheck`, `npm run lint`, default build, and `NEXT_PUBLIC_APP=life` build
+> all pass. About to commit/push/deploy-confirm. See "Mask finance numbers"
+> section below for details; earlier sections (link/title truncation fix,
+> Purchases auto-refresh, auto-fill rollout, logo redesign) are
 > also already confirmed deployed. Cannot browser-verify locally: this
 > sandbox has no `.env.local` Supabase credentials.)
+
+## Mask finance numbers: a "Hide finance numbers" toggle (2026-07-03)
+User: "add a toggle so that I can mask finance numbers on and off" — then,
+when asked to scope it: "make it mask all personal finances numbers, mainly
+on the finance page but also at a glance on the dashboard if it shows a
+number there."
+
+**Mechanism:** reused the existing per-device `usePref` cookie system
+(`src/components/providers/prefs.tsx`, already used for things like glance
+stats and hidden tabs) rather than inventing a new persistence layer — a new
+`mask-finance` boolean pref, server-seeded so there's no flash on load.
+- `src/hooks/use-mask-finance.ts` (new) — `useMaskFinance()` reads/writes the
+  pref.
+- `src/components/shared/money.tsx` (new) — `<Money value={n} />`: renders
+  `formatCurrency(n)` normally, or a fixed `••••` placeholder when masked
+  regardless of the actual number's length or magnitude (so hiding the
+  number doesn't leak it via placeholder width).
+- `src/components/shared/mask-finance-toggle.tsx` (new) — an Eye/EyeOff
+  icon button; placed in the Finance page's `PageHeader` actions slot.
+- `src/lib/mask-money-text.ts` (new) — `maskMoneyText()`, a regex-based
+  masker for already-formatted strings (`/-?£[\d,]+(\.\d+)?/g` → `••••`).
+  Needed because the Dashboard's glance-stat values/hints are pre-formatted
+  strings built server-side (`formatCurrency()` baked into a `value: string`
+  passed down as-is) rather than raw numbers — retrofitting `<Money>`
+  everywhere there would have meant restructuring `GlanceValue` to carry raw
+  numbers through. The regex only matches "£"-prefixed amounts, so
+  non-money glance stats (task/project counts, "3 items") pass through
+  untouched with no per-stat flagging needed.
+
+**Where it applies:**
+- Finance page (`finance/page.tsx`, `finance-scope.tsx`, `income-section.tsx`,
+  `credit-cards-section.tsx`, `shares-section.tsx`, `salary-details.tsx`):
+  net worth, income (this month + history), bills, net monthly, 12-month
+  income, savings/investment pot totals and per-pot balances, credit card
+  statement amounts, share purchase price/current value/gain, annual salary.
+- Dashboard: the "Cash flow" widget (Income/Bills/Net monthly), and the
+  glance-stat cards that show money (`monthlyBills`, `savingsBalance`,
+  `readyToBuy`, and `nextBill`'s hint) — including the amounts shown in their
+  tap-to-expand popup lists.
+- **Deliberately left unmasked:** input fields on forms/editors (you need to
+  see what you're typing to edit it — e.g. the income bulk-editor table,
+  credit card/share/income-month forms) and non-money dashboard glance stats
+  (open tasks, active projects, etc.).
+- **Verification:** `npm run typecheck`, `npm run lint`, default build, and
+  `NEXT_PUBLIC_APP=life` build all pass. Not yet browser-verified (no
+  `.env.local` Supabase credentials in this sandbox) — should be
+  smoke-tested once deployed: toggle "Hide finance numbers" on the Finance
+  page, confirm every amount there and on the Dashboard's Cash flow/glance
+  cards turns into `••••`, and confirm the toggle state persists across a
+  page reload (it's a cookie, so it should).
 
 ## Truncate link titles: fix a real overflow bug (2026-07-03)
 User: "truncate link names and titles so they don't make the screen have to

@@ -4,8 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
+import { Money } from "@/components/shared/money";
+import { MaskFinanceToggle } from "@/components/shared/mask-finance-toggle";
 import { CollapsibleSection } from "@/app/(app)/dashboard/collapsible-section";
 import type {
   Bill,
@@ -96,7 +97,9 @@ export default async function FinancePage() {
         title="Finance"
         description="Your personal financial overview."
         info="Log your monthly net income below to calculate your net position."
-      />
+      >
+        <MaskFinanceToggle />
+      </PageHeader>
 
       <FinanceScope
         bills={bills}
@@ -137,7 +140,7 @@ export default async function FinancePage() {
       <CollapsibleSection title="Shares" href="/finance" count={shares.length}>
         <div className="flex items-center justify-between pb-1">
           <p className="text-sm text-muted-foreground">
-            {shares.length > 0 ? `Total value: ${formatCurrency(totalSharesValue)}` : "Ticker, quantity and purchase price, with live prices where available."}
+            {shares.length > 0 ? <>Total value: <Money value={totalSharesValue} /></> : "Ticker, quantity and purchase price, with live prices where available."}
           </p>
           <ShareForm trigger={<button className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"><BarChart3 className="h-3.5 w-3.5" /> Add</button>} />
         </div>

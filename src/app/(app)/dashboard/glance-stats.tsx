@@ -25,6 +25,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { DEFAULT_GLANCE, useGlancePrefs } from "@/hooks/use-glance-prefs";
+import { useMaskFinance } from "@/hooks/use-mask-finance";
+import { maskMoneyText } from "@/lib/mask-money-text";
 import { cn } from "@/lib/utils";
 
 export type GlanceItem = { label: string; sub?: string; href: string };
@@ -48,8 +50,10 @@ const ICONS: Record<string, LucideIcon> = Object.fromEntries(GLANCE_CATALOG.map(
 /** Renders the user's chosen glance stats, in their chosen order. */
 export function GlanceStats({ values }: { values: Record<string, GlanceValue> }) {
   const { order } = useGlancePrefs();
+  const { masked } = useMaskFinance();
   const ids = (order ?? DEFAULT_GLANCE).filter((id) => values[id]);
   if (ids.length === 0) return null;
+  const mask = (s?: string) => (s && masked ? maskMoneyText(s) : s);
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -60,8 +64,8 @@ export function GlanceStats({ values }: { values: Record<string, GlanceValue> })
         const card = (
           <StatCard
             label={meta?.label ?? id}
-            value={v.value}
-            hint={v.hint}
+            value={mask(v.value)!}
+            hint={mask(v.hint)}
             icon={Icon}
             accent={i % 2 === 1 ? "muted" : undefined}
           />
@@ -91,7 +95,7 @@ export function GlanceStats({ values }: { values: Record<string, GlanceValue> })
                         className="flex items-center justify-between gap-3 rounded-lg border p-2.5 text-sm transition-colors hover:bg-accent"
                       >
                         <span className="min-w-0 truncate">{it.label}</span>
-                        {it.sub ? <span className="shrink-0 text-xs text-muted-foreground">{it.sub}</span> : null}
+                        {it.sub ? <span className="shrink-0 text-xs text-muted-foreground">{mask(it.sub)}</span> : null}
                       </Link>
                     ))}
                   </div>

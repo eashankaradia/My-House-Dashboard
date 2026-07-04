@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { priorityVariant } from "@/lib/ui";
 import { daysUntil, formatCurrency, formatDate, toAnnual, toMonthly } from "@/lib/utils";
 import { getHouseholdMap } from "@/lib/household";
+import { Money } from "@/components/shared/money";
 import type {
   Bill,
   BillPayment,
@@ -456,16 +457,16 @@ export default async function DashboardPage() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div>
                 <p className="text-xs text-muted-foreground">Income</p>
-                <p className="text-base font-semibold">{formatCurrency(monthlyIncome!)}</p>
+                <p className="text-base font-semibold"><Money value={monthlyIncome!} /></p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Bills</p>
-                <p className="text-base font-semibold">{formatCurrency(monthlyBillsTotal)}</p>
+                <p className="text-base font-semibold"><Money value={monthlyBillsTotal} /></p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Net monthly</p>
                 <p className={`text-base font-semibold ${netMonthly < 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
-                  {netMonthly < 0 ? "−" : "+"}{formatCurrency(Math.abs(netMonthly))}
+                  {netMonthly < 0 ? "−" : "+"}<Money value={Math.abs(netMonthly)} />
                 </p>
               </div>
               <div>

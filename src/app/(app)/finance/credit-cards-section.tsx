@@ -3,7 +3,7 @@
 import * as React from "react";
 import { CreditCard as CardIcon, ChevronDown, ChevronUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import type { CreditCard, CreditCardStatement } from "@/lib/database.types";
 import { CreditCardForm } from "./credit-card-form";
 import { CreditCardStatementForm } from "./credit-card-statement-form";
@@ -42,7 +42,7 @@ export function CreditCardsSection({ cards, statements }: { cards: CreditCard[];
               <div className="shrink-0 text-right">
                 {thisMonthStatement ? (
                   <>
-                    <p className="font-semibold">{formatCurrency(thisMonthStatement.amount)}</p>
+                    <p className="font-semibold"><Money value={thisMonthStatement.amount} /></p>
                     {thisMonthStatement.is_paid ? (
                       <Badge variant="success" className="text-[10px]">
                         Paid
@@ -88,7 +88,7 @@ export function CreditCardsSection({ cards, statements }: { cards: CreditCard[];
                               {new Date(s.statement_month + "T00:00:00").toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
                             </span>
                             <span className="flex items-center gap-2">
-                              <span className="font-medium">{formatCurrency(s.amount)}</span>
+                              <span className="font-medium"><Money value={s.amount} /></span>
                               {s.is_paid && (
                                 <Badge variant="success" className="text-[10px]">
                                   Paid

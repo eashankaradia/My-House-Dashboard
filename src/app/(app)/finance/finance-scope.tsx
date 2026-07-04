@@ -5,7 +5,8 @@ import Link from "next/link";
 import { ArrowRight, LineChart, Pencil, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardTrigger } from "@/components/shared/card-trigger";
-import { cn, formatCurrency, toMonthly } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
+import { cn, toMonthly } from "@/lib/utils";
 import type { Bill, SavingsAccount, SavingsContribution, SavingsPot, Share } from "@/lib/database.types";
 import { PotDetailDialog } from "@/app/(app)/savings/pot-detail";
 import { PotForm } from "@/app/(app)/savings/pot-form";
@@ -79,28 +80,28 @@ export function FinanceScope({
         <CardContent className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3 p-4">
           <div>
             <p className="text-xs text-muted-foreground">Net worth</p>
-            <p className="text-2xl font-semibold">{formatCurrency(netWorth)}</p>
+            <p className="text-2xl font-semibold"><Money value={netWorth} /></p>
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             <MiniStat
               label="Income"
-              value={monthlyIncome !== null ? formatCurrency(monthlyIncome) : "Not set"}
+              value={monthlyIncome !== null ? <Money value={monthlyIncome} /> : "Not set"}
               muted={monthlyIncome === null}
             />
-            <MiniStat label="Bills" value={formatCurrency(monthlyBills)} muted />
+            <MiniStat label="Bills" value={<Money value={monthlyBills} />} muted />
             <MiniStat
               label="Net"
-              value={netMonthly !== null ? formatCurrency(netMonthly) : "—"}
+              value={netMonthly !== null ? <Money value={netMonthly} /> : "—"}
               destructive={netMonthly !== null && netMonthly < 0}
             />
-            <MiniStat label="Net income (12mo)" value={formatCurrency(last12MonthsIncome)} muted />
+            <MiniStat label="Net income (12mo)" value={<Money value={last12MonthsIncome} />} muted />
           </div>
         </CardContent>
       </Card>
 
       {/* Savings pots */}
       <Card>
-        <PotSectionHeader title={`Savings · ${formatCurrency(totalSaved)}`} defaultPotType="savings" />
+        <PotSectionHeader title={<>Savings · <Money value={totalSaved} /></>} defaultPotType="savings" />
         <CardContent className="space-y-1">
           {savingsPots.length === 0 ? (
             <p className="py-3 text-center text-sm text-muted-foreground">No savings pots yet.</p>
@@ -122,7 +123,7 @@ export function FinanceScope({
         <PotSectionHeader
           title={
             <span className="flex items-center gap-2">
-              <LineChart className="h-4 w-4 text-muted-foreground" /> Investments · {formatCurrency(totalInvested)}
+              <LineChart className="h-4 w-4 text-muted-foreground" /> Investments · <Money value={totalInvested} />
             </span>
           }
           defaultPotType="investment"
@@ -177,7 +178,7 @@ function PotSectionHeader({ title, defaultPotType }: { title: React.ReactNode; d
   );
 }
 
-function MiniStat({ label, value, muted, destructive }: { label: string; value: string; muted?: boolean; destructive?: boolean }) {
+function MiniStat({ label, value, muted, destructive }: { label: string; value: React.ReactNode; muted?: boolean; destructive?: boolean }) {
   return (
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>
@@ -215,7 +216,7 @@ function CompactPotRow({
             <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", COLOR_BG[pot.color] ?? "bg-primary")} />
             <span className="truncate text-sm font-medium">{pot.name}</span>
           </span>
-          <span className="shrink-0 text-sm font-semibold">{formatCurrency(pot.current_amount)}</span>
+          <span className="shrink-0 text-sm font-semibold"><Money value={pot.current_amount} /></span>
         </CardTrigger>
       </PotDetailDialog>
       <QuickContribute

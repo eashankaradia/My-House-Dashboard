@@ -1,7 +1,7 @@
 "use client";
 
 import { Pencil } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import { monthStr } from "@/lib/income";
 import type { FinanceSettings, IncomeMonth } from "@/lib/database.types";
 import { SalaryDetailsSummary } from "./salary-details";
@@ -37,11 +37,13 @@ export function IncomeSection({ settings, months }: { settings: FinanceSettings 
               </span>
               <span className="flex items-center gap-2">
                 <span className="font-semibold">
-                  {current
-                    ? formatCurrency(Number(current.net_income))
-                    : carried
-                      ? formatCurrency(Number(carried.net_income))
-                      : "—"}
+                  {current ? (
+                    <Money value={Number(current.net_income)} />
+                  ) : carried ? (
+                    <Money value={Number(carried.net_income)} />
+                  ) : (
+                    "—"
+                  )}
                 </span>
                 <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
               </span>
@@ -63,9 +65,9 @@ export function IncomeSection({ settings, months }: { settings: FinanceSettings 
                   <button className="flex w-full items-center justify-between rounded-lg border bg-card px-3 py-2 text-left text-sm">
                     <span>{formatMonth(m.month)}</span>
                     <span className="flex items-center gap-2">
-                      <span className="font-medium">{formatCurrency(Number(m.net_income))}</span>
+                      <span className="font-medium"><Money value={Number(m.net_income)} /></span>
                       {Number(m.bonus) > 0 && (
-                        <span className="text-xs text-muted-foreground">+{formatCurrency(Number(m.bonus))} bonus</span>
+                        <span className="text-xs text-muted-foreground">+<Money value={Number(m.bonus)} /> bonus</span>
                       )}
                       <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     </span>

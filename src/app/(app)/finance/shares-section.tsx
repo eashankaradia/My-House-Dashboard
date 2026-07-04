@@ -2,7 +2,7 @@
 
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import type { Share } from "@/lib/database.types";
 import { ShareForm } from "./share-form";
 
@@ -32,16 +32,16 @@ export function SharesSection({ shares, prices }: { shares: Share[]; prices: Rec
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {share.quantity} @ {formatCurrency(Number(share.purchase_price))}
+                    {share.quantity} @ <Money value={Number(share.purchase_price)} />
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="font-semibold">{formatCurrency(currentValue)}</p>
+                  <p className="font-semibold"><Money value={currentValue} /></p>
                   {live != null && (
                     <p className={`flex items-center justify-end gap-0.5 text-xs ${gain >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
                       {gain >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                       {gain >= 0 ? "+" : ""}
-                      {formatCurrency(gain)} ({gainPct >= 0 ? "+" : ""}
+                      <Money value={gain} /> ({gainPct >= 0 ? "+" : ""}
                       {gainPct.toFixed(1)}%)
                     </p>
                   )}
