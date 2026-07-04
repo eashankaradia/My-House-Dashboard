@@ -122,9 +122,9 @@ export function NotesLinksView({ notes, links }: { notes: Document[]; links: Use
                       href={link.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center gap-1 font-medium hover:underline"
+                      className="flex min-w-0 items-center gap-1 font-medium hover:underline"
                     >
-                      <span className="truncate">{link.title}</span>
+                      <span className="min-w-0 truncate">{link.title}</span>
                       <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     </a>
                     <p className="truncate text-xs text-muted-foreground">{hostOf(link.url)}</p>

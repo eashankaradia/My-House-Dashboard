@@ -46,9 +46,9 @@ export default async function DraftsPage() {
                     <img src={d.image_url} alt="" className="h-16 w-16 shrink-0 rounded-lg border object-cover" />
                   ) : null}
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary">{meta.label}</Badge>
-                      <span className="truncate font-medium">{d.title}</span>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <Badge variant="secondary" className="shrink-0">{meta.label}</Badge>
+                      <span className="min-w-0 truncate font-medium">{d.title}</span>
                     </div>
                     {d.notes ? <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{d.notes}</p> : null}
                     <p className="mt-1 text-[11px] text-muted-foreground">{formatDate(d.created_at)}</p>

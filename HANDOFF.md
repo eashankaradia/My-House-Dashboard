@@ -2,20 +2,55 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-03 (Two more batches landed:
-> (1) Purchases now auto-refreshes each option's price from its saved link
-> whenever the Purchases page loads (throttled to once per 15 min per option),
-> via migration `0064_purchase_option_price_checked_at` (already applied live).
-> (2) The "Auto-fill from link" pattern (title/photo/source pulled from a
-> pasted URL) is now on six more forms: Notes & Links useful-link-form,
-> nutrition/health inspiration forms, recipe-form (video link), and fitness
-> muscle-links / exercise links. `npm run typecheck`, `npm run lint`, default
-> build, and `NEXT_PUBLIC_APP=life` build all pass. Committed and pushed to
-> `main`; confirmed **READY in Vercel production** on both
-> `my-house-dashboard` and `my-life-dashboard` at commit `85bb048`. Nothing
-> outstanding. See sections below for both batches plus the earlier logo
-> redesign, also already confirmed deployed. Cannot browser-verify locally:
+> after **every** change. Last updated: 2026-07-03 (Fixed a real overflow bug:
+> two list rows (Notes & Links' useful-link titles, Drafts' titles) were
+> missing `min-w-0` on a truncating flex child, so a long link title/page
+> title could stretch the row — and the page — wider than the viewport
+> instead of truncating with an ellipsis. Audited every other truncated
+> title/link display in the app; all others already had the right
+> `min-w-0`/`shrink-0` combination. `npm run typecheck`, `npm run lint`,
+> default build, and `NEXT_PUBLIC_APP=life` build all pass. About to
+> commit/push/deploy-confirm. See "Truncate link titles" section below for
+> details; earlier sections (Purchases auto-refresh, auto-fill rollout, logo
+> redesign) are already confirmed deployed. Cannot browser-verify locally:
 > this sandbox has no `.env.local` Supabase credentials.)
+
+## Truncate link titles: fix a real overflow bug (2026-07-03)
+User: "truncate link names and titles so they don't make the screen have to
+go really wide."
+
+**Root cause:** Tailwind's `truncate` (`overflow-hidden; text-overflow:
+ellipsis; white-space: nowrap`) only works on a flex *item* if that item also
+has `min-w-0` — otherwise the browser's default `min-width: auto` on flex
+items sizes it to its content's intrinsic width (and `white-space: nowrap`
+makes the *entire* unbroken string count as that intrinsic width), so a long
+link title/page title just pushes the row — and the whole page — wider
+instead of ellipsis-truncating.
+
+Found two real instances of this:
+- `src/app/(app)/notes/notes-links-view.tsx` — the Useful Links title `<a>`
+  was `flex items-center gap-1 ...` wrapping a `<span className="truncate">`
+  with no `min-w-0` on either the anchor or the span. A long page title (e.g.
+  a verbose article headline) could force the whole link card wider than its
+  grid column. Fixed: `min-w-0` added to the anchor and the span.
+- `src/app/(app)/drafts/page.tsx` — the draft title row was
+  `<div className="flex items-center gap-2">` with a `Badge` and a
+  `<span className="truncate">{d.title}</span>`, again with no `min-w-0`
+  anywhere in the row (and the Badge had no `shrink-0`). Fixed: `min-w-0` on
+  the row div and the span, `shrink-0` on the Badge.
+
+**Audited everywhere else** truncated titles/names/links are rendered
+(fitness muscle-links, fitness exercise-links, purchases option rows,
+inspiration cards/hub, tasks, bills, projects, rooms, contacts, dashboard
+widgets, etc.) — all other instances already had the correct `min-w-0` (or
+used `max-w-[…]` / `break-words` instead of `truncate`, which doesn't need
+it), so no further changes were needed.
+- **Verification:** `npm run typecheck`, `npm run lint`, default build, and
+  `NEXT_PUBLIC_APP=life` build all pass. Not yet browser-verified (no
+  `.env.local` Supabase credentials in this sandbox) — should be
+  smoke-tested once deployed: save a Useful Link or a draft with a very long
+  title and confirm the row truncates with an ellipsis instead of widening
+  the page/causing horizontal scroll.
 
 ## Purchases: auto-refresh option prices + wider auto-fill rollout (2026-07-03)
 User: "I like auto fill on my purchases, whenever I click on the tab I want
