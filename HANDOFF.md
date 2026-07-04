@@ -2,7 +2,7 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-03 (Purchase detail dialog:
+> after **every** change. Last updated: 2026-07-04 (Purchase detail dialog:
 > decluttered for a single-option item, the common case — the "Decision
 > centre" box (redundant when there's nothing to decide between) is hidden,
 > the verbose "Options to compare (N) — ▲▼ to rank, ★ to pick" header is now
@@ -10,16 +10,17 @@
 > (shown only when there are 2+ options to actually rank/compare), and the
 > rank arrows on a lone option (which do nothing) are hidden. No migration.
 > `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. About to commit/push/deploy-confirm.
-> Not browser-verified against live data (no `.env.local` Supabase
-> credentials in this sandbox) — reasoned from the user's screenshot of the
-> live dialog plus the source. See "Purchase detail: declutter for
-> presentation" section below for details; earlier sections (button-text
-> sweep, Room Designer compact toggle, Purchases quick status change, mask
-> finance numbers, link/title truncation
-> fix, Purchases auto-refresh, auto-fill rollout, logo redesign) are all
-> already confirmed deployed. Cannot browser-verify locally: this sandbox has
-> no `.env.local` Supabase credentials.)
+> `NEXT_PUBLIC_APP=life` build all pass. Committed as `e490244`, pushed to
+> `main`, and confirmed READY on Vercel production for both
+> my-house-dashboard and my-life-dashboard. Not browser-verified against
+> live data (no `.env.local` Supabase credentials in this sandbox) —
+> reasoned from the user's screenshot of the live dialog plus the source.
+> See "Purchase detail: declutter for presentation" section below for
+> details; earlier sections (button-text sweep, Room Designer compact
+> toggle, Purchases quick status change, mask finance numbers, link/title
+> truncation fix, Purchases auto-refresh, auto-fill rollout, logo redesign)
+> are all already confirmed deployed. Cannot browser-verify locally: this
+> sandbox has no `.env.local` Supabase credentials.)
 
 ## Purchase detail: declutter for presentation (2026-07-03)
 User shared a screenshot of the Purchases detail dialog ("Kitchen Table",
