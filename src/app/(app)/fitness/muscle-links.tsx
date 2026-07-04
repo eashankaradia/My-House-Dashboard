@@ -39,8 +39,8 @@ export function MuscleLinks({ links }: { links: MuscleLink[] }) {
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Muscle guides</p>
         <MuscleLinkForm
           trigger={
-            <button className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline">
-              <Plus className="h-3.5 w-3.5" /> Add link
+            <button aria-label="Add link" className="text-primary hover:underline">
+              <Plus className="h-3.5 w-3.5" />
             </button>
           }
         />

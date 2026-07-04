@@ -63,7 +63,7 @@ export function RoutineItemForm({ defaultSection, item, trigger }: Props) {
         {trigger ?? (
           <Button size="sm" variant="outline" className="gap-1.5">
             {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {editing ? "Edit" : "Add step"}
+            {editing ? null : "Add step"}
           </Button>
         )}
       </DialogTrigger>

@@ -75,7 +75,7 @@ export function BillForm({ bill, accounts = [], trigger }: Props) {
         {trigger ?? (
           <Button>
             {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {editing ? "Edit" : "Add bill"}
+            {editing ? null : "Add bill"}
           </Button>
         )}
       </DialogTrigger>

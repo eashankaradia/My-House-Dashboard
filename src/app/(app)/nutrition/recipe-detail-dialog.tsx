@@ -77,8 +77,8 @@ export function RecipeDetailDialog({ recipe, ingredients, open, onOpenChange }: 
               recipe={recipe}
               ingredients={recipeIngredients}
               trigger={
-                <Button variant="outline" size="sm" className="gap-1.5">
-                  <Pencil className="h-4 w-4" /> Edit recipe
+                <Button variant="outline" size="icon" aria-label="Edit recipe">
+                  <Pencil className="h-4 w-4" />
                 </Button>
               }
             />

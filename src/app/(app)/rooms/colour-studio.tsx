@@ -56,7 +56,7 @@ export function ColourStudio({
         <CardContent className="p-3">
           <form onSubmit={newPalette} className="flex items-center gap-2">
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="New palette… (e.g. Warm neutrals)" className="h-10" />
-            <Button type="submit" disabled={pending} className="h-10 gap-1.5"><Plus className="h-4 w-4" /> Add</Button>
+            <Button type="submit" disabled={pending} size="icon" className="h-10 w-10 shrink-0" aria-label="Add palette"><Plus className="h-4 w-4" /></Button>
           </form>
         </CardContent>
       </Card>

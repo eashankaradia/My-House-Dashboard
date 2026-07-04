@@ -77,7 +77,7 @@ export function PotForm({
         {trigger ?? (
           <Button>
             {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {editing ? "Edit" : "New pot"}
+            {editing ? null : "New pot"}
           </Button>
         )}
       </DialogTrigger>

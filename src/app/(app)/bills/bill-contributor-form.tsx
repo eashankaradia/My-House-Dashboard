@@ -85,7 +85,7 @@ export function BillContributorForm({ billId, members, contributor, trigger }: P
         {trigger ?? (
           <Button size="sm" variant="outline" className="gap-1.5">
             {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {editing ? "Edit" : "Add contributor"}
+            {editing ? null : "Add contributor"}
           </Button>
         )}
       </DialogTrigger>

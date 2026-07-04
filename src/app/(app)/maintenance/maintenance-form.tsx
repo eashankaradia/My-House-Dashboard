@@ -67,7 +67,7 @@ export function MaintenanceForm({ task, trigger }: { task?: MaintenanceTask; tri
         {trigger ?? (
           <Button>
             {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {editing ? "Edit" : "Add task"}
+            {editing ? null : "Add task"}
           </Button>
         )}
       </DialogTrigger>

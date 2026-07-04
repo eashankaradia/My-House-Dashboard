@@ -153,7 +153,7 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [], catego
         {trigger ?? (
           <Button>
             {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {editing ? "Edit" : "Add item"}
+            {editing ? null : "Add item"}
           </Button>
         )}
       </DialogTrigger>
@@ -200,8 +200,8 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [], catego
                   ))}
                 </div>
               )}
-              <Button type="button" variant="outline" size="sm" className="w-full gap-1.5 border-dashed" onClick={addOptionRow}>
-                <Plus className="h-4 w-4" /> Add option
+              <Button type="button" variant="outline" size="icon" className="w-full border-dashed" onClick={addOptionRow} aria-label="Add option">
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
           ) : (

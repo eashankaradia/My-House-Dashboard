@@ -35,8 +35,8 @@ export function ExerciseDetailDialog({ exercise, links, personalBests, open, onO
             exercise={exercise}
             links={links}
             trigger={
-              <Button type="button" variant="outline" size="sm" className="gap-1.5">
-                <Pencil className="h-4 w-4" /> Edit
+              <Button type="button" variant="outline" size="icon" aria-label="Edit exercise">
+                <Pencil className="h-4 w-4" />
               </Button>
             }
           />
@@ -127,9 +127,10 @@ function PersonalBests({ exerciseId, personalBests }: { exerciseId: string; pers
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+            aria-label="Add personal best"
+            className="text-primary hover:underline"
           >
-            <Plus className="h-3.5 w-3.5" /> Add PB
+            <Plus className="h-3.5 w-3.5" />
           </button>
         ) : null}
       </div>

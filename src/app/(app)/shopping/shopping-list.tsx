@@ -79,8 +79,8 @@ export function ShoppingList({
               placeholder="Qty (e.g. 2, 1kg)"
               className="h-10 w-32"
             />
-            <Button type="submit" disabled={pending || !name.trim()} className="h-10 gap-1.5">
-              <Plus className="h-4 w-4" /> Add
+            <Button type="submit" disabled={pending || !name.trim()} size="icon" className="h-10 w-10 shrink-0" aria-label="Add item">
+              <Plus className="h-4 w-4" />
             </Button>
           </form>
         </CardContent>

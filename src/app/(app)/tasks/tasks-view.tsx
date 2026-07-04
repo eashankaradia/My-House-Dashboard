@@ -446,8 +446,8 @@ function AddTaskForm({ projects, members }: { projects: ProjectOption[]; members
           >
             <Coffee className="h-4 w-4" /> When bored
           </button>
-          <Button type="submit" disabled={pending} className="gap-1.5">
-            <Plus className="h-4 w-4" /> Add
+          <Button type="submit" disabled={pending} size="icon" aria-label="Add task">
+            <Plus className="h-4 w-4" />
           </Button>
         </form>
       </CardContent>

@@ -305,7 +305,7 @@ function DesignTab({ room, versions }: { room: Room; versions: RoomDesignVersion
         <CardContent className="p-3">
           <form onSubmit={add} className="flex items-center gap-2">
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="New design version… (e.g. Cosy, Budget)" className="h-10" />
-            <Button type="submit" disabled={pending} className="h-10 gap-1.5"><Plus className="h-4 w-4" /> Add</Button>
+            <Button type="submit" disabled={pending} size="icon" className="h-10 w-10 shrink-0" aria-label="Add design version"><Plus className="h-4 w-4" /></Button>
           </form>
         </CardContent>
       </Card>
@@ -666,7 +666,7 @@ function TasksTab({ room }: { room: Room }) {
         <CardContent className="space-y-3 p-4">
           <form onSubmit={(e) => { e.preventDefault(); create(title); }} className="flex items-center gap-2">
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Add a task for this room…" className="h-10" />
-            <Button type="submit" disabled={pending || !title.trim()} className="h-10 gap-1.5"><Plus className="h-4 w-4" /> Add</Button>
+            <Button type="submit" disabled={pending || !title.trim()} size="icon" className="h-10 w-10 shrink-0" aria-label="Add task"><Plus className="h-4 w-4" /></Button>
           </form>
           <div className="flex flex-wrap gap-1.5">
             {SUGGESTIONS.map((s) => (

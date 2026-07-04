@@ -132,7 +132,7 @@ export function RecipeForm({ recipe, ingredients = [], trigger }: Props) {
         {trigger ?? (
           <Button size="sm" className="gap-1.5">
             {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {editing ? "Edit" : "Add recipe"}
+            {editing ? null : "Add recipe"}
           </Button>
         )}
       </DialogTrigger>
@@ -179,8 +179,8 @@ export function RecipeForm({ recipe, ingredients = [], trigger }: Props) {
                   </Button>
                 </div>
               ))}
-              <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={addRow}>
-                <Plus className="h-4 w-4" /> Add ingredient
+              <Button type="button" variant="outline" size="icon" aria-label="Add ingredient" onClick={addRow}>
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
           </Field>

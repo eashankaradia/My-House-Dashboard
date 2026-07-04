@@ -37,8 +37,8 @@ export function PurchaseCategoriesSettings({ categories }: { categories: Purchas
     <div className="space-y-3">
       <form onSubmit={submit} className="flex gap-2">
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Lighting" className="h-9" />
-        <Button type="submit" size="sm" className="h-9 gap-1.5" disabled={pending}>
-          <Plus className="h-4 w-4" /> Add
+        <Button type="submit" size="icon" className="h-9 w-9" disabled={pending} aria-label="Add category">
+          <Plus className="h-4 w-4" />
         </Button>
       </form>
       <div className="flex flex-wrap gap-2">

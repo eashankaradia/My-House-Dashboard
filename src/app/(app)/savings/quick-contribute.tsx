@@ -51,8 +51,8 @@ export function QuickContribute({ pot, trigger }: { pot: SavingsPot; trigger?: R
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button variant="outline" size="sm" className="h-8 gap-1.5">
-            <Plus className="h-4 w-4" /> Add
+          <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Add contribution">
+            <Plus className="h-4 w-4" />
           </Button>
         )}
       </DialogTrigger>

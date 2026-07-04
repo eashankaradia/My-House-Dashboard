@@ -69,8 +69,8 @@ export function DocumentDetailDialog({ doc, children }: { doc: Document; childre
           <div className="flex items-center justify-between border-t pt-3">
             <div className="flex items-center gap-2">
               {doc.file_path ? (
-                <Button variant="outline" size="sm" onClick={download} disabled={pending} className="gap-1.5">
-                  <Download className="h-4 w-4" /> Open file
+                <Button variant="outline" size="icon" onClick={download} disabled={pending} aria-label="Open file">
+                  <Download className="h-4 w-4" />
                 </Button>
               ) : null}
               <ShareButton title={doc.name} text={`${doc.category} · renewal ${formatDate(doc.expiry_date)}`} />

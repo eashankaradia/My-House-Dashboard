@@ -84,7 +84,7 @@ export function HouseholdContributionForm({ members, contribution, trigger }: Pr
         {trigger ?? (
           <Button size="sm" variant="outline" className="gap-1.5">
             {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {editing ? "Edit" : "Add contribution"}
+            {editing ? null : "Add contribution"}
           </Button>
         )}
       </DialogTrigger>

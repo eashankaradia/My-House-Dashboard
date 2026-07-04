@@ -117,8 +117,8 @@ export function PlanDetailDialog({ plan, planExercises, exercises, open, onOpenC
                   </option>
                 ))}
               </NativeSelect>
-              <Button type="button" size="sm" disabled={pending || !pickId} onClick={() => add(pickId)} className="gap-1.5">
-                <Plus className="h-4 w-4" /> Add
+              <Button type="button" size="icon" disabled={pending || !pickId} onClick={() => add(pickId)} aria-label="Add exercise to plan">
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
             <ExerciseForm

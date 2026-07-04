@@ -71,8 +71,8 @@ export function RoomsSettings({ rooms }: { rooms: string[] }) {
       <p className="text-xs text-muted-foreground">Tap a name to rename it. Renaming keeps its tagged purchases and ideas linked.</p>
       <form onSubmit={add} className="flex items-center gap-2 border-t pt-3">
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Add a room…" className="h-9 max-w-xs" />
-        <Button type="submit" size="sm" className="gap-1.5" disabled={pending || !name.trim()}>
-          <Plus className="h-4 w-4" /> Add
+        <Button type="submit" size="icon" disabled={pending || !name.trim()} aria-label="Add room">
+          <Plus className="h-4 w-4" />
         </Button>
       </form>
     </div>

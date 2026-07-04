@@ -136,7 +136,7 @@ export function InspirationForm({ inspiration, collections, trigger }: Props) {
         {trigger ?? (
           <Button>
             {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {editing ? "Edit" : "Save idea"}
+            {editing ? null : "Save idea"}
           </Button>
         )}
       </DialogTrigger>

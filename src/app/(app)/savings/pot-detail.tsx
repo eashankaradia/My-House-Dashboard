@@ -171,8 +171,8 @@ export function PotDetailDialog({
                   <AccountForm
                     potId={pot.id}
                     trigger={
-                      <Button variant="outline" size="sm" className="h-7 gap-1 text-xs">
-                        <Plus className="h-3.5 w-3.5" /> Add account
+                      <Button variant="outline" size="icon" className="h-7 w-7" aria-label="Add account">
+                        <Plus className="h-3.5 w-3.5" />
                       </Button>
                     }
                   />
@@ -239,9 +239,8 @@ export function PotDetailDialog({
                           potId={pot.id}
                           account={a}
                           trigger={
-                            <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
+                            <button aria-label="Edit account" className="inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
                               <Pencil className="h-3.5 w-3.5" />
-                              Edit
                             </button>
                           }
                         />

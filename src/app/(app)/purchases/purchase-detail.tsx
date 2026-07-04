@@ -121,8 +121,8 @@ export function PurchaseDetailDialog({
                 purchaseId={purchase.id}
                 purchaseCategory={purchase.category}
                 trigger={
-                  <Button variant="outline" size="sm" className="w-full gap-1 border-dashed">
-                    <Plus className="h-4 w-4" /> Add option
+                  <Button variant="outline" size="icon" className="w-full border-dashed" aria-label="Add option">
+                    <Plus className="h-4 w-4" />
                   </Button>
                 }
               />

@@ -2,23 +2,103 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-03 (Room Designer: added a
-> Detailed/Compact toggle to the room grid, same pattern as Documents/Tasks/
-> Projects. Compact view shows just room name, design count, and an arrow to
-> open the workspace; Detailed keeps the existing rich cards unchanged. No
+> after **every** change. Last updated: 2026-07-03 (App-wide sweep: stripped
+> redundant "Edit"/"Add X"/"Open" text from ~45 small in-context trigger
+> buttons (list rows, detail dialogs, inline add-within-section buttons) —
+> icon-only now, since the icon already conveys the action. Page-header
+> primary CTAs and empty-state buttons deliberately kept their text (user
+> confirmed this scope explicitly), along with a handful of other exceptions
+> — see "Strip redundant Edit/Add/Open button text" section below for the
+> full list of what changed and what was deliberately left alone. No
 > migration. `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. About to commit/push/deploy-confirm.
-> Separately, an app-wide sweep is IN PROGRESS (not yet committed) to strip
-> redundant "Edit"/"Add X"/"Open" text from small in-context trigger buttons
-> (list rows, detail dialogs, inline add-within-section buttons) — page-header
-> primary CTAs and empty-state buttons are explicitly OUT of scope and must
-> keep their text. A background research agent is auditing every instance
-> before edits are made; that batch is not started yet. See "Room Designer
-> compact toggle" section below for what's done; earlier sections (Purchases
-> quick status change, mask finance numbers, link/title truncation fix,
-> Purchases auto-refresh, auto-fill rollout, logo redesign) are all
-> already confirmed deployed. Cannot browser-verify locally: this sandbox
-> has no `.env.local` Supabase credentials.)
+> `NEXT_PUBLIC_APP=life` build all pass. About to commit/push, then confirm
+> Vercel deploy for both this batch and the prior Room Designer batch (already
+> committed/pushed as `6d093b3` but not yet deploy-confirmed) together. See
+> "Strip redundant Edit/Add/Open button text" and "Room Designer compact
+> toggle" sections below for what each batch changed. Earlier sections
+> (Purchases quick status change, mask finance numbers, link/title truncation
+> fix, Purchases auto-refresh, auto-fill rollout, logo redesign) are all
+> already confirmed deployed. Cannot browser-verify locally: this sandbox has
+> no `.env.local` Supabase credentials.)
+
+## Strip redundant Edit/Add/Open button text (2026-07-03)
+User: "remove the word edit from edit buttons and add from +, and open from
+download button." Scoped via a follow-up question: only small/inline
+trigger buttons (list rows, detail dialogs, inline add-within-section
+buttons) go icon-only — page-header primary CTAs and empty-state buttons
+explicitly keep their text.
+
+Ran a background research agent (Explore) to inventory every Pencil+"Edit",
+Plus+"Add X", and Download+"Open" button in `src/`, classify each as
+inline vs. primary-CTA, and flag deviations/edge cases, before touching any
+code. Then applied the strip based on that inventory:
+
+- **Bare "Edit" instances (13 files)** — detail-dialog and list-row Edit
+  triggers, e.g. `nutrition/recipe-detail-dialog.tsx`,
+  `habits/habit-detail-dialog.tsx`, `savings/pot-detail.tsx` (linked
+  account row), `savings/pot-card.tsx`, `maintenance/maintenance-row.tsx`,
+  `fitness/exercise-detail-dialog.tsx`, `projects/projects-views.tsx`,
+  `purchases/option-detail.tsx`, `purchases/purchases-grid.tsx` (both
+  card and list views), `bills/bills-list.tsx` (both views),
+  `bills/payment-accounts.tsx`. All converted to `size="icon"` +
+  `aria-label` instead of visible text.
+- **The shared `{editing ? "Edit" : "Add X"}` ternary (21 form components)**
+  — this is the default `DialogTrigger` fallback used by ~27 Create/Edit
+  dialog components app-wide (RecipeForm, BillForm, PotForm, GoalForm,
+  etc). Confirmed the "editing" branch is *always* an in-context trigger
+  (a list row or detail dialog passing the entity with no custom
+  `trigger` override) and never a page-header CTA — except two
+  singleton-entity exceptions (see below) — so the fix was mechanical:
+  `{editing ? "Edit" : "Add X"}` → `{editing ? null : "Add X"}` across all
+  21 (the icon still switches Pencil/Plus; only the *text* is conditional
+  now). The "Add X" side is untouched since that's the page-header/
+  empty-state creation path.
+- **Ad-hoc inline "+ Add X" buttons (~18 instances)** — bespoke buttons not
+  part of the shared ternary, inside forms/detail-dialogs/section headers:
+  "Add ingredient" (recipe-form), "Add link" (muscle-links, exercise-form),
+  "Add PB" (exercise-detail-dialog), "Add option" (purchase-form,
+  purchase-detail, purchases-grid — 3 spots), "Add account" (pot-detail,
+  payment-accounts), "Add door" (room-shape-doors), "Add exercise to plan"
+  (plan-detail-dialog), plus inline quick-add-row submit buttons sitting
+  directly next to an input field: shopping-list, tasks-view (add task),
+  room-workspace (add design version, add task — 2 spots), colour-studio
+  (add palette), rooms-settings, purchase-categories-settings,
+  quick-contribute, and the calendar's day quick-add-event form. All
+  converted to icon-only with `aria-label`.
+- **"Open"/"Open file" (2 files)** — `documents/document-row.tsx` and
+  `documents/document-detail.tsx`, both Download-icon buttons, now
+  icon-only.
+- **Deliberately left untouched (exceptions)**:
+  - `mortgage/mortgage-form.tsx` and `journal/journal-form.tsx` — these are
+    singleton-entity pages where the *default trigger* is invoked directly
+    inside the page's `<PageHeader>` and toggles between "Add X" (no
+    record yet) and "Edit X" (record exists) — i.e. the "Edit" case here
+    *is* the page-header primary CTA, not an inline trigger, so both stay
+    as-is per the confirmed scope.
+  - The four Pencil+"Edit"/"Done" **mode toggles** (`savings/pot-detail.tsx`,
+    `bills/household-contributions.tsx`, `finance/finance-scope.tsx`,
+    `finance/income-header-actions.tsx`) — these aren't dialog triggers,
+    they're inline edit-mode toggles whose label communicates state
+    (Edit ⇄ Done); stripping the text would erase that signal.
+  - `inspiration/inspiration-hub.tsx`'s "Edit" dropdown-menu item — left
+    alone since it sits next to other labeled menu items ("Convert to
+    project", etc.) and bare icon there would break visual consistency
+    with its siblings.
+  - The calendar's "+ Event" header button — functions as the page's only
+    entity-creation entry point (no separate page-header CTA exists for
+    it), so treated as a primary-CTA equivalent and left with its text.
+  - `contacts/contact-form.tsx`, `documents/document-form.tsx`,
+    `documents/note-form.tsx`, `notes/useful-link-form.tsx`,
+    `finance/credit-card-statement-form.tsx` — all page-header CTAs with no
+    "Edit" branch to strip (some are create-only; `useful-link-form` uses
+    a `Link2` icon, not `Plus`).
+- **Verification:** `npm run typecheck`, `npm run lint`, default build, and
+  `NEXT_PUBLIC_APP=life` build all pass. Not yet browser-verified (no
+  `.env.local` Supabase credentials in this sandbox) — should be
+  smoke-tested once deployed: spot-check a handful of the touched buttons
+  (e.g. a bill row's Edit icon, a recipe's "+ ingredient" row, a document's
+  Open/Download icon) to confirm they're still clickable/functional and
+  have a visible focus/hover state despite losing their text.
 
 ## Room Designer: compact toggle with name/count/arrow (2026-07-03)
 User: "make room designer tab compact toggle, show name, count for designs

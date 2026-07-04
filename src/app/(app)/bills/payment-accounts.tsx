@@ -87,9 +87,9 @@ function AccountForm({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {account ? (
-          <Button variant="ghost" size="sm"><Pencil className="h-4 w-4" /> Edit</Button>
+          <Button variant="ghost" size="icon" aria-label="Edit account"><Pencil className="h-4 w-4" /></Button>
         ) : (
-          <Button variant="outline" size="sm"><Plus className="h-4 w-4" /> Add account</Button>
+          <Button variant="outline" size="icon" aria-label="Add account"><Plus className="h-4 w-4" /></Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-md">

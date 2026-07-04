@@ -59,8 +59,8 @@ export function DocumentRow({ doc, compact = false }: { doc: Document; compact?:
       actions={
         <>
           {doc.file_path ? (
-            <Button variant="outline" size="sm" onClick={download} disabled={pending}>
-              <Download className="h-4 w-4" /> Open
+            <Button variant="outline" size="icon" onClick={download} disabled={pending} aria-label="Open document">
+              <Download className="h-4 w-4" />
             </Button>
           ) : null}
           <ConfirmDelete itemLabel="document" action={deleteDocument.bind(null, doc.id)} />

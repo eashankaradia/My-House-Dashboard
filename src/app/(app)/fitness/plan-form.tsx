@@ -66,7 +66,7 @@ export function PlanForm({ plan, trigger }: Props) {
         {trigger ?? (
           <Button size="sm" className="gap-1.5">
             {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {editing ? "Edit plan" : "New plan"}
+            {editing ? null : "New plan"}
           </Button>
         )}
       </DialogTrigger>

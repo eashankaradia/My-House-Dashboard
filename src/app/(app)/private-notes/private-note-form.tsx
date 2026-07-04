@@ -62,7 +62,7 @@ export function PrivateNoteForm({ note, trigger }: { note?: PrivateNote; trigger
         {trigger ?? (
           <Button size="sm" className="gap-1.5">
             {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {editing ? "Edit" : "New note"}
+            {editing ? null : "New note"}
           </Button>
         )}
       </DialogTrigger>

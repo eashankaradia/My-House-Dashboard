@@ -94,7 +94,7 @@ export function ExerciseForm({ exercise, links = [], trigger, onCreated }: Props
         {trigger ?? (
           <Button size="sm" variant="outline" className="gap-1.5">
             {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {editing ? "Edit" : "New exercise"}
+            {editing ? null : "New exercise"}
           </Button>
         )}
       </DialogTrigger>
@@ -248,8 +248,8 @@ function ExerciseLinksField({ exerciseId, links }: { exerciseId: string; links: 
             onChange={(e) => setLabel(e.target.value)}
             className="w-32"
           />
-          <Button type="button" size="sm" variant="outline" onClick={addLink} disabled={pending || !url.trim()}>
-            <Plus className="h-4 w-4" /> Add
+          <Button type="button" size="icon" variant="outline" onClick={addLink} disabled={pending || !url.trim()} aria-label="Add link">
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
       </div>

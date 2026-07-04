@@ -57,8 +57,8 @@ export function HabitDetailDialog({ habit, logs, targets, open, onOpenChange }: 
             habit={habit}
             targets={targets.filter((t) => t.habit_id === habit.id)}
             trigger={
-              <Button variant="ghost" size="sm" className="shrink-0 gap-1.5 text-muted-foreground">
-                <Pencil className="h-3.5 w-3.5" /> Edit
+              <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground" aria-label="Edit habit">
+                <Pencil className="h-3.5 w-3.5" />
               </Button>
             }
           />

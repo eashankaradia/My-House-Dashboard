@@ -390,8 +390,8 @@ function AddEventForm({
           <option value="monthly">Repeats monthly</option>
           <option value="yearly">Repeats yearly</option>
         </NativeSelect>
-        <Button type="submit" size="sm" disabled={pending || !title.trim()} className="gap-1.5">
-          <Plus className="h-4 w-4" /> Add
+        <Button type="submit" size="icon" disabled={pending || !title.trim()} aria-label="Add event">
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
     </form>

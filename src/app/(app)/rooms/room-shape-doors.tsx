@@ -66,8 +66,8 @@ export function RoomShapeDoors({ room, save }: { room: Room; save: (patch: Recor
         <div className="space-y-2 border-t pt-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">Doors</p>
-            <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={() => saveDoors([...doors, { wall: "bottom", offset: 0, width: 80 }])}>
-              <Plus className="h-4 w-4" /> Add door
+            <Button type="button" size="icon" variant="outline" aria-label="Add door" onClick={() => saveDoors([...doors, { wall: "bottom", offset: 0, width: 80 }])}>
+              <Plus className="h-4 w-4" />
             </Button>
           </div>
           {doors.length === 0 ? (

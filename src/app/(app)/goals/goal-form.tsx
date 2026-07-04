@@ -88,7 +88,7 @@ export function GoalForm({ goal, trigger }: Props) {
         {trigger ?? (
           <Button size="sm" className="gap-1.5">
             {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {editing ? "Edit" : "Add goal"}
+            {editing ? null : "Add goal"}
           </Button>
         )}
       </DialogTrigger>

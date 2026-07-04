@@ -121,8 +121,8 @@ export function OptionDetailDialog({
               purchaseCategory={purchaseCategory}
               option={option}
               trigger={
-                <Button variant="outline" size="sm" className="gap-1">
-                  <Pencil className="h-4 w-4" /> Edit
+                <Button variant="outline" size="icon" aria-label="Edit option">
+                  <Pencil className="h-4 w-4" />
                 </Button>
               }
             />

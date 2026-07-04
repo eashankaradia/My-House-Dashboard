@@ -443,9 +443,8 @@ function CompactRow({
           members={members}
           categories={categories}
           trigger={
-            <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
+            <button aria-label="Edit item" className="inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
               <Pencil className="h-4 w-4" />
-              Edit
             </button>
           }
         />
@@ -537,8 +536,8 @@ function PurchaseCard({
                 purchaseId={purchase.id}
                 purchaseCategory={purchase.category}
                 trigger={
-                  <Button variant="outline" size="sm" className="w-full gap-1 border-dashed">
-                    <Plus className="h-4 w-4" /> Add option
+                  <Button variant="outline" size="icon" className="w-full border-dashed" aria-label="Add option">
+                    <Plus className="h-4 w-4" />
                   </Button>
                 }
               />
@@ -557,9 +556,8 @@ function PurchaseCard({
               members={members}
               categories={categories}
               trigger={
-                <button className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
+                <button aria-label="Edit item" className="inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
                   <Pencil className="h-4 w-4" />
-                  Edit
                 </button>
               }
             />
