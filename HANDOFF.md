@@ -7,11 +7,13 @@
 > Finance page and the Dashboard's Cash flow / glance-stat cards behind
 > bullets, per-device via the existing prefs cookie. No migration. `npm run
 > typecheck`, `npm run lint`, default build, and `NEXT_PUBLIC_APP=life` build
-> all pass. About to commit/push/deploy-confirm. See "Mask finance numbers"
-> section below for details; earlier sections (link/title truncation fix,
-> Purchases auto-refresh, auto-fill rollout, logo redesign) are
-> also already confirmed deployed. Cannot browser-verify locally: this
-> sandbox has no `.env.local` Supabase credentials.)
+> all pass. Committed and pushed to `main`; confirmed **READY in Vercel
+> production** on both `my-house-dashboard` and `my-life-dashboard` at commit
+> `0ada54b`. Nothing outstanding. See "Mask finance numbers" section below
+> for details; earlier sections (link/title truncation fix, Purchases
+> auto-refresh, auto-fill rollout, logo redesign) are also already confirmed
+> deployed. Cannot browser-verify locally: this sandbox has no
+> `.env.local` Supabase credentials.)
 
 ## Mask finance numbers: a "Hide finance numbers" toggle (2026-07-03)
 User: "add a toggle so that I can mask finance numbers on and off" — then,
