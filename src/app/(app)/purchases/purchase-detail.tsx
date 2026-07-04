@@ -23,6 +23,7 @@ import type { PurchaseOption, PurchaseWithOptions } from "@/lib/database.types";
 import { PurchaseForm } from "./purchase-form";
 import { OptionForm } from "./option-form";
 import { OptionRow } from "./option-row";
+import { StatusSelect } from "./status-select";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { LinkedItems } from "@/app/(app)/links/linked-items";
 import { deletePurchase } from "./actions";
@@ -56,7 +57,10 @@ export function PurchaseDetailDialog({
 
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <Detail label="Status" value={purchase.status} />
+            <div>
+              <p className="text-xs font-medium text-muted-foreground">Status</p>
+              <StatusSelect purchase={purchase} className="mt-0.5 h-9 w-full text-sm" />
+            </div>
             <Detail label="Category" value={purchase.category} />
             {purchase.size ? <Detail label="Size" value={`${purchase.size} purchase`} /> : null}
             {purchase.room ? <Detail label="Room" value={purchase.room} /> : null}

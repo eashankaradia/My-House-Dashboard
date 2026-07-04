@@ -2,18 +2,43 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-03 (Added a "Hide finance
-> numbers" toggle (eye icon, Finance page header): masks all amounts on the
-> Finance page and the Dashboard's Cash flow / glance-stat cards behind
-> bullets, per-device via the existing prefs cookie. No migration. `npm run
-> typecheck`, `npm run lint`, default build, and `NEXT_PUBLIC_APP=life` build
-> all pass. Committed and pushed to `main`; confirmed **READY in Vercel
-> production** on both `my-house-dashboard` and `my-life-dashboard` at commit
-> `0ada54b`. Nothing outstanding. See "Mask finance numbers" section below
-> for details; earlier sections (link/title truncation fix, Purchases
-> auto-refresh, auto-fill rollout, logo redesign) are also already confirmed
+> after **every** change. Last updated: 2026-07-03 (Future Purchases: the
+> detail dialog's static "Status" text is now a live dropdown (the same
+> `StatusSelect` already used in list rows, extracted to its own file), so
+> clicking a purchase and changing its status no longer requires opening the
+> full edit form. No migration. `npm run typecheck`, `npm run lint`, default
+> build, and `NEXT_PUBLIC_APP=life` build all pass. About to
+> commit/push/deploy-confirm. See "Purchases: quick status change" section
+> below for details; earlier sections (mask finance numbers, link/title
+> truncation fix, Purchases auto-refresh, auto-fill rollout, logo redesign)
+> are all already confirmed
 > deployed. Cannot browser-verify locally: this sandbox has no
 > `.env.local` Supabase credentials.)
+
+## Purchases: quick status change from the detail dialog (2026-07-03)
+User: "when I click on a future purchases let me easily change it's status."
+
+Clicking a purchase card opened `PurchaseDetailDialog`, which showed status
+as plain read-only text (`<Detail label="Status" value={purchase.status} />`)
+— changing it meant opening the full `PurchaseForm` edit dialog just to flip
+one field. A working `StatusSelect` dropdown already existed, but only
+inline in the desktop list-row view (`purchases-grid.tsx`), not in the
+dialog opened from either that view or the card/compact views.
+- `src/app/(app)/purchases/status-select.tsx` (new) — extracted the
+  dropdown (calls the existing `updatePurchaseStatus` action) out of
+  `purchases-grid.tsx` into its own file so it can be shared without a
+  cross-import between the grid and detail-dialog files.
+- `src/app/(app)/purchases/purchases-grid.tsx` — now imports `StatusSelect`
+  instead of defining it locally; both existing usages (detailed-row view,
+  compact-row view) unchanged in behavior.
+- `src/app/(app)/purchases/purchase-detail.tsx` — the "Status" field in the
+  dialog is now the same `StatusSelect` dropdown instead of static text.
+- **Verification:** `npm run typecheck`, `npm run lint`, default build, and
+  `NEXT_PUBLIC_APP=life` build all pass. Not yet browser-verified (no
+  `.env.local` Supabase credentials in this sandbox) — should be
+  smoke-tested once deployed: open a purchase's detail view, change its
+  status from the dropdown, confirm it saves without opening the edit form
+  and that the card/list re-sorts/re-labels correctly afterward.
 
 ## Mask finance numbers: a "Hide finance numbers" toggle (2026-07-03)
 User: "add a toggle so that I can mask finance numbers on and off" — then,

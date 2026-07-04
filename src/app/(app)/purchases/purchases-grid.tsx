@@ -24,7 +24,8 @@ import { PurchaseForm } from "./purchase-form";
 import { OptionForm } from "./option-form";
 import { OptionRow } from "./option-row";
 import { PurchaseDetailDialog } from "./purchase-detail";
-import { deletePurchase, updatePurchaseStatus } from "./actions";
+import { StatusSelect } from "./status-select";
+import { deletePurchase } from "./actions";
 
 // Kept for backwards compatibility with the page's import; stars are gone.
 export type StarInfo = { mine: boolean; names: string[] };
@@ -399,28 +400,6 @@ function FilterSelect({
         {children}
       </NativeSelect>
     </label>
-  );
-}
-
-function StatusSelect({ purchase }: { purchase: PurchaseWithOptions }) {
-  const [pending, startTransition] = React.useTransition();
-  const { toast } = useToast();
-  return (
-    <NativeSelect
-      value={purchase.status}
-      disabled={pending}
-      onChange={(e) =>
-        startTransition(async () => {
-          const res = await updatePurchaseStatus(purchase.id, e.target.value);
-          if (res?.error) toast({ variant: "destructive", title: "Couldn't update", description: res.error });
-        })
-      }
-      className="h-8 text-xs"
-    >
-      {PURCHASE_STATUSES.map((s) => (
-        <option key={s} value={s}>{s}</option>
-      ))}
-    </NativeSelect>
   );
 }
 
