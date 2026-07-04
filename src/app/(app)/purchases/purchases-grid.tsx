@@ -530,6 +530,7 @@ function PurchaseCard({
                   option={opt}
                   isFirst={i === 0}
                   isLast={i === options.length - 1}
+                  showRank={options.length > 1}
                 />
               ))}
               <OptionForm

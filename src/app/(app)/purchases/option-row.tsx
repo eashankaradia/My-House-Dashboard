@@ -19,12 +19,15 @@ export function OptionRow({
   option,
   isFirst,
   isLast,
+  showRank = true,
 }: {
   purchaseId: string;
   purchaseCategory?: string;
   option: PurchaseOption;
   isFirst: boolean;
   isLast: boolean;
+  /** Hide the rank arrows when there's only one option — nothing to rank against. */
+  showRank?: boolean;
 }) {
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
@@ -48,24 +51,26 @@ export function OptionRow({
     >
       {/* Line 1: rank · image · name/meta · price */}
       <div className="flex min-w-0 items-start gap-2">
-        <div className="flex shrink-0 flex-col">
-          <button
-            onClick={() => run(() => moveOption(purchaseId, option.id, "up"))}
-            disabled={pending || isFirst}
-            aria-label="Rank higher"
-            className="inline-flex h-6 w-7 items-center justify-center text-muted-foreground transition-transform hover:text-foreground active:scale-90 disabled:opacity-30"
-          >
-            <ChevronUp className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => run(() => moveOption(purchaseId, option.id, "down"))}
-            disabled={pending || isLast}
-            aria-label="Rank lower"
-            className="inline-flex h-6 w-7 items-center justify-center text-muted-foreground transition-transform hover:text-foreground active:scale-90 disabled:opacity-30"
-          >
-            <ChevronDown className="h-4 w-4" />
-          </button>
-        </div>
+        {showRank ? (
+          <div className="flex shrink-0 flex-col">
+            <button
+              onClick={() => run(() => moveOption(purchaseId, option.id, "up"))}
+              disabled={pending || isFirst}
+              aria-label="Rank higher"
+              className="inline-flex h-6 w-7 items-center justify-center text-muted-foreground transition-transform hover:text-foreground active:scale-90 disabled:opacity-30"
+            >
+              <ChevronUp className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => run(() => moveOption(purchaseId, option.id, "down"))}
+              disabled={pending || isLast}
+              aria-label="Rank lower"
+              className="inline-flex h-6 w-7 items-center justify-center text-muted-foreground transition-transform hover:text-foreground active:scale-90 disabled:opacity-30"
+            >
+              <ChevronDown className="h-4 w-4" />
+            </button>
+          </div>
+        ) : null}
 
         {option.image_url ? (
           <OptionDetailDialog purchaseId={purchaseId} purchaseCategory={purchaseCategory} option={option}>

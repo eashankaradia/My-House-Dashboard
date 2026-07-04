@@ -2,25 +2,59 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-03 (App-wide sweep: stripped
-> redundant "Edit"/"Add X"/"Open" text from ~45 small in-context trigger
-> buttons (list rows, detail dialogs, inline add-within-section buttons) —
-> icon-only now, since the icon already conveys the action. Page-header
-> primary CTAs and empty-state buttons deliberately kept their text (user
-> confirmed this scope explicitly), along with a handful of other exceptions
-> — see "Strip redundant Edit/Add/Open button text" section below for the
-> full list of what changed and what was deliberately left alone. No
-> migration. `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. Committed and pushed to `main`;
-> confirmed **READY in Vercel production** on both `my-house-dashboard` and
-> `my-life-dashboard` at commit `925b6d1` (and the prior Room Designer batch,
-> `6d093b3`, is confirmed READY too). Nothing outstanding. See "Strip
-> redundant Edit/Add/Open button text" and "Room Designer compact toggle"
-> sections below for what each batch changed. Earlier sections
-> (Purchases quick status change, mask finance numbers, link/title truncation
+> after **every** change. Last updated: 2026-07-03 (Purchase detail dialog:
+> decluttered for a single-option item, the common case — the "Decision
+> centre" box (redundant when there's nothing to decide between) is hidden,
+> the verbose "Options to compare (N) — ▲▼ to rank, ★ to pick" header is now
+> a plain "Options (N)" with the instructions moved into an info tooltip
+> (shown only when there are 2+ options to actually rank/compare), and the
+> rank arrows on a lone option (which do nothing) are hidden. No migration.
+> `npm run typecheck`, `npm run lint`, default build, and
+> `NEXT_PUBLIC_APP=life` build all pass. About to commit/push/deploy-confirm.
+> Not browser-verified against live data (no `.env.local` Supabase
+> credentials in this sandbox) — reasoned from the user's screenshot of the
+> live dialog plus the source. See "Purchase detail: declutter for
+> presentation" section below for details; earlier sections (button-text
+> sweep, Room Designer compact toggle, Purchases quick status change, mask
+> finance numbers, link/title truncation
 > fix, Purchases auto-refresh, auto-fill rollout, logo redesign) are all
 > already confirmed deployed. Cannot browser-verify locally: this sandbox has
 > no `.env.local` Supabase credentials.)
+
+## Purchase detail: declutter for presentation (2026-07-03)
+User shared a screenshot of the Purchases detail dialog ("Kitchen Table",
+one option) and said: "it looks overwhelming, clean it up so when I'm
+showing someone it looks easy to read and understand with minimal text."
+
+The screenshot showed the same product name/price rendered **twice** —
+once in a collapsed "Decision centre" summary, once in the single option
+row directly below it — plus a verbose always-visible instruction line
+("Options to compare (1) — ▲▼ to rank, ★ to pick") and rank-up/rank-down
+arrows that do nothing when there's only one option to rank.
+- `src/app/(app)/purchases/purchase-detail.tsx` — `DecisionCentre` (the
+  cheapest/top-rated/room-fit comparison panel) now only renders when
+  `options.length > 1` — with 0 or 1 options there's nothing to decide
+  between, so it was pure duplication. The options-list header is now a
+  plain `Options (N)` label; the `▲▼ to rank, ★ to pick` instructions moved
+  into an `InfoHint` tooltip that only appears once there are 2+ options
+  (matching the existing app convention for "how do I use this" hints next
+  to page titles).
+- `src/app/(app)/purchases/option-row.tsx` — new `showRank` prop (default
+  `true`); when `false`, the rank up/down arrow column isn't rendered at
+  all (previously always rendered, just visually disabled/greyed with one
+  option). Both `purchase-detail.tsx` and `purchases-grid.tsx` now pass
+  `showRank={options.length > 1}`.
+- Left unchanged: the star-rating/link/pick/edit/delete icon row on each
+  option (still needed regardless of option count), the Status/Category/
+  Room summary grid, timestamps, comments, and linked-items sections —
+  none of those were duplicated or redundant, just the two items above were.
+- **Verification:** `npm run typecheck`, `npm run lint`, default build, and
+  `NEXT_PUBLIC_APP=life` build all pass. Not browser-verified against live
+  data (no `.env.local` Supabase credentials in this sandbox) — reasoned
+  directly from the user's screenshot and the source; should be
+  smoke-tested once deployed on an item with exactly one option (Decision
+  centre + rank arrows should both be gone) and one with 2+ options
+  (Decision centre and rank arrows should still appear, tooltip visible).
 
 ## Strip redundant Edit/Add/Open button text (2026-07-03)
 User: "remove the word edit from edit buttons and add from +, and open from

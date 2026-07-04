@@ -16,6 +16,7 @@ import { AddedBy } from "@/components/shared/added-by";
 import { ShareButton } from "@/components/shared/share-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { ItemComments } from "@/components/shared/item-comments";
+import { InfoHint } from "@/components/shared/info-hint";
 import { priorityVariant } from "@/lib/ui";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { MemberMap } from "@/lib/household";
@@ -99,12 +100,13 @@ export function PurchaseDetailDialog({
               </div>
             </div>
           ) : null}
-          <DecisionCentre purchase={purchase} options={options} />
+          {options.length > 1 ? <DecisionCentre purchase={purchase} options={options} /> : null}
           <ItemTimestamps createdAt={purchase.created_at} updatedAt={purchase.updated_at} />
 
           <div>
-            <p className="mb-1.5 text-xs font-medium text-muted-foreground">
-              Options to compare ({options.length}) — ▲▼ to rank, ★ to pick
+            <p className="mb-1.5 flex items-center gap-1 text-xs font-medium text-muted-foreground">
+              Options ({options.length})
+              {options.length > 1 ? <InfoHint text="Use the arrows to rank options and the star to pick one." /> : null}
             </p>
             <div className="space-y-2">
               {options.map((opt, i) => (
@@ -115,6 +117,7 @@ export function PurchaseDetailDialog({
                   option={opt}
                   isFirst={i === 0}
                   isLast={i === options.length - 1}
+                  showRank={options.length > 1}
                 />
               ))}
               <OptionForm
