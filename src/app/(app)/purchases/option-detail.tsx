@@ -7,12 +7,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/shared/star-rating";
 import { ItemComments } from "@/components/shared/item-comments";
+import { ShareButton } from "@/components/shared/share-button";
+import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { FREQUENCY_SUFFIX, OPTION_SHAPE_LABELS } from "@/lib/constants";
 import type { PurchaseOption } from "@/lib/database.types";
@@ -23,14 +24,25 @@ export function OptionDetailDialog({
   purchaseId,
   purchaseCategory = "Furniture",
   option,
+  deepLink = true,
   children,
 }: {
   purchaseId: string;
   purchaseCategory?: string;
   option: PurchaseOption;
+  /**
+   * React to `?option=<id>` in the URL (e.g. from a shared link) and open
+   * automatically. Disabled for duplicate render paths (the grid's inline
+   * option list) so only one instance per option auto-opens.
+   */
+  deepLink?: boolean;
+  /** One or more `<DialogTrigger asChild>` elements. */
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = React.useState(false);
+  const linked = useOpenFromUrl(option.id, "option");
+  const [localOpen, setLocalOpen] = React.useState(false);
+  const open = deepLink ? linked.open : localOpen;
+  const onOpenChange = deepLink ? linked.onOpenChange : setLocalOpen;
   const [activePhoto, setActivePhoto] = React.useState(0);
   const dims = [option.width_cm, option.depth_cm, option.height_cm];
   const hasDims = dims.some((d) => d != null && d > 0);
@@ -42,8 +54,8 @@ export function OptionDetailDialog({
   }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {children}
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 pr-6">
@@ -131,7 +143,7 @@ export function OptionDetailDialog({
               entityType="purchase_option"
               entityId={option.id}
               ownerId={option.user_id}
-              href={`/purchases?item=${option.purchase_id}`}
+              href={`/purchases?item=${option.purchase_id}&option=${option.id}`}
               label={option.name}
             />
           </div>
@@ -147,6 +159,11 @@ export function OptionDetailDialog({
                 View product <ExternalLink className="h-3.5 w-3.5" />
               </a>
             ) : null}
+            <ShareButton
+              title={option.name}
+              text={[option.store, formatCurrency(option.price)].filter(Boolean).join(" · ")}
+              url={`/purchases?item=${option.purchase_id}&option=${option.id}`}
+            />
             <OptionForm
               purchaseId={purchaseId}
               purchaseCategory={purchaseCategory}

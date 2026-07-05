@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ChevronDown, ChevronUp, ExternalLink, Pencil, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { DialogTrigger } from "@/components/ui/dialog";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,7 @@ export function OptionRow({
   isFirst,
   isLast,
   showRank = true,
+  deepLink = true,
 }: {
   purchaseId: string;
   purchaseCategory?: string;
@@ -28,6 +30,8 @@ export function OptionRow({
   isLast: boolean;
   /** Hide the rank arrows when there's only one option — nothing to rank against. */
   showRank?: boolean;
+  /** Whether this row's option dialog reacts to a shared `?option=<id>` link. */
+  deepLink?: boolean;
 }) {
   const [pending, startTransition] = React.useTransition();
   const { toast } = useToast();
@@ -72,25 +76,27 @@ export function OptionRow({
           </div>
         ) : null}
 
-        {option.image_url ? (
-          <OptionDetailDialog purchaseId={purchaseId} purchaseCategory={purchaseCategory} option={option}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={option.image_url} alt="" className="h-10 w-10 shrink-0 cursor-pointer rounded-md object-cover hover:opacity-80" />
-          </OptionDetailDialog>
-        ) : null}
+        <OptionDetailDialog purchaseId={purchaseId} purchaseCategory={purchaseCategory} option={option} deepLink={deepLink}>
+          {option.image_url ? (
+            <DialogTrigger asChild>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={option.image_url} alt="" className="h-10 w-10 shrink-0 cursor-pointer rounded-md object-cover hover:opacity-80" />
+            </DialogTrigger>
+          ) : null}
 
-        <OptionDetailDialog purchaseId={purchaseId} purchaseCategory={purchaseCategory} option={option}>
-          <button className="block min-w-0 flex-1 rounded text-left hover:underline">
-            <span className="flex min-w-0 flex-wrap items-center gap-1.5">
-              <span className="min-w-0 flex-1 whitespace-normal break-words text-sm font-medium leading-snug [overflow-wrap:anywhere]">
-                {option.name}
+          <DialogTrigger asChild>
+            <button className="block min-w-0 flex-1 rounded text-left hover:underline">
+              <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+                <span className="min-w-0 flex-1 whitespace-normal break-words text-sm font-medium leading-snug [overflow-wrap:anywhere]">
+                  {option.name}
+                </span>
+                {option.is_chosen ? <Badge variant="success" className="shrink-0">Picked</Badge> : null}
               </span>
-              {option.is_chosen ? <Badge variant="success" className="shrink-0">Picked</Badge> : null}
-            </span>
-            <span className="block min-w-0 whitespace-normal break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">
-              {[option.store, option.notes].filter(Boolean).join(" · ") || " "}
-            </span>
-          </button>
+              <span className="block min-w-0 whitespace-normal break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">
+                {[option.store, option.notes].filter(Boolean).join(" · ") || " "}
+              </span>
+            </button>
+          </DialogTrigger>
         </OptionDetailDialog>
 
         <div className="flex shrink-0 flex-col items-end pt-0.5">

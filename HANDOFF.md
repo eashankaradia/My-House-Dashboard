@@ -2,28 +2,91 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-05 (Room Designer: furniture
-> can now be an actual L-shaped "Corner Sofa" footprint instead of only
-> rectangle/square/round. Added `corner`, `notch_w_cm`, `notch_d_cm` to
-> `room_design_layout_items` via migration
-> `0066_layout_item_corner_sofa.sql` (**user must run this migration**).
-> New `lShapeFootprint()` helper in `lib/room-shape.ts` reuses the existing
-> `lShapeOutline()` (already used for L-shaped rooms) and mirrors it to
-> whichever corner is picked. New "Corner Sofa" preset (260x170cm,
-> 160x80cm notch); a "Flip corner" button cycles which corner is cut;
-> notch width/depth are editable when shape is "l-shape". `npm run
-> typecheck`, `npm run lint`, default build, and `NEXT_PUBLIC_APP=life`
-> build all pass. Committed as `651c28b`, pushed to `main`, and confirmed
-> READY on Vercel production for both my-house-dashboard and
-> my-life-dashboard. Not browser-verified against live data (no
-> `.env.local` Supabase credentials in this sandbox) — smoke-test suggestion: add a Corner Sofa from the furniture
-> preset list, confirm it renders as an L (not a rectangle), tap "Flip
-> corner" a few times to cycle all 4 orientations, and edit notch width/
-> depth to confirm the shape updates live. See "Room Designer: corner sofa
-> (L-shaped furniture)" section below for details; earlier sections (door
+> after **every** change. Last updated: 2026-07-05 (Purchases: options are
+> now shareable. `ShareButton` gained an optional `url` override (defaults
+> to `window.location.href` as before); the option detail dialog uses it
+> to share a deep link to `/purchases?item=<purchaseId>&option=<optionId>`.
+> Made that deep link actually work: `OptionDetailDialog` now drives its
+> open state off `useOpenFromUrl(option.id, "option")` (behind a new
+> `deepLink` prop, default true), and merged its two previously-separate
+> `<Dialog>` instances (image trigger + name trigger, in `option-row.tsx`)
+> into one shared dialog with two `<DialogTrigger>` children, so a shared
+> link only auto-opens once instead of twice. The grid's inline option
+> list passes `deepLink={false}` (same option data renders there too;
+> only the modal-nested copy should react to the URL). No migration.
+> `npm run typecheck`, `npm run lint`, default build, and
+> `NEXT_PUBLIC_APP=life` build all pass. About to commit/push/deploy-
+> confirm. Not browser-verified against live data (no `.env.local`
+> Supabase credentials in this sandbox) — smoke-test suggestion: open an
+> option, tap Share, confirm the shared text contains a
+> `?item=...&option=...` URL, then visit that URL fresh and confirm the
+> purchase dialog opens with the specific option's dialog on top (and
+> not duplicated). See "Purchases: share individual options" section
+> below for details; earlier sections (Room Designer corner sofa, door
 > distance to wall, purchase-option photo gallery, purchase detail
-> declutter, button-text sweep, Room Designer compact toggle, and
-> everything before) are all already confirmed deployed.
+> declutter, and everything before) are all already confirmed deployed.
+
+## Purchases: share individual options (2026-07-05)
+User asked: "give me the ability to share options for purchases." Purchases
+already had a Share button (whole-item), but individual options (the
+competing products within a purchase, e.g. "DFS Marlow sofa" vs "Made
+Harlow sofa") had no share affordance and no deep link of their own.
+
+**The trap I nearly fell into:** naively wiring `useOpenFromUrl(option.id,
+"option")` straight into the existing `OptionDetailDialog` would have
+opened it *twice* per option — `option-row.tsx` was already instantiating
+two separate `<OptionDetailDialog>` (and therefore two separate
+`<Dialog>` roots, each with its own `useState`) for the same option: one
+wrapping the thumbnail image, one wrapping the name/store text. Both
+would react to the same `?option=<id>&item=<purchaseId>` and both would
+pop open — two stacked dialogs for one option.
+
+Fix: merged them into a single `<OptionDetailDialog>` per option, with
+the image and the name/store button each wrapped in their own
+`<DialogTrigger asChild>` as *siblings* inside it (Radix supports
+multiple triggers under one `Dialog.Root`; `Dialog.Root` itself renders no
+DOM, so the existing flex layout in `option-row.tsx` is unaffected).
+
+There's a second render path for the same option data: `purchases-grid.tsx`
+renders `<OptionRow>` again inside each card's inline "N options" expand
+section. That copy doesn't need to react to shared links (the canonical
+share target is the modal-nested one, reached via `?item=`), so it now
+passes `deepLink={false}` — added a `deepLink` prop to both `OptionRow`
+and `OptionDetailDialog` (default `true`) to make this an explicit,
+per-call-site opt-out rather than a hidden footgun.
+
+Code changes:
+- `src/components/shared/share-button.tsx`: added an optional `url` prop
+  (path or absolute URL). When set, it's resolved to absolute via `new
+  URL(url, window.location.origin)` inside the click handler (not at
+  render time, to stay SSR-safe). Omitting it keeps every existing call
+  site's behavior (`window.location.href`) unchanged.
+- `src/app/(app)/purchases/option-detail.tsx`:
+  - `OptionDetailDialog` now takes a `deepLink` prop (default `true`) and
+    drives its open state from `useOpenFromUrl(option.id, "option")` when
+    enabled, falling back to local `useState` when not.
+  - Restructured to accept pre-wrapped `<DialogTrigger>` children instead
+    of wrapping `children` itself, so callers can supply more than one
+    trigger under one dialog.
+  - Added a `ShareButton` next to the Edit button in the footer, sharing
+    `/purchases?item=<purchaseId>&option=<optionId>` with the option's
+    name/price/store as the message.
+  - The option's comment-notification link (`ItemComments`'s `href`) now
+    also includes `&option=<id>`, so clicking a comment notification opens
+    straight to the option, not just the parent purchase.
+- `src/app/(app)/purchases/option-row.tsx`: added `deepLink` prop (forwarded
+  to `OptionDetailDialog`); merged the two separate dialog wraps into one,
+  with the image and name/store button each in their own `DialogTrigger`.
+- `src/app/(app)/purchases/purchases-grid.tsx`: its inline `<OptionRow>`
+  (inside each card's expandable options list) now passes `deepLink={false}`.
+
+Verification: `npm run typecheck`, `npm run lint`, default build, and
+`NEXT_PUBLIC_APP=life` build all pass. Not browser-verified against live
+data (no `.env.local` Supabase credentials in this sandbox) — suggested
+smoke-test: open an option's detail, tap Share, confirm the shared text's
+URL is `/purchases?item=<id>&option=<id>`; then load that URL fresh (or
+in an incognito tab) and confirm the purchase dialog opens with the
+target option's dialog open on top of it, appearing exactly once.
 
 ## Room Designer: corner sofa (L-shaped furniture) (2026-07-05)
 User asked: "let me add a corner sofa" (in the Room Designer). Asked the
