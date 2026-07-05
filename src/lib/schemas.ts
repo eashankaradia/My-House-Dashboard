@@ -139,7 +139,7 @@ export const purchaseOptionSchema = z.object({
   store: optionalString,
   url: optionalString,
   price: money,
-  image_url: optionalString,
+  image_urls: z.array(z.string().trim().min(1)).default([]),
   notes: optionalString,
   rating,
   frequency: z.enum(FREQUENCIES).default("one-off"),

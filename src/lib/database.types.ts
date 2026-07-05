@@ -225,6 +225,8 @@ export type PurchaseOption = Timestamps & {
   url: string | null;
   price: number;
   image_url: string | null;
+  /** Full photo gallery; image_url is kept in sync as image_urls[0] (the cover). */
+  image_urls: string[];
   notes: string | null;
   is_chosen: boolean;
   rank: number;

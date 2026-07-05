@@ -18,7 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
-import { ImageUpload } from "@/components/shared/image-upload";
+import { ImageUploadMulti } from "@/components/shared/image-upload-multi";
 import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
 import { purchaseOptionSchema, type PurchaseOptionInput } from "@/lib/schemas";
@@ -56,7 +56,7 @@ export function OptionForm({ purchaseId, purchaseCategory = "Furniture", option,
       store: option?.store ?? "",
       url: option?.url ?? "",
       price: option?.price ?? 0,
-      image_url: option?.image_url ?? "",
+      image_urls: option?.image_urls ?? (option?.image_url ? [option.image_url] : []),
       notes: option?.notes ?? "",
       rating: option?.rating ?? 0,
       frequency: (option?.frequency as PurchaseOptionInput["frequency"]) ?? "one-off",
@@ -69,7 +69,7 @@ export function OptionForm({ purchaseId, purchaseCategory = "Furniture", option,
 
   // Optional extras live behind a collapsible section; one-off price is the default.
   const [showMore, setShowMore] = React.useState(
-    Boolean(option && (option.store || option.url || option.image_url || option.notes || option.rating || option.width_cm || option.depth_cm || option.height_cm || (option.frequency && option.frequency !== "one-off"))),
+    Boolean(option && (option.store || option.url || option.image_urls?.length || option.notes || option.rating || option.width_cm || option.depth_cm || option.height_cm || (option.frequency && option.frequency !== "one-off"))),
   );
   // Furniture size/shape is furniture-only, so it's tucked behind its own toggle.
   const [showSize, setShowSize] = React.useState(
@@ -89,7 +89,9 @@ export function OptionForm({ purchaseId, purchaseCategory = "Furniture", option,
     }
     if (res.title && !getValues("name")) setValue("name", res.title.slice(0, 160));
     if (res.price) setValue("price", res.price);
-    if (res.image) setValue("image_url", res.image);
+    if (res.image && !getValues("image_urls").includes(res.image)) {
+      setValue("image_urls", [...getValues("image_urls"), res.image]);
+    }
     toast({ title: "Filled from link" });
   }
 
@@ -149,9 +151,8 @@ export function OptionForm({ purchaseId, purchaseCategory = "Furniture", option,
                   </Button>
                 </div>
               </Field>
-              <Field label="Photo" hint="Upload a photo or it's filled from the link">
-                <ImageUpload value={watch("image_url")} onChange={(url) => setValue("image_url", url ?? "")} />
-                <input type="hidden" {...register("image_url")} />
+              <Field label="Photos" hint="Upload one or more, or the first is filled from the link">
+                <ImageUploadMulti value={watch("image_urls")} onChange={(urls) => setValue("image_urls", urls)} />
               </Field>
               <Field label="Your rating" hint="How much you rate this option, out of 5.">
                 <div className="flex h-9 items-center">
@@ -213,10 +214,7 @@ export function OptionForm({ purchaseId, purchaseCategory = "Furniture", option,
               ) : null}
             </div>
           ) : (
-            <>
-              <input type="hidden" {...register("image_url")} />
-              <input type="hidden" {...register("rating")} />
-            </>
+            <input type="hidden" {...register("rating")} />
           )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>

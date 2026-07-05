@@ -2,25 +2,81 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-04 (Purchase detail dialog:
-> decluttered for a single-option item, the common case — the "Decision
-> centre" box (redundant when there's nothing to decide between) is hidden,
-> the verbose "Options to compare (N) — ▲▼ to rank, ★ to pick" header is now
-> a plain "Options (N)" with the instructions moved into an info tooltip
-> (shown only when there are 2+ options to actually rank/compare), and the
-> rank arrows on a lone option (which do nothing) are hidden. No migration.
-> `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. Committed as `e490244`, pushed to
-> `main`, and confirmed READY on Vercel production for both
-> my-house-dashboard and my-life-dashboard. Not browser-verified against
-> live data (no `.env.local` Supabase credentials in this sandbox) —
-> reasoned from the user's screenshot of the live dialog plus the source.
-> See "Purchase detail: declutter for presentation" section below for
-> details; earlier sections (button-text sweep, Room Designer compact
-> toggle, Purchases quick status change, mask finance numbers, link/title
-> truncation fix, Purchases auto-refresh, auto-fill rollout, logo redesign)
-> are all already confirmed deployed. Cannot browser-verify locally: this
-> sandbox has no `.env.local` Supabase credentials.)
+> after **every** change. Last updated: 2026-07-05 (Purchase options now have
+> a photo gallery instead of a single image — added `image_urls text[]` to
+> `purchase_options` via migration `0065_purchase_option_photos.sql`
+> (**user must run this migration**), a new `ImageUploadMulti` component,
+> and a tap-to-switch gallery in the option detail dialog. `image_url` is
+> kept in sync as `image_urls[0]` (the cover) so existing thumbnail spots —
+> option rows, Ready to buy, the Room Designer's saved-option picker — are
+> unchanged. `npm run typecheck`, `npm run lint`, default build, and
+> `NEXT_PUBLIC_APP=life` build all pass. About to commit/push/deploy-confirm.
+> Not browser-verified against live data (no `.env.local` Supabase
+> credentials in this sandbox). See "Purchase options: photo gallery"
+> section below for details; earlier sections (Purchase detail declutter,
+> button-text sweep, Room Designer compact toggle, Purchases quick status
+> change, mask finance numbers, link/title truncation fix, Purchases
+> auto-refresh, auto-fill rollout, logo redesign) are all already confirmed
+> deployed.
+
+## Purchase options: photo gallery (2026-07-05)
+User asked: "let me add more than one photo per option on future purchases."
+`purchase_options` previously had a single `image_url` column, enforced by
+`ImageUpload` (single-file) in `option-form.tsx`/`quick-option-form.tsx`.
+
+**Migration required — run before/with this deploy:**
+`supabase/migrations/0065_purchase_option_photos.sql` adds
+`image_urls text[] not null default '{}'` to `purchase_options` and
+backfills it from the existing `image_url` for any option that already has
+a photo. Safe to run more than once (`add column if not exists`).
+
+**Design decision:** kept `image_url` as a derived "cover" column
+(`image_urls[0]`), written on every insert/update, rather than touching
+every place that reads a single cover thumbnail. This meant zero changes
+to `option-row.tsx`, `ready-to-buy.tsx`, `floor-planner.tsx`, or the Room
+Designer's placement/layout code — they all still read `option.image_url`
+and keep working. `image_urls` is the new source of truth for the gallery.
+
+Code changes:
+- `src/lib/schemas.ts`: `purchaseOptionSchema.image_url` →
+  `image_urls: z.array(z.string().trim().min(1)).default([])`.
+- `src/lib/database.types.ts`: added `image_urls: string[]` to
+  `PurchaseOption` (kept `image_url` too).
+- `src/components/shared/image-upload-multi.tsx` (new): uploads one or
+  more files to the `images` bucket, renders existing photos as removable
+  thumbnails plus Camera/Gallery add buttons (gallery input allows
+  multi-select). Mirrors the styling of the existing single-image
+  `ImageUpload`, which is untouched and still used elsewhere (projects,
+  inspiration, recipes, drafts).
+- `src/app/(app)/purchases/option-form.tsx` and `quick-option-form.tsx`:
+  swapped the single "Photo" field for `ImageUploadMulti` bound to
+  `image_urls`; auto-fill from a pasted link now appends to the array
+  (skipping duplicates) instead of overwriting a single field.
+- `src/app/(app)/purchases/actions.ts`: `addOption`, `updateOption`, and
+  `createPurchaseWithOptions` now write both `image_urls` (full array) and
+  `image_url` (`image_urls[0] ?? null`, the derived cover).
+- `src/app/(app)/purchases/option-detail.tsx`: the read-only option view
+  now shows a photo gallery — a hero image plus a horizontal thumbnail
+  strip (shown only when there are 2+ photos) that swaps the hero on tap.
+  Falls back to `option.image_url` if `image_urls` is empty, so it doesn't
+  break for options saved before the migration runs.
+- `src/app/(app)/purchases/purchase-form.tsx`: the up-front "add options
+  while creating a purchase" flow now sends `image_urls: []` (that flow
+  doesn't collect photos, same as before — it never collected a single
+  `image_url` either).
+
+Verification: `npm run typecheck`, `npm run lint`, default build, and
+`NEXT_PUBLIC_APP=life` build all pass. Not browser-verified against live
+data (no `.env.local` Supabase credentials in this sandbox) — the Supabase
+Storage upload flow (`ImageUploadMulti`) in particular should get a real
+smoke-test: add 2-3 photos to an option, confirm they persist and reorder
+via remove/re-add, and confirm the option-row/Ready-to-buy/Room-Designer
+thumbnails still show the first photo as the cover.
+
+**Next step for whoever picks this up:** the user must run
+`0065_purchase_option_photos.sql` in the Supabase SQL editor for the
+gallery to actually persist (before that, `image_urls` writes will fail
+since the column doesn't exist yet).
 
 ## Purchase detail: declutter for presentation (2026-07-03)
 User shared a screenshot of the Purchases detail dialog ("Kitchen Table",

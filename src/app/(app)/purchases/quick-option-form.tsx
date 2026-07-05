@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form-field";
-import { ImageUpload } from "@/components/shared/image-upload";
+import { ImageUploadMulti } from "@/components/shared/image-upload-multi";
 import { useToast } from "@/hooks/use-toast";
 import { fetchLinkPreview } from "@/app/actions/link-preview";
 import { OPTION_SHAPES, OPTION_SHAPE_LABELS } from "@/lib/constants";
@@ -53,7 +53,7 @@ export function QuickOptionForm({ trigger }: Props) {
       store: "",
       url: "",
       price: 0,
-      image_url: "",
+      image_urls: [],
       notes: "",
       rating: 0,
       frequency: "one-off",
@@ -94,7 +94,9 @@ export function QuickOptionForm({ trigger }: Props) {
     }
     if (res.title && !getValues("name")) setValue("name", res.title.slice(0, 160));
     if (res.price) setValue("price", res.price);
-    if (res.image) setValue("image_url", res.image);
+    if (res.image && !getValues("image_urls").includes(res.image)) {
+      setValue("image_urls", [...getValues("image_urls"), res.image]);
+    }
     toast({ title: "Filled from link" });
   }
 
@@ -166,9 +168,8 @@ export function QuickOptionForm({ trigger }: Props) {
 
           {showDetails ? (
             <div className="space-y-4 rounded-lg border bg-muted/20 p-3">
-              <Field label="Photo">
-                <ImageUpload value={watch("image_url")} onChange={(url) => setValue("image_url", url ?? "")} />
-                <input type="hidden" {...register("image_url")} />
+              <Field label="Photos">
+                <ImageUploadMulti value={watch("image_urls")} onChange={(urls) => setValue("image_urls", urls)} />
               </Field>
               <Field label="Store" htmlFor="qo-store">
                 <Input id="qo-store" placeholder="e.g. IKEA" {...register("store")} />
@@ -196,9 +197,7 @@ export function QuickOptionForm({ trigger }: Props) {
                 </div>
               ) : null}
             </div>
-          ) : (
-            <input type="hidden" {...register("image_url")} />
-          )}
+          ) : null}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>

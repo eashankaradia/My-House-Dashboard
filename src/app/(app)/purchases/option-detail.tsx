@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/shared/star-rating";
 import { ItemComments } from "@/components/shared/item-comments";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { FREQUENCY_SUFFIX, OPTION_SHAPE_LABELS } from "@/lib/constants";
 import type { PurchaseOption } from "@/lib/database.types";
 import { OptionForm } from "./option-form";
@@ -31,9 +31,15 @@ export function OptionDetailDialog({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = React.useState(false);
+  const [activePhoto, setActivePhoto] = React.useState(0);
   const dims = [option.width_cm, option.depth_cm, option.height_cm];
   const hasDims = dims.some((d) => d != null && d > 0);
   const isFurniture = purchaseCategory === "Furniture";
+  const photos = option.image_urls?.length ? option.image_urls : option.image_url ? [option.image_url] : [];
+
+  React.useEffect(() => {
+    if (open) setActivePhoto(0);
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -47,9 +53,34 @@ export function OptionDetailDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          {option.image_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={option.image_url} alt="" className="max-h-56 w-full rounded-lg object-cover" />
+          {photos.length ? (
+            <div className="space-y-1.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photos[Math.min(activePhoto, photos.length - 1)]}
+                alt=""
+                className="max-h-56 w-full rounded-lg object-cover"
+              />
+              {photos.length > 1 ? (
+                <div className="flex gap-1.5 overflow-x-auto">
+                  {photos.map((url, i) => (
+                    <button
+                      key={url}
+                      type="button"
+                      onClick={() => setActivePhoto(i)}
+                      aria-label={`Photo ${i + 1}`}
+                      className={cn(
+                        "h-12 w-12 shrink-0 overflow-hidden rounded-md border-2",
+                        i === activePhoto ? "border-primary" : "border-transparent",
+                      )}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt="" className="h-full w-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           ) : null}
 
           <div className="flex items-baseline justify-between gap-2">

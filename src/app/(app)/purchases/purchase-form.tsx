@@ -108,6 +108,7 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [], catego
         store: o.store.trim() || undefined,
         url: o.url.trim() || undefined,
         frequency: "one-off",
+        image_urls: [],
       }));
     startTransition(async () => {
       const result = editing
