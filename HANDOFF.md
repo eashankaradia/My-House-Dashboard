@@ -15,9 +15,11 @@
 > list passes `deepLink={false}` (same option data renders there too;
 > only the modal-nested copy should react to the URL). No migration.
 > `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. About to commit/push/deploy-
-> confirm. Not browser-verified against live data (no `.env.local`
-> Supabase credentials in this sandbox) — smoke-test suggestion: open an
+> `NEXT_PUBLIC_APP=life` build all pass. Committed as `b68db70`, pushed to
+> `main`, and confirmed READY on Vercel production for both
+> my-house-dashboard and my-life-dashboard. Not browser-verified against
+> live data (no `.env.local` Supabase credentials in this sandbox) —
+> smoke-test suggestion: open an
 > option, tap Share, confirm the shared text contains a
 > `?item=...&option=...` URL, then visit that URL fresh and confirm the
 > purchase dialog opens with the specific option's dialog on top (and
