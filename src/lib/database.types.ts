@@ -459,8 +459,12 @@ export type RoomLayoutItem = Timestamps & {
   status: string;
   purchase_id: string | null;
   option_id: string | null;
-  /** Footprint shape: "rectangle" | "square" | "round" | null. */
+  /** Footprint shape: "rectangle" | "square" | "round" | "l-shape" | null. */
   shape: string | null;
+  /** Which corner is cut away for an "l-shape" footprint: "tl" | "tr" | "bl" | "br". */
+  corner: string | null;
+  notch_w_cm: number | null;
+  notch_d_cm: number | null;
   image_url: string | null;
   locked: boolean;
 };

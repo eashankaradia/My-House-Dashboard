@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { outlinePoints, pointsToSvg } from "@/lib/room-shape";
+import { lShapeFootprint, outlinePoints, pointsToSvg, type CornerId } from "@/lib/room-shape";
 import type { Room, RoomDesignVersion, RoomDoor, RoomLayoutItem, RoomPoint } from "@/lib/database.types";
 import { addLayoutItem, createPurchaseFromLayout, deleteLayoutItem, updateLayoutItem, updateRoomDetails } from "./actions";
 
@@ -26,9 +26,12 @@ const SNAP = 5; // cm
 const LAYOUT_STATUSES = ["idea", "planned", "ordered", "delivered", "installed"] as const;
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const PALETTE = ["#94a3b8", "#60a5fa", "#34d399", "#fbbf24", "#f87171", "#c084fc", "#f472b6", "#2dd4bf"];
+const CORNERS: CornerId[] = ["tr", "br", "bl", "tl"];
+const nextCorner = (c: string | null) => CORNERS[(CORNERS.indexOf((c as CornerId) ?? "tr") + 1) % CORNERS.length];
 
-const PRESETS: { category: string; w: number; d: number }[] = [
+const PRESETS: { category: string; w: number; d: number; shape?: string; notchW?: number; notchD?: number }[] = [
   { category: "Sofa", w: 200, d: 90 },
+  { category: "Corner Sofa", w: 260, d: 170, shape: "l-shape", notchW: 160, notchD: 80 },
   { category: "Bed", w: 150, d: 200 },
   { category: "Desk", w: 120, d: 60 },
   { category: "Wardrobe", w: 100, d: 60 },
@@ -348,7 +351,7 @@ export function FloorPlanner({
     doorDrag.current = i;
   }
 
-  async function add(data: { name: string; category: string; width_cm: number; depth_cm: number; color: string }) {
+  async function add(data: { name: string; category: string; width_cm: number; depth_cm: number; color: string; shape?: string; notch_w_cm?: number; notch_d_cm?: number }) {
     const res = await addLayoutItem(version.id, data);
     if (res?.error || !res.item) {
       toast({ variant: "destructive", title: "Couldn't add", description: res?.error });
@@ -528,6 +531,22 @@ export function FloorPlanner({
                         cy={it.y_cm + it.depth_cm / 2}
                         rx={it.width_cm / 2}
                         ry={it.depth_cm / 2}
+                        fill={fill}
+                        fillOpacity={0.85}
+                        stroke={bad ? "#ef4444" : isSel ? "#0ea5e9" : "#1f2937"}
+                        strokeWidth={isSel || bad ? 4 : 2}
+                      />
+                    ) : it.shape === "l-shape" ? (
+                      <polygon
+                        points={pointsToSvg(
+                          lShapeFootprint(
+                            it.width_cm,
+                            it.depth_cm,
+                            it.notch_w_cm ?? it.width_cm / 2,
+                            it.notch_d_cm ?? it.depth_cm / 2,
+                            (it.corner as CornerId) ?? "tr",
+                          ).map((p) => ({ x: p.x + it.x_cm, y: p.y + it.y_cm })),
+                        )}
                         fill={fill}
                         fillOpacity={0.85}
                         stroke={bad ? "#ef4444" : isSel ? "#0ea5e9" : "#1f2937"}
@@ -737,6 +756,11 @@ export function FloorPlanner({
                 <Button variant="outline" size="sm" className="gap-1.5" onClick={() => rotate(selected)}>
                   <RotateCw className="h-4 w-4" /> Rotate
                 </Button>
+                {selected.shape === "l-shape" ? (
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => update(selected.id, { corner: nextCorner(selected.corner) })}>
+                    <FlipHorizontal2 className="h-4 w-4" /> Flip corner
+                  </Button>
+                ) : null}
                 <Button variant={selected.locked ? "default" : "outline"} size="sm" className="gap-1.5" onClick={() => update(selected.id, { locked: !selected.locked })}>
                   {selected.locked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
                   {selected.locked ? "Locked" : "Lock"}
@@ -771,8 +795,27 @@ export function FloorPlanner({
                   <option value="rectangle">Rectangle</option>
                   <option value="square">Square</option>
                   <option value="round">Round / Oval</option>
+                  <option value="l-shape">Corner sofa (L-shape)</option>
                 </NativeSelect>
               </Field>
+              {selected.shape === "l-shape" ? (
+                <>
+                  <Field label="Notch width (cm)" hint="Cut from one corner - the sofa's open side.">
+                    <Input
+                      type="number"
+                      defaultValue={selected.notch_w_cm ?? Math.round(selected.width_cm / 2)}
+                      onBlur={(e) => update(selected.id, { notch_w_cm: Number(e.target.value) || 0 })}
+                    />
+                  </Field>
+                  <Field label="Notch depth (cm)">
+                    <Input
+                      type="number"
+                      defaultValue={selected.notch_d_cm ?? Math.round(selected.depth_cm / 2)}
+                      onBlur={(e) => update(selected.id, { notch_d_cm: Number(e.target.value) || 0 })}
+                    />
+                  </Field>
+                </>
+              ) : null}
               <Field label="Status">
                 <NativeSelect value={selected.status} onChange={(e) => update(selected.id, { status: e.target.value })}>
                   {LAYOUT_STATUSES.map((s) => (
@@ -927,7 +970,7 @@ function AddFromWishlist({
 function AddFurniture({
   onAdd,
 }: {
-  onAdd: (data: { name: string; category: string; width_cm: number; depth_cm: number; color: string }) => Promise<void>;
+  onAdd: (data: { name: string; category: string; width_cm: number; depth_cm: number; color: string; shape?: string; notch_w_cm?: number; notch_d_cm?: number }) => Promise<void>;
 }) {
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
@@ -948,6 +991,7 @@ function AddFurniture({
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
+    const preset = PRESETS.find((p) => p.category === category);
     startTransition(async () => {
       await onAdd({
         name: name.trim() || category,
@@ -955,6 +999,9 @@ function AddFurniture({
         width_cm: Number(w) || 100,
         depth_cm: Number(d) || 60,
         color,
+        shape: preset?.shape,
+        notch_w_cm: preset?.notchW,
+        notch_d_cm: preset?.notchD,
       });
       setOpen(false);
       setName("");

@@ -2,29 +2,85 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-05 (Room Designer: doors now
-> show a distance-to-nearest-wall measurement. User asked "on room designer
-> I need the distance between the edge of the door and the wall." The
-> "Distances" toggle in `floor-planner.tsx` already drew wall-length labels
-> and each furniture item's nearest-wall gaps, but didn't measure doors.
-> Added a dashed line + label from each door's nearer jamb to the closest
-> wall corner (reusing the existing `doorGeom`, `DimLabel`, `fmtDist`
-> helpers and the furniture gap logic's "pick whichever side is closer"
-> pattern), shown only when Distances is on. Updated the planner-tips copy
-> to mention doors too. `npm run typecheck`, `npm run lint`, default build,
-> and `NEXT_PUBLIC_APP=life` build all pass. Committed as `120eada`, pushed
-> to `main`, and confirmed READY on Vercel production for both
-> my-house-dashboard and my-life-dashboard. Not browser-verified against
-> live data (no `.env.local` Supabase credentials in this sandbox) —
-> smoke-test suggestion: open a room design, add a door, toggle Distances
-> on, confirm a dashed amber line + label appears from the door to its
-> nearest wall corner and updates live while dragging the door. See "Room
-> Designer: door distance to wall" section
-> below for details; earlier sections (Purchase options photo gallery,
-> Purchase detail declutter, button-text sweep, Room Designer compact
-> toggle, Purchases quick status change, mask finance numbers, link/title
-> truncation fix, Purchases auto-refresh, auto-fill rollout, logo redesign)
-> are all already confirmed deployed.
+> after **every** change. Last updated: 2026-07-05 (Room Designer: furniture
+> can now be an actual L-shaped "Corner Sofa" footprint instead of only
+> rectangle/square/round. Added `corner`, `notch_w_cm`, `notch_d_cm` to
+> `room_design_layout_items` via migration
+> `0066_layout_item_corner_sofa.sql` (**user must run this migration**).
+> New `lShapeFootprint()` helper in `lib/room-shape.ts` reuses the existing
+> `lShapeOutline()` (already used for L-shaped rooms) and mirrors it to
+> whichever corner is picked. New "Corner Sofa" preset (260x170cm,
+> 160x80cm notch); a "Flip corner" button cycles which corner is cut;
+> notch width/depth are editable when shape is "l-shape". `npm run
+> typecheck`, `npm run lint`, default build, and `NEXT_PUBLIC_APP=life`
+> build all pass. About to commit/push/deploy-confirm. Not browser-
+> verified against live data (no `.env.local` Supabase credentials in this
+> sandbox) — smoke-test suggestion: add a Corner Sofa from the furniture
+> preset list, confirm it renders as an L (not a rectangle), tap "Flip
+> corner" a few times to cycle all 4 orientations, and edit notch width/
+> depth to confirm the shape updates live. See "Room Designer: corner sofa
+> (L-shaped furniture)" section below for details; earlier sections (door
+> distance to wall, purchase-option photo gallery, purchase detail
+> declutter, button-text sweep, Room Designer compact toggle, and
+> everything before) are all already confirmed deployed.
+
+## Room Designer: corner sofa (L-shaped furniture) (2026-07-05)
+User asked: "let me add a corner sofa" (in the Room Designer). Asked the
+user to clarify scope first — a plain rectangle preset vs. an actual
+L-shaped footprint with a corner picker — and they chose the real L-shape.
+
+**Migration required — run before/with this deploy:**
+`supabase/migrations/0066_layout_item_corner_sofa.sql` adds `corner text`,
+`notch_w_cm numeric`, `notch_d_cm numeric` to `room_design_layout_items`.
+
+**Geometry:** a corner sofa's footprint is modelled as its `width_cm` x
+`depth_cm` bounding box with a `notch_w_cm` x `notch_d_cm` rectangle
+removed from one corner (`corner`: `"tl" | "tr" | "bl" | "br"`, defaults
+to `"tr"` when null). `src/lib/room-shape.ts` gets a new
+`lShapeFootprint(w, d, notchW, notchD, corner)` that reuses the existing
+`lShapeOutline()` (already used for L-shaped rooms, which always cuts the
+top-right corner) and mirrors its points horizontally/vertically to
+produce the other 3 corners — no new polygon math, just reflection.
+
+Code changes:
+- `src/lib/room-shape.ts`: added `CornerId` type + `lShapeFootprint()`.
+- `src/lib/database.types.ts`: `RoomLayoutItem` gets `corner`,
+  `notch_w_cm`, `notch_d_cm` (all nullable).
+- `src/app/(app)/rooms/actions.ts`: `addLayoutItem`'s data param and
+  insert, `LAYOUT_FIELDS`/`NUMERIC_LAYOUT_FIELDS` (for `updateLayoutItem`
+  patches), and `duplicateVersion`'s row-copy all carry the 3 new fields.
+- `src/app/(app)/rooms/floor-planner.tsx`:
+  - New `PRESETS` entry: "Corner Sofa" (260x170cm, shape `l-shape`, notch
+    160x80cm — modelled as a ~100cm chaise arm spanning the full depth
+    plus a ~90cm-deep main seat run spanning the full width, typical UK
+    corner-sofa proportions).
+  - Item rendering gets a third branch (alongside rect/ellipse): a
+    `<polygon>` built from `lShapeFootprint()` translated by the item's
+    x/y, for `shape === "l-shape"`.
+  - Selected-item panel: Shape dropdown gains "Corner sofa (L-shape)"; a
+    "Flip corner" button (only shown for l-shape items) cycles `corner`
+    through all 4 positions via a new `nextCorner()`/`CORNERS` helper;
+    Notch width/depth become editable number fields when shape is
+    l-shape, defaulting to half the bounding box if unset.
+  - `AddFurniture`'s `onAdd`/`add()` signatures extended to optionally
+    carry `shape`/`notch_w_cm`/`notch_d_cm` so picking the "Corner Sofa"
+    preset actually creates an L-shaped item, not a plain rectangle.
+- Deliberately out of scope: purchase options (the wishlist-item
+  footprint used by "Place a saved option") still only support
+  rectangle/square/round — extending L-shape there would need a matching
+  migration on `purchase_options` and wasn't asked for. Overlap detection
+  (`findOverlaps`) still uses the plain bounding box for l-shape items too,
+  consistent with how round items are already approximated as rectangles
+  for collision purposes.
+
+Verification: `npm run typecheck`, `npm run lint`, default build, and
+`NEXT_PUBLIC_APP=life` build all pass. Not browser-verified against live
+data (no `.env.local` Supabase credentials in this sandbox).
+
+**Next step for whoever picks this up:** the user must run
+`0066_layout_item_corner_sofa.sql` in the Supabase SQL editor before a
+corner sofa's notch/corner will actually persist (before that,
+`updateLayoutItem`/`addLayoutItem` writes to those columns will fail).
 
 ## Room Designer: door distance to wall (2026-07-05)
 User asked: "on room designer I need the distance between the edge of the

@@ -225,6 +225,9 @@ export async function duplicateDesignVersion(id: string): Promise<ActionResult> 
         purchase_id: it.purchase_id,
         option_id: it.option_id,
         shape: it.shape,
+        corner: it.corner,
+        notch_w_cm: it.notch_w_cm,
+        notch_d_cm: it.notch_d_cm,
         image_url: it.image_url,
         locked: it.locked,
       })),
@@ -247,6 +250,9 @@ export async function addLayoutItem(
     color?: string;
     cost?: number;
     shape?: string;
+    corner?: string;
+    notch_w_cm?: number;
+    notch_d_cm?: number;
     purchase_id?: string;
     option_id?: string;
   },
@@ -265,6 +271,9 @@ export async function addLayoutItem(
       color: data.color ?? null,
       cost: data.cost ?? null,
       shape: data.shape ?? null,
+      corner: data.corner ?? null,
+      notch_w_cm: data.notch_w_cm ?? null,
+      notch_d_cm: data.notch_d_cm ?? null,
       purchase_id: data.purchase_id ?? null,
       option_id: data.option_id ?? null,
       x_cm: 10,
@@ -280,9 +289,10 @@ export async function addLayoutItem(
 const LAYOUT_FIELDS = [
   "name", "category", "width_cm", "depth_cm", "height_cm", "x_cm", "y_cm",
   "rotation", "color", "material", "notes", "cost", "priority", "status",
-  "purchase_id", "option_id", "shape", "image_url", "locked",
+  "purchase_id", "option_id", "shape", "corner", "notch_w_cm", "notch_d_cm",
+  "image_url", "locked",
 ] as const;
-const NUMERIC_LAYOUT_FIELDS = new Set(["width_cm", "depth_cm", "height_cm", "x_cm", "y_cm", "rotation", "cost"]);
+const NUMERIC_LAYOUT_FIELDS = new Set(["width_cm", "depth_cm", "height_cm", "x_cm", "y_cm", "rotation", "cost", "notch_w_cm", "notch_d_cm"]);
 
 export async function updateLayoutItem(id: string, patch: Record<string, unknown>): Promise<ActionResult> {
   const { supabase } = await getActionContext();

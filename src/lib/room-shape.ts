@@ -27,6 +27,19 @@ export function lShapeOutline(w: number, l: number, cutW: number, cutD: number):
   ];
 }
 
+export type CornerId = "tl" | "tr" | "bl" | "br";
+
+/**
+ * L-shaped footprint for corner furniture (e.g. a corner sofa): a w×d
+ * bounding box with a notchW×notchD rectangle removed from one corner.
+ */
+export function lShapeFootprint(w: number, d: number, notchW: number, notchD: number, corner: CornerId = "tr"): RoomPoint[] {
+  const base = lShapeOutline(w, d, notchW, notchD); // notch cut from the top-right corner
+  const flipX = corner === "tl" || corner === "bl";
+  const flipY = corner === "bl" || corner === "br";
+  return base.map((p) => ({ x: flipX ? w - p.x : p.x, y: flipY ? d - p.y : p.y }));
+}
+
 /** The effective outline for a room — its stored polygon or a plain rectangle. */
 export function outlinePoints(room: Pick<Room, "outline" | "width_cm" | "length_cm">): RoomPoint[] {
   if (room.outline && room.outline.length >= 3) return room.outline;
