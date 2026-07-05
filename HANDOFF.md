@@ -13,9 +13,10 @@
 > 160x80cm notch); a "Flip corner" button cycles which corner is cut;
 > notch width/depth are editable when shape is "l-shape". `npm run
 > typecheck`, `npm run lint`, default build, and `NEXT_PUBLIC_APP=life`
-> build all pass. About to commit/push/deploy-confirm. Not browser-
-> verified against live data (no `.env.local` Supabase credentials in this
-> sandbox) — smoke-test suggestion: add a Corner Sofa from the furniture
+> build all pass. Committed as `651c28b`, pushed to `main`, and confirmed
+> READY on Vercel production for both my-house-dashboard and
+> my-life-dashboard. Not browser-verified against live data (no
+> `.env.local` Supabase credentials in this sandbox) — smoke-test suggestion: add a Corner Sofa from the furniture
 > preset list, confirm it renders as an L (not a rectangle), tap "Flip
 > corner" a few times to cycle all 4 orientations, and edit notch width/
 > depth to confirm the shape updates live. See "Room Designer: corner sofa
