@@ -5,19 +5,21 @@
 > after **every** change. Last updated: 2026-07-05 (Purchase options now have
 > a photo gallery instead of a single image — added `image_urls text[]` to
 > `purchase_options` via migration `0065_purchase_option_photos.sql`
-> (**user must run this migration**), a new `ImageUploadMulti` component,
-> and a tap-to-switch gallery in the option detail dialog. `image_url` is
-> kept in sync as `image_urls[0]` (the cover) so existing thumbnail spots —
-> option rows, Ready to buy, the Room Designer's saved-option picker — are
-> unchanged. `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. About to commit/push/deploy-confirm.
-> Not browser-verified against live data (no `.env.local` Supabase
-> credentials in this sandbox). See "Purchase options: photo gallery"
-> section below for details; earlier sections (Purchase detail declutter,
-> button-text sweep, Room Designer compact toggle, Purchases quick status
-> change, mask finance numbers, link/title truncation fix, Purchases
-> auto-refresh, auto-fill rollout, logo redesign) are all already confirmed
-> deployed.
+> (**user must run this migration in the Supabase SQL editor — the app
+> writes to `image_urls` regardless of whether it's been run yet**), a new
+> `ImageUploadMulti` component, and a tap-to-switch gallery in the option
+> detail dialog. `image_url` is kept in sync as `image_urls[0]` (the cover)
+> so existing thumbnail spots — option rows, Ready to buy, the Room
+> Designer's saved-option picker — are unchanged. `npm run typecheck`,
+> `npm run lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass.
+> Committed as `091b264`, pushed to `main`, and confirmed READY on Vercel
+> production for both my-house-dashboard and my-life-dashboard. Not
+> browser-verified against live data (no `.env.local` Supabase credentials
+> in this sandbox). See "Purchase options: photo gallery" section below for
+> details; earlier sections (Purchase detail declutter, button-text sweep,
+> Room Designer compact toggle, Purchases quick status change, mask finance
+> numbers, link/title truncation fix, Purchases auto-refresh, auto-fill
+> rollout, logo redesign) are all already confirmed deployed.
 
 ## Purchase options: photo gallery (2026-07-05)
 User asked: "let me add more than one photo per option on future purchases."
