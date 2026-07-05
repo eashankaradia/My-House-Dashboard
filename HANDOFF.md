@@ -12,12 +12,14 @@
 > helpers and the furniture gap logic's "pick whichever side is closer"
 > pattern), shown only when Distances is on. Updated the planner-tips copy
 > to mention doors too. `npm run typecheck`, `npm run lint`, default build,
-> and `NEXT_PUBLIC_APP=life` build all pass. About to commit/push/deploy-
-> confirm. Not browser-verified against live data (no `.env.local` Supabase
-> credentials in this sandbox) — smoke-test suggestion: open a room design,
-> add a door, toggle Distances on, confirm a dashed amber line + label
-> appears from the door to its nearest wall corner and updates live while
-> dragging the door. See "Room Designer: door distance to wall" section
+> and `NEXT_PUBLIC_APP=life` build all pass. Committed as `120eada`, pushed
+> to `main`, and confirmed READY on Vercel production for both
+> my-house-dashboard and my-life-dashboard. Not browser-verified against
+> live data (no `.env.local` Supabase credentials in this sandbox) —
+> smoke-test suggestion: open a room design, add a door, toggle Distances
+> on, confirm a dashed amber line + label appears from the door to its
+> nearest wall corner and updates live while dragging the door. See "Room
+> Designer: door distance to wall" section
 > below for details; earlier sections (Purchase options photo gallery,
 > Purchase detail declutter, button-text sweep, Room Designer compact
 > toggle, Purchases quick status change, mask finance numbers, link/title
