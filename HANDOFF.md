@@ -2,24 +2,61 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-05 (Purchase options now have
-> a photo gallery instead of a single image — added `image_urls text[]` to
-> `purchase_options` via migration `0065_purchase_option_photos.sql`
-> (**user must run this migration in the Supabase SQL editor — the app
-> writes to `image_urls` regardless of whether it's been run yet**), a new
-> `ImageUploadMulti` component, and a tap-to-switch gallery in the option
-> detail dialog. `image_url` is kept in sync as `image_urls[0]` (the cover)
-> so existing thumbnail spots — option rows, Ready to buy, the Room
-> Designer's saved-option picker — are unchanged. `npm run typecheck`,
-> `npm run lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass.
-> Committed as `091b264`, pushed to `main`, and confirmed READY on Vercel
-> production for both my-house-dashboard and my-life-dashboard. Not
-> browser-verified against live data (no `.env.local` Supabase credentials
-> in this sandbox). See "Purchase options: photo gallery" section below for
-> details; earlier sections (Purchase detail declutter, button-text sweep,
-> Room Designer compact toggle, Purchases quick status change, mask finance
-> numbers, link/title truncation fix, Purchases auto-refresh, auto-fill
-> rollout, logo redesign) are all already confirmed deployed.
+> after **every** change. Last updated: 2026-07-05 (Room Designer: doors now
+> show a distance-to-nearest-wall measurement. User asked "on room designer
+> I need the distance between the edge of the door and the wall." The
+> "Distances" toggle in `floor-planner.tsx` already drew wall-length labels
+> and each furniture item's nearest-wall gaps, but didn't measure doors.
+> Added a dashed line + label from each door's nearer jamb to the closest
+> wall corner (reusing the existing `doorGeom`, `DimLabel`, `fmtDist`
+> helpers and the furniture gap logic's "pick whichever side is closer"
+> pattern), shown only when Distances is on. Updated the planner-tips copy
+> to mention doors too. `npm run typecheck`, `npm run lint`, default build,
+> and `NEXT_PUBLIC_APP=life` build all pass. About to commit/push/deploy-
+> confirm. Not browser-verified against live data (no `.env.local` Supabase
+> credentials in this sandbox) — smoke-test suggestion: open a room design,
+> add a door, toggle Distances on, confirm a dashed amber line + label
+> appears from the door to its nearest wall corner and updates live while
+> dragging the door. See "Room Designer: door distance to wall" section
+> below for details; earlier sections (Purchase options photo gallery,
+> Purchase detail declutter, button-text sweep, Room Designer compact
+> toggle, Purchases quick status change, mask finance numbers, link/title
+> truncation fix, Purchases auto-refresh, auto-fill rollout, logo redesign)
+> are all already confirmed deployed.
+
+## Room Designer: door distance to wall (2026-07-05)
+User asked: "on room designer I need the distance between the edge of the
+door and the wall."
+
+`src/app/(app)/rooms/floor-planner.tsx` already had a "Distances" toggle
+(`showDims`) that draws wall-length labels around the outline and, for
+each furniture item, a dashed line + label to whichever wall (left/right,
+top/bottom) it's nearer to — but doors had no measurement at all, even
+though their `offset` field (distance from the wall's corner) is exactly
+what's editable in the door's form/detail panel.
+
+Added a `doors.map(...)` block inside the same `showDims ? (...)` group
+(before the furniture-gaps block), between the wall-length labels and the
+furniture gaps:
+- Uses the existing `doorGeom(d)` helper to get each door's two jamb
+  points (`g.A`, `g.B`) in room-plan cm coordinates.
+- Picks whichever end of the door is closer to a wall corner — same
+  "smaller gap wins" pattern the furniture-gap code already uses — via
+  `toStart`/`toEnd` computed along the door's wall axis.
+- Draws a dashed amber (`#f59e0b`) line from that corner to the nearer
+  jamb, with a `DimLabel`/`fmtDist` distance label at the midpoint,
+  faded to 74% opacity unless that door is selected (matches the
+  furniture-gap opacity convention).
+- Updated the "Planner tips" copy from "Turn on Distances to see each
+  item's nearest wall gaps" to "...each item's and door's nearest wall
+  gaps."
+
+No new props, no schema/migration changes — this only reads from state
+(`doors`, `doorGeom`) that was already being tracked and persisted.
+
+Verification: `npm run typecheck`, `npm run lint`, default build, and
+`NEXT_PUBLIC_APP=life` build all pass. Not browser-verified against live
+data (no `.env.local` Supabase credentials in this sandbox).
 
 ## Purchase options: photo gallery (2026-07-05)
 User asked: "let me add more than one photo per option on future purchases."

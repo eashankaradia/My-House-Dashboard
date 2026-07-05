@@ -450,7 +450,7 @@ export function FloorPlanner({
           <div className="mt-2 flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:gap-2">
             <span>Drag furniture or doors to move them.</span>
             <span>Tap an item to edit size, colour, status or linked purchase.</span>
-            <span>Turn on Distances to see each item&apos;s nearest wall gaps.</span>
+            <span>Turn on Distances to see each item&apos;s and door&apos;s nearest wall gaps.</span>
           </div>
         </details>
       )}
@@ -586,6 +586,27 @@ export function FloorPlanner({
                     const inset = labelSize * 1.4;
                     return (
                       <DimLabel key={`wall${i}`} x={mid.x + (dx / dl) * inset} y={mid.y + (dy / dl) * inset} text={fmtDist(len)} size={labelSize} />
+                    );
+                  })}
+
+                  {doors.map((d, i) => {
+                    const g = doorGeom(d);
+                    const vertical = d.wall === "left" || d.wall === "right";
+                    const toStart = vertical ? g.A.y : g.A.x;
+                    const toEnd = vertical ? L - g.B.y : W - g.B.x;
+                    const nearStart = toStart <= toEnd;
+                    const gap = nearStart ? toStart : toEnd;
+                    if (gap < 1) return null;
+                    const corner = vertical
+                      ? { x: g.A.x, y: nearStart ? 0 : L }
+                      : { x: nearStart ? 0 : W, y: g.A.y };
+                    const jamb = nearStart ? g.A : g.B;
+                    const mid = { x: (corner.x + jamb.x) / 2, y: (corner.y + jamb.y) / 2 };
+                    return (
+                      <g key={`doorgap${i}`} opacity={i === selectedDoor ? 1 : 0.74}>
+                        <line x1={corner.x} y1={corner.y} x2={jamb.x} y2={jamb.y} stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 4" />
+                        <DimLabel x={mid.x} y={mid.y} text={fmtDist(gap)} size={labelSize * 0.88} />
+                      </g>
                     );
                   })}
 
