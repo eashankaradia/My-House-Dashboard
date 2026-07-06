@@ -17,14 +17,16 @@
 > (raw number inputs were never rounded, so no change needed there), just
 > not shown in read-only glance views (stat cards, list rows, dashboard,
 > detail dialogs). No migration. `npm run typecheck`, `npm run lint`,
-> default build, and `NEXT_PUBLIC_APP=life` build all pass. About to
-> commit/push/deploy-confirm. Not browser-verified against live data (no
-> `.env.local` Supabase credentials in this sandbox) — smoke-test
-> suggestion: find any amount that previously showed pence (e.g. a bill
-> or purchase with a non-round price) and confirm it now displays as a
-> whole pound figure everywhere except its own edit form. See "App-wide:
-> round currency to the nearest pound" section below for details; earlier
-> sections (bills pays-the-rest fix, purchased/completed collapse, share
+> default build, and `NEXT_PUBLIC_APP=life` build all pass. Committed as
+> 18d9260 and confirmed READY on Vercel production for both
+> my-house-dashboard and my-life-dashboard. Not browser-verified against
+> live data (no `.env.local` Supabase credentials in this sandbox) —
+> smoke-test suggestion: find any amount that previously showed pence
+> (e.g. a bill or purchase with a non-round price) and confirm it now
+> displays as a whole pound figure everywhere except its own edit form.
+> See "App-wide: round currency to the nearest pound" section below for
+> details; earlier sections (bills pays-the-rest fix, purchased/completed
+> collapse, share
 > individual options, and everything before) are all already confirmed
 > deployed.
 
