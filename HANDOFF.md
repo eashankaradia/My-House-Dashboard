@@ -2,31 +2,68 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-05 (Purchases: options are
-> now shareable. `ShareButton` gained an optional `url` override (defaults
-> to `window.location.href` as before); the option detail dialog uses it
-> to share a deep link to `/purchases?item=<purchaseId>&option=<optionId>`.
-> Made that deep link actually work: `OptionDetailDialog` now drives its
-> open state off `useOpenFromUrl(option.id, "option")` (behind a new
-> `deepLink` prop, default true), and merged its two previously-separate
-> `<Dialog>` instances (image trigger + name trigger, in `option-row.tsx`)
-> into one shared dialog with two `<DialogTrigger>` children, so a shared
-> link only auto-opens once instead of twice. The grid's inline option
-> list passes `deepLink={false}` (same option data renders there too;
-> only the modal-nested copy should react to the URL). No migration.
-> `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. Committed as `b68db70`, pushed to
-> `main`, and confirmed READY on Vercel production for both
-> my-house-dashboard and my-life-dashboard. Not browser-verified against
-> live data (no `.env.local` Supabase credentials in this sandbox) —
-> smoke-test suggestion: open an
-> option, tap Share, confirm the shared text contains a
-> `?item=...&option=...` URL, then visit that URL fresh and confirm the
-> purchase dialog opens with the specific option's dialog on top (and
-> not duplicated). See "Purchases: share individual options" section
-> below for details; earlier sections (Room Designer corner sofa, door
+> after **every** change. Last updated: 2026-07-05 (Purchased items and
+> completed projects no longer clutter the main lists — both move to a
+> collapsed section below, using a new shared `CollapsibleSection`
+> component. Purchases: the grid's "filtered" list now excludes
+> `status === "Purchased"` outright (removed from the status filter
+> dropdown too — it's a separate section now, not a filter value), and a
+> collapsed "Purchased (N)" section lists them (compact rows, sorted by
+> `purchased_at` desc), still filtered by search. Projects: the list view
+> (not the board, which already isolates by status into its own column)
+> now splits into `activeProjects`/`completedProjects`, with completed
+> ones in a collapsed "Completed (N)" section. No migration. `npm run
+> typecheck`, `npm run lint`, default build, and `NEXT_PUBLIC_APP=life`
+> build all pass. About to commit/push/deploy-confirm. Not
+> browser-verified against live data (no `.env.local` Supabase
+> credentials in this sandbox) — smoke-test suggestion: mark a purchase
+> "Purchased" and a project "Completed", confirm both vanish from their
+> main lists and reappear under their respective collapsed sections,
+> expandable/collapsible, with normal click-to-open behavior intact. See
+> "Purchases & Projects: collapse purchased/completed items" section
+> below for details; earlier sections (share individual options, Room
+> Designer corner sofa, door
 > distance to wall, purchase-option photo gallery, purchase detail
 > declutter, and everything before) are all already confirmed deployed.
+
+## Purchases & Projects: collapse purchased/completed items (2026-07-05)
+User asked: "filter purchased items out of the future purchases and make
+a collapsed section for purchased" then "do the same with completed
+projects."
+
+New shared component: `src/components/shared/collapsible-section.tsx` —
+`<CollapsibleSection title count>`, collapsed by default, renders nothing
+if `count === 0`. Deliberately generic (unlike the existing
+`ArchivedSection`, which is a name-only list with restore/delete actions)
+so callers pass real card/row rendering as children — purchased items and
+completed projects aren't being "restored" from anywhere, they're just
+secondary to the active list.
+
+- `src/app/(app)/purchases/purchases-grid.tsx`:
+  - Split the main `purchases` prop into `filtered` (status !==
+    "Purchased", the existing filter/sort pipeline unchanged otherwise)
+    and a new `purchased` list (status === "Purchased", filtered by
+    search only, sorted by `purchased_at` desc).
+  - Added `ACTIVE_STATUSES = PURCHASE_STATUSES.filter(s => s !==
+    "Purchased")` and swapped it in for both Status filter dropdowns
+    (mobile Sheet + desktop select) — "Purchased" is no longer a filter
+    value since it's a permanent separate section now.
+  - Rendered a `<CollapsibleSection title="Purchased">` below the main
+    view (compact/table/card, whichever `effectiveView` is active),
+    always as compact rows regardless of the main view mode. The
+    "Nothing here" empty state only shows when *both* lists are empty.
+- `src/app/(app)/projects/projects-views.tsx`:
+  - Split `visibleProjects` into `activeProjects`/`completedProjects`
+    (status !== / === "Completed"). Only the **list** view (not the
+    board) uses this split — the board already puts "Completed" in its
+    own column, so nothing there needed to change.
+  - List view now renders `activeProjects` then a `<CollapsibleSection
+    title="Completed">` with `completedProjects` (same `ProjectCard`,
+    compact).
+
+Verification: `npm run typecheck`, `npm run lint`, default build, and
+`NEXT_PUBLIC_APP=life` build all pass. Not browser-verified against live
+data (no `.env.local` Supabase credentials in this sandbox).
 
 ## Purchases: share individual options (2026-07-05)
 User asked: "give me the ability to share options for purchases." Purchases

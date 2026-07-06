@@ -10,6 +10,7 @@ import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
+import { CollapsibleSection } from "@/components/shared/collapsible-section";
 import { SearchInput } from "@/components/shared/search-input";
 import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
@@ -37,6 +38,9 @@ const SORTS = {
   room: "Room",
   category: "Category",
 } as const;
+
+// Purchased items live in their own collapsed section, not the status filter.
+const ACTIVE_STATUSES = PURCHASE_STATUSES.filter((s) => s !== "Purchased");
 
 function sortedOptions(p: PurchaseWithOptions): PurchaseOption[] {
   return [...p.options].sort((a, b) => a.rank - b.rank || Number(a.price) - Number(b.price));
@@ -96,7 +100,15 @@ export function PurchasesGrid({
     minRating > 0 ? { label: `${minRating}+ stars`, clear: () => setMinRating(0) } : null,
   ].filter((filter): filter is { label: string; clear: () => void } => Boolean(filter));
 
+  // Purchased items move to a collapsed section below — they're done, not
+  // something to keep browsing/filtering alongside the active wishlist.
+  const purchased = purchases
+    .filter((p) => p.status === "Purchased")
+    .filter((p) => (!search.trim() ? true : p.name.toLowerCase().includes(search.trim().toLowerCase())))
+    .sort((a, b) => (b.purchased_at ?? b.created_at).localeCompare(a.purchased_at ?? a.created_at));
+
   const filtered = purchases
+    .filter((p) => p.status !== "Purchased")
     .filter((p) => (!search.trim() ? true : p.name.toLowerCase().includes(search.trim().toLowerCase())))
     .filter((p) => (!onlyMine ? true : p.user_id === currentUserId))
     .filter((p) => (scopeFilter === "all" ? true : p.scope === scopeFilter))
@@ -144,7 +156,7 @@ export function PurchasesGrid({
             <div className="mt-5 space-y-4">
               <FilterSelect label="Status" value={status} onChange={setStatus}>
                 <option value="All">All statuses</option>
-                {PURCHASE_STATUSES.map((s) => (
+                {ACTIVE_STATUSES.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </FilterSelect>
@@ -238,7 +250,7 @@ export function PurchasesGrid({
         </button>
         <NativeSelect value={status} onChange={(e) => setStatus(e.target.value)} className="hidden h-9 w-auto text-sm lg:block">
           <option value="All">All statuses</option>
-          {PURCHASE_STATUSES.map((s) => (
+          {ACTIVE_STATUSES.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </NativeSelect>
@@ -308,25 +320,37 @@ export function PurchasesGrid({
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {filtered.length === 0 && purchased.length === 0 ? (
         <EmptyState icon={ShoppingBag} title="Nothing here" description="No items match this filter yet." />
-      ) : effectiveView === "compact" ? (
-        <Card>
-          <CardContent className="divide-y p-0">
-            {filtered.map((purchase) => (
-              <CompactRow key={purchase.id} purchase={purchase} memberMap={memberMap} categories={categories} />
-            ))}
-          </CardContent>
-        </Card>
-      ) : effectiveView === "table" ? (
-        <PurchaseTable purchases={filtered} memberMap={memberMap} />
       ) : (
-        <div className="grid min-w-0 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
-          {filtered.map((purchase, i) => (
-            // Only the top-rated item starts expanded; the rest are pre-collapsed.
-            <PurchaseCard key={purchase.id} purchase={purchase} memberMap={memberMap} defaultOpen={i === 0} categories={categories} />
-          ))}
-        </div>
+        <>
+          {filtered.length === 0 ? null : effectiveView === "compact" ? (
+            <Card>
+              <CardContent className="divide-y p-0">
+                {filtered.map((purchase) => (
+                  <CompactRow key={purchase.id} purchase={purchase} memberMap={memberMap} categories={categories} />
+                ))}
+              </CardContent>
+            </Card>
+          ) : effectiveView === "table" ? (
+            <PurchaseTable purchases={filtered} memberMap={memberMap} />
+          ) : (
+            <div className="grid min-w-0 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
+              {filtered.map((purchase, i) => (
+                // Only the top-rated item starts expanded; the rest are pre-collapsed.
+                <PurchaseCard key={purchase.id} purchase={purchase} memberMap={memberMap} defaultOpen={i === 0} categories={categories} />
+              ))}
+            </div>
+          )}
+
+          <CollapsibleSection title="Purchased" count={purchased.length}>
+            <div className="space-y-2">
+              {purchased.map((purchase) => (
+                <CompactRow key={purchase.id} purchase={purchase} memberMap={memberMap} categories={categories} />
+              ))}
+            </div>
+          </CollapsibleSection>
+        </>
       )}
     </div>
   );

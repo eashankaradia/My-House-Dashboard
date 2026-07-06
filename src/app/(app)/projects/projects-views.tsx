@@ -12,6 +12,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
+import { CollapsibleSection } from "@/components/shared/collapsible-section";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SearchInput } from "@/components/shared/search-input";
 import { useToast } from "@/hooks/use-toast";
@@ -56,6 +57,10 @@ export function ProjectsViews({
     .filter((p) => (onlyMine ? p.user_id === currentUserId : true))
     .filter((p) => (scopeFilter === "all" ? true : p.scope === scopeFilter))
     .filter((p) => (!projectSearch.trim() ? true : p.name.toLowerCase().includes(projectSearch.trim().toLowerCase())));
+  // Completed projects move to a collapsed section in list view — the board
+  // view already keeps them isolated in their own column.
+  const activeProjects = visibleProjects.filter((p) => p.status !== "Completed");
+  const completedProjects = visibleProjects.filter((p) => p.status === "Completed");
   const showFilter = Object.keys(memberMap).length > 1;
 
   return (
@@ -186,9 +191,16 @@ export function ProjectsViews({
           </>
         ) : (
           <div className="space-y-3">
-            {visibleProjects.map((project) => (
+            {activeProjects.map((project) => (
               <ProjectCard key={project.id} project={project} memberMap={memberMap} compact={projectCompact} />
             ))}
+            <CollapsibleSection title="Completed" count={completedProjects.length}>
+              <div className="space-y-3">
+                {completedProjects.map((project) => (
+                  <ProjectCard key={project.id} project={project} memberMap={memberMap} compact />
+                ))}
+              </div>
+            </CollapsibleSection>
           </div>
         )}
       </TabsContent>
