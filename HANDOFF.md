@@ -20,8 +20,9 @@
 > (expired, excluded) vs "· starts soon" (future-dated, still included).
 > No migration, no schema change — display/calc logic only. `npm run
 > typecheck`, `npm run lint`, default build, and `NEXT_PUBLIC_APP=life`
-> build all pass. About to commit/push/deploy-confirm. Not
-> browser-verified against live data (no `.env.local` Supabase
+> build all pass. Committed as `e540c5c`, pushed to `main`, and confirmed
+> READY on Vercel production for both my-house-dashboard and
+> my-life-dashboard. Not browser-verified against live data (no `.env.local` Supabase
 > credentials in this sandbox) — smoke-test suggestion: with Neelam's
 > £900 entry still dated "From 1 Aug 2026", confirm Eashan's "pays the
 > rest" now shows ≈£1,087.06 (1987.06 − 900), and confirm a contribution
