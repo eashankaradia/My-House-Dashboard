@@ -5,7 +5,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Format a number as GBP currency. Defaults to whole pounds for tidy cards. */
+/**
+ * Format a number as GBP currency, rounded to the nearest whole pound for a
+ * glanceable display — the exact figure is still there in the underlying
+ * data (e.g. an item's edit form). Pass options to show pence where the
+ * precise amount genuinely matters.
+ */
 export function formatCurrency(
   value: number | null | undefined,
   options: Intl.NumberFormatOptions = {},
@@ -14,7 +19,7 @@ export function formatCurrency(
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "GBP",
-    maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 0,
     ...options,
   }).format(amount);
 }

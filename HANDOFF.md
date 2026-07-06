@@ -2,35 +2,60 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-06 (Bills: fixed the
-> "pays the rest" split silently reverting to the full bill total when the
-> other contributor's entry is future-dated. `household-contributions.tsx`
-> and `bill-contributors.tsx` both computed the remainder from `active`
-> (start_date <= today <= end_date) contributors, but rendered *all*
-> contributors in the list — so a future-dated fixed contribution showed
-> its amount in the row (looking counted) while being silently excluded
-> from the sum feeding the "pays the rest" person's total. Root-caused via
-> a user screenshot: Neelam's entry read "From 1 Aug 2026 · not active",
-> and Eashan's "Pays the rest" showed the full £1,987.06 instead of
-> £1,987.06 − £900. Fix: only a genuinely-*expired* contribution (past
-> end_date) is now excluded from the split math; a future-dated one still
-> counts, since it's the agreed arrangement, just scheduled to start
-> later. Renamed the exclusion helper `isActive` → `isExpired` in both
-> files; row labels changed from a binary "· not active" to "· ended"
-> (expired, excluded) vs "· starts soon" (future-dated, still included).
-> No migration, no schema change — display/calc logic only. `npm run
-> typecheck`, `npm run lint`, default build, and `NEXT_PUBLIC_APP=life`
-> build all pass. Committed as `e540c5c`, pushed to `main`, and confirmed
-> READY on Vercel production for both my-house-dashboard and
-> my-life-dashboard. Not browser-verified against live data (no `.env.local` Supabase
-> credentials in this sandbox) — smoke-test suggestion: with Neelam's
-> £900 entry still dated "From 1 Aug 2026", confirm Eashan's "pays the
-> rest" now shows ≈£1,087.06 (1987.06 − 900), and confirm a contribution
-> with a genuinely past end_date is still excluded from the total. See
-> "Bills: fix pays-the-rest split ignoring future-dated contributors"
-> section below for details; earlier sections (purchased/completed
-> collapse, share individual options, Room Designer corner sofa, and
-> everything before) are all already confirmed deployed.
+> after **every** change. Last updated: 2026-07-06 (App-wide: currency now
+> always rounds to the nearest whole pound for display — `formatCurrency()`
+> in `lib/utils.ts` previously showed pence only when the amount had a
+> fractional part (`amount % 1 === 0 ? 0 : 2`); changed to always
+> `maximumFractionDigits: 0`. Single-function change, so it cascades to
+> every one of the ~113 call sites app-wide, including through the
+> `<Money>` component (the mask-finance-numbers wrapper). Confirmed none
+> of those 113 call sites were already passing explicit
+> `maximumFractionDigits` overrides, so this is a uniform behavior change,
+> not a partial one. Chose the simplest of two options the user was asked
+> to pick between: the exact pence figure is not surfaced via a
+> tooltip/reveal anywhere — it's still there in every item's edit form
+> (raw number inputs were never rounded, so no change needed there), just
+> not shown in read-only glance views (stat cards, list rows, dashboard,
+> detail dialogs). No migration. `npm run typecheck`, `npm run lint`,
+> default build, and `NEXT_PUBLIC_APP=life` build all pass. About to
+> commit/push/deploy-confirm. Not browser-verified against live data (no
+> `.env.local` Supabase credentials in this sandbox) — smoke-test
+> suggestion: find any amount that previously showed pence (e.g. a bill
+> or purchase with a non-round price) and confirm it now displays as a
+> whole pound figure everywhere except its own edit form. See "App-wide:
+> round currency to the nearest pound" section below for details; earlier
+> sections (bills pays-the-rest fix, purchased/completed collapse, share
+> individual options, and everything before) are all already confirmed
+> deployed.
+
+## App-wide: round currency to the nearest pound (2026-07-06)
+User asked: "round financial numbers to the nearest pound at first
+glance, keep the actual numbers in the background." Asked the user to
+pick between (a) rounding everywhere with the exact figure only
+reachable via each item's edit form, or (b) a hover/tap-to-reveal tooltip
+on every currency display; they chose (a) — simpler and works better on
+a mobile-first app where hover tooltips aren't reliably reachable anyway.
+
+`formatCurrency()` in `src/lib/utils.ts` was the single shared formatter
+(confirmed via grep: all ~113 call sites across the app call it with no
+options, so none were relying on the old conditional-pence behavior).
+Old behavior: `maximumFractionDigits: amount % 1 === 0 ? 0 : 2` — whole
+pounds only when the amount happened to be a round number, pence
+otherwise. New: always `maximumFractionDigits: 0`. This one-line change
+cascades everywhere `formatCurrency` (or the `<Money>` mask-aware
+wrapper, which calls it) is used — stat cards, list rows, dashboard
+widgets, detail dialogs, chart tooltips, everything.
+
+Deliberately unchanged: every edit form (bills, purchases, projects,
+shares, savings, credit cards, etc.) binds its amount field to the raw
+stored number via a plain `<Input type="number">`, never through
+`formatCurrency` — so the exact pence figure was never lost, just not
+shown in read-only summary text. Opening any item to edit it still shows
+the precise number exactly as stored.
+
+Verification: `npm run typecheck`, `npm run lint`, default build, and
+`NEXT_PUBLIC_APP=life` build all pass. Not browser-verified against live
+data (no `.env.local` Supabase credentials in this sandbox).
 
 ## Bills: fix pays-the-rest split ignoring future-dated contributors (2026-07-06)
 User reported: "the pays the rest option on bills needs to be the
