@@ -26,8 +26,9 @@
 > `manifest.ts` for PWA icons) was already byte-identical to `logo.png`,
 > so no change needed there — only the SVG favicon was stale. No
 > migration. `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. About to commit/push/
-> deploy-confirm. Not browser-verified against live data (no
+> `NEXT_PUBLIC_APP=life` build all pass. Committed as 636eb1a and
+> confirmed READY on Vercel production for both my-house-dashboard and
+> my-life-dashboard. Not browser-verified against live data (no
 > `.env.local` Supabase credentials in this sandbox) — smoke-test
 > suggestion: confirm the eye icon appears in the top header on every
 > page (not just Finance) on both apps, toggling it masks/unmasks amounts
