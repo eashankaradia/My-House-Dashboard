@@ -2,33 +2,89 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-06 (App-wide: currency now
-> always rounds to the nearest whole pound for display — `formatCurrency()`
-> in `lib/utils.ts` previously showed pence only when the amount had a
-> fractional part (`amount % 1 === 0 ? 0 : 2`); changed to always
-> `maximumFractionDigits: 0`. Single-function change, so it cascades to
-> every one of the ~113 call sites app-wide, including through the
-> `<Money>` component (the mask-finance-numbers wrapper). Confirmed none
-> of those 113 call sites were already passing explicit
-> `maximumFractionDigits` overrides, so this is a uniform behavior change,
-> not a partial one. Chose the simplest of two options the user was asked
-> to pick between: the exact pence figure is not surfaced via a
-> tooltip/reveal anywhere — it's still there in every item's edit form
-> (raw number inputs were never rounded, so no change needed there), just
-> not shown in read-only glance views (stat cards, list rows, dashboard,
-> detail dialogs). No migration. `npm run typecheck`, `npm run lint`,
-> default build, and `NEXT_PUBLIC_APP=life` build all pass. Committed as
-> 18d9260 and confirmed READY on Vercel production for both
-> my-house-dashboard and my-life-dashboard. Not browser-verified against
-> live data (no `.env.local` Supabase credentials in this sandbox) —
-> smoke-test suggestion: find any amount that previously showed pence
-> (e.g. a bill or purchase with a non-round price) and confirm it now
-> displays as a whole pound figure everywhere except its own edit form.
-> See "App-wide: round currency to the nearest pound" section below for
-> details; earlier sections (bills pays-the-rest fix, purchased/completed
-> collapse, share
-> individual options, and everything before) are all already confirmed
-> deployed.
+> after **every** change. Last updated: 2026-07-06 (Global mask-finance toggle
+> + favicon/logo alignment). Moved `MaskFinanceToggle` (existing component,
+> previously only on the Finance page) into the shared top header in
+> `src/app/(app)/layout.tsx`, so it's now reachable from every page on both
+> My House and MyLife (single shared layout, so both apps get it for free).
+> Removed the now-redundant copy from the Finance page header. Added a
+> `variant` prop ("outline" | "ghost") to `MaskFinanceToggle` so the header
+> copy (ghost, blends in with the other icon buttons) can differ from any
+> future in-page usage (outline, default, unchanged). Separately, fixed a
+> real branding mismatch: the browser-tab favicon (`public/icons/icon.svg`,
+> used for both `icon` and `apple` in `src/app/layout.tsx`'s metadata) was
+> still the old bright-green-background/white-M design from before the
+> sparkle-logo redesign (task history #75), while the actual in-app logo
+> (`public/icons/logo.png`, used in the sidebar, mobile header, and login
+> page) had already moved to the cream-background/sage-green-M sparkle
+> design. Re-drew `icon.svg` to match: sampled `logo.png`'s exact colors
+> (bg `#faf9f7`, mark `#7c9a7f`) with Pillow, rebuilt the SVG with a bolder
+> M stroke and repositioned sparkle, and rendered it through headless
+> Chromium to visually confirm the match against the real logo before
+> committing (see side-by-side render done during this session — not
+> saved to the repo, scratchpad only). `public/icons/icon.png` (used in
+> `manifest.ts` for PWA icons) was already byte-identical to `logo.png`,
+> so no change needed there — only the SVG favicon was stale. No
+> migration. `npm run typecheck`, `npm run lint`, default build, and
+> `NEXT_PUBLIC_APP=life` build all pass. About to commit/push/
+> deploy-confirm. Not browser-verified against live data (no
+> `.env.local` Supabase credentials in this sandbox) — smoke-test
+> suggestion: confirm the eye icon appears in the top header on every
+> page (not just Finance) on both apps, toggling it masks/unmasks amounts
+> everywhere, and the browser tab favicon now shows the cream/sage-green
+> M+sparkle instead of the old green square. See "Global mask-finance
+> toggle + favicon alignment" section below for details; earlier sections
+> (currency rounding, bills pays-the-rest fix, purchased/completed
+> collapse, share individual options, and everything before) are all
+> already confirmed deployed.
+
+## Global mask-finance toggle + favicon alignment (2026-07-06)
+User asked for two things in one message: (1) "give me a toggle at the
+top which lets me mask financial figures on and off. do this on myhouse
+and mylife" — the mask-finance feature already existed (task #78) but its
+toggle button was only present on the Finance page, not "at the top"
+app-wide; (2) "align all of the logos" — ambiguous, so asked via
+AskUserQuestion whether this meant the favicon vs in-app logo mismatch or
+the sizing/rounding/shadow inconsistency across the 3 places the logo
+image appears; user picked the favicon/in-app-logo mismatch.
+
+**Toggle**: `MaskFinanceToggle` (`src/components/shared/mask-finance-
+toggle.tsx`) and its backing `useMaskFinance` hook (per-device pref,
+`src/hooks/use-mask-finance.ts`) already existed and already drove
+`<Money>` masking app-wide — the only gap was discoverability. Added it
+to the shared top header in `src/app/(app)/layout.tsx` (next to search,
+notifications, private-section link), which both My House and MyLife
+render from since it's one shared layout switched only by
+`NEXT_PUBLIC_APP`. Removed the duplicate instance from
+`src/app/(app)/finance/page.tsx`'s `PageHeader` now that it's globally
+reachable. Added a `variant?: "outline" | "ghost"` prop to
+`MaskFinanceToggle` (default `"outline"`, unchanged for any future
+in-page use) so the header instance can use `"ghost"` to match the
+borderless style of the other header icon buttons (search, bell,
+private-lock) instead of standing out as a bordered button.
+
+**Favicon**: `public/icons/icon.svg` (wired to both `icon` and `apple` in
+`src/app/layout.tsx` metadata) still had the pre-redesign look — solid
+green `#24a371` rounded-square background, thin white M chevron, tiny
+white corner sparkle. Meanwhile the actual in-app logo
+(`public/icons/logo.png`, shown in the sidebar, mobile header, and login
+page) was already on the redesigned cream/sage-green sparkle mark. Used
+Pillow to sample `logo.png`'s exact pixel colors (background `#faf9f7`,
+mark `#7c9a7f`), then rebuilt `icon.svg` with those colors, a bolder
+stroke-width-3 M (up from 1.7, to read as "bold" like the PNG rather than
+a thin outline), and a repositioned/rescaled sparkle. Rendered the new
+SVG through headless Chromium (`/opt/pw-browsers/chromium-1194`, no
+`playwright` npm package installed in this repo so invoked the chrome
+binary directly with `--headless=new --screenshot`) and visually
+diffed it against `logo.png` side by side to confirm the match before
+finalizing. `public/icons/icon.png` (referenced by `src/app/manifest.ts`
+for PWA home-screen icons) was already byte-identical to `logo.png`
+(confirmed via `md5sum`), so it didn't need touching — the mismatch was
+isolated to the SVG favicon.
+
+Verification: `npm run typecheck`, `npm run lint`, default build, and
+`NEXT_PUBLIC_APP=life` build all pass. Not browser-verified against live
+data (no `.env.local` Supabase credentials in this sandbox).
 
 ## App-wide: round currency to the nearest pound (2026-07-06)
 User asked: "round financial numbers to the nearest pound at first

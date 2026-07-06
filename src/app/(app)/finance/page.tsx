@@ -6,7 +6,6 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getHouseholdMap } from "@/lib/household";
 import { Money } from "@/components/shared/money";
-import { MaskFinanceToggle } from "@/components/shared/mask-finance-toggle";
 import { CollapsibleSection } from "@/app/(app)/dashboard/collapsible-section";
 import type {
   Bill,
@@ -97,9 +96,7 @@ export default async function FinancePage() {
         title="Finance"
         description="Your personal financial overview."
         info="Log your monthly net income below to calculate your net position."
-      >
-        <MaskFinanceToggle />
-      </PageHeader>
+      />
 
       <FinanceScope
         bills={bills}

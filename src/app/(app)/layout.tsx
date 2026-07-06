@@ -9,6 +9,7 @@ import { FloatingAdd } from "@/components/layout/floating-add";
 import { AutoRefresh } from "@/components/layout/auto-refresh";
 import { UserMenu } from "@/components/layout/user-menu";
 import { GlobalSearch } from "@/components/layout/global-search";
+import { MaskFinanceToggle } from "@/components/shared/mask-finance-toggle";
 import { cookies } from "next/headers";
 import { HouseholdColorsProvider } from "@/components/providers/household-colors";
 import { PrefsProvider } from "@/components/providers/prefs";
@@ -68,6 +69,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </Link>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
+            <MaskFinanceToggle variant="ghost" />
             <GlobalSearch />
             {isLife ? (
               <Link

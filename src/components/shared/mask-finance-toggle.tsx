@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { useMaskFinance } from "@/hooks/use-mask-finance";
 
 /** Toggles hiding personal finance amounts behind bullets, app-wide. */
-export function MaskFinanceToggle() {
+export function MaskFinanceToggle({ variant = "outline" }: { variant?: "outline" | "ghost" }) {
   const { masked, setMasked } = useMaskFinance();
   return (
     <Button
       type="button"
-      variant="outline"
+      variant={variant}
       size="icon"
       onClick={() => setMasked(!masked)}
       aria-label={masked ? "Show finance numbers" : "Hide finance numbers"}
