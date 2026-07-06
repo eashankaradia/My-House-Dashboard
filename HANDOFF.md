@@ -14,8 +14,10 @@
 > now splits into `activeProjects`/`completedProjects`, with completed
 > ones in a collapsed "Completed (N)" section. No migration. `npm run
 > typecheck`, `npm run lint`, default build, and `NEXT_PUBLIC_APP=life`
-> build all pass. About to commit/push/deploy-confirm. Not
-> browser-verified against live data (no `.env.local` Supabase
+> build all pass. Committed as `175328e`, pushed to `main`, and confirmed
+> READY on Vercel production for both my-house-dashboard and
+> my-life-dashboard. Not browser-verified against live data (no
+> `.env.local` Supabase
 > credentials in this sandbox) — smoke-test suggestion: mark a purchase
 > "Purchased" and a project "Completed", confirm both vanish from their
 > main lists and reappear under their respective collapsed sections,
