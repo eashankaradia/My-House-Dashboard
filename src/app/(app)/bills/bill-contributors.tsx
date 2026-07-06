@@ -9,10 +9,10 @@ import type { MemberMap } from "@/lib/household";
 import type { Bill, BillContributor, HouseholdMember } from "@/lib/database.types";
 import { BillContributorForm } from "./bill-contributor-form";
 
-function isActive(c: BillContributor, today: string): boolean {
-  if (c.start_date && c.start_date > today) return false;
-  if (c.end_date && c.end_date < today) return false;
-  return true;
+/** Only a genuinely-ended arrangement should stop counting — a future-dated
+ *  one hasn't started yet but is still the agreed split, so it should. */
+function isExpired(c: BillContributor, today: string): boolean {
+  return c.end_date != null && c.end_date < today;
 }
 
 export function BillContributors({
@@ -27,9 +27,9 @@ export function BillContributors({
   memberMap: MemberMap;
 }) {
   const todayStr = new Date().toISOString().slice(0, 10);
-  const active = contributors.filter((c) => isActive(c, todayStr));
-  const fixed = active.filter((c) => c.amount != null);
-  const remainder = active.filter((c) => c.amount == null);
+  const counted = contributors.filter((c) => !isExpired(c, todayStr));
+  const fixed = counted.filter((c) => c.amount != null);
+  const remainder = counted.filter((c) => c.amount == null);
   const fixedTotal = fixed.reduce((s, c) => s + Number(c.amount), 0);
   const remainderEach = remainder.length > 0 ? Math.max(0, Number(bill.amount) - fixedTotal) / remainder.length : 0;
 
@@ -50,7 +50,8 @@ export function BillContributors({
             const name = memberMap[c.member_id] ?? "Unknown";
             const color = members.find((m) => m.user_id === c.member_id)?.color;
             const effective = c.amount != null ? Number(c.amount) : remainderEach;
-            const live = isActive(c, todayStr);
+            const expired = isExpired(c, todayStr);
+            const upcoming = Boolean(c.start_date && c.start_date > todayStr);
             return (
               <BillContributorForm
                 key={c.id}
@@ -67,7 +68,7 @@ export function BillContributors({
                       <p className="text-xs text-muted-foreground">
                         {c.start_date ? `From ${formatDate(c.start_date)}` : "Always"}
                         {c.end_date ? ` to ${formatDate(c.end_date)}` : ""}
-                        {!live ? " · not active" : ""}
+                        {expired ? " · ended" : upcoming ? " · starts soon" : ""}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
@@ -76,7 +77,7 @@ export function BillContributors({
                       ) : (
                         <Badge variant="secondary">Pays the rest</Badge>
                       )}
-                      {live && c.amount == null && remainderEach > 0 && (
+                      {!expired && c.amount == null && remainderEach > 0 && (
                         <p className="text-xs text-muted-foreground">≈ {formatCurrency(effective)}</p>
                       )}
                     </div>
@@ -88,7 +89,7 @@ export function BillContributors({
         </div>
       )}
 
-      {active.length > 0 && (
+      {counted.length > 0 && (
         <p className="text-xs text-muted-foreground">
           Currently: {fixed.map((c) => `${memberMap[c.member_id] ?? "Unknown"} ${formatCurrency(Number(c.amount))}`).join(", ")}
           {fixed.length > 0 && remainder.length > 0 ? ", " : ""}

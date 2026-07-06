@@ -11,10 +11,10 @@ import type { MemberMap } from "@/lib/household";
 import type { HouseholdContribution, HouseholdMember } from "@/lib/database.types";
 import { HouseholdContributionForm } from "./household-contribution-form";
 
-function isActive(c: HouseholdContribution, today: string): boolean {
-  if (c.start_date && c.start_date > today) return false;
-  if (c.end_date && c.end_date < today) return false;
-  return true;
+/** Only a genuinely-ended arrangement should stop counting — a future-dated
+ *  one hasn't started yet but is still the agreed split, so it should. */
+function isExpired(c: HouseholdContribution, today: string): boolean {
+  return c.end_date != null && c.end_date < today;
 }
 
 export function HouseholdContributions({
@@ -30,9 +30,9 @@ export function HouseholdContributions({
 }) {
   const [editMode, setEditMode] = React.useState(false);
   const todayStr = new Date().toISOString().slice(0, 10);
-  const active = contributions.filter((c) => isActive(c, todayStr));
-  const fixed = active.filter((c) => c.amount != null);
-  const remainder = active.filter((c) => c.amount == null);
+  const counted = contributions.filter((c) => !isExpired(c, todayStr));
+  const fixed = counted.filter((c) => c.amount != null);
+  const remainder = counted.filter((c) => c.amount == null);
   const fixedTotal = fixed.reduce((s, c) => s + Number(c.amount), 0);
   const remainderEach = remainder.length > 0 ? Math.max(0, monthlyTotal - fixedTotal) / remainder.length : 0;
 
@@ -74,7 +74,8 @@ export function HouseholdContributions({
               const name = memberMap[c.member_id] ?? "Unknown";
               const color = members.find((m) => m.user_id === c.member_id)?.color;
               const effective = c.amount != null ? Number(c.amount) : remainderEach;
-              const live = isActive(c, todayStr);
+              const expired = isExpired(c, todayStr);
+              const upcoming = Boolean(c.start_date && c.start_date > todayStr);
               const rowContent = (
                 <>
                   <Avatar className="h-7 w-7 shrink-0">
@@ -85,7 +86,7 @@ export function HouseholdContributions({
                     <p className="text-xs text-muted-foreground">
                       {c.start_date ? `From ${formatDate(c.start_date)}` : "Always"}
                       {c.end_date ? ` to ${formatDate(c.end_date)}` : ""}
-                      {!live ? " · not active" : ""}
+                      {expired ? " · ended" : upcoming ? " · starts soon" : ""}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
@@ -94,7 +95,7 @@ export function HouseholdContributions({
                     ) : (
                       <Badge variant="secondary">Pays the rest</Badge>
                     )}
-                    {live && c.amount == null && remainderEach > 0 && (
+                    {!expired && c.amount == null && remainderEach > 0 && (
                       <p className="text-xs text-muted-foreground">≈ {formatCurrency(effective)}</p>
                     )}
                   </div>

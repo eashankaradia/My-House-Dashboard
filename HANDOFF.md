@@ -2,31 +2,79 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-05 (Purchased items and
-> completed projects no longer clutter the main lists — both move to a
-> collapsed section below, using a new shared `CollapsibleSection`
-> component. Purchases: the grid's "filtered" list now excludes
-> `status === "Purchased"` outright (removed from the status filter
-> dropdown too — it's a separate section now, not a filter value), and a
-> collapsed "Purchased (N)" section lists them (compact rows, sorted by
-> `purchased_at` desc), still filtered by search. Projects: the list view
-> (not the board, which already isolates by status into its own column)
-> now splits into `activeProjects`/`completedProjects`, with completed
-> ones in a collapsed "Completed (N)" section. No migration. `npm run
+> after **every** change. Last updated: 2026-07-06 (Bills: fixed the
+> "pays the rest" split silently reverting to the full bill total when the
+> other contributor's entry is future-dated. `household-contributions.tsx`
+> and `bill-contributors.tsx` both computed the remainder from `active`
+> (start_date <= today <= end_date) contributors, but rendered *all*
+> contributors in the list — so a future-dated fixed contribution showed
+> its amount in the row (looking counted) while being silently excluded
+> from the sum feeding the "pays the rest" person's total. Root-caused via
+> a user screenshot: Neelam's entry read "From 1 Aug 2026 · not active",
+> and Eashan's "Pays the rest" showed the full £1,987.06 instead of
+> £1,987.06 − £900. Fix: only a genuinely-*expired* contribution (past
+> end_date) is now excluded from the split math; a future-dated one still
+> counts, since it's the agreed arrangement, just scheduled to start
+> later. Renamed the exclusion helper `isActive` → `isExpired` in both
+> files; row labels changed from a binary "· not active" to "· ended"
+> (expired, excluded) vs "· starts soon" (future-dated, still included).
+> No migration, no schema change — display/calc logic only. `npm run
 > typecheck`, `npm run lint`, default build, and `NEXT_PUBLIC_APP=life`
-> build all pass. Committed as `175328e`, pushed to `main`, and confirmed
-> READY on Vercel production for both my-house-dashboard and
-> my-life-dashboard. Not browser-verified against live data (no
-> `.env.local` Supabase
-> credentials in this sandbox) — smoke-test suggestion: mark a purchase
-> "Purchased" and a project "Completed", confirm both vanish from their
-> main lists and reappear under their respective collapsed sections,
-> expandable/collapsible, with normal click-to-open behavior intact. See
-> "Purchases & Projects: collapse purchased/completed items" section
-> below for details; earlier sections (share individual options, Room
-> Designer corner sofa, door
-> distance to wall, purchase-option photo gallery, purchase detail
-> declutter, and everything before) are all already confirmed deployed.
+> build all pass. About to commit/push/deploy-confirm. Not
+> browser-verified against live data (no `.env.local` Supabase
+> credentials in this sandbox) — smoke-test suggestion: with Neelam's
+> £900 entry still dated "From 1 Aug 2026", confirm Eashan's "pays the
+> rest" now shows ≈£1,087.06 (1987.06 − 900), and confirm a contribution
+> with a genuinely past end_date is still excluded from the total. See
+> "Bills: fix pays-the-rest split ignoring future-dated contributors"
+> section below for details; earlier sections (purchased/completed
+> collapse, share individual options, Room Designer corner sofa, and
+> everything before) are all already confirmed deployed.
+
+## Bills: fix pays-the-rest split ignoring future-dated contributors (2026-07-06)
+User reported: "the pays the rest option on bills needs to be the
+difference between the total and the amount that others pay." Several
+rounds of investigation (the formula itself — `max(0, total − fixed) /
+remainder count` — was already correct) eventually landed on a
+screenshot: the household had Neelam at £900/mo starting 1 Aug 2026, and
+Eashan "Pays the rest," but Eashan's shown amount was the full monthly
+total, not total-minus-900.
+
+Root cause: both `household-contributions.tsx` and `bill-contributors.tsx`
+had an `isActive(c, today)` check (`start_date <= today <= end_date`) used
+to build the set that feeds the sum (`fixed`/`remainder`/`fixedTotal`),
+but the rendered row list mapped over the *unfiltered* array. So a
+future-dated fixed contribution (start_date in the future) displayed its
+£ amount in its own row like normal, while being silently dropped from the
+arithmetic feeding everyone else's "pays the rest" figure — a genuine
+display/calc inconsistency, not just a data-entry mistake.
+
+Fix (identical in both files):
+- Replaced `isActive()` with `isExpired(c, today)` — `true` only when
+  `end_date` is set and in the past. A future `start_date` no longer
+  excludes a row from the split math, since a scheduled-to-start
+  contribution is still the agreed number, not a "maybe."
+- `fixed`/`remainder`/`fixedTotal`/`remainderEach` now derive from
+  `counted = contributions.filter(c => !isExpired(c, today))` instead of
+  the old `active` (both-bounds-checked) set.
+- Per-row label: replaced the binary "· not active" with "· ended" when
+  `isExpired` (genuinely excluded) and "· starts soon" when the start
+  date is still in the future (included, just not live yet) — so the
+  label now matches what's actually happening in the math.
+- The "≈ effective amount" preview line now gates on `!expired` instead
+  of the old `live` flag, so it still shows for future-dated rows (since
+  they're now counted) and hides only for genuinely expired ones.
+
+Deliberately not changed: a contributor with BOTH a past and a future
+entry (e.g. an old £700 row ended, superseded by a new £900 row) could
+still double-count if both happen to be "not expired" at once with
+overlapping dates — this wasn't the user's scenario (single row per
+person) and handling staggered/overlapping schedules properly would need
+a bigger redesign (e.g. "most relevant row per member") not requested here.
+
+Verification: `npm run typecheck`, `npm run lint`, default build, and
+`NEXT_PUBLIC_APP=life` build all pass. Not browser-verified against live
+data (no `.env.local` Supabase credentials in this sandbox).
 
 ## Purchases & Projects: collapse purchased/completed items (2026-07-05)
 User asked: "filter purchased items out of the future purchases and make
