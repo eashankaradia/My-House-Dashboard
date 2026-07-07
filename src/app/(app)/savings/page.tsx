@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
-import { formatCurrency } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import { monthStr } from "@/lib/income";
 import type { SavingsAccount, SavingsContribution, SavingsPot } from "@/lib/database.types";
 import { PotForm } from "./pot-form";
@@ -48,10 +48,10 @@ export default async function SavingsPage() {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Net worth" value={formatCurrency(netWorth)} icon={Wallet} />
-            <StatCard label="Saved" value={formatCurrency(totalSaved)} icon={PiggyBank} accent="muted" />
-            <StatCard label="Invested" value={formatCurrency(totalInvested)} icon={LineChart} accent="muted" />
-            <StatCard label="This month" value={formatCurrency(monthlyContributed)} hint="Contributed" icon={TrendingUp} />
+            <StatCard label="Net worth" value={<Money value={netWorth} />} icon={Wallet} />
+            <StatCard label="Saved" value={<Money value={totalSaved} />} icon={PiggyBank} accent="muted" />
+            <StatCard label="Invested" value={<Money value={totalInvested} />} icon={LineChart} accent="muted" />
+            <StatCard label="This month" value={<Money value={monthlyContributed} />} hint="Contributed" icon={TrendingUp} />
           </div>
 
           {(["savings", "investment"] as const).map((type) => {

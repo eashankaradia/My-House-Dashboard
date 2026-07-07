@@ -3,7 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
-import { daysUntil, formatCurrency } from "@/lib/utils";
+import { daysUntil } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import { getHouseholdMap } from "@/lib/household";
 import type { MaintenanceTask } from "@/lib/database.types";
 import { MaintenanceForm } from "./maintenance-form";
@@ -52,7 +53,7 @@ export default async function MaintenancePage() {
           <div className="grid gap-4 sm:grid-cols-3">
             <StatCard label="Overdue" value={String(overdue.length)} icon={AlertTriangle} accent={overdue.length ? "destructive" : "muted"} />
             <StatCard label="Due within 30 days" value={String(dueSoon.length)} icon={CalendarClock} accent={dueSoon.length ? "warning" : "muted"} />
-            <StatCard label="Annual upkeep cost" value={formatCurrency(annualCost)} icon={Wrench} />
+            <StatCard label="Annual upkeep cost" value={<Money value={annualCost} />} icon={Wrench} />
           </div>
 
           <MaintenanceList tasks={tasks} memberMap={memberMap} />

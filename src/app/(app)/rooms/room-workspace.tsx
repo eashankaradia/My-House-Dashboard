@@ -23,7 +23,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import type { Inspiration, Project, Purchase, PurchaseOption, Room, RoomColourPalette, RoomColourSwatch, RoomDesignVersion, RoomLayoutItem } from "@/lib/database.types";
 import { createTask } from "@/app/(app)/projects/actions";
 import { ColourStudio } from "./colour-studio";
@@ -325,7 +326,7 @@ function DesignTab({ room, versions }: { room: Room; versions: RoomDesignVersion
                     </p>
                     <p className="text-xs text-muted-foreground">
                       <Badge variant={STATUS_VARIANT[v.status] ?? "secondary"}>{v.status}</Badge>
-                      {v.cost_estimate != null ? <span className="ml-2">{formatCurrency(v.cost_estimate)} est.</span> : null}
+                      {v.cost_estimate != null ? <span className="ml-2"><Money value={v.cost_estimate} /> est.</span> : null}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
@@ -497,8 +498,8 @@ function PurchasesTab({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Planned</p><p className="text-xl font-semibold">{formatCurrency(plannedCost)}</p><p className="text-xs text-muted-foreground">{planned.length} item{planned.length === 1 ? "" : "s"}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Spent</p><p className="text-xl font-semibold">{formatCurrency(spent)}</p><p className="text-xs text-muted-foreground">{bought.length} bought</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Planned</p><p className="text-xl font-semibold"><Money value={plannedCost} /></p><p className="text-xs text-muted-foreground">{planned.length} item{planned.length === 1 ? "" : "s"}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Spent</p><p className="text-xl font-semibold"><Money value={spent} /></p><p className="text-xs text-muted-foreground">{bought.length} bought</p></CardContent></Card>
       </div>
 
       <Card>
@@ -513,7 +514,7 @@ function PurchasesTab({
             </Badge>
           </div>
           <div className="grid gap-2 sm:grid-cols-3">
-            <PlanSignal icon={ShoppingBag} label="To buy" value={formatCurrency(plannedCost)} detail={`${planned.length} planned`} />
+            <PlanSignal icon={ShoppingBag} label="To buy" value={<Money value={plannedCost} />} detail={`${planned.length} planned`} />
             <PlanSignal icon={Ruler} label="Measured" value={String(planned.length - missingMeasurements.length)} detail={`${missingMeasurements.length} missing size`} />
             <PlanSignal icon={Layers} label="On plans" value={String(placedPurchases.length)} detail={`${missingLayout.length} not placed`} />
           </div>
@@ -546,8 +547,8 @@ function PurchasesTab({
                 {categoryRows.map(([cat, r]) => (
                   <tr key={cat} className="border-t">
                     <td className="py-1.5">{cat}</td>
-                    <td className="py-1.5 text-right text-muted-foreground">{formatCurrency(r.planned)}</td>
-                    <td className="py-1.5 text-right font-medium">{formatCurrency(r.spent)}</td>
+                    <td className="py-1.5 text-right text-muted-foreground"><Money value={r.planned} /></td>
+                    <td className="py-1.5 text-right font-medium"><Money value={r.spent} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -576,7 +577,7 @@ function PurchasesTab({
                   </span>
                 </span>
                 <Badge variant={p.status === "Purchased" ? "success" : placed ? "secondary" : "outline"}>{p.status}</Badge>
-                <span className="shrink-0 font-medium">{formatCurrency(p.status === "Purchased" ? p.purchased_price ?? p.price : pickPrice(p))}</span>
+                <span className="shrink-0 font-medium"><Money value={p.status === "Purchased" ? p.purchased_price ?? p.price : pickPrice(p)} /></span>
               </Link>
               );
             })}
@@ -595,7 +596,7 @@ function PlanSignal({
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
-  value: string;
+  value: React.ReactNode;
   detail: string;
 }) {
   return (

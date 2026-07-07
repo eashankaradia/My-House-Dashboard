@@ -6,7 +6,8 @@ import { StatCard } from "@/components/shared/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DonutChart } from "@/components/charts/donut-chart";
-import { formatCurrency, formatDate, daysUntil, toAnnual, toMonthly } from "@/lib/utils";
+import { formatDate, daysUntil, toAnnual, toMonthly } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import { getHouseholdMap } from "@/lib/household";
 import type { Bill, BillContributor, BillPayment, HouseholdContribution, HouseholdMember, PaymentAccount } from "@/lib/database.types";
 import { BillForm } from "./bill-form";
@@ -86,8 +87,8 @@ export default async function BillsPage() {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Monthly bills" value={formatCurrency(monthlyTotal)} icon={Receipt} />
-            <StatCard label="Annual bills" value={formatCurrency(annualTotal)} icon={TrendingUp} />
+            <StatCard label="Monthly bills" value={<Money value={monthlyTotal} />} icon={Receipt} />
+            <StatCard label="Annual bills" value={<Money value={annualTotal} />} icon={TrendingUp} />
             <StatCard
               label="Next due"
               value={upcoming[0] ? formatDate(upcoming[0].bill.due_date) : "—"}
@@ -133,7 +134,7 @@ export default async function BillsPage() {
                       <p className="text-xs text-muted-foreground">{formatDate(bill.due_date)}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{formatCurrency(bill.amount)}</span>
+                      <span className="font-medium"><Money value={bill.amount} /></span>
                       {days < 0 ? (
                         <Badge variant="destructive">{Math.abs(days)}d late</Badge>
                       ) : days <= 7 ? (

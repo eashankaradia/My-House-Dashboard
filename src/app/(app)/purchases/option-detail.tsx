@@ -15,6 +15,9 @@ import { ItemComments } from "@/components/shared/item-comments";
 import { ShareButton } from "@/components/shared/share-button";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
+import { useMaskFinance } from "@/hooks/use-mask-finance";
+import { MASKED_AMOUNT } from "@/lib/mask-money-text";
 import { FREQUENCY_SUFFIX, OPTION_SHAPE_LABELS } from "@/lib/constants";
 import type { PurchaseOption } from "@/lib/database.types";
 import { OptionForm } from "./option-form";
@@ -39,6 +42,7 @@ export function OptionDetailDialog({
   /** One or more `<DialogTrigger asChild>` elements. */
   children: React.ReactNode;
 }) {
+  const { masked } = useMaskFinance();
   const linked = useOpenFromUrl(option.id, "option");
   const [localOpen, setLocalOpen] = React.useState(false);
   const open = deepLink ? linked.open : localOpen;
@@ -97,7 +101,7 @@ export function OptionDetailDialog({
 
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-xl font-semibold">
-              {formatCurrency(option.price)}
+              <Money value={option.price} />
               {FREQUENCY_SUFFIX[option.frequency] ? (
                 <span className="text-sm font-normal text-muted-foreground">{FREQUENCY_SUFFIX[option.frequency]}</span>
               ) : null}
@@ -107,11 +111,11 @@ export function OptionDetailDialog({
 
           {option.start_price > 0 && Number(option.price) !== Number(option.start_price) ? (
             <p className="text-xs text-muted-foreground">
-              Started at {formatCurrency(option.start_price)} ·{" "}
+              Started at <Money value={option.start_price} /> ·{" "}
               {option.price < option.start_price ? (
-                <span className="font-medium text-emerald-600">down {formatCurrency(option.start_price - option.price)}</span>
+                <span className="font-medium text-emerald-600">down <Money value={option.start_price - option.price} /></span>
               ) : (
-                <span className="font-medium text-rose-600">up {formatCurrency(option.price - option.start_price)}</span>
+                <span className="font-medium text-rose-600">up <Money value={option.price - option.start_price} /></span>
               )}
             </p>
           ) : null}
@@ -161,7 +165,7 @@ export function OptionDetailDialog({
             ) : null}
             <ShareButton
               title={option.name}
-              text={[option.store, formatCurrency(option.price)].filter(Boolean).join(" · ")}
+              text={[option.store, masked ? MASKED_AMOUNT : formatCurrency(option.price)].filter(Boolean).join(" · ")}
               url={`/purchases?item=${option.purchase_id}&option=${option.id}`}
             />
             <OptionForm

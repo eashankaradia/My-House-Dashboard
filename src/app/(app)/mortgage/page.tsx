@@ -6,7 +6,8 @@ import { StatCard } from "@/components/shared/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { formatCurrency, formatDate, formatPercent, daysUntil } from "@/lib/utils";
+import { formatDate, formatPercent, daysUntil } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import { monthsToYearsLabel, payoffMonths } from "@/lib/finance";
 import type { Mortgage } from "@/lib/database.types";
 import { MortgageForm } from "./mortgage-form";
@@ -60,13 +61,13 @@ export default async function MortgagePage() {
       </PageHeader>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Equity" value={formatCurrency(equity)} hint={`${Math.round(equityPct)}% of value`} icon={Wallet} />
-        <StatCard label="Balance" value={formatCurrency(mortgage.mortgage_balance)} icon={Banknote} accent="muted" />
+        <StatCard label="Equity" value={<Money value={equity} />} hint={`${Math.round(equityPct)}% of value`} icon={Wallet} />
+        <StatCard label="Balance" value={<Money value={mortgage.mortgage_balance} />} icon={Banknote} accent="muted" />
         <StatCard label="Loan-to-value" value={formatPercent(ltv)} hint={`${formatPercent(mortgage.interest_rate)} rate`} icon={Percent} />
         <StatCard
           label="Remaining term"
           value={monthsToYearsLabel(remainingTerm)}
-          hint={`${formatCurrency(mortgage.monthly_payment)}/mo`}
+          hint={<><Money value={mortgage.monthly_payment} />/mo</>}
           icon={CalendarClock}
         />
       </div>
@@ -80,19 +81,19 @@ export default async function MortgagePage() {
             <div>
               <div className="mb-1.5 flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Equity</span>
-                <span className="font-medium">{formatCurrency(equity)}</span>
+                <span className="font-medium"><Money value={equity} /></span>
               </div>
               <Progress value={equityPct} />
               <div className="mt-1.5 flex items-center justify-between text-xs text-muted-foreground">
                 <span>{Math.round(equityPct)}% owned</span>
-                <span>Value {formatCurrency(mortgage.property_value)}</span>
+                <span>Value <Money value={mortgage.property_value} /></span>
               </div>
             </div>
 
             <div className="space-y-2 border-t pt-4 text-sm">
               <Row label="Provider" value={mortgage.provider ?? "—"} />
               <Row label="Interest rate" value={formatPercent(mortgage.interest_rate)} />
-              <Row label="Monthly payment" value={formatCurrency(mortgage.monthly_payment)} />
+              <Row label="Monthly payment" value={<Money value={mortgage.monthly_payment} />} />
               <Row label="Fixed term ends" value={formatDate(mortgage.fixed_term_end_date)} />
             </div>
 
@@ -129,7 +130,7 @@ export default async function MortgagePage() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between">
       <span className="text-muted-foreground">{label}</span>

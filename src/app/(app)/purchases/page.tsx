@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
-import { formatCurrency } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import { PURCHASE_CATEGORIES } from "@/lib/constants";
 import { getHouseholdMap } from "@/lib/household";
 import { ArchivedSection } from "@/components/shared/archived-section";
@@ -77,7 +77,7 @@ export default async function PurchasesPage() {
             <>
               <div className="grid gap-4 sm:grid-cols-2">
                 <StatCard label="Wishlist items" value={String(wishlist.length)} icon={ShoppingBag} />
-                <StatCard label="Ready to buy" value={formatCurrency(readyToBuyValue)} hint={`${readyToBuy.length} item${readyToBuy.length === 1 ? "" : "s"}`} icon={Wallet} />
+                <StatCard label="Ready to buy" value={<Money value={readyToBuyValue} />} hint={`${readyToBuy.length} item${readyToBuy.length === 1 ? "" : "s"}`} icon={Wallet} />
               </div>
               <ReadyToBuy items={readyToBuy} />
               <PurchasesGrid purchases={purchases} memberMap={memberMap} currentUserId={user?.id} categories={categories} />

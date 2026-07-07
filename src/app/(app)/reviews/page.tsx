@@ -2,7 +2,8 @@ import { ClipboardCheck } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
 import { createClient } from "@/lib/supabase/server";
-import { formatCurrency, toMonthly } from "@/lib/utils";
+import { toMonthly } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import { monthStr as financeMonthStr, effectiveIncomeForMonth } from "@/lib/income";
 import { weekStart, monthStart, weekLabel, monthLabel } from "@/lib/review-periods";
 import type { Bill, Goal, Habit, HabitLog, IncomeMonth, MaintenanceTask, ProjectTask, Review } from "@/lib/database.types";
@@ -112,7 +113,7 @@ export default async function ReviewsPage() {
         }
         monthlyStats={
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Net this month" value={netMonthly !== null ? formatCurrency(netMonthly) : "—"} accent={netMonthly !== null && netMonthly < 0 ? "destructive" : "muted"} />
+            <StatCard label="Net this month" value={netMonthly !== null ? <Money value={netMonthly} /> : "—"} accent={netMonthly !== null && netMonthly < 0 ? "destructive" : "muted"} />
             <StatCard label="Habits this month" value={monthlyHabitPct !== null ? `${monthlyHabitPct}%` : "—"} accent="muted" />
             <StatCard label="Avg goal progress" value={avgGoalProgress !== null ? `${avgGoalProgress}%` : "—"} accent="muted" />
             <StatCard label="Home tasks done" value={String(maintenanceCompletedThisMonth)} accent="muted" />

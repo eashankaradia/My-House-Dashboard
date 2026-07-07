@@ -15,7 +15,8 @@ import { ShareButton } from "@/components/shared/share-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { ItemComments } from "@/components/shared/item-comments";
 import { priorityVariant } from "@/lib/ui";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import type { MemberMap } from "@/lib/household";
 import type { ProjectWithTasks } from "@/lib/database.types";
 import { ProjectForm } from "./project-form";
@@ -54,8 +55,8 @@ export function ProjectDetailDialog({
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Detail label="Status" value={project.status} />
             <Detail label="Category" value={project.category} />
-            <Detail label="Estimated" value={formatCurrency(project.estimated_cost)} />
-            <Detail label="Actual" value={formatCurrency(project.actual_cost)} />
+            <Detail label="Estimated" value={<Money value={project.estimated_cost} />} />
+            <Detail label="Actual" value={<Money value={project.actual_cost} />} />
             <Detail label="Target date" value={formatDate(project.target_completion_date)} />
             <Detail label="Sub-tasks" value={`${done}/${project.tasks.length} done`} />
           </div>
@@ -100,7 +101,7 @@ export function ProjectDetailDialog({
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
+function Detail({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>

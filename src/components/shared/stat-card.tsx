@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   label: string;
-  value: string;
-  hint?: string;
+  value: React.ReactNode;
+  hint?: React.ReactNode;
   icon?: LucideIcon;
   accent?: "primary" | "warning" | "destructive" | "muted";
   className?: string;

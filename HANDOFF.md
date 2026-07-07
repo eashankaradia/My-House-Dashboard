@@ -2,42 +2,62 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-06 (Global mask-finance toggle
-> + favicon/logo alignment). Moved `MaskFinanceToggle` (existing component,
-> previously only on the Finance page) into the shared top header in
-> `src/app/(app)/layout.tsx`, so it's now reachable from every page on both
-> My House and MyLife (single shared layout, so both apps get it for free).
-> Removed the now-redundant copy from the Finance page header. Added a
-> `variant` prop ("outline" | "ghost") to `MaskFinanceToggle` so the header
-> copy (ghost, blends in with the other icon buttons) can differ from any
-> future in-page usage (outline, default, unchanged). Separately, fixed a
-> real branding mismatch: the browser-tab favicon (`public/icons/icon.svg`,
-> used for both `icon` and `apple` in `src/app/layout.tsx`'s metadata) was
-> still the old bright-green-background/white-M design from before the
-> sparkle-logo redesign (task history #75), while the actual in-app logo
-> (`public/icons/logo.png`, used in the sidebar, mobile header, and login
-> page) had already moved to the cream-background/sage-green-M sparkle
-> design. Re-drew `icon.svg` to match: sampled `logo.png`'s exact colors
-> (bg `#faf9f7`, mark `#7c9a7f`) with Pillow, rebuilt the SVG with a bolder
-> M stroke and repositioned sparkle, and rendered it through headless
-> Chromium to visually confirm the match against the real logo before
-> committing (see side-by-side render done during this session — not
-> saved to the repo, scratchpad only). `public/icons/icon.png` (used in
-> `manifest.ts` for PWA icons) was already byte-identical to `logo.png`,
-> so no change needed there — only the SVG favicon was stale. No
-> migration. `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. Committed as 636eb1a and
-> confirmed READY on Vercel production for both my-house-dashboard and
-> my-life-dashboard. Not browser-verified against live data (no
-> `.env.local` Supabase credentials in this sandbox) — smoke-test
-> suggestion: confirm the eye icon appears in the top header on every
-> page (not just Finance) on both apps, toggling it masks/unmasks amounts
-> everywhere, and the browser tab favicon now shows the cream/sage-green
-> M+sparkle instead of the old green square. See "Global mask-finance
-> toggle + favicon alignment" section below for details; earlier sections
-> (currency rounding, bills pays-the-rest fix, purchased/completed
-> collapse, share individual options, and everything before) are all
-> already confirmed deployed.
+> after **every** change. Last updated: 2026-07-06 (Global masking now covers
+> every currency display app-wide — previously the mask-finance toggle only
+> masked a handful of Finance-page amounts via `<Money>`; ~100 other
+> `formatCurrency()` call sites across bills, purchases, savings, projects,
+> rooms, mortgage, maintenance, analytics, goals, reviews and charts bypassed
+> masking entirely. Converted all of them to `<Money>` (or, where JSX doesn't
+> fit — chart tick/tooltip formatters, `ShareButton` text — a `masked ?
+> MASKED_AMOUNT : ...` inline check via `useMaskFinance()`). Widened
+> `StatCard`, several per-file local `Detail`/`Row`/`DecisionMetric`/
+> `PlanSignal` components' value props from `string` to `React.ReactNode` to
+> accept `<Money>`. See "Global masking coverage" section below for the full
+> file list. About to commit/push/deploy-confirm. `npm run typecheck`,
+> `npm run lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass.
+> Not browser-verified against live data (no `.env.local` Supabase
+> credentials in this sandbox) — smoke-test suggestion: toggle masking on and
+> confirm bill amounts, purchase prices, savings pot balances, project costs,
+> mortgage figures, and chart tooltips/axis labels all show `••••` instead of
+> real numbers. Earlier sections (mask-toggle header placement, favicon
+> alignment, currency rounding, and everything before) are all already
+> confirmed deployed.
+
+## Global masking coverage: every currency display, not just Finance (2026-07-06)
+User said: "global masking should hide all finance numbers" — after the
+previous batch added a header-level toggle, the toggle itself worked but
+only actually masked amounts on the Finance page and dashboard glance
+stats (the only places already using `<Money>`). Everywhere else — bills,
+purchases, savings pots, projects, room designer, mortgage, maintenance,
+analytics, goals, reviews, and chart tooltips/axis labels — called
+`formatCurrency()` directly, bypassing the mask entirely.
+
+Audited every `formatCurrency(`/`formatCompactCurrency(` call site across
+the app (~100 sites in 31 files) and classified each as: a plain JSX
+display (swap to `<Money value={...} />`), a component prop typed as
+`string` (widen to `React.ReactNode` so `<Money>` fits), or a non-JSX
+string context — Recharts `tickFormatter`/`Tooltip.formatter` callbacks
+and `ShareButton`'s `text` prop — where `<Money>` (a component) can't be
+used, so those call `useMaskFinance()` directly and substitute
+`MASKED_AMOUNT` from `lib/mask-money-text.ts` when masked.
+
+Files touched: `bills/{bill-contributors,household-contributions,bills-list,
+bill-detail,bill-payments,page}.tsx`, `purchases/{purchases-grid,
+option-detail,option-row,purchase-detail,page,ready-to-buy}.tsx`,
+`savings/{pot-detail,pot-card,page}.tsx`, `projects/{projects-views,
+project-detail}.tsx`, `rooms/room-workspace.tsx`, `rooms/[id]/compare/
+page.tsx`, `maintenance/{maintenance-row,maintenance-detail,page}.tsx`,
+`mortgage/{overpayment-calculator,page}.tsx`, `analytics/page.tsx`,
+`goals/page.tsx`, `reviews/page.tsx`, `components/charts/{bar-chart,
+area-chart,donut-chart}.tsx`, and `components/shared/stat-card.tsx`
+(widened `value`/`hint` to `ReactNode`). `finance/salary-details.tsx` was
+already correctly masking via its own inline ternary — left unchanged.
+Every edit form's raw number inputs remain untouched, as established in
+the currency-rounding batch.
+
+Verification: `npm run typecheck`, `npm run lint`, default build, and
+`NEXT_PUBLIC_APP=life` build all pass. Not browser-verified against live
+data (no `.env.local` Supabase credentials in this sandbox).
 
 ## Global mask-finance toggle + favicon alignment (2026-07-06)
 User asked for two things in one message: (1) "give me a toggle at the

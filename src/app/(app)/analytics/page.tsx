@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { BarChart } from "@/components/charts/bar-chart";
 import { AreaChart } from "@/components/charts/area-chart";
-import { formatCurrency, toAnnual, toMonthly } from "@/lib/utils";
+import { toAnnual, toMonthly } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import type {
   Bill,
   BillPayment,
@@ -133,21 +134,21 @@ export default async function AnalyticsPage() {
       <PageHeader title="Analytics" description="Useful, actionable insight you can learn from." info="Leads with your bill payments — what you've actually paid month to month, and how that compares with what you expected. The breakdowns below fill in automatically from the other sections." />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Monthly bills" value={formatCurrency(monthlyBills)} />
-        <StatCard label="Annual outgoings" value={formatCurrency(annualBills + annualMaint)} accent="muted" />
-        <StatCard label="Total saved" value={formatCurrency(potRows.reduce((s, p) => s + Number(p.current_amount), 0))} />
-        <StatCard label="Project pipeline" value={formatCurrency(projectRows.reduce((s, p) => s + Number(p.estimated_cost), 0))} accent="muted" />
+        <StatCard label="Monthly bills" value={<Money value={monthlyBills} />} />
+        <StatCard label="Annual outgoings" value={<Money value={annualBills + annualMaint} />} accent="muted" />
+        <StatCard label="Total saved" value={<Money value={potRows.reduce((s, p) => s + Number(p.current_amount), 0)} />} />
+        <StatCard label="Project pipeline" value={<Money value={projectRows.reduce((s, p) => s + Number(p.estimated_cost), 0)} />} accent="muted" />
       </div>
 
       {/* Actionable: payments trend + expected vs actual */}
       {hasPayments ? (
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-3">
-            <StatCard label="Expected (6 mo)" value={formatCurrency(totalExpected)} />
-            <StatCard label="Actually paid (6 mo)" value={formatCurrency(totalActual)} accent="muted" />
+            <StatCard label="Expected (6 mo)" value={<Money value={totalExpected} />} />
+            <StatCard label="Actually paid (6 mo)" value={<Money value={totalActual} />} accent="muted" />
             <StatCard
               label={variance > 0 ? "Over expected" : variance < 0 ? "Under expected" : "On budget"}
-              value={`${variance > 0 ? "+" : variance < 0 ? "−" : ""}${formatCurrency(Math.abs(variance))}`}
+              value={<>{variance > 0 ? "+" : variance < 0 ? "−" : ""}<Money value={Math.abs(variance)} /></>}
             />
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
@@ -167,7 +168,7 @@ export default async function AnalyticsPage() {
                       <span className="min-w-0 truncate">{v.name}</span>
                       <span className={v.value > 0 ? "font-medium text-destructive" : "font-medium text-emerald-600 dark:text-emerald-400"}>
                         {v.value > 0 ? "+" : "−"}
-                        {formatCurrency(Math.abs(v.value))}
+                        <Money value={Math.abs(v.value)} />
                       </span>
                     </div>
                   ))

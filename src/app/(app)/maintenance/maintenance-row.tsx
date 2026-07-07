@@ -8,7 +8,8 @@ import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { ListRow } from "@/components/shared/list-row";
 import { useToast } from "@/hooks/use-toast";
 import { FREQUENCY_LABELS } from "@/lib/constants";
-import { daysUntil, formatCurrency, formatDate } from "@/lib/utils";
+import { daysUntil, formatDate } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import type { MaintenanceTask } from "@/lib/database.types";
 import { MaintenanceForm } from "./maintenance-form";
 import { completeMaintenance, deleteMaintenance } from "./actions";
@@ -41,7 +42,7 @@ export function MaintenanceRow({ task }: { task: MaintenanceTask }) {
         <>
           {task.next_due_date ? `Due ${formatDate(task.next_due_date)}` : "No due date"}
           {task.last_completed_date ? ` · last done ${formatDate(task.last_completed_date)}` : ""}
-          {task.cost ? ` · ${formatCurrency(task.cost)}` : ""}
+          {task.cost ? <> · <Money value={task.cost} /></> : null}
         </>
       }
       badges={

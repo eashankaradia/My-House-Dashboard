@@ -6,7 +6,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MEMBER_COLOR_TEXT } from "@/lib/constants";
-import { cn, formatCurrency, formatDate, initialsFromName } from "@/lib/utils";
+import { cn, formatDate, initialsFromName } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import type { MemberMap } from "@/lib/household";
 import type { HouseholdContribution, HouseholdMember } from "@/lib/database.types";
 import { HouseholdContributionForm } from "./household-contribution-form";
@@ -66,7 +67,7 @@ export function HouseholdContributions({
       <CardContent className="space-y-2">
         {contributions.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No split set — add who puts in what toward the household&apos;s {formatCurrency(monthlyTotal)}/mo bills.
+            No split set — add who puts in what toward the household&apos;s <Money value={monthlyTotal} />/mo bills.
           </p>
         ) : (
           <div className="space-y-1.5">
@@ -91,12 +92,12 @@ export function HouseholdContributions({
                   </div>
                   <div className="shrink-0 text-right">
                     {c.amount != null ? (
-                      <p className="font-semibold">{formatCurrency(Number(c.amount))}</p>
+                      <p className="font-semibold"><Money value={Number(c.amount)} /></p>
                     ) : (
                       <Badge variant="secondary">Pays the rest</Badge>
                     )}
                     {!expired && c.amount == null && remainderEach > 0 && (
-                      <p className="text-xs text-muted-foreground">≈ {formatCurrency(effective)}</p>
+                      <p className="text-xs text-muted-foreground">≈ <Money value={effective} /></p>
                     )}
                   </div>
                 </>

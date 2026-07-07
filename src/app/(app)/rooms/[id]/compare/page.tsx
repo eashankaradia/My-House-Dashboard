@@ -4,7 +4,7 @@ import { ArrowLeft, Star } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import type { Room, RoomDesignVersion, RoomLayoutItem } from "@/lib/database.types";
 
 export const metadata = { title: "Compare designs" };
@@ -74,7 +74,7 @@ export default async function ComparePage({ params }: { params: Promise<{ id: st
 
                 <Row label="Cost">
                   <span className={cost > 0 && cost === cheapest ? "font-semibold text-emerald-600 dark:text-emerald-400" : "font-medium"}>
-                    {formatCurrency(cost)}{cost > 0 && cost === cheapest ? " ·cheapest" : ""}
+                    <Money value={cost} />{cost > 0 && cost === cheapest ? " ·cheapest" : ""}
                   </span>
                 </Row>
                 <Row label="Furniture">{vItems.length} item{vItems.length === 1 ? "" : "s"}</Row>
@@ -102,7 +102,7 @@ export default async function ComparePage({ params }: { params: Promise<{ id: st
                       {vItems.map((it) => (
                         <li key={it.id} className="flex justify-between gap-2">
                           <span className="truncate">{it.name}</span>
-                          {it.cost ? <span className="shrink-0 text-muted-foreground">{formatCurrency(it.cost)}</span> : null}
+                          {it.cost ? <span className="shrink-0 text-muted-foreground"><Money value={it.cost} /></span> : null}
                         </li>
                       ))}
                     </ul>

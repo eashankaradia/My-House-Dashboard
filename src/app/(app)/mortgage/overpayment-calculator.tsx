@@ -17,6 +17,9 @@ import { Label } from "@/components/ui/label";
 import { CHART_COLORS, tooltipStyle } from "@/components/charts/chart-theme";
 import { amortise, monthsToYearsLabel, payoffMonths } from "@/lib/finance";
 import { formatCompactCurrency, formatCurrency } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
+import { useMaskFinance } from "@/hooks/use-mask-finance";
+import { MASKED_AMOUNT } from "@/lib/mask-money-text";
 
 type Props = {
   balance: number;
@@ -25,6 +28,7 @@ type Props = {
 };
 
 export function OverpaymentCalculator({ balance, rate, monthlyPayment }: Props) {
+  const { masked } = useMaskFinance();
   const [extra, setExtra] = React.useState(100);
   const [lump, setLump] = React.useState(0);
 
@@ -93,7 +97,7 @@ export function OverpaymentCalculator({ balance, rate, monthlyPayment }: Props) 
           <div className="rounded-lg border bg-card p-3">
             <p className="text-xs text-muted-foreground">Interest saved</p>
             <p className="text-lg font-semibold text-primary">
-              {canModel ? formatCurrency(interestSaved) : "—"}
+              {canModel ? <Money value={interestSaved} /> : "—"}
             </p>
           </div>
         </div>
@@ -107,10 +111,10 @@ export function OverpaymentCalculator({ balance, rate, monthlyPayment }: Props) 
                 tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => formatCompactCurrency(v)}
+                tickFormatter={(v) => (masked ? MASKED_AMOUNT : formatCompactCurrency(v))}
                 width={48}
               />
-              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatCurrency(v)} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => (masked ? MASKED_AMOUNT : formatCurrency(v))} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Line type="monotone" dataKey="Current" stroke={CHART_COLORS[1]} strokeWidth={2.5} dot={false} />
               <Line type="monotone" dataKey="Overpaying" stroke={CHART_COLORS[0]} strokeWidth={2.5} dot={false} />

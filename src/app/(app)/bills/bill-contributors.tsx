@@ -5,6 +5,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { MEMBER_COLOR_TEXT } from "@/lib/constants";
 import { formatCurrency, formatDate, initialsFromName } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
+import { useMaskFinance } from "@/hooks/use-mask-finance";
+import { maskMoneyText } from "@/lib/mask-money-text";
 import type { MemberMap } from "@/lib/household";
 import type { Bill, BillContributor, HouseholdMember } from "@/lib/database.types";
 import { BillContributorForm } from "./bill-contributor-form";
@@ -26,6 +29,7 @@ export function BillContributors({
   members: HouseholdMember[];
   memberMap: MemberMap;
 }) {
+  const { masked } = useMaskFinance();
   const todayStr = new Date().toISOString().slice(0, 10);
   const counted = contributors.filter((c) => !isExpired(c, todayStr));
   const fixed = counted.filter((c) => c.amount != null);
@@ -73,12 +77,12 @@ export function BillContributors({
                     </div>
                     <div className="shrink-0 text-right">
                       {c.amount != null ? (
-                        <p className="font-semibold">{formatCurrency(Number(c.amount))}</p>
+                        <p className="font-semibold"><Money value={Number(c.amount)} /></p>
                       ) : (
                         <Badge variant="secondary">Pays the rest</Badge>
                       )}
                       {!expired && c.amount == null && remainderEach > 0 && (
-                        <p className="text-xs text-muted-foreground">≈ {formatCurrency(effective)}</p>
+                        <p className="text-xs text-muted-foreground">≈ <Money value={effective} /></p>
                       )}
                     </div>
                   </button>
@@ -89,13 +93,17 @@ export function BillContributors({
         </div>
       )}
 
-      {counted.length > 0 && (
-        <p className="text-xs text-muted-foreground">
-          Currently: {fixed.map((c) => `${memberMap[c.member_id] ?? "Unknown"} ${formatCurrency(Number(c.amount))}`).join(", ")}
-          {fixed.length > 0 && remainder.length > 0 ? ", " : ""}
-          {remainder.map((c) => `${memberMap[c.member_id] ?? "Unknown"} ${formatCurrency(remainderEach)} (rest)`).join(", ")}
-        </p>
-      )}
+      {counted.length > 0 && (() => {
+        const summary =
+          fixed.map((c) => `${memberMap[c.member_id] ?? "Unknown"} ${formatCurrency(Number(c.amount))}`).join(", ") +
+          (fixed.length > 0 && remainder.length > 0 ? ", " : "") +
+          remainder.map((c) => `${memberMap[c.member_id] ?? "Unknown"} ${formatCurrency(remainderEach)} (rest)`).join(", ");
+        return (
+          <p className="text-xs text-muted-foreground">
+            Currently: {masked ? maskMoneyText(summary) : summary}
+          </p>
+        );
+      })()}
     </div>
   );
 }

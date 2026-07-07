@@ -16,6 +16,9 @@ import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { ItemComments } from "@/components/shared/item-comments";
 import { FREQUENCY_LABELS } from "@/lib/constants";
 import { formatCurrency, formatDate, toAnnual, toMonthly } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
+import { useMaskFinance } from "@/hooks/use-mask-finance";
+import { MASKED_AMOUNT } from "@/lib/mask-money-text";
 import type { MemberMap } from "@/lib/household";
 import type { Bill, BillContributor, BillPayment, HouseholdMember, PaymentAccount } from "@/lib/database.types";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
@@ -43,6 +46,7 @@ export function BillDetailDialog({
   children: React.ReactNode;
 }) {
   const { open, onOpenChange } = useOpenFromUrl(bill.id);
+  const { masked } = useMaskFinance();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -55,10 +59,10 @@ export function BillDetailDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <Detail label="Amount" value={formatCurrency(bill.amount)} />
+            <Detail label="Amount" value={<Money value={bill.amount} />} />
             <Detail label="Frequency" value={FREQUENCY_LABELS[bill.frequency] ?? bill.frequency} />
-            <Detail label="Monthly" value={formatCurrency(toMonthly(bill.amount, bill.frequency))} />
-            <Detail label="Annual" value={formatCurrency(toAnnual(bill.amount, bill.frequency))} />
+            <Detail label="Monthly" value={<Money value={toMonthly(bill.amount, bill.frequency)} />} />
+            <Detail label="Annual" value={<Money value={toAnnual(bill.amount, bill.frequency)} />} />
             {bill.start_date ? <Detail label="Start date" value={formatDate(bill.start_date)} /> : null}
             <Detail label="Next due" value={formatDate(bill.due_date)} />
             <Detail label="End date" value={formatDate(bill.end_date)} />
@@ -92,7 +96,10 @@ export function BillDetailDialog({
           <div className="flex items-center justify-between border-t pt-3">
             <AddedBy name={memberMap[bill.user_id]} />
             <div className="flex items-center gap-2">
-              <ShareButton title={bill.name} text={`${formatCurrency(bill.amount)} · ${FREQUENCY_LABELS[bill.frequency] ?? bill.frequency}`} />
+              <ShareButton
+                title={bill.name}
+                text={`${masked ? MASKED_AMOUNT : formatCurrency(bill.amount)} · ${FREQUENCY_LABELS[bill.frequency] ?? bill.frequency}`}
+              />
               <BillForm bill={bill} accounts={accounts} />
               <ConfirmDelete itemLabel="bill" action={deleteBill.bind(null, bill.id)} variant="menu" />
             </div>
@@ -103,7 +110,7 @@ export function BillDetailDialog({
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
+function Detail({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>

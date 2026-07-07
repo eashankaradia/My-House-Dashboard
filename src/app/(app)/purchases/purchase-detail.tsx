@@ -18,7 +18,8 @@ import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { ItemComments } from "@/components/shared/item-comments";
 import { InfoHint } from "@/components/shared/info-hint";
 import { priorityVariant } from "@/lib/ui";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import type { MemberMap } from "@/lib/household";
 import type { PurchaseOption, PurchaseWithOptions } from "@/lib/database.types";
 import { PurchaseForm } from "./purchase-form";
@@ -65,7 +66,7 @@ export function PurchaseDetailDialog({
             <Detail label="Category" value={purchase.category} />
             {purchase.size ? <Detail label="Size" value={`${purchase.size} purchase`} /> : null}
             {purchase.room ? <Detail label="Room" value={purchase.room} /> : null}
-            {options.length === 0 ? <Detail label="Price" value={formatCurrency(purchase.price)} /> : null}
+            {options.length === 0 ? <Detail label="Price" value={<Money value={purchase.price} />} /> : null}
             {purchase.store ? <Detail label="Store" value={purchase.store} /> : null}
           </div>
 
@@ -90,7 +91,7 @@ export function PurchaseDetailDialog({
                   <span>By <span className="font-medium">{memberMap[purchase.purchased_by] ?? "someone"}</span></span>
                 ) : null}
                 {purchase.purchased_price != null ? (
-                  <span>Paid <span className="font-medium">{formatCurrency(purchase.purchased_price)}</span></span>
+                  <span>Paid <span className="font-medium"><Money value={purchase.purchased_price} /></span></span>
                 ) : null}
                 {purchase.receipt_url ? (
                   <a href={purchase.receipt_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">
@@ -153,7 +154,7 @@ export function PurchaseDetailDialog({
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
+function Detail({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
@@ -205,7 +206,7 @@ function DecisionCentre({
         <span>
           <span className="block text-sm font-semibold">Decision centre</span>
           <span className="block text-xs text-muted-foreground">
-            {decision?.name ?? "No pick yet"} - {formatCurrency(basePrice)}
+            {decision?.name ?? "No pick yet"} - <Money value={basePrice} />
           </span>
         </span>
         <span className="flex items-center gap-2">
@@ -223,13 +224,13 @@ function DecisionCentre({
               icon={CheckCircle2}
               label="Current pick"
               value={decision?.name ?? purchase.name}
-              detail={decision ? formatCurrency(decision.price) : formatCurrency(purchase.price)}
+              detail={<Money value={decision ? decision.price : purchase.price} />}
             />
             <DecisionMetric
               icon={CircleDollarSign}
               label="Cheapest"
               value={cheapest?.name ?? "No option prices"}
-              detail={cheapest ? formatCurrency(cheapest.price) : "Add options to compare"}
+              detail={cheapest ? <Money value={cheapest.price} /> : "Add options to compare"}
             />
             <DecisionMetric
               icon={Star}
@@ -249,11 +250,11 @@ function DecisionCentre({
 
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
             <span className="rounded-full bg-background px-2 py-1">
-              Decision cost: <span className="font-medium text-foreground">{formatCurrency(basePrice)}</span>
+              Decision cost: <span className="font-medium text-foreground"><Money value={basePrice} /></span>
             </span>
             {priceSpread > 0 ? (
               <span className="rounded-full bg-background px-2 py-1">
-                Price spread: <span className="font-medium text-foreground">{formatCurrency(priceSpread)}</span>
+                Price spread: <span className="font-medium text-foreground"><Money value={priceSpread} /></span>
               </span>
             ) : null}
             {decision?.store ? (
@@ -277,7 +278,7 @@ function DecisionMetric({
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
-  detail: string;
+  detail: React.ReactNode;
 }) {
   return (
     <div className="min-w-0 rounded-md bg-background p-2">

@@ -18,7 +18,8 @@ import { SearchInput } from "@/components/shared/search-input";
 import { useToast } from "@/hooks/use-toast";
 import { ITEM_SCOPES, ITEM_SCOPE_LABELS, PROJECT_STATUSES } from "@/lib/constants";
 import { priorityVariant, STATUS_ACCENT, STATUS_BORDER } from "@/lib/ui";
-import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import type { MemberMap } from "@/lib/household";
 import type { ProjectTask, ProjectWithTasks } from "@/lib/database.types";
 import { ProjectForm } from "./project-form";
@@ -247,7 +248,7 @@ function ProjectCard({
                 </p>
               </div>
               <div className="text-right text-sm">
-                <p className="font-medium">{formatCurrency(project.actual_cost || project.estimated_cost)}</p>
+                <p className="font-medium"><Money value={project.actual_cost || project.estimated_cost} /></p>
                 <p className="text-xs text-muted-foreground">{project.actual_cost ? "actual" : "est."}</p>
               </div>
             </div>

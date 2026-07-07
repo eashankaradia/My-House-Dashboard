@@ -15,7 +15,8 @@ import { ShareButton } from "@/components/shared/share-button";
 import { ItemTimestamps } from "@/components/shared/item-timestamps";
 import { ItemComments } from "@/components/shared/item-comments";
 import { FREQUENCY_LABELS } from "@/lib/constants";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import type { MemberMap } from "@/lib/household";
 import type { MaintenanceTask } from "@/lib/database.types";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
@@ -46,7 +47,7 @@ export function MaintenanceDetailDialog({
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Detail label="Next due" value={formatDate(task.next_due_date)} />
             <Detail label="Last completed" value={formatDate(task.last_completed_date)} />
-            <Detail label="Typical cost" value={formatCurrency(task.cost)} />
+            <Detail label="Typical cost" value={<Money value={task.cost} />} />
             <Detail label="Frequency" value={FREQUENCY_LABELS[task.frequency] ?? task.frequency} />
           </div>
           {task.notes ? (
@@ -73,7 +74,7 @@ export function MaintenanceDetailDialog({
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
+function Detail({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>

@@ -22,6 +22,9 @@ import { ItemComments } from "@/components/shared/item-comments";
 import { AreaChart } from "@/components/charts/area-chart";
 import { useToast } from "@/hooks/use-toast";
 import { useOpenFromUrl } from "@/hooks/use-open-from-url";
+import { useMaskFinance } from "@/hooks/use-mask-finance";
+import { MASKED_AMOUNT } from "@/lib/mask-money-text";
+import { Money } from "@/components/shared/money";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import type { SavingsAccount, SavingsContribution, SavingsPot } from "@/lib/database.types";
 import { PotForm } from "./pot-form";
@@ -48,6 +51,7 @@ export function PotDetailDialog({
   children: React.ReactNode;
 }) {
   const { open, onOpenChange } = useOpenFromUrl(pot.id);
+  const { masked } = useMaskFinance();
   const pct = pot.target_amount > 0 ? Math.min(100, (pot.current_amount / pot.target_amount) * 100) : 0;
   const remaining = Math.max(0, pot.target_amount - pot.current_amount);
 
@@ -115,13 +119,13 @@ export function PotDetailDialog({
           {/* Headline progress */}
           <div>
             <div className="mb-1.5 flex items-baseline justify-between">
-              <span className="text-2xl font-semibold">{formatCurrency(pot.current_amount)}</span>
-              <span className="text-sm text-muted-foreground">of {formatCurrency(pot.target_amount)}</span>
+              <span className="text-2xl font-semibold"><Money value={pot.current_amount} /></span>
+              <span className="text-sm text-muted-foreground">of <Money value={pot.target_amount} /></span>
             </div>
             <Progress value={pct} />
             <div className="mt-1.5 flex items-center justify-between text-xs text-muted-foreground">
               <span>{Math.round(pct)}% saved</span>
-              {remaining > 0 ? <span>{formatCurrency(remaining)} to go</span> : <Badge variant="success">Complete</Badge>}
+              {remaining > 0 ? <span><Money value={remaining} /> to go</span> : <Badge variant="success">Complete</Badge>}
             </div>
           </div>
 
@@ -130,17 +134,17 @@ export function PotDetailDialog({
             <div className="grid grid-cols-3 gap-3 rounded-lg border bg-muted/30 p-3 text-center">
               <div>
                 <p className="text-xs text-muted-foreground">Value</p>
-                <p className="font-semibold">{formatCurrency(pot.current_amount)}</p>
+                <p className="font-semibold"><Money value={pot.current_amount} /></p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Contributed</p>
-                <p className="font-semibold">{formatCurrency(totalContributed)}</p>
+                <p className="font-semibold"><Money value={totalContributed} /></p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">{growth >= 0 ? "Growth" : "Down"}</p>
                 <p className={cn("font-semibold", growth >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
                   {growth >= 0 ? "+" : ""}
-                  {formatCurrency(growth)}
+                  <Money value={growth} />
                 </p>
               </div>
             </div>
@@ -197,7 +201,7 @@ export function PotDetailDialog({
                             {a.name}
                             {a.provider ? <span className="text-muted-foreground"> · {a.provider}</span> : null}
                           </span>
-                          <span className="shrink-0 font-medium">{formatCurrency(balanceOf(a.id))}</span>
+                          <span className="shrink-0 font-medium"><Money value={balanceOf(a.id)} /></span>
                         </button>
                       }
                     />
@@ -207,14 +211,14 @@ export function PotDetailDialog({
                         {a.name}
                         {a.provider ? <span className="text-muted-foreground"> · {a.provider}</span> : null}
                       </span>
-                      <span className="shrink-0 font-medium">{formatCurrency(balanceOf(a.id))}</span>
+                      <span className="shrink-0 font-medium"><Money value={balanceOf(a.id)} /></span>
                     </div>
                   ),
                 )}
                 {Math.abs(unassigned) > 0.005 ? (
                   <div className="flex items-center justify-between rounded-lg border border-dashed px-2.5 py-2 text-sm text-muted-foreground">
                     <span>Unassigned</span>
-                    <span className="font-medium">{formatCurrency(unassigned)}</span>
+                    <span className="font-medium"><Money value={unassigned} /></span>
                   </div>
                 ) : null}
               </div>
@@ -232,7 +236,7 @@ export function PotDetailDialog({
                         Added {formatDate(a.created_at)} · updated {formatDate(a.updated_at)}
                       </p>
                     </div>
-                    <span className="shrink-0 font-medium">{formatCurrency(balanceOf(a.id))}</span>
+                    <span className="shrink-0 font-medium"><Money value={balanceOf(a.id)} /></span>
                     {editMode ? (
                       <>
                         <AccountForm
@@ -252,7 +256,7 @@ export function PotDetailDialog({
                 {Math.abs(unassigned) > 0.005 ? (
                   <div className="flex items-center justify-between rounded-lg border border-dashed p-2.5 text-sm text-muted-foreground">
                     <span>Unassigned</span>
-                    <span className="font-medium">{formatCurrency(unassigned)}</span>
+                    <span className="font-medium"><Money value={unassigned} /></span>
                   </div>
                 ) : null}
               </div>
@@ -278,7 +282,7 @@ export function PotDetailDialog({
                       <div className="min-w-0 flex-1">
                         <span className={cn("font-medium", amt < 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400")}>
                           {amt < 0 ? "−" : "+"}
-                          {formatCurrency(Math.abs(amt))}
+                          <Money value={Math.abs(amt)} />
                         </span>
                         <span className="ml-2 text-xs text-muted-foreground">
                           {formatDate(c.occurred_on)}
@@ -301,7 +305,14 @@ export function PotDetailDialog({
           {/* Footer actions */}
           <ItemTimestamps createdAt={pot.created_at} updatedAt={pot.updated_at} />
           <div className="flex items-center justify-end gap-2 border-t pt-3">
-            <ShareButton title={pot.name} text={`${formatCurrency(pot.current_amount)} saved of ${formatCurrency(pot.target_amount)}`} />
+            <ShareButton
+              title={pot.name}
+              text={
+                masked
+                  ? `${MASKED_AMOUNT} saved of ${MASKED_AMOUNT}`
+                  : `${formatCurrency(pot.current_amount)} saved of ${formatCurrency(pot.target_amount)}`
+              }
+            />
             {editMode ? (
               <>
                 <PotForm pot={pot} />

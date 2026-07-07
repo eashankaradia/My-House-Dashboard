@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { CardTrigger } from "@/components/shared/card-trigger";
-import { formatCurrency } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import type { SavingsAccount, SavingsContribution, SavingsPot } from "@/lib/database.types";
 import { PotForm } from "./pot-form";
 import { PotDetailDialog } from "./pot-detail";
@@ -62,13 +62,13 @@ export function PotCard({
             </div>
             <div>
               <div className="mb-1.5 flex items-baseline justify-between">
-                <span className="text-xl font-semibold">{formatCurrency(pot.current_amount)}</span>
-                <span className="text-sm text-muted-foreground">of {formatCurrency(pot.target_amount)}</span>
+                <span className="text-xl font-semibold"><Money value={pot.current_amount} /></span>
+                <span className="text-sm text-muted-foreground">of <Money value={pot.target_amount} /></span>
               </div>
               <Progress value={pct} indicatorClassName={COLOR_BG[pot.color] ?? "bg-primary"} />
               <div className="mt-1.5 flex items-center justify-between text-xs text-muted-foreground">
                 <span>{Math.round(pct)}% saved</span>
-                {remaining > 0 ? <span>{formatCurrency(remaining)} to go</span> : <Badge variant="success">Complete</Badge>}
+                {remaining > 0 ? <span><Money value={remaining} /> to go</span> : <Badge variant="success">Complete</Badge>}
               </div>
             </div>
           </CardTrigger>

@@ -7,7 +7,8 @@ import { DialogTrigger } from "@/components/ui/dialog";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import { FREQUENCY_SUFFIX } from "@/lib/constants";
 import type { PurchaseOption } from "@/lib/database.types";
 import { OptionForm } from "./option-form";
@@ -101,15 +102,15 @@ export function OptionRow({
 
         <div className="flex shrink-0 flex-col items-end pt-0.5">
           <span className="text-sm font-semibold">
-            {formatCurrency(option.price)}
+            <Money value={option.price} />
             {FREQUENCY_SUFFIX[option.frequency] ? (
               <span className="text-xs font-normal text-muted-foreground">{FREQUENCY_SUFFIX[option.frequency]}</span>
             ) : null}
           </span>
           {priceDrop ? (
-            <span className="text-[11px] font-medium text-emerald-600">↓ {formatCurrency(option.start_price - option.price)}</span>
+            <span className="text-[11px] font-medium text-emerald-600">↓ <Money value={option.start_price - option.price} /></span>
           ) : priceRise ? (
-            <span className="text-[11px] font-medium text-rose-600">↑ {formatCurrency(option.price - option.start_price)}</span>
+            <span className="text-[11px] font-medium text-rose-600">↑ <Money value={option.price - option.start_price} /></span>
           ) : null}
         </div>
       </div>

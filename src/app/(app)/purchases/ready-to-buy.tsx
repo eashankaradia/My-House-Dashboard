@@ -5,7 +5,8 @@ import { Check, ExternalLink, ShoppingCart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import { FREQUENCY_SUFFIX } from "@/lib/constants";
 import type { PurchaseOption, PurchaseWithOptions } from "@/lib/database.types";
 import { updatePurchaseStatus } from "./actions";
@@ -66,7 +67,7 @@ export function ReadyToBuy({ items }: { items: PurchaseWithOptions[] }) {
                 </p>
               </div>
               <span className="shrink-0 text-sm font-semibold">
-                {formatCurrency(price)}
+                <Money value={price} />
                 {opt && FREQUENCY_SUFFIX[opt.frequency] ? (
                   <span className="text-xs font-normal text-muted-foreground">{FREQUENCY_SUFFIX[opt.frequency]}</span>
                 ) : null}

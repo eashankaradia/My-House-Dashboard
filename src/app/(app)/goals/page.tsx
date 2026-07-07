@@ -8,7 +8,7 @@ import { CardTrigger } from "@/components/shared/card-trigger";
 import { FavoriteToggle } from "@/components/shared/favorite-toggle";
 import { getFavoriteIds } from "@/app/(app)/favorites/actions";
 import type { Goal } from "@/lib/database.types";
-import { formatCurrency } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import { GoalForm } from "./goal-form";
 
 export const metadata = { title: "Goals" };
@@ -144,10 +144,10 @@ function GoalGroup({
                         <Progress value={pct} className="h-2" />
                         <div className="flex justify-between text-xs text-muted-foreground">
                           <span>
-                            {goal.unit === "£" ? formatCurrency(Number(goal.current_value)) : `${goal.current_value ?? 0} ${goal.unit ?? ""}`}
+                            {goal.unit === "£" ? <Money value={Number(goal.current_value)} /> : `${goal.current_value ?? 0} ${goal.unit ?? ""}`}
                           </span>
                           <span>
-                            {goal.unit === "£" ? formatCurrency(Number(goal.target_value)) : `${goal.target_value} ${goal.unit ?? ""}`}
+                            {goal.unit === "£" ? <Money value={Number(goal.target_value)} /> : `${goal.target_value} ${goal.unit ?? ""}`}
                           </span>
                         </div>
                       </div>

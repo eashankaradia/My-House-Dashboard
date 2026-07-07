@@ -9,7 +9,8 @@ import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
 import { SearchInput } from "@/components/shared/search-input";
 import { FREQUENCY_LABELS, ITEM_SCOPE_LABELS } from "@/lib/constants";
-import { cn, daysUntil, formatCurrency, formatDate, toMonthly } from "@/lib/utils";
+import { cn, daysUntil, formatDate, toMonthly } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import { useToast } from "@/hooks/use-toast";
 import type { MemberMap } from "@/lib/household";
 import type { Bill, BillContributor, BillPayment, HouseholdMember, PaymentAccount } from "@/lib/database.types";
@@ -97,7 +98,7 @@ export function BillsList({
                     </span>
                   ) : null}
                   <span className="w-20 shrink-0 text-right font-semibold">
-                    {formatCurrency(toMonthly(bill.amount, bill.frequency))}
+                    <Money value={toMonthly(bill.amount, bill.frequency)} />
                     <span className="text-xs font-normal text-muted-foreground">/mo</span>
                   </span>
                 </CardTrigger>
@@ -141,9 +142,9 @@ export function BillsList({
               <div className="flex items-center gap-1.5">
                 {due ? <MarkPaidButton payment={due} /> : null}
                 <div className="text-right">
-                  <p className="font-semibold">{formatCurrency(bill.amount)}</p>
+                  <p className="font-semibold"><Money value={bill.amount} /></p>
                   <p className="text-xs text-muted-foreground">
-                    {formatCurrency(toMonthly(bill.amount, bill.frequency))}/mo
+                    <Money value={toMonthly(bill.amount, bill.frequency)} />/mo
                   </p>
                 </div>
                 <BillForm

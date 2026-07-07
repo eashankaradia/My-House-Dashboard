@@ -18,7 +18,8 @@ import { useViewPref } from "@/hooks/use-view-prefs";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { ITEM_SCOPE_LABELS, PURCHASE_SIZES, PURCHASE_STATUSES } from "@/lib/constants";
 import { PRIORITY_ACCENT } from "@/lib/ui";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import type { MemberMap } from "@/lib/household";
 import type { PurchaseOption, PurchaseWithOptions } from "@/lib/database.types";
 import { PurchaseForm } from "./purchase-form";
@@ -392,7 +393,7 @@ function PurchaseTable({
                 <td className="px-3 py-2">
                   <StarRating value={effectiveRating(p)} size="sm" />
                 </td>
-                <td className="px-3 py-2 text-right font-medium">{formatCurrency(effectivePrice(p))}</td>
+                <td className="px-3 py-2 text-right font-medium"><Money value={effectivePrice(p)} /></td>
                 <td className="px-3 py-2 text-muted-foreground">{p.status}</td>
                 <td className="px-3 py-2 text-right">
                   <ConfirmDelete itemLabel="item" action={deletePurchase.bind(null, p.id)} />
@@ -457,7 +458,7 @@ function CompactRow({
           </div>
         </CardTrigger>
       </PurchaseDetailDialog>
-      <span className="shrink-0 font-semibold">{formatCurrency(effectivePrice(purchase))}</span>
+      <span className="shrink-0 font-semibold"><Money value={effectivePrice(purchase)} /></span>
       <div className="hidden w-32 shrink-0 sm:block">
         <StatusSelect purchase={purchase} />
       </div>
@@ -516,14 +517,14 @@ function PurchaseCard({
 
         <div className="flex items-baseline justify-between gap-2">
           {options.length === 0 ? (
-            <span className="text-lg font-semibold">{formatCurrency(purchase.price)}</span>
+            <span className="text-lg font-semibold"><Money value={purchase.price} /></span>
           ) : chosen ? (
             <span className="text-lg font-semibold text-primary">
-              {formatCurrency(chosen.price)} <span className="text-xs font-normal text-muted-foreground">picked</span>
+              <Money value={chosen.price} /> <span className="text-xs font-normal text-muted-foreground">picked</span>
             </span>
           ) : (
             <span className="text-lg font-semibold">
-              {min === max ? formatCurrency(min) : `${formatCurrency(min)} – ${formatCurrency(max)}`}
+              {min === max ? <Money value={min} /> : <><Money value={min} /> – <Money value={max} /></>}
             </span>
           )}
           <button

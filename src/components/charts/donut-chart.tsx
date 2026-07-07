@@ -3,6 +3,8 @@
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { CHART_COLORS, tooltipStyle } from "./chart-theme";
 import { formatCurrency } from "@/lib/utils";
+import { useMaskFinance } from "@/hooks/use-mask-finance";
+import { MASKED_AMOUNT } from "@/lib/mask-money-text";
 
 type Datum = { name: string; value: number };
 
@@ -15,7 +17,8 @@ export function DonutChart({
   currency?: boolean;
   height?: number;
 }) {
-  const fmt = (v: number) => (currency ? formatCurrency(v) : String(v));
+  const { masked } = useMaskFinance();
+  const fmt = (v: number) => (masked ? MASKED_AMOUNT : currency ? formatCurrency(v) : String(v));
   return (
     <ResponsiveContainer width="100%" height={height}>
       <PieChart>

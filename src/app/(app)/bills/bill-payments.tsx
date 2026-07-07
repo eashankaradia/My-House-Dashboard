@@ -9,7 +9,8 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Field } from "@/components/shared/form-field";
 import { ConfirmDelete } from "@/components/shared/confirm-delete";
 import { useToast } from "@/hooks/use-toast";
-import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
+import { Money } from "@/components/shared/money";
 import type { Bill, BillPayment, PaymentAccount } from "@/lib/database.types";
 import {
   createBillPayment,
@@ -75,7 +76,7 @@ export function BillPayments({
         <div>
           <p className="text-sm font-medium">Payments</p>
           {payments.length > 0 ? (
-            <p className="text-xs text-muted-foreground">Paid to date {formatCurrency(paidTotal)}</p>
+            <p className="text-xs text-muted-foreground">Paid to date <Money value={paidTotal} /></p>
           ) : null}
         </div>
         <div className="flex items-center gap-2">
@@ -159,7 +160,7 @@ function PaymentRow({
             <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
           </p>
           <p className="text-xs text-muted-foreground">
-            {formatCurrency(payment.actual_amount ?? payment.expected_amount)}
+            <Money value={payment.actual_amount ?? payment.expected_amount} />
             {payment.account_id ? ` · ${accountNames.get(payment.account_id) ?? "Account"}` : ""}
             {payment.notes ? ` · ${payment.notes}` : ""}
           </p>
