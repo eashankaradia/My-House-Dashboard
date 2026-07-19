@@ -20,8 +20,9 @@
 > account) would still resolve and show up in My House's pinned list — fixed
 > in `getPinnedItems()` (`src/app/(app)/favorites/actions.ts`). See "Dashboard:
 > stop MyLife content leaking onto My House home" section below for details.
-> About to commit/push/deploy-confirm. `npm run typecheck`, `npm run lint`,
-> default build, and `NEXT_PUBLIC_APP=life` build all pass. Not
+> Committed as 87f1d00 and confirmed READY on Vercel production for both
+> my-house-dashboard and my-life-dashboard. `npm run typecheck`, `npm run
+> lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass. Not
 > browser-verified against live data (no `.env.local` Supabase credentials
 > in this sandbox) — smoke-test suggestion: on My House, confirm the
 > dashboard never shows "Today's habits", "Goals", or "Cash flow" widgets,
