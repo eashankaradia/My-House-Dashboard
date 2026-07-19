@@ -56,6 +56,7 @@ export type PinnedItem = { type: FavoriteType; id: string; label: string; href: 
 /** Every pinned item across every type, resolved to a label + deep link, for the dashboard. */
 export async function getPinnedItems(): Promise<PinnedItem[]> {
   const { supabase, user } = await getActionContext();
+  const isHouse = process.env.NEXT_PUBLIC_APP !== "life";
   const { data } = await supabase
     .from("favorites")
     .select("entity_type, entity_id")
@@ -68,6 +69,10 @@ export async function getPinnedItems(): Promise<PinnedItem[]> {
   for (const f of favorites) {
     if (!VALID.has(f.entity_type as FavoriteType)) continue;
     const t = f.entity_type as FavoriteType;
+    // "goal" is a MyLife-only concept (no Goals feature on My House) — never
+    // resolve or show a pinned goal there, even if it was pinned while using
+    // MyLife under the same account.
+    if (isHouse && t === "goal") continue;
     byType.set(t, [...(byType.get(t) ?? []), f.entity_id]);
   }
 
@@ -81,8 +86,14 @@ export async function getPinnedItems(): Promise<PinnedItem[]> {
   const labels = new Map<string, string>(); // `${type}:${id}` -> label
   for (const [t, ids] of byType) {
     const meta = TABLES[t];
-    const { data: rows } = await db.from(meta.table).select(`id, ${meta.labelCol}`).in("id", ids);
-    for (const r of rows ?? []) labels.set(`${t}:${r.id}`, r[meta.labelCol]);
+    // Tasks carry a personal/household scope — on My House, only resolve
+    // (and thus only show) ones scoped to the household.
+    const cols = t === "task" ? `id, ${meta.labelCol}, scope` : `id, ${meta.labelCol}`;
+    const { data: rows } = await db.from(meta.table).select(cols).in("id", ids);
+    for (const r of rows ?? []) {
+      if (isHouse && t === "task" && r.scope !== "household") continue;
+      labels.set(`${t}:${r.id}`, r[meta.labelCol]);
+    }
   }
 
   return favorites

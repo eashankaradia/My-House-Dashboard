@@ -67,9 +67,29 @@ export default async function DashboardPage() {
   if (isHouse) billsQuery = billsQuery.eq("scope", "household");
   let purchasesQuery = supabase.from("purchases").select("*").order("created_at", { ascending: false });
   if (isHouse) purchasesQuery = purchasesQuery.eq("scope", "household");
+  let projectsQuery = supabase.from("projects").select("*").order("updated_at", { ascending: false });
+  if (isHouse) projectsQuery = projectsQuery.eq("scope", "household");
+  let tasksQuery = supabase.from("project_tasks").select("*");
+  if (isHouse) tasksQuery = tasksQuery.eq("scope", "household");
   const thisWeekStart = weekStart();
   const weeklyReviewQuery = isLife
     ? supabase.from("reviews").select("id").eq("period_type", "weekly").eq("period_start", thisWeekStart).maybeSingle()
+    : Promise.resolve({ data: null });
+  // Habits, goals and income are MyLife-only concepts (no equivalent nav or
+  // feature on My House) — skip fetching them entirely on My House rather
+  // than fetching and filtering client-side, so nothing MyLife ever reaches
+  // the My House dashboard.
+  const habitsQuery = isLife
+    ? supabase.from("habits").select("*").eq("is_active", true).order("created_at", { ascending: true })
+    : Promise.resolve({ data: null });
+  const habitLogsQuery = isLife
+    ? supabase.from("habit_logs").select("*").gte("logged_date", thirtyDaysAgo)
+    : Promise.resolve({ data: null });
+  const goalsQuery = isLife
+    ? supabase.from("goals").select("*").eq("status", "Active").order("created_at", { ascending: false }).limit(6)
+    : Promise.resolve({ data: null });
+  const incomeMonthsQuery = isLife
+    ? supabase.from("income_months").select("*").order("month", { ascending: false })
     : Promise.resolve({ data: null });
 
   const [
@@ -94,8 +114,8 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     billsQuery,
     supabase.from("savings_pots").select("*"),
-    supabase.from("projects").select("*").order("updated_at", { ascending: false }),
-    supabase.from("project_tasks").select("*"),
+    projectsQuery,
+    tasksQuery,
     purchasesQuery,
     supabase.from("inspiration").select("*").order("updated_at", { ascending: false }).limit(5),
     supabase.from("maintenance_tasks").select("*"),
@@ -104,10 +124,10 @@ export default async function DashboardPage() {
     getHouseholdMap(),
     supabase.from("calendar_events").select("*"),
     supabase.from("bill_payments").select("*").eq("is_paid", false),
-    supabase.from("habits").select("*").eq("is_active", true).order("created_at", { ascending: true }),
-    supabase.from("habit_logs").select("*").gte("logged_date", thirtyDaysAgo),
-    supabase.from("goals").select("*").eq("status", "Active").order("created_at", { ascending: false }).limit(6),
-    supabase.from("income_months").select("*").order("month", { ascending: false }),
+    habitsQuery,
+    habitLogsQuery,
+    goalsQuery,
+    incomeMonthsQuery,
     getPinnedItems(),
     weeklyReviewQuery,
   ]);

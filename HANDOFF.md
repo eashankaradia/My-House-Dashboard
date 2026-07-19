@@ -2,27 +2,92 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-06 (Global masking now covers
-> every currency display app-wide — previously the mask-finance toggle only
-> masked a handful of Finance-page amounts via `<Money>`; ~100 other
-> `formatCurrency()` call sites across bills, purchases, savings, projects,
-> rooms, mortgage, maintenance, analytics, goals, reviews and charts bypassed
-> masking entirely. Converted all of them to `<Money>` (or, where JSX doesn't
-> fit — chart tick/tooltip formatters, `ShareButton` text — a `masked ?
-> MASKED_AMOUNT : ...` inline check via `useMaskFinance()`). Widened
-> `StatCard`, several per-file local `Detail`/`Row`/`DecisionMetric`/
-> `PlanSignal` components' value props from `string` to `React.ReactNode` to
-> accept `<Money>`. See "Global masking coverage" section below for the full
-> file list. Committed as cc7205c and confirmed READY on Vercel production
-> for both my-house-dashboard and my-life-dashboard. `npm run typecheck`,
-> `npm run lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass.
-> Not browser-verified against live data (no `.env.local` Supabase
-> credentials in this sandbox) — smoke-test suggestion: toggle masking on and
-> confirm bill amounts, purchase prices, savings pot balances, project costs,
-> mortgage figures, and chart tooltips/axis labels all show `••••` instead of
-> real numbers. Earlier sections (mask-toggle header placement, favicon
-> alignment, currency rounding, and everything before) are all already
-> confirmed deployed.
+> after **every** change. Last updated: 2026-07-06 (Dashboard: My House home
+> no longer shows MyLife-only content). `src/app/(app)/dashboard/page.tsx`
+> queried `habits`, `habit_logs`, `goals`, and `income_months`
+> unconditionally regardless of `NEXT_PUBLIC_APP`, so the "Today's habits",
+> "Goals", and "Cash flow" widgets — none of which have any nav entry or
+> feature on My House — would render there if that data existed. Also,
+> `projects`/`project_tasks` (which do have a personal/household `scope`
+> column, same as `bills`/`purchases`) were fetched with no scope filter at
+> all on the dashboard, unlike every other page, so personal (MyLife)
+> projects and tasks could leak into "Open projects", "Upcoming tasks",
+> "Needs attention", and the glance-stat counts. Fixed both: habits/goals/
+> income are now only queried when `isLife`, and projects/tasks now get the
+> same `.eq("scope", "household")` filter on My House that bills/purchases
+> already had. Also closed a narrower leak in the "Pinned" widget: a goal or
+> a personal-scope task favourited while using MyLife (same Supabase
+> account) would still resolve and show up in My House's pinned list — fixed
+> in `getPinnedItems()` (`src/app/(app)/favorites/actions.ts`). See "Dashboard:
+> stop MyLife content leaking onto My House home" section below for details.
+> About to commit/push/deploy-confirm. `npm run typecheck`, `npm run lint`,
+> default build, and `NEXT_PUBLIC_APP=life` build all pass. Not
+> browser-verified against live data (no `.env.local` Supabase credentials
+> in this sandbox) — smoke-test suggestion: on My House, confirm the
+> dashboard never shows "Today's habits", "Goals", or "Cash flow" widgets,
+> and that "Open projects"/"Upcoming tasks" only include household-scoped
+> items even if the same account has personal MyLife projects/tasks. On
+> MyLife, confirm all of the above still work exactly as before (this batch
+> only added an `isLife`/`isHouse` gate, nothing about MyLife's own data
+> changed). Earlier sections (global masking coverage, mask-toggle header
+> placement, favicon alignment, currency rounding, and everything before)
+> are all already confirmed deployed.
+
+## Dashboard: stop MyLife content leaking onto My House home (2026-07-06)
+User said: "on myhouse home don't show anything from mylife." Audited
+`src/app/(app)/dashboard/page.tsx` (the one dashboard component both apps
+share, switched only by which widgets render and what's queried) for
+anything that could show MyLife-only data on My House.
+
+**Unconditional queries for MyLife-only features**: `habits`, `habit_logs`,
+`goals`, and `income_months` were all queried with no `isHouse`/`isLife`
+check. None of these four have any nav entry, page, or feature on My House
+(`HOUSE_NAV_ITEMS` in `lib/constants.ts` has no Habits, Routine, Goals, or
+Finance/Income item — those are MyLife-only). The "Today's habits" widget,
+"Goals" widget, and "Cash flow" widget (which shows income vs bills) were
+each gated only on the fetched data being non-empty (`dailyHabits.length >
+0`, `activeGoals.length > 0`, `netMonthly !== null`), so if that data
+existed for the account they'd render on My House with no feature there to
+have produced it "properly" — a latent leak, not yet necessarily hit in
+practice, but present in the code. Changed all four queries to the same
+conditional-query pattern already used for `weeklyReviewQuery`
+(`isLife ? supabase.from(...) : Promise.resolve({ data: null })`), so
+nothing is fetched on My House and the widgets disappear via their
+existing empty-data guards — no new `isLife &&` JSX checks needed.
+
+**Unscoped projects/tasks**: `bills` and `purchases` both have a
+`scope: "personal" | "household"` column and were already filtered to
+`.eq("scope", "household")` on My House everywhere, including the
+dashboard. `projects` and `project_tasks` have the same `scope` column
+(confirmed in `database.types.ts`) and every other page that reads them
+(`projects/page.tsx`) applies the same filter — but the dashboard's own
+queries for `projects` and `project_tasks` had no scope filter at all.
+That meant a personal (MyLife) project or task could appear in the
+dashboard's "Open projects", "Upcoming tasks", and "Needs attention"
+sections, and inflate the `openTasks`/`activeProjects`/`dueThisWeek`
+glance-stat counts, on My House. Added the same `.eq("scope",
+"household")` filter used for bills/purchases.
+
+**Pinned favourites**: a narrower, second-order leak — `getPinnedItems()`
+(`src/app/(app)/favorites/actions.ts`) resolves every favourite the
+current Supabase account has ever starred, across both apps, since
+favourites are keyed by `user_id` with no app/scope awareness. A "goal"
+favourite (MyLife-only, no My House equivalent) or a personal-scope "task"
+favourite would still resolve to a label and appear in My House's Pinned
+widget if starred while using MyLife under the same account. Fixed by
+skipping the "goal" type entirely on My House, and by selecting each
+task's `scope` column and skipping personal ones when resolving labels on
+My House.
+
+Deliberately unchanged: `maintenance_tasks`, `documents`, and `mortgages`
+are queried unconditionally too, but these have no nav entry or feature on
+MyLife at all (the reverse direction), so there's no plausible way MyLife
+data ends up in those tables to leak — out of scope for "don't show
+anything from MyLife on My House."
+
+Verification: `npm run typecheck`, `npm run lint`, default build, and
+`NEXT_PUBLIC_APP=life` build all pass. Not browser-verified against live
+data (no `.env.local` Supabase credentials in this sandbox).
 
 ## Global masking coverage: every currency display, not just Finance (2026-07-06)
 User said: "global masking should hide all finance numbers" — after the
