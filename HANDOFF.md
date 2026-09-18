@@ -21,9 +21,11 @@
 > fresh sandbox on the stale `claude/mylife-personal-os-m6octr` branch (far
 > behind `main`); switched to `main` (fast-forward, no conflicts) before
 > starting, since that's where all prior work lives and is deployed from.
-> About to commit/push. `npm run typecheck`, `npm run lint`, default build,
-> and `NEXT_PUBLIC_APP=life` build all pass (had to `npm install` first —
-> fresh sandbox had no `node_modules`). Not browser-verified against live
+> Committed as 304cf97 and confirmed READY on Vercel production for both
+> my-house-dashboard and my-life-dashboard. `npm run typecheck`, `npm run
+> lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass (had to
+> `npm install` first — fresh sandbox had no `node_modules`). Not
+> browser-verified against live
 > data (no `.env.local` Supabase credentials in this sandbox) — smoke-test
 > suggestion: on My House, confirm the sidebar/bottom-nav/page all say
 > "Shopping List" (not "Groceries") and the feature itself still works
