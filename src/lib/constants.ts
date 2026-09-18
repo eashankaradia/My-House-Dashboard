@@ -56,7 +56,7 @@ const HOUSE_NAV_ITEMS: NavItem[] = [
   { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance", group: "Planner" },
   { title: "Future Purchases", short: "Purchases", href: "/purchases", icon: ShoppingBag, description: "Your home wishlist", group: "Planner" },
   { title: "Room Designer", short: "Rooms", href: "/rooms", icon: Sofa, description: "Design each room before you buy", group: "Planner" },
-  { title: "Groceries", short: "Shop", href: "/shopping", icon: ShoppingCart, description: "Shared shopping list", group: "Planner" },
+  { title: "Shopping List", short: "Shop", href: "/shopping", icon: ShoppingCart, description: "Shared shopping list", group: "Planner" },
   { title: "Maintenance", short: "Upkeep", href: "/maintenance", icon: Wrench, description: "Reminders & servicing", group: "Planner" },
   // More
   { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Ideas & collections", group: "More" },

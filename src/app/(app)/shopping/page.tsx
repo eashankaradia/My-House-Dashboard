@@ -5,7 +5,7 @@ import { getHouseholdMap } from "@/lib/household";
 import type { ShoppingItem } from "@/lib/database.types";
 import { ShoppingList } from "./shopping-list";
 
-export const metadata = { title: "Groceries" };
+export const metadata = { title: "Shopping List" };
 
 export default async function ShoppingPage() {
   const supabase = await createClient();
@@ -18,9 +18,9 @@ export default async function ShoppingPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Groceries"
+        title="Shopping List"
         description="A shared shopping list for the whole household."
-        info="Add things you need. Tick an item off once you've got it — it drops to the bottom and is struck through. Delete anything you don't need, or clear everything you've already got in one tap."
+        info="Add anything you need to pick up — not just groceries. Tick an item off once you've got it — it drops to the bottom and is struck through. Delete anything you don't need, or clear everything you've already got in one tap."
       />
       <ShoppingList items={items} memberMap={memberMap} />
     </div>

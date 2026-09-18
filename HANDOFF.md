@@ -2,37 +2,74 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-07-06 (Dashboard: My House home
-> no longer shows MyLife-only content). `src/app/(app)/dashboard/page.tsx`
-> queried `habits`, `habit_logs`, `goals`, and `income_months`
-> unconditionally regardless of `NEXT_PUBLIC_APP`, so the "Today's habits",
-> "Goals", and "Cash flow" widgets — none of which have any nav entry or
-> feature on My House — would render there if that data existed. Also,
-> `projects`/`project_tasks` (which do have a personal/household `scope`
-> column, same as `bills`/`purchases`) were fetched with no scope filter at
-> all on the dashboard, unlike every other page, so personal (MyLife)
-> projects and tasks could leak into "Open projects", "Upcoming tasks",
-> "Needs attention", and the glance-stat counts. Fixed both: habits/goals/
-> income are now only queried when `isLife`, and projects/tasks now get the
-> same `.eq("scope", "household")` filter on My House that bills/purchases
-> already had. Also closed a narrower leak in the "Pinned" widget: a goal or
-> a personal-scope task favourited while using MyLife (same Supabase
-> account) would still resolve and show up in My House's pinned list — fixed
-> in `getPinnedItems()` (`src/app/(app)/favorites/actions.ts`). See "Dashboard:
-> stop MyLife content leaking onto My House home" section below for details.
-> Committed as 87f1d00 and confirmed READY on Vercel production for both
-> my-house-dashboard and my-life-dashboard. `npm run typecheck`, `npm run
-> lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass. Not
-> browser-verified against live data (no `.env.local` Supabase credentials
-> in this sandbox) — smoke-test suggestion: on My House, confirm the
-> dashboard never shows "Today's habits", "Goals", or "Cash flow" widgets,
-> and that "Open projects"/"Upcoming tasks" only include household-scoped
-> items even if the same account has personal MyLife projects/tasks. On
-> MyLife, confirm all of the above still work exactly as before (this batch
-> only added an `isLife`/`isHouse` gate, nothing about MyLife's own data
-> changed). Earlier sections (global masking coverage, mask-toggle header
-> placement, favicon alignment, currency rounding, and everything before)
-> are all already confirmed deployed.
+> after **every** change. Last updated: 2026-09-18 (My House: renamed
+> "Groceries" to "Shopping List"). The `/shopping` feature
+> (`shopping_items` table, `shopping-list.tsx`) was already functionally
+> generic — items are just a free-text name + quantity, no grocery-specific
+> fields or copy in the list UI itself — so this was a pure rename, not a
+> feature change. Changed the My House nav item's `title` in
+> `src/lib/constants.ts` from "Groceries" to "Shopping List" (kept the
+> `short: "Shop"` bottom-tab label and the `ShoppingCart` icon, both already
+> generic), and the page's `metadata.title` / `PageHeader` title in
+> `src/app/(app)/shopping/page.tsx` to match. Tweaked the info-hint copy to
+> say "Add anything you need to pick up — not just groceries" so the page
+> itself signals the broadened scope. Confirmed via repo-wide grep that
+> "Groceries" appeared nowhere else except MyLife's unrelated finance budget
+> category list ("Food & Groceries" spending category, a different feature
+> entirely) — left that untouched. `shopping_items` table/column names were
+> already generic, so no migration needed. Note: this session started in a
+> fresh sandbox on the stale `claude/mylife-personal-os-m6octr` branch (far
+> behind `main`); switched to `main` (fast-forward, no conflicts) before
+> starting, since that's where all prior work lives and is deployed from.
+> About to commit/push. `npm run typecheck`, `npm run lint`, default build,
+> and `NEXT_PUBLIC_APP=life` build all pass (had to `npm install` first —
+> fresh sandbox had no `node_modules`). Not browser-verified against live
+> data (no `.env.local` Supabase credentials in this sandbox) — smoke-test
+> suggestion: on My House, confirm the sidebar/bottom-nav/page all say
+> "Shopping List" (not "Groceries") and the feature itself still works
+> unchanged (add/tick/delete/clear-got items). Earlier sections (MyLife
+> dashboard leak fix, global masking coverage, mask-toggle header placement,
+> favicon alignment, currency rounding, and everything before) are all
+> already confirmed deployed.
+
+## My House: rename "Groceries" to "Shopping List" (2026-09-18)
+User said: "on my house change groceries to a general shopping list." The
+`/shopping` feature was already functionally generic — an item is just a
+free-text name + optional quantity (`shopping_items` table), with no
+grocery-specific fields, categories, or copy anywhere in
+`shopping-list.tsx`'s UI (empty state, placeholders, "Got it" flow all
+already read as a general list). This was a pure branding/copy change, not
+a feature change.
+
+Changed:
+- `src/lib/constants.ts` — the My House nav item's `title`: "Groceries" →
+  "Shopping List". Kept `short: "Shop"` (the bottom-tab label) and the
+  `ShoppingCart` icon as-is — both already read as generic.
+- `src/app/(app)/shopping/page.tsx` — `metadata.title` and the
+  `PageHeader` title to match. Also tweaked the info-hint text to add
+  "Add anything you need to pick up — not just groceries" so the page
+  itself signals the broadened scope, not just the nav label.
+
+Confirmed via a repo-wide case-sensitive grep for "Groceries" that it
+appeared nowhere else except MyLife's `BUDGET_CATEGORIES` list ("Food &
+Groceries" — a personal spending category in the MyLife-only Finance
+feature, unrelated to this nav item) — left untouched, since the request
+was specifically about My House and that's a different concept entirely.
+`shopping_items`'s table/column names were already generic (`name`,
+`quantity`, `is_got`, `got_at`) — no migration needed.
+
+Session note: started in a fresh sandbox checked out on the stale
+`claude/mylife-personal-os-m6octr` branch (from an early task-setup
+instruction, far behind `main` — missing all of this session's prior
+work). Switched to `main` (`git checkout main && git merge --ff-only
+origin/main`, clean fast-forward, no local changes lost) before starting,
+since `main` is what's actually deployed and where `HANDOFF.md`'s history
+lives. `node_modules` was also missing (fresh sandbox) — ran `npm install`
+before verification.
+
+Verification: `npm run typecheck`, `npm run lint`, default build, and
+`NEXT_PUBLIC_APP=life` build all pass. Not browser-verified against live
+data (no `.env.local` Supabase credentials in this sandbox).
 
 ## Dashboard: stop MyLife content leaking onto My House home (2026-07-06)
 User said: "on myhouse home don't show anything from mylife." Audited
