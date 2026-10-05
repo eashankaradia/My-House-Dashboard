@@ -36,6 +36,7 @@ function toRow(values: PurchaseInput) {
     room: values.room ?? null,
     priority: values.priority,
     status: values.status,
+    is_essential: values.is_essential,
     non_negotiables: values.non_negotiables ?? null,
     notes: values.notes ?? null,
     purchased_at: values.status === "Purchased" ? new Date().toISOString().slice(0, 10) : null,

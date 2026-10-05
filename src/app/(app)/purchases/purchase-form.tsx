@@ -20,6 +20,7 @@ import {
 import { Field } from "@/components/shared/form-field";
 import { ImageUpload } from "@/components/shared/image-upload";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import {
   ITEM_SCOPES,
   ITEM_SCOPE_LABELS,
@@ -70,6 +71,7 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [], catego
       room: purchase?.room ?? defaults?.room ?? "",
       priority: purchase?.priority ?? defaults?.priority ?? "Low",
       status: purchase?.status ?? "Considering",
+      is_essential: purchase?.is_essential ?? true,
       non_negotiables: purchase?.non_negotiables ?? "",
       notes: purchase?.notes ?? "",
       purchased_by: purchase?.purchased_by ?? "",
@@ -263,6 +265,24 @@ export function PurchaseForm({ purchase, trigger, defaults, members = [], catego
               </NativeSelect>
             </Field>
           </div>
+          <Field label="Essential?" tooltip="Must-have vs a nice-to-have you can filter out of the list.">
+            <div className="flex items-center rounded-lg border p-0.5 text-sm">
+              <button
+                type="button"
+                onClick={() => setValue("is_essential", true)}
+                className={cn("flex-1 rounded-md px-2.5 py-1.5", watch("is_essential") && "bg-accent")}
+              >
+                Essential
+              </button>
+              <button
+                type="button"
+                onClick={() => setValue("is_essential", false)}
+                className={cn("flex-1 rounded-md px-2.5 py-1.5", !watch("is_essential") && "bg-accent")}
+              >
+                Nice-to-have
+              </button>
+            </div>
+          </Field>
           {isLife ? (
             <Field label="Scope" hint="Personal items never show in MyHouse. Mark it household to share it.">
               <NativeSelect {...register("scope")}>

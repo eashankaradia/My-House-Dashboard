@@ -88,12 +88,14 @@ export function PurchasesGrid({
   const [onlyMine, setOnlyMine] = React.useState(false);
   const [scopeFilter, setScopeFilter] = React.useState<"all" | "personal" | "household">("all");
   const [hideNoOptions, setHideNoOptions] = React.useState(false);
+  const [essentialOnly, setEssentialOnly] = React.useState(false);
   const [search, setSearch] = React.useState("");
 
   const rooms = Array.from(new Set(purchases.map((p) => p.room).filter(Boolean))) as string[];
   const rank = { High: 0, Medium: 1, Low: 2 } as const;
   const activeFilters = [
     hideNoOptions ? { label: "Has options", clear: () => setHideNoOptions(false) } : null,
+    essentialOnly ? { label: "Essential only", clear: () => setEssentialOnly(false) } : null,
     status !== "All" ? { label: status, clear: () => setStatus("All") } : null,
     room !== "All" ? { label: room, clear: () => setRoom("All") } : null,
     category !== "All" ? { label: category, clear: () => setCategory("All") } : null,
@@ -114,6 +116,7 @@ export function PurchasesGrid({
     .filter((p) => (!onlyMine ? true : p.user_id === currentUserId))
     .filter((p) => (scopeFilter === "all" ? true : p.scope === scopeFilter))
     .filter((p) => (!hideNoOptions ? true : p.options.length > 0))
+    .filter((p) => (!essentialOnly ? true : p.is_essential))
     .filter((p) => (status === "All" ? true : p.status === status))
     .filter((p) => (room === "All" ? true : p.room === room))
     .filter((p) => (category === "All" ? true : p.category === category))
@@ -195,6 +198,16 @@ export function PurchasesGrid({
               >
                 Hide items with no options
               </button>
+              <button
+                type="button"
+                onClick={() => setEssentialOnly((v) => !v)}
+                className={cn(
+                  "w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors",
+                  essentialOnly && "bg-accent text-foreground",
+                )}
+              >
+                Essential only
+              </button>
             </div>
           </SheetContent>
         </Sheet>
@@ -248,6 +261,16 @@ export function PurchasesGrid({
           )}
         >
           {hideNoOptions ? "Showing items with options" : "Hide items with no options"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setEssentialOnly((v) => !v)}
+          className={cn(
+            "hidden rounded-lg border px-3 py-2 text-sm transition-colors lg:inline-flex",
+            essentialOnly && "bg-accent text-foreground",
+          )}
+        >
+          Essential only
         </button>
         <NativeSelect value={status} onChange={(e) => setStatus(e.target.value)} className="hidden h-9 w-auto text-sm lg:block">
           <option value="All">All statuses</option>

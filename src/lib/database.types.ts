@@ -203,6 +203,7 @@ export type Purchase = Timestamps & {
   non_negotiables: string | null;
   notes: string | null;
   status: PurchaseStatus;
+  is_essential: boolean;
   image_url: string | null;
   purchased_at: string | null;
   source_inspiration_id: string | null;

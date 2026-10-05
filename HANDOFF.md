@@ -2,37 +2,78 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-09-18 (My House: renamed
-> "Groceries" to "Shopping List"). The `/shopping` feature
-> (`shopping_items` table, `shopping-list.tsx`) was already functionally
-> generic — items are just a free-text name + quantity, no grocery-specific
-> fields or copy in the list UI itself — so this was a pure rename, not a
-> feature change. Changed the My House nav item's `title` in
-> `src/lib/constants.ts` from "Groceries" to "Shopping List" (kept the
-> `short: "Shop"` bottom-tab label and the `ShoppingCart` icon, both already
-> generic), and the page's `metadata.title` / `PageHeader` title in
-> `src/app/(app)/shopping/page.tsx` to match. Tweaked the info-hint copy to
-> say "Add anything you need to pick up — not just groceries" so the page
-> itself signals the broadened scope. Confirmed via repo-wide grep that
-> "Groceries" appeared nowhere else except MyLife's unrelated finance budget
-> category list ("Food & Groceries" spending category, a different feature
-> entirely) — left that untouched. `shopping_items` table/column names were
-> already generic, so no migration needed. Note: this session started in a
-> fresh sandbox on the stale `claude/mylife-personal-os-m6octr` branch (far
-> behind `main`); switched to `main` (fast-forward, no conflicts) before
-> starting, since that's where all prior work lives and is deployed from.
-> Committed as 304cf97 and confirmed READY on Vercel production for both
-> my-house-dashboard and my-life-dashboard. `npm run typecheck`, `npm run
-> lint`, default build, and `NEXT_PUBLIC_APP=life` build all pass (had to
-> `npm install` first — fresh sandbox had no `node_modules`). Not
-> browser-verified against live
+> after **every** change. Last updated: 2026-10-05 (Future Purchases: added
+> an Essential/Nice-to-have flag + an "Essential only" filter). User asked:
+> "On future purchases make give me a radio button which lets me filter out
+> non essential purchases." Added a new `is_essential boolean not null
+> default true` column to `purchases` (migration
+> `supabase/migrations/0067_purchase_essential.sql` — **not yet applied to
+> the live DB, user must run it**). Added `is_essential` to the `Purchase`
+> type (`src/lib/database.types.ts`), to `purchaseSchema`
+> (`src/lib/schemas.ts`, `z.boolean().default(true)`), and threaded it
+> through `toRow()` in `src/app/(app)/purchases/actions.ts` so create/update
+> persist it. `purchase-form.tsx` gained an "Essential?" segmented
+> Essential/Nice-to-have toggle (defaults to Essential, matching the
+> migration default) next to Priority/Status. `purchases-grid.tsx` got a new
+> `essentialOnly` filter — a binary toggle button styled like the existing
+> `hideNoOptions` control (appears in both the mobile filter Sheet and the
+> desktop toolbar, `lg:inline-flex`), wired into the `filtered` chain and the
+> mobile `activeFilters` chips. The user's "radio button" phrasing was read
+> as the app's established single-pick filter idiom (matching `onlyMine`,
+> `scopeFilter`, `hideNoOptions`), not a literal HTML radio input. Shared
+> component — applies to both My House and MyLife (Future Purchases exists
+> on both apps' nav and the implementing components are app-agnostic).
+> `npm run typecheck`, `npm run lint`, default build, and
+> `NEXT_PUBLIC_APP=life` build all pass. Not browser-verified against live
 > data (no `.env.local` Supabase credentials in this sandbox) — smoke-test
-> suggestion: on My House, confirm the sidebar/bottom-nav/page all say
-> "Shopping List" (not "Groceries") and the feature itself still works
-> unchanged (add/tick/delete/clear-got items). Earlier sections (MyLife
-> dashboard leak fix, global masking coverage, mask-toggle header placement,
-> favicon alignment, currency rounding, and everything before) are all
-> already confirmed deployed.
+> suggestion once the migration is run live: open an existing purchase, set
+> it to "Nice-to-have", save, then toggle "Essential only" in the filter bar
+> and confirm it drops out of the list (and reappears when the toggle is
+> cleared); confirm new items default to "Essential". Earlier sections
+> (Shopping List rename, MyLife dashboard leak fix, global masking coverage,
+> mask-toggle header placement, favicon alignment, currency rounding, and
+> everything before) are all already confirmed deployed.
+
+## Future Purchases: Essential/Nice-to-have flag + filter (2026-10-05)
+User said: "On future purchases make give me a radio button which lets me
+filter out non essential purchases." No existing field fit: `priority`
+(Low/Medium/High) is a distinct urgency ranking, and the separate
+MyLife-only `essentials` table (the "Essentials" page) is an unrelated
+feature — so this needed a new boolean on `purchases`.
+
+**Migration required — run before/with this deploy:**
+`supabase/migrations/0067_purchase_essential.sql` adds `is_essential
+boolean not null default true` to `purchases`. Defaulting to `true` means
+every existing item stays visible under the new filter until someone
+explicitly marks it a nice-to-have.
+
+Code changes:
+- `src/lib/database.types.ts` — `Purchase.is_essential: boolean`.
+- `src/lib/schemas.ts` — `purchaseSchema.is_essential: z.boolean().default(true)`.
+- `src/app/(app)/purchases/actions.ts` — `toRow()` passes `is_essential`
+  through on create/update.
+- `src/app/(app)/purchases/purchase-form.tsx` — new "Essential?" field: a
+  two-button segmented toggle (Essential / Nice-to-have) using
+  `watch`/`setValue`, since native `<select>` + `register` doesn't suit a
+  boolean. Defaults to Essential for new items.
+- `src/app/(app)/purchases/purchases-grid.tsx` — new `essentialOnly` state,
+  a binary toggle button (styled like the existing `hideNoOptions` control,
+  present in both the mobile `Sheet` and the desktop toolbar), a
+  `.filter((p) => !essentialOnly || p.is_essential)` clause, and an
+  "Essential only" chip in the mobile `activeFilters` list.
+
+This is a shared component used by both apps' `/purchases` route, so it
+applies to My House and MyLife without any app-specific gating — matching
+how the user's request wasn't scoped to one app.
+
+Verification: `npm run typecheck`, `npm run lint`, default build, and
+`NEXT_PUBLIC_APP=life` build all pass. Not browser-tested against live data
+(no Supabase credentials in this sandbox).
+
+**Next step:** run migration `0067_purchase_essential.sql` against the live
+Supabase project, then confirm in the browser: mark an item "Nice-to-have",
+toggle "Essential only" in `/purchases` and confirm it's filtered out on
+both My House and MyLife.
 
 ## My House: rename "Groceries" to "Shopping List" (2026-09-18)
 User said: "on my house change groceries to a general shopping list." The

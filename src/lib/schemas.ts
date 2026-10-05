@@ -123,6 +123,7 @@ export const purchaseSchema = z.object({
   room: optionalString,
   priority: z.enum(PRIORITIES),
   status: z.enum(PURCHASE_STATUSES),
+  is_essential: z.boolean().default(true),
   non_negotiables: optionalString,
   notes: optionalString,
   purchased_by: optionalString,
