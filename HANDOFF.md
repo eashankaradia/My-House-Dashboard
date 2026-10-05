@@ -75,6 +75,11 @@ Supabase project, then confirm in the browser: mark an item "Nice-to-have",
 toggle "Essential only" in `/purchases` and confirm it's filtered out on
 both My House and MyLife.
 
+**Deploy confirmed:** both `my-house-dashboard` and `my-life-dashboard`
+production deployments for commit `a31aa1c` are READY on Vercel. The
+migration still needs to be run against the live Supabase DB — see "Next
+step" above.
+
 ## My House: rename "Groceries" to "Shopping List" (2026-09-18)
 User said: "on my house change groceries to a general shopping list." The
 `/shopping` feature was already functionally generic — an item is just a
