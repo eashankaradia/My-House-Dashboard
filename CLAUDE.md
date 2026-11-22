@@ -1,6 +1,11 @@
 # Agent continuity rules
 
-Read `HANDOFF.md` completely before making changes.
+Read `HANDOFF.md` completely before making changes — start with its "Session
+setup" section, which covers the cloud environment to use (the
+`My-House-Dashboard` one, not `Default`, or you get no dependencies and no
+database access), the fact that all work goes to `main`, and how to apply
+migrations. Batches from 2026-07-05 and earlier are in
+`docs/handoff-archive/`.
 
 For every coherent implementation batch:
 
