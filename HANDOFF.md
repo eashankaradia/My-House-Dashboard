@@ -2,37 +2,115 @@
 
 > **Purpose of this file:** a complete, self-contained briefing so another AI
 > agent (or developer) can pick up exactly where work left off. Keep it updated
-> after **every** change. Last updated: 2026-10-05 (Future Purchases: added
-> an Essential/Nice-to-have flag + an "Essential only" filter). User asked:
-> "On future purchases make give me a radio button which lets me filter out
-> non essential purchases." Added a new `is_essential boolean not null
-> default true` column to `purchases` (migration
-> `supabase/migrations/0067_purchase_essential.sql` — **not yet applied to
-> the live DB, user must run it**). Added `is_essential` to the `Purchase`
-> type (`src/lib/database.types.ts`), to `purchaseSchema`
-> (`src/lib/schemas.ts`, `z.boolean().default(true)`), and threaded it
-> through `toRow()` in `src/app/(app)/purchases/actions.ts` so create/update
-> persist it. `purchase-form.tsx` gained an "Essential?" segmented
-> Essential/Nice-to-have toggle (defaults to Essential, matching the
-> migration default) next to Priority/Status. `purchases-grid.tsx` got a new
-> `essentialOnly` filter — a binary toggle button styled like the existing
-> `hideNoOptions` control (appears in both the mobile filter Sheet and the
-> desktop toolbar, `lg:inline-flex`), wired into the `filtered` chain and the
-> mobile `activeFilters` chips. The user's "radio button" phrasing was read
-> as the app's established single-pick filter idiom (matching `onlyMine`,
-> `scopeFilter`, `hideNoOptions`), not a literal HTML radio input. Shared
-> component — applies to both My House and MyLife (Future Purchases exists
-> on both apps' nav and the implementing components are app-agnostic).
-> `npm run typecheck`, `npm run lint`, default build, and
-> `NEXT_PUBLIC_APP=life` build all pass. Not browser-verified against live
-> data (no `.env.local` Supabase credentials in this sandbox) — smoke-test
-> suggestion once the migration is run live: open an existing purchase, set
-> it to "Nice-to-have", save, then toggle "Essential only" in the filter bar
-> and confirm it drops out of the list (and reappears when the toggle is
-> cleared); confirm new items default to "Essential". Earlier sections
-> (Shopping List rename, MyLife dashboard leak fix, global masking coverage,
-> mask-toggle header placement, favicon alignment, currency rounding, and
-> everything before) are all already confirmed deployed.
+> after **every** change. Last updated: 2026-11-22 (Future Purchases: new
+> Rooms view + simpler list and toolbar). User asked: "Make my future
+> purchases interface easier to use. Give me a view where I have all of my
+> rooms as collapsible sections and can see the purchases behind it. Make the
+> purchase view simple." Three changes, all in the Future Purchases UI (no
+> schema change, no migration): (1) a new `"rooms"` view mode — added to
+> `ViewMode` in `src/hooks/use-view-prefs.ts` and made the **default** for
+> the purchases section (was `"compact"`), plus a "Rooms" option in the
+> Settings view picker (`src/app/(app)/settings/view-defaults.tsx`) and a
+> `DoorOpen` button in the on-page view toggle. It renders one
+> `RoomSection` per room from `useRooms()` (the household's editable room
+> list, so empty rooms show too), each a collapsible card headed "Room · N
+> items · £total", with a `No room yet` bucket last and rooms sorted
+> alphabetically. (2) A new `SimpleRow` for the rows inside those sections:
+> name, a muted "category · N options" line, a "Nice-to-have" pill for
+> non-essential items, and the effective price — tapping anywhere opens the
+> existing `PurchaseDetailDialog`, which already holds status/edit/options/
+> delete, so no per-row control clutter. (3) Decluttered the toolbar: the
+> five desktop `NativeSelect` filters and the two desktop toggle buttons are
+> gone, so the Filters sheet is now the single filter surface at every
+> breakpoint (it gained "Added by" and, on MyLife, "Scope" segmented
+> controls), the removable filter chips show at all widths, and the visible
+> bar is just Search / Filters / Sort / count / view toggle. Sections
+> auto-expand while a search or filter is narrowing (`narrowing` flag keyed
+> into `RoomSection`'s remount), otherwise the first room starts open.
+> Shared component — applies to both My House and MyLife. `npm run
+> typecheck`, `npm run lint`, default build, and `NEXT_PUBLIC_APP=life`
+> build all pass. Not browser-verified against live data (no `.env.local`
+> Supabase credentials in this sandbox) — smoke-test: open `/purchases`,
+> confirm it lands on the Rooms view with every room listed, expand a couple
+> of rooms, check the per-room totals look right, tap an item to confirm the
+> detail dialog still does everything, then try the Filters sheet and the
+> other three views. **Still outstanding from the previous batch:** migration
+> `supabase/migrations/0067_purchase_essential.sql` (adds `is_essential` to
+> `purchases`) may still not have been applied to the live DB — if the
+> Rooms-view "Nice-to-have" pill never appears, that's why. Earlier sections
+> (essential filter, Shopping List rename, MyLife dashboard leak fix, global
+> masking coverage, mask-toggle header placement, favicon alignment,
+> currency rounding, and everything before) are all already confirmed
+> deployed.
+
+## Future Purchases: Rooms view + simpler list and toolbar (2026-11-22)
+User said: "Make my future purchases interface easier to use. Give me a view
+where I have all of my rooms as collapsible sections and can see the
+purchases behind it. Make the purchase view simple." No schema change and no
+migration — this is all presentation.
+
+### 1. New "Rooms" view (now the default)
+- `src/hooks/use-view-prefs.ts` — `ViewMode` gains `"rooms"`, and
+  `DEFAULT_VIEW.purchases` changes from `"compact"` to `"rooms"`. Note the
+  stored pref is per-device, so anyone who had already picked a view keeps
+  it and has to select Rooms from the toggle once.
+- `src/app/(app)/settings/view-defaults.tsx` — "Rooms" added as the first
+  purchases option so the Settings picker and the on-page toggle still agree.
+- `purchases-grid.tsx` — a `DoorOpen` button in the view toggle, and a new
+  `RoomSection` component: a `Card` with a header button showing the room
+  name, item count and the room's total (summed `effectivePrice`), a
+  `ChevronDown` that rotates when open, and the rows revealed underneath.
+  Room names come from `useRooms()` (the household's editable list) unioned
+  with any room names found on existing purchases, sorted alphabetically,
+  with a `NO_ROOM` ("No room yet") bucket appended when anything is
+  unassigned. Rooms with nothing in them render "Nothing planned for this
+  room yet" rather than being hidden, so the view really is "all of my
+  rooms" — but they ARE hidden while a filter/search is narrowing, via the
+  `narrowing` flag.
+- Open/closed behaviour: `defaultOpen={narrowing || i === 0}`, and the
+  section `key` includes `narrowing` so the sections remount (and so
+  re-derive their open state) the moment a search/filter starts or stops
+  narrowing. That means searching expands every matching room with no extra
+  clicks, and a clean page still shows the first room's contents instead of
+  a wall of closed rows.
+
+### 2. Simpler purchase rows
+New `SimpleRow` in `purchases-grid.tsx`, used inside the room sections:
+priority accent border (`PRIORITY_ACCENT`), item name, a muted
+"category · N options" sub-line, a "Nice-to-have" pill when
+`is_essential` is false, and the effective price. The whole row is a
+`CardTrigger` that opens `PurchaseDetailDialog` — which already carries the
+status select, edit form, option ranking, comments and delete — so nothing
+is lost by keeping those controls out of the list. Contrast with
+`CompactRow` (still used by the compact view and the Purchased section),
+which carries an inline status dropdown, edit pencil and delete button.
+
+### 3. Decluttered toolbar
+Previously the desktop bar carried an only-mine toggle, a scope toggle, two
+binary filter buttons, five `NativeSelect` dropdowns, the sort select, the
+count and the view toggle — all on one wrapping row. Now:
+- The Filters `Sheet` is the single filter surface at every breakpoint (its
+  trigger lost `lg:hidden`), and it gained "Added by" (Everyone/Me) and, on
+  MyLife only, "Scope" (All/Household/Personal) segmented controls via two
+  small new helpers, `FilterGroup` and `SegmentedButton`.
+- The five desktop `NativeSelect`s and the two desktop toggle buttons were
+  deleted — they only duplicated what the sheet already had.
+- The removable filter chips lost `lg:hidden`, so what's active is visible
+  and clearable at any width; `onlyMine` and `scopeFilter` now produce chips
+  too.
+- What's left on the visible bar: search, the Filters button (with its
+  active-filter count badge), the chips, the sort select, the item count and
+  the view toggle.
+
+Verification: `npm run typecheck`, `npm run lint`, default build, and
+`NEXT_PUBLIC_APP=life` build all pass. Not browser-tested against live data
+(no Supabase credentials in this sandbox).
+
+**Next step:** nothing outstanding for this batch beyond a browser
+smoke-test. Still pending from the previous batch: run
+`supabase/migrations/0067_purchase_essential.sql` against the live Supabase
+project if it hasn't been run yet — without it `is_essential` doesn't exist
+and the "Nice-to-have" pill can never show.
 
 ## Future Purchases: Essential/Nice-to-have flag + filter (2026-10-05)
 User said: "On future purchases make give me a radio button which lets me

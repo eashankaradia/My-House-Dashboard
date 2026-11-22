@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useViewPref, type ViewMode } from "@/hooks/use-view-prefs";
 
 const PURCHASE_OPTIONS: { value: ViewMode; label: string }[] = [
+  { value: "rooms", label: "Rooms" },
   { value: "detailed", label: "Detailed" },
   { value: "compact", label: "Compact" },
   { value: "table", label: "Table" },

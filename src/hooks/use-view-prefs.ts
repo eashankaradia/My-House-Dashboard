@@ -2,11 +2,11 @@
 
 import { usePref } from "@/components/providers/prefs";
 
-export type ViewMode = "detailed" | "compact" | "table";
+export type ViewMode = "rooms" | "detailed" | "compact" | "table";
 
 /** Sensible default view per section when the user hasn't chosen one. */
 export const DEFAULT_VIEW: Record<string, ViewMode> = {
-  purchases: "compact",
+  purchases: "rooms",
   tasks: "detailed",
 };
 

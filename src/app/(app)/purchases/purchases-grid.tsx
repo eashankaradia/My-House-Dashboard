@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Filter, LayoutGrid, Pencil, Plus, Rows3, ShoppingBag, Table2, X } from "lucide-react";
+import { ChevronDown, DoorOpen, Filter, LayoutGrid, Pencil, Plus, Rows3, ShoppingBag, Table2, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -16,6 +16,7 @@ import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
 import { useViewPref } from "@/hooks/use-view-prefs";
 import { useIsMobile } from "@/hooks/use-is-mobile";
+import { useRooms } from "@/hooks/use-rooms";
 import { ITEM_SCOPE_LABELS, PURCHASE_SIZES, PURCHASE_STATUSES } from "@/lib/constants";
 import { PRIORITY_ACCENT } from "@/lib/ui";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,9 @@ const SORTS = {
 
 // Purchased items live in their own collapsed section, not the status filter.
 const ACTIVE_STATUSES = PURCHASE_STATUSES.filter((s) => s !== "Purchased");
+
+// Bucket in the Rooms view for items nobody has assigned a room to yet.
+const NO_ROOM = "No room yet";
 
 function sortedOptions(p: PurchaseWithOptions): PurchaseOption[] {
   return [...p.options].sort((a, b) => a.rank - b.rank || Number(a.price) - Number(b.price));
@@ -81,6 +85,7 @@ export function PurchasesGrid({
   const [minRating, setMinRating] = React.useState<number>(0);
   const [sort, setSort] = React.useState<keyof typeof SORTS>("rating");
   const [view, setView] = useViewPref("purchases");
+  const roomList = useRooms();
   // The table scrolls sideways on phones — fall back to cards there.
   const isMobile = useIsMobile();
   const effectiveView = isMobile && view === "table" ? "detailed" : view;
@@ -96,6 +101,8 @@ export function PurchasesGrid({
   const activeFilters = [
     hideNoOptions ? { label: "Has options", clear: () => setHideNoOptions(false) } : null,
     essentialOnly ? { label: "Essential only", clear: () => setEssentialOnly(false) } : null,
+    onlyMine ? { label: "Added by me", clear: () => setOnlyMine(false) } : null,
+    scopeFilter !== "all" ? { label: ITEM_SCOPE_LABELS[scopeFilter], clear: () => setScopeFilter("all") } : null,
     status !== "All" ? { label: status, clear: () => setStatus("All") } : null,
     room !== "All" ? { label: room, clear: () => setRoom("All") } : null,
     category !== "All" ? { label: category, clear: () => setCategory("All") } : null,
@@ -139,13 +146,28 @@ export function PurchasesGrid({
       }
     });
 
+  // Once a search or filter is narrowing things down, showing empty rooms is
+  // just noise — and matching sections should already be open.
+  const narrowing = Boolean(search.trim()) || activeFilters.length > 0;
+
+  // Rooms view: one collapsible section per room in the household, so the
+  // wishlist reads as "what's planned for each room".
+  const roomNames = Array.from(
+    new Set([...roomList, ...(purchases.map((p) => p.room).filter(Boolean) as string[])]),
+  ).sort((a, b) => a.localeCompare(b));
+  const unassigned = filtered.filter((p) => !p.room);
+  const roomGroups = [
+    ...roomNames.map((name) => ({ name, items: filtered.filter((p) => p.room === name) })),
+    ...(unassigned.length ? [{ name: NO_ROOM, items: unassigned }] : []),
+  ].filter((group) => !narrowing || group.items.length > 0);
+
   return (
     <div className="space-y-4">
       <SearchInput value={search} onChange={setSearch} placeholder="Search purchases…" className="max-w-sm" />
       <div className="flex flex-wrap items-center gap-2">
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-9 gap-1.5 rounded-full border bg-background px-3 shadow-sm lg:hidden">
+            <Button variant="ghost" size="sm" className="h-9 gap-1.5 rounded-full border bg-background px-3 shadow-sm">
               <Filter className="h-4 w-4" />
               Filters
               {activeFilters.length ? (
@@ -158,6 +180,19 @@ export function PurchasesGrid({
           <SheetContent side="right" className="w-full max-w-sm overflow-y-auto">
             <SheetTitle>Purchase filters</SheetTitle>
             <div className="mt-5 space-y-4">
+              <FilterGroup label="Added by">
+                <SegmentedButton active={!onlyMine} onClick={() => setOnlyMine(false)}>Everyone</SegmentedButton>
+                <SegmentedButton active={onlyMine} onClick={() => setOnlyMine(true)}>Me</SegmentedButton>
+              </FilterGroup>
+              {isLife ? (
+                <FilterGroup label="Scope">
+                  {(["all", "household", "personal"] as const).map((s) => (
+                    <SegmentedButton key={s} active={scopeFilter === s} onClick={() => setScopeFilter(s)}>
+                      {s === "all" ? "All" : ITEM_SCOPE_LABELS[s]}
+                    </SegmentedButton>
+                  ))}
+                </FilterGroup>
+              ) : null}
               <FilterSelect label="Status" value={status} onChange={setStatus}>
                 <option value="All">All statuses</option>
                 {ACTIVE_STATUSES.map((s) => (
@@ -216,96 +251,12 @@ export function PurchasesGrid({
             key={filter.label}
             type="button"
             onClick={filter.clear}
-            className="inline-flex max-w-[10rem] items-center gap-1 rounded-full border bg-background px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground lg:hidden"
+            className="inline-flex max-w-[10rem] items-center gap-1 rounded-full border bg-background px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             <span className="truncate">{filter.label}</span>
             <X className="h-3 w-3" />
           </button>
         ))}
-        {isLife ? (
-          <div className="flex items-center rounded-lg border p-0.5 text-sm">
-            {(["all", "household", "personal"] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setScopeFilter(s)}
-                className={cn("rounded-md px-2.5 py-1", scopeFilter === s && "bg-accent")}
-              >
-                {s === "all" ? "All" : ITEM_SCOPE_LABELS[s]}
-              </button>
-            ))}
-          </div>
-        ) : null}
-        <div className="flex items-center rounded-lg border p-0.5 text-sm">
-          <button
-            type="button"
-            onClick={() => setOnlyMine(false)}
-            className={cn("rounded-md px-2.5 py-1", !onlyMine && "bg-accent")}
-          >
-            All
-          </button>
-          <button
-            type="button"
-            onClick={() => setOnlyMine(true)}
-            className={cn("rounded-md px-2.5 py-1", onlyMine && "bg-accent")}
-          >
-            Mine
-          </button>
-        </div>
-        <button
-          type="button"
-          onClick={() => setHideNoOptions((v) => !v)}
-          className={cn(
-            "hidden rounded-lg border px-3 py-2 text-sm transition-colors lg:inline-flex",
-            hideNoOptions && "bg-accent text-foreground",
-          )}
-        >
-          {hideNoOptions ? "Showing items with options" : "Hide items with no options"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setEssentialOnly((v) => !v)}
-          className={cn(
-            "hidden rounded-lg border px-3 py-2 text-sm transition-colors lg:inline-flex",
-            essentialOnly && "bg-accent text-foreground",
-          )}
-        >
-          Essential only
-        </button>
-        <NativeSelect value={status} onChange={(e) => setStatus(e.target.value)} className="hidden h-9 w-auto text-sm lg:block">
-          <option value="All">All statuses</option>
-          {ACTIVE_STATUSES.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </NativeSelect>
-        <NativeSelect value={room} onChange={(e) => setRoom(e.target.value)} className="hidden h-9 w-auto text-sm lg:block">
-          <option value="All">All rooms</option>
-          {rooms.map((r) => (
-            <option key={r} value={r}>{r}</option>
-          ))}
-        </NativeSelect>
-        <NativeSelect value={category} onChange={(e) => setCategory(e.target.value)} className="hidden h-9 w-auto text-sm lg:block">
-          <option value="All">All categories</option>
-          {categories.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </NativeSelect>
-        <NativeSelect value={size} onChange={(e) => setSize(e.target.value)} className="hidden h-9 w-auto text-sm lg:block">
-          <option value="All">Any size</option>
-          {PURCHASE_SIZES.map((s) => (
-            <option key={s} value={s}>{s} purchases</option>
-          ))}
-        </NativeSelect>
-        <NativeSelect
-          value={String(minRating)}
-          onChange={(e) => setMinRating(Number(e.target.value))}
-          className="hidden h-9 w-auto text-sm lg:block"
-        >
-          <option value="0">Any rating</option>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <option key={n} value={n}>{n}★ and up</option>
-          ))}
-        </NativeSelect>
         <NativeSelect
           value={sort}
           onChange={(e) => setSort(e.target.value as keyof typeof SORTS)}
@@ -319,6 +270,13 @@ export function PurchasesGrid({
         <div className="ml-auto flex items-center gap-2">
           <span className="text-sm text-muted-foreground">{filtered.length} items</span>
           <div className="flex items-center rounded-lg border p-0.5">
+            <button
+              onClick={() => setView("rooms")}
+              aria-label="By room"
+              className={cn("rounded-md p-1.5 text-muted-foreground", view === "rooms" && "bg-accent text-foreground")}
+            >
+              <DoorOpen className="h-4 w-4" />
+            </button>
             <button
               onClick={() => setView("detailed")}
               aria-label="Card view"
@@ -348,7 +306,22 @@ export function PurchasesGrid({
         <EmptyState icon={ShoppingBag} title="Nothing here" description="No items match this filter yet." />
       ) : (
         <>
-          {filtered.length === 0 ? null : effectiveView === "compact" ? (
+          {filtered.length === 0 ? null : effectiveView === "rooms" ? (
+            <div className="space-y-2">
+              {roomGroups.map((group, i) => (
+                <RoomSection
+                  // Remounts when a filter starts/stops narrowing, so the
+                  // sections that matter are open without extra clicks.
+                  key={`${group.name}|${narrowing}`}
+                  room={group.name}
+                  items={group.items}
+                  memberMap={memberMap}
+                  categories={categories}
+                  defaultOpen={narrowing || i === 0}
+                />
+              ))}
+            </div>
+          ) : effectiveView === "compact" ? (
             <Card>
               <CardContent className="divide-y p-0">
                 {filtered.map((purchase) => (
@@ -427,6 +400,128 @@ function PurchaseTable({
         </table>
       </CardContent>
     </Card>
+  );
+}
+
+/** One room's items, collapsed behind a "Room · N items · £total" header. */
+function RoomSection({
+  room,
+  items,
+  memberMap,
+  categories,
+  defaultOpen,
+}: {
+  room: string;
+  items: PurchaseWithOptions[];
+  memberMap: MemberMap;
+  categories: string[];
+  defaultOpen: boolean;
+}) {
+  const [open, setOpen] = React.useState(defaultOpen);
+  const total = items.reduce((sum, p) => sum + effectivePrice(p), 0);
+
+  return (
+    <Card>
+      <CardContent className="p-0">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="flex w-full items-center gap-3 px-4 py-3 text-left"
+        >
+          <span className="min-w-0 flex-1 truncate font-medium">{room}</span>
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {items.length} item{items.length === 1 ? "" : "s"}
+          </span>
+          {items.length ? (
+            <span className="shrink-0 text-sm font-semibold">
+              <Money value={total} />
+            </span>
+          ) : null}
+          <ChevronDown
+            className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")}
+          />
+        </button>
+        {!open ? null : items.length === 0 ? (
+          <p className="border-t px-4 py-3 text-sm text-muted-foreground">Nothing planned for this room yet.</p>
+        ) : (
+          <div className="divide-y border-t">
+            {items.map((purchase) => (
+              <SimpleRow key={purchase.id} purchase={purchase} memberMap={memberMap} categories={categories} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * The plainest useful row: name, what it is, and what it'll cost. Tapping
+ * anywhere opens the item, where status/edit/options/delete all live — so the
+ * list itself stays readable instead of being a wall of controls.
+ */
+function SimpleRow({
+  purchase,
+  memberMap,
+  categories,
+}: {
+  purchase: PurchaseWithOptions;
+  memberMap: MemberMap;
+  categories: string[];
+}) {
+  const count = purchase.options.length;
+  const meta = [purchase.category, count ? `${count} option${count === 1 ? "" : "s"}` : null]
+    .filter(Boolean)
+    .join(" · ");
+
+  return (
+    <PurchaseDetailDialog purchase={purchase} memberMap={memberMap} categories={categories}>
+      <CardTrigger
+        className={cn(
+          "flex min-w-0 items-center gap-3 border-l-4 px-4 py-3 text-sm hover:bg-accent/40",
+          PRIORITY_ACCENT[purchase.priority],
+        )}
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-medium">{purchase.name}</span>
+          <span className="block truncate text-xs text-muted-foreground">{meta}</span>
+        </span>
+        {!purchase.is_essential ? (
+          <span className="shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] text-muted-foreground">
+            Nice-to-have
+          </span>
+        ) : null}
+        <span className="shrink-0 font-semibold">
+          <Money value={effectivePrice(purchase)} />
+        </span>
+      </CardTrigger>
+    </PurchaseDetailDialog>
+  );
+}
+
+function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <div className="flex items-center rounded-lg border p-0.5 text-sm">{children}</div>
+    </div>
+  );
+}
+
+function SegmentedButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button type="button" onClick={onClick} className={cn("flex-1 rounded-md px-2.5 py-1", active && "bg-accent")}>
+      {children}
+    </button>
   );
 }
 
