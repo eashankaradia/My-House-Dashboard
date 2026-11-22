@@ -34,10 +34,15 @@
 > confirm it lands on the Rooms view with every room listed, expand a couple
 > of rooms, check the per-room totals look right, tap an item to confirm the
 > detail dialog still does everything, then try the Filters sheet and the
-> other three views. **Still outstanding from the previous batch:** migration
-> `supabase/migrations/0067_purchase_essential.sql` (adds `is_essential` to
-> `purchases`) may still not have been applied to the live DB — if the
-> Rooms-view "Nice-to-have" pill never appears, that's why. Earlier sections
+> other three views. Both apps confirmed READY on Vercel production for
+> commit `fd6afcb`. **Migration backlog found and cleared in the same
+> session:** 0066 and 0067 had never been applied to the live DB, which meant
+> add/edit-purchase was erroring in production (`toRow()` writes
+> `is_essential` to a column that didn't exist) and every Rooms-view row
+> showed a "Nice-to-have" pill (undefined read as falsy). Both are now
+> applied via the Supabase MCP connection and the columns verified; `CLAUDE.md`
+> rule 3 now requires applying and verifying migrations in the same batch.
+> Earlier sections
 > (essential filter, Shopping List rename, MyLife dashboard leak fix, global
 > masking coverage, mask-toggle header placement, favicon alignment,
 > currency rounding, and everything before) are all already confirmed
@@ -106,11 +111,34 @@ Verification: `npm run typecheck`, `npm run lint`, default build, and
 `NEXT_PUBLIC_APP=life` build all pass. Not browser-tested against live data
 (no Supabase credentials in this sandbox).
 
-**Next step:** nothing outstanding for this batch beyond a browser
-smoke-test. Still pending from the previous batch: run
-`supabase/migrations/0067_purchase_essential.sql` against the live Supabase
-project if it hasn't been run yet — without it `is_essential` doesn't exist
-and the "Nice-to-have" pill can never show.
+### Migration backlog found and cleared (same session)
+Audited the live DB against `supabase/migrations/` and found two files had
+never been applied, which had silently broken two shipped features:
+- **0067** (`purchases.is_essential`) — `toRow()` writes `is_essential` on
+  every create/update, so **adding or editing any purchase was failing in
+  production** with a PostgREST "column does not exist" error, and every
+  Rooms-view row rendered a "Nice-to-have" pill because `undefined` reads as
+  falsy. Applied and verified.
+- **0066** (`room_design_layout_items.corner`, `notch_w_cm`, `notch_d_cm`) —
+  the Room Designer corner-sofa feature had no columns to persist to.
+  Applied and verified.
+
+Both applied via the Supabase MCP connection (project `vbyqbxvffaqkrltzewjz`)
+and confirmed with an `information_schema` query: `is_essential` is
+`boolean NOT NULL DEFAULT true` (existing rows backfilled to `true`, i.e.
+everything is Essential until marked otherwise), and the three layout columns
+are nullable `text`/`numeric`/`numeric`.
+
+**Important lesson for future sessions:** the Supabase migration ledger
+(`list_migrations`) is NOT a reliable check — 0065 does not appear in it but
+its column does exist, so it had been applied without being recorded. Always
+verify the actual columns via `information_schema`, not the ledger.
+`CLAUDE.md` rule 3 now requires applying and verifying migrations as part of
+the batch that introduces them.
+
+**Next step:** nothing outstanding. Browser smoke-test of the Rooms view is
+still worth doing, and now that 0067 is live the "Nice-to-have" pill should
+appear only on items actually marked nice-to-have.
 
 ## Future Purchases: Essential/Nice-to-have flag + filter (2026-10-05)
 User said: "On future purchases make give me a radio button which lets me
