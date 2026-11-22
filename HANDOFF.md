@@ -101,10 +101,20 @@ migration — this is all presentation.
   Room names come from `useRooms()` (the household's editable list) unioned
   with any room names found on existing purchases, sorted alphabetically,
   with a `NO_ROOM` ("No room yet") bucket appended when anything is
-  unassigned. Rooms with nothing in them render "Nothing planned for this
-  room yet" rather than being hidden, so the view really is "all of my
-  rooms" — but they ARE hidden while a filter/search is narrowing, via the
-  `narrowing` flag.
+  unassigned. **Only rooms that actually contain items get a section** — see
+  the data check below for why — and the leftovers collapse into one muted
+  "Nothing planned yet in X, Y, Z." line, hidden entirely while a
+  search/filter is narrowing.
+
+#### Data check that changed this design
+Queried the live DB rather than guessing: the household has **20 distinct
+configured rooms but only 7 with active wishlist items** (20 items total,
+4 of them unassigned). The first cut gave every configured room its own
+section, which would have rendered 21 sections for 20 items with 13 of them
+empty — strictly worse than the list it replaced. If you touch this view,
+re-check that ratio before reintroducing empty sections. Also confirmed no
+purchase has a null `price`, so the per-room `effectivePrice` totals can't
+produce `£NaN`.
 - Open/closed behaviour: `defaultOpen={narrowing || i === 0}`, and the
   section `key` includes `narrowing` so the sections remount (and so
   re-derive their open state) the moment a search/filter starts or stops
@@ -169,9 +179,23 @@ verify the actual columns via `information_schema`, not the ledger.
 `CLAUDE.md` rule 3 now requires applying and verifying migrations as part of
 the batch that introduces them.
 
-**Next step:** nothing outstanding. Browser smoke-test of the Rooms view is
-still worth doing, and now that 0067 is live the "Nice-to-have" pill should
-appear only on items actually marked nice-to-have.
+### Known data issue, not yet fixed — duplicate rooms
+`public.rooms` contains 26 rows but only 20 distinct names: **Garage,
+Garden, Hallway, Kitchen, Living Room and Office each appear twice**,
+probably from a seed or migration applied twice. The Rooms view is immune
+(it dedupes with a `Set`), but the room dropdowns in `purchase-form.tsx` and
+`inspiration-form.tsx` will show those names twice. Not cleaned up because
+`rooms` rows carry ids referenced elsewhere (`/rooms/[id]`, the room
+designer tables), so deleting a duplicate could orphan a saved design —
+needs a careful look at which id is referenced before any delete. Raised
+with the user 2026-11-22; awaiting a decision.
+
+**Next step:** nothing outstanding in code. Two things need the user:
+(1) a decision on the duplicate `rooms` rows above, and (2) a browser
+smoke-test of the Rooms view — or a test login so a session on the
+`My-House-Dashboard` environment can do it. Now that 0067 is live, every
+existing purchase is `is_essential = true`, so no "Nice-to-have" pills
+should appear until something is explicitly marked as one.
 
 ## Future Purchases: Essential/Nice-to-have flag + filter (2026-10-05)
 User said: "On future purchases make give me a radio button which lets me

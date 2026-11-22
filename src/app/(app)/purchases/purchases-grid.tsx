@@ -156,10 +156,16 @@ export function PurchasesGrid({
     new Set([...roomList, ...(purchases.map((p) => p.room).filter(Boolean) as string[])]),
   ).sort((a, b) => a.localeCompare(b));
   const unassigned = filtered.filter((p) => !p.room);
-  const roomGroups = [
+  const allRoomGroups = [
     ...roomNames.map((name) => ({ name, items: filtered.filter((p) => p.room === name) })),
     ...(unassigned.length ? [{ name: NO_ROOM, items: unassigned }] : []),
-  ].filter((group) => !narrowing || group.items.length > 0);
+  ];
+  // Only rooms with something in them get a section. The household has far
+  // more rooms configured than it has wishlist items, so giving every room a
+  // section buries the real content under empty ones; the leftovers get a
+  // single muted line instead.
+  const roomGroups = allRoomGroups.filter((group) => group.items.length > 0);
+  const emptyRooms = allRoomGroups.filter((group) => group.items.length === 0).map((group) => group.name);
 
   return (
     <div className="space-y-4">
@@ -320,6 +326,11 @@ export function PurchasesGrid({
                   defaultOpen={narrowing || i === 0}
                 />
               ))}
+              {emptyRooms.length > 0 && !narrowing ? (
+                <p className="px-1 pt-1 text-xs text-muted-foreground">
+                  Nothing planned yet in {emptyRooms.join(", ")}.
+                </p>
+              ) : null}
             </div>
           ) : effectiveView === "compact" ? (
             <Card>
@@ -433,24 +444,20 @@ function RoomSection({
           <span className="shrink-0 text-xs text-muted-foreground">
             {items.length} item{items.length === 1 ? "" : "s"}
           </span>
-          {items.length ? (
-            <span className="shrink-0 text-sm font-semibold">
-              <Money value={total} />
-            </span>
-          ) : null}
+          <span className="shrink-0 text-sm font-semibold">
+            <Money value={total} />
+          </span>
           <ChevronDown
             className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")}
           />
         </button>
-        {!open ? null : items.length === 0 ? (
-          <p className="border-t px-4 py-3 text-sm text-muted-foreground">Nothing planned for this room yet.</p>
-        ) : (
+        {open ? (
           <div className="divide-y border-t">
             {items.map((purchase) => (
               <SimpleRow key={purchase.id} purchase={purchase} memberMap={memberMap} categories={categories} />
             ))}
           </div>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );

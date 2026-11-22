@@ -59,7 +59,7 @@ export default async function PurchasesPage() {
   return (
     <div className="space-y-6">
       <PriceRefresh />
-      <PageHeader title="Future Purchases" description="A wishlist for everything your home needs." info="Add the thing you want (e.g. a Sofa), then add several Options under it — specific products from different shops with their own prices, links and photos — to compare them side by side. The Rooms view groups the list into one collapsible section per room, with a running total for each; tap any item to open it and change status, edit it, or work through its options. Use the icons on the right to switch to cards, a compact list or a table, and the Filters button for status, room, rating and essentials.">
+      <PageHeader title="Future Purchases" description="A wishlist for everything your home needs." info="Add the thing you want (e.g. a Sofa), then add several Options under it — specific products from different shops with their own prices, links and photos — to compare them side by side. The Rooms view groups the list into a collapsible section per room — just the rooms with something in them, each with a running total; tap any item to open it and change status, edit it, or work through its options. Use the icons on the right to switch to cards, a compact list or a table, and the Filters button for status, room, rating and essentials.">
         <PurchaseForm members={members} categories={categories} />
       </PageHeader>
 
