@@ -22,10 +22,17 @@ For every coherent implementation batch:
    add/edit-purchase erroring in production. Note also that the migration
    ledger is not a reliable check on its own — 0065 had been applied without
    being recorded in it — so always verify the actual columns.
-4. Commit and push the batch so work is never left only in an agent session.
-5. Keep the active pull request description current when the scope materially
+4. For any UI change whose layout depends on how much data exists, check the
+   real shape with a read-only query before shipping, and record the counts
+   in `HANDOFF.md`. Builds and typechecks say nothing about whether a screen
+   is usable. The Rooms view shipped giving every configured room a section;
+   a query then showed 20 rooms but only 7 with items, i.e. 21 sections for
+   20 items. Ask "how many rows will this actually render, and does it still
+   read well?" — grouping, empty states, totals and anything paginated.
+5. Commit and push the batch so work is never left only in an agent session.
+6. Keep the active pull request description current when the scope materially
    changes.
-6. Before session or credit limits become a risk, stop feature work early and
+7. Before session or credit limits become a risk, stop feature work early and
    leave a final pushed handoff checkpoint.
 
 Never claim a feature is complete unless its code is committed and pushed.
