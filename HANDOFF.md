@@ -154,6 +154,10 @@ Verification: `npm run typecheck`, `npm run lint`, default build, and
 `NEXT_PUBLIC_APP=life` build all pass. Not browser-tested against live data
 (no Supabase credentials in this sandbox).
 
+**Deploy confirmed:** both apps READY on Vercel production for `e8de574`
+(the empty-rooms fix), which supersedes the earlier `fd6afcb` deploy of
+this batch.
+
 ### Migration backlog found and cleared (same session)
 Audited the live DB against `supabase/migrations/` and found two files had
 never been applied, which had silently broken two shipped features:
