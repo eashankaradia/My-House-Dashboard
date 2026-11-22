@@ -107,14 +107,23 @@ migration — this is all presentation.
   search/filter is narrowing.
 
 #### Data check that changed this design
-Queried the live DB rather than guessing: the household has **20 distinct
-configured rooms but only 7 with active wishlist items** (20 items total,
-4 of them unassigned). The first cut gave every configured room its own
-section, which would have rendered 21 sections for 20 items with 13 of them
-empty — strictly worse than the list it replaced. If you touch this view,
-re-check that ratio before reintroducing empty sections. Also confirmed no
-purchase has a null `price`, so the per-room `effectivePrice` totals can't
-produce `£NaN`.
+Queried the live DB rather than guessing. Eashan+Neelam's household
+(`f9ccf450-1a3f-45ec-9d46-eb42b2c6c3ad`) has **14 configured rooms but only
+6 with active wishlist items** — 16 household items, 4 of them unassigned.
+The first cut gave every configured room its own section, which would have
+rendered 15 sections for 16 items with 8 of them empty: strictly worse than
+the list it replaced. If you touch this view, re-check that ratio before
+reintroducing empty sections. Also confirmed no purchase has a null `price`,
+so the per-room `effectivePrice` totals can't produce `£NaN`.
+
+**Scope every data check by household.** The MCP SQL connection runs with
+admin rights and therefore **bypasses RLS**, so an unscoped `select` returns
+every household's rows merged together. The first version of this note said
+"20 rooms, 7 with items" because it counted a second household's data
+(there is a `Demo` user in household `802858d3-…` with its own 12 rooms).
+That also produced a bogus "duplicate rooms" bug report — see below. Join
+through `household_members` and filter to one `household_id` whenever you
+are reasoning about what a user actually sees.
 - Open/closed behaviour: `defaultOpen={narrowing || i === 0}`, and the
   section `key` includes `narrowing` so the sections remount (and so
   re-derive their open state) the moment a search/filter starts or stops
@@ -183,21 +192,37 @@ verify the actual columns via `information_schema`, not the ledger.
 `CLAUDE.md` rule 3 now requires applying and verifying migrations as part of
 the batch that introduces them.
 
-### Known data issue, not yet fixed — duplicate rooms
-`public.rooms` contains 26 rows but only 20 distinct names: **Garage,
-Garden, Hallway, Kitchen, Living Room and Office each appear twice**,
-probably from a seed or migration applied twice. The Rooms view is immune
-(it dedupes with a `Set`), but the room dropdowns in `purchase-form.tsx` and
-`inspiration-form.tsx` will show those names twice. Not cleaned up because
-`rooms` rows carry ids referenced elsewhere (`/rooms/[id]`, the room
-designer tables), so deleting a duplicate could orphan a saved design —
-needs a careful look at which id is referenced before any delete. Raised
-with the user 2026-11-22; awaiting a decision.
+### RETRACTED: there is no duplicate-rooms bug — do not "clean up" `rooms`
+An earlier version of this note claimed `public.rooms` had six duplicated
+names (Garage, Garden, Hallway, Kitchen, Living Room, Office) needing
+cleanup. **That was wrong, and acting on it would have deleted another
+household's data.** Leaving the correction here because the mistake is easy
+to repeat.
 
-**Next step:** nothing outstanding in code. Two things need the user:
-(1) a decision on the duplicate `rooms` rows above, and (2) a browser
-smoke-test of the Rooms view — or a test login so a session on the
-`My-House-Dashboard` environment can do it. Now that 0067 is live, every
+What's actually true:
+- `rooms` is keyed by `user_id`, and the database holds **two separate
+  households**: `f9ccf450-…` (Eashan + Neelam, 14 rooms) and `802858d3-…`
+  (a `Demo` user, 12 rooms).
+- Each "duplicate" pair was one row from each household — e.g. Eashan's
+  Kitchen and Demo's Kitchen. Within either household: **14 rows / 14
+  distinct names and 12 / 12 — zero duplicates.**
+- RLS on `rooms` is `auth.uid() = user_id OR same_household(user_id)`, so
+  Eashan never sees Demo's rooms and the dropdowns do NOT show anything
+  twice. The "bug" existed only in an unscoped admin query.
+- Deleting them would have been destructive and silent: both
+  `room_design_versions` and `room_colour_palettes` reference `rooms.id`
+  **ON DELETE CASCADE**, and Eashan's Living Room carries 3 design versions
+  and 8 layout items.
+
+If a real duplicate is ever suspected, group by `household_id` (join
+`household_members`) before concluding anything, and check the CASCADE
+references before deleting a `rooms` row.
+
+**Next step:** nothing outstanding in code, and nothing to clean up in the
+data. The one thing still wanted from the user is a browser smoke-test of
+the Rooms view — or a test login so a session on the `My-House-Dashboard`
+environment can do it (note the free Supabase plan has no branching, so
+there is no staging DB to test against). Now that 0067 is live, every
 existing purchase is `is_essential = true`, so no "Nice-to-have" pills
 should appear until something is explicitly marked as one.
 

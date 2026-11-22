@@ -26,9 +26,17 @@ For every coherent implementation batch:
    real shape with a read-only query before shipping, and record the counts
    in `HANDOFF.md`. Builds and typechecks say nothing about whether a screen
    is usable. The Rooms view shipped giving every configured room a section;
-   a query then showed 20 rooms but only 7 with items, i.e. 21 sections for
-   20 items. Ask "how many rows will this actually render, and does it still
+   a query then showed 14 rooms but only 6 with items, i.e. 15 sections for
+   16 items. Ask "how many rows will this actually render, and does it still
    read well?" — grouping, empty states, totals and anything paginated.
+   **Scope those queries by household.** The Supabase MCP connection is an
+   admin one and bypasses RLS, so an unscoped `select` merges every
+   household's rows: this DB holds a second `Demo` household besides
+   Eashan+Neelam's. Join `household_members` and filter to one
+   `household_id`, or you will draw conclusions about data no user can see —
+   it already produced one wrong row count and one entirely fictional
+   "duplicate rooms" bug, which if acted on would have cascade-deleted
+   another household's saved room designs.
 5. Commit and push the batch so work is never left only in an agent session.
 6. Keep the active pull request description current when the scope materially
    changes.
