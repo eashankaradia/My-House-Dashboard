@@ -4,38 +4,32 @@ import * as React from "react";
 import {
   BarChart3,
   BookUser,
-  Camera,
   CheckSquare,
   CreditCard,
-  FileText,
   FolderArchive,
   Hammer,
   Lightbulb,
-  Link2,
   ListChecks,
   ListPlus,
   Receipt,
   ShoppingBag,
+  ShoppingCart,
   StickyNote,
   SunMoon,
   Utensils,
   Wallet,
-  Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { QuickPhotoDialog } from "@/app/(app)/photos/quick-photo-dialog";
-import { DraftDialog } from "@/app/(app)/drafts/draft-dialog";
 import { BillForm } from "@/app/(app)/bills/bill-form";
 import { ProjectForm } from "@/app/(app)/projects/project-form";
 import { TaskQuickForm } from "@/app/(app)/projects/task-quick-form";
 import { PurchaseForm } from "@/app/(app)/purchases/purchase-form";
 import { QuickOptionForm } from "@/app/(app)/purchases/quick-option-form";
 import { InspirationForm } from "@/app/(app)/inspiration/inspiration-form";
-import { MaintenanceForm } from "@/app/(app)/maintenance/maintenance-form";
 import { DocumentForm } from "@/app/(app)/documents/document-form";
 import { NoteForm } from "@/app/(app)/documents/note-form";
-import { UsefulLinkForm } from "@/app/(app)/notes/useful-link-form";
 import { ContactForm } from "@/app/(app)/contacts/contact-form";
+import { ShoppingItemDialog } from "@/app/(app)/shopping/shopping-item-dialog";
 import { EssentialForm } from "@/app/(app)/essentials/essential-form";
 import { RoutineItemForm } from "@/app/(app)/routine/routine-item-form";
 import { RecipeForm } from "@/app/(app)/nutrition/recipe-form";
@@ -69,35 +63,32 @@ Pill.displayName = "Pill";
 export function AddPills({ className }: { className?: string }) {
   return (
     <div className={className}>
-      <AddGroup label="Capture">
-        <QuickPhotoDialog trigger={<Pill icon={Camera} label="Photo" />} />
-        <DraftDialog trigger={<Pill icon={FileText} label="Draft" />} />
-        <InspirationForm collections={[]} trigger={<Pill icon={Lightbulb} label="Idea" />} />
-        <NoteForm trigger={<Pill icon={StickyNote} label="Note" />} />
-        <UsefulLinkForm trigger={<Pill icon={Link2} label="Link" />} />
-        <ContactForm trigger={<Pill icon={BookUser} label="Contact" />} />
-      </AddGroup>
-      <AddGroup label="Money">
-        <BillForm trigger={<Pill icon={Receipt} label="Expense" />} />
+      <AddGroup label="Plan">
+        {isLife ? <EssentialForm categories={[]} trigger={<Pill icon={ListChecks} label="Essential" />} /> : null}
         <PurchaseForm trigger={<Pill icon={ShoppingBag} label="Purchase" />} />
         <QuickOptionForm trigger={<Pill icon={ListPlus} label="Option" />} />
+        <TaskQuickForm trigger={<Pill icon={CheckSquare} label="Task" />} />
+        <ProjectForm trigger={<Pill icon={Hammer} label="Project" />} />
+      </AddGroup>
+      <AddGroup label="Money">
+        {isLife ? <IncomeMonthForm month={monthStr()} trigger={<Pill icon={Wallet} label="Income" />} /> : null}
+        <BillForm trigger={<Pill icon={Receipt} label="Expense" />} />
         <DocumentForm trigger={<Pill icon={FolderArchive} label="Document" />} />
         {isLife ? (
           <>
             <CreditCardForm trigger={<Pill icon={CreditCard} label="Card" />} />
-            <IncomeMonthForm month={monthStr()} trigger={<Pill icon={Wallet} label="Income" />} />
             <ShareForm trigger={<Pill icon={BarChart3} label="Share" />} />
           </>
         ) : null}
       </AddGroup>
-      <AddGroup label="Work">
-        <TaskQuickForm trigger={<Pill icon={CheckSquare} label="Task" />} />
-        <ProjectForm trigger={<Pill icon={Hammer} label="Project" />} />
-        {isLife ? null : <MaintenanceForm trigger={<Pill icon={Wrench} label="Maintenance" />} />}
+      <AddGroup label="Capture">
+        {isLife ? null : <ShoppingItemDialog trigger={<Pill icon={ShoppingCart} label="Shopping" />} />}
+        <InspirationForm collections={[]} trigger={<Pill icon={Lightbulb} label="Idea" />} />
+        <NoteForm trigger={<Pill icon={StickyNote} label="Note" />} />
+        <ContactForm trigger={<Pill icon={BookUser} label="Contact" />} />
       </AddGroup>
       {isLife ? (
-        <AddGroup label="Life">
-          <EssentialForm categories={[]} trigger={<Pill icon={ListChecks} label="Essential" />} />
+        <AddGroup label="Daily">
           <RoutineItemForm trigger={<Pill icon={SunMoon} label="Routine" />} />
           <RecipeForm trigger={<Pill icon={Utensils} label="Recipe" />} />
         </AddGroup>

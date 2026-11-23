@@ -106,12 +106,30 @@ longer a sidebar item, and it offered Habits/Fitness on MyLife despite
 `[dashboard, essentials, money, projects]`. These are defaults only; a device
 with saved tabs keeps them.
 
+### 4. The global + menu (the "contribute" path)
+It carried 13 pills on My House and 18 on MyLife, four of them for features
+with zero rows: Photo (`quick_photos=0`), Draft (`drafts=0`), Link
+(`useful_links=0` — note this is a different table from `links=6`, which is
+the entity-linking feature) and Maintenance (`maintenance_tasks=0`).
+Meanwhile the Shopping List — the one feature actually built for quick
+capture — had no pill at all.
+- Dropped those four pills. The features and their pages are untouched; only
+  the shortcut is gone.
+- Added `shopping/shopping-item-dialog.tsx` (`ShoppingItemDialog`), a
+  name + quantity dialog over the existing `addShoppingItem` action, and a
+  Shopping pill on My House.
+- Regrouped by what actually gets added: "Plan" (Essential on MyLife,
+  Purchase, Option, Task, Project) → "Money" (Income on MyLife, Expense,
+  Document, Card, Share) → "Capture" (Shopping, Idea, Note, Contact) →
+  "Daily" on MyLife (Routine, Recipe). My House 13→10 pills, MyLife 18→14.
+
 Verification: `npm run typecheck`, `npm run lint`, default build and
 `NEXT_PUBLIC_APP=life` build all pass. No migration. Not browser-tested.
 
-**Next step:** nothing blocking. Worth a look in the browser at `/money` and
-the shortened sidebar. If any "Not used yet" page is actually wanted, moving
-it from `MORE_ITEMS` back into `NAV_ITEMS` is a one-line change.
+**Next step:** nothing blocking. Worth a look in the browser at `/money`, the
+shortened sidebar and the + menu. If any "Not used yet" page is actually
+wanted, moving it from `MORE_ITEMS` back into `NAV_ITEMS` is a one-line
+change; same for restoring a dropped + pill.
 
 ## Session setup — read this first (2026-11-22)
 Three things that cost every previous session time or correctness:
