@@ -134,6 +134,42 @@ shortened sidebar and the + menu. If any "Not used yet" page is actually
 wanted, moving it from `MORE_ITEMS` back into `NAV_ITEMS` is a one-line
 change; same for restoring a dropped + pill.
 
+## Essentials: collapsible categories + a legible status filter (2026-11-23)
+Essentials is the household's **heaviest-used feature — 98 items**, and it
+rendered all of them at once: 8 always-open category sections, 2–3 columns of
+tiles. The only way to narrow it was three unlabelled coloured dots, which
+don't read as controls at all. The page's own question — "what do I still
+need?" — was invisible behind one of those dots.
+
+Data (RLS-scoped to `f9ccf450-…`): 98 items, **33 red (still need)**, 1 amber,
+64 green, across Clothing 23, Everyday Use 20, Everyday Consumables 14, Work
+13, Fitness and Wellbeing 13, Travel 7, Apps and subscriptions 6,
+Wellbeing 2. Only 10 items have `have_notes`, all in Everyday Consumables.
+
+Changes in `essentials-view.tsx`:
+- Categories are now collapsible cards (`CategorySection`), each header
+  showing the item count and, when non-zero, a red **"N needed"** badge — so
+  the gaps are visible without expanding anything. First category open by
+  default; a filter or search auto-expands matches via the same `narrowing`
+  remount-key pattern used by the purchases Rooms view, so the two pages
+  behave the same way.
+- The status filter is now labelled chips — All 98 / Still need 33 / So-so 1 /
+  Have 64 — with the colour dot kept. A chip for a status with zero items is
+  hidden. Previously these were bare dots with a number.
+- Page `info` copy rewritten to describe the actual controls.
+
+**Investigated and deliberately NOT changed:** "Wellbeing" (2 items) and
+"Fitness and Wellbeing" (13) look like duplicate categories, but the rows say
+otherwise — Wellbeing is **Barber and Dentist** (personal-care services) while
+Fitness and Wellbeing is barbells, football boots and workout clothes. Not a
+duplicate; left alone. (Second time in this project that category/row *names*
+alone would have produced a wrong "duplicate" cleanup — see the rooms
+retraction. Always read the rows.) If the overlap bothers the user, renaming
+"Fitness and Wellbeing" → "Fitness" is the cleaner fix, but that's their
+taxonomy to decide.
+
+Verification: typecheck, lint, both builds pass. No migration.
+
 ## Browser verification — how to actually look at the app (2026-11-23)
 Every batch before this shipped without anyone (human or agent) looking at
 the result in a browser, which is how the Rooms view went out rendering 15

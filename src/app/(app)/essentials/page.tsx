@@ -25,7 +25,7 @@ export default async function EssentialsPage() {
       <PageHeader
         title="Essentials"
         description="What you need, grouped by category — and what you've already got."
-        info="RAG status: green = sorted, amber = have it but not great, red = still need it."
+        info="Each category collapses, with a count of what's still needed, so you can see the gaps without scrolling the whole list. The chips at the top filter by status: Still need, So-so (have it but it's not great) or Have — filtering or searching opens the matching categories for you. Tap any item to edit it."
       >
         <EssentialForm categories={categories} />
       </PageHeader>
