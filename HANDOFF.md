@@ -126,6 +126,9 @@ capture — had no pill at all.
 Verification: `npm run typecheck`, `npm run lint`, default build and
 `NEXT_PUBLIC_APP=life` build all pass. No migration. Not browser-tested.
 
+**Deploy confirmed:** both apps READY on Vercel production for `4a90b7b`,
+covering all four commits in this batch (`0b76120`, `2aa8e56`, `4a90b7b`).
+
 **Next step:** nothing blocking. Worth a look in the browser at `/money`, the
 shortened sidebar and the + menu. If any "Not used yet" page is actually
 wanted, moving it from `MORE_ITEMS` back into `NAV_ITEMS` is a one-line
