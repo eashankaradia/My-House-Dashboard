@@ -1,7 +1,7 @@
 "use server";
 
 import { getActionContext } from "@/lib/action-utils";
-import { NAV_ITEMS } from "@/lib/constants";
+import { ALL_NAV_ITEMS } from "@/lib/constants";
 
 export type SearchResult = { type: string; id: string; label: string; href: string };
 
@@ -10,7 +10,7 @@ export type SearchResult = { type: string; id: string; label: string; href: stri
  * anywhere in the app, not just to data records.
  */
 const PAGES: { label: string; href: string; keywords?: string }[] = [
-  ...NAV_ITEMS.map((n) => ({ label: n.title, href: n.href, keywords: `${n.short ?? ""} ${n.description}` })),
+  ...ALL_NAV_ITEMS.map((n) => ({ label: n.title, href: n.href, keywords: `${n.short ?? ""} ${n.description}` })),
   { label: "Settings", href: "/settings", keywords: "preferences account" },
   { label: "Settings · Profile & display name", href: "/settings", keywords: "name colour theme" },
   { label: "Settings · Appearance & dark mode", href: "/settings", keywords: "theme dark light mode" },

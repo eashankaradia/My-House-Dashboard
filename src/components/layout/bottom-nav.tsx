@@ -4,12 +4,12 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Plus, X } from "lucide-react";
-import { NAV_ITEMS } from "@/lib/constants";
+import { ALL_NAV_ITEMS } from "@/lib/constants";
 import { DEFAULT_BOTTOM_TABS, useBottomTabs } from "@/hooks/use-bottom-tabs";
 import { cn } from "@/lib/utils";
 import { AddPills } from "./add-menu";
 
-type NavItem = (typeof NAV_ITEMS)[number];
+type NavItem = (typeof ALL_NAV_ITEMS)[number];
 
 /** Fixed bottom navigation for phones (hidden on lg+), with a centred + button. */
 export function BottomNav() {
@@ -19,7 +19,7 @@ export function BottomNav() {
 
   const hrefs = tabs ?? DEFAULT_BOTTOM_TABS;
   const items = hrefs
-    .map((href) => NAV_ITEMS.find((n) => n.href === href))
+    .map((href) => ALL_NAV_ITEMS.find((n) => n.href === href))
     .filter((n): n is NavItem => Boolean(n))
     .slice(0, 4);
 

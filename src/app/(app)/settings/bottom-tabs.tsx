@@ -2,18 +2,18 @@
 
 import * as React from "react";
 import { ChevronDown, ChevronUp, Plus, X } from "lucide-react";
-import { NAV_ITEMS } from "@/lib/constants";
+import { ALL_NAV_ITEMS } from "@/lib/constants";
 import { DEFAULT_BOTTOM_TABS, useBottomTabs } from "@/hooks/use-bottom-tabs";
 import { cn } from "@/lib/utils";
 
 const MAX = 4;
-const title = (href: string) => NAV_ITEMS.find((n) => n.href === href)?.title ?? href;
+const title = (href: string) => ALL_NAV_ITEMS.find((n) => n.href === href)?.title ?? href;
 
 /** Settings UI: choose which tabs appear in the mobile bottom bar, and order. */
 export function BottomTabsSettings() {
   const { tabs, save } = useBottomTabs();
   const current = (tabs ?? DEFAULT_BOTTOM_TABS).slice(0, MAX);
-  const available = NAV_ITEMS.filter((n) => !current.includes(n.href));
+  const available = ALL_NAV_ITEMS.filter((n) => !current.includes(n.href));
 
   function move(i: number, dir: -1 | 1) {
     const next = [...current];

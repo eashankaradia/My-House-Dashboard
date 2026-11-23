@@ -48,6 +48,71 @@
 > currency rounding, and everything before) are all already confirmed
 > deployed.
 
+## Usability audit: one Money page, a smaller nav, simpler purchases (2026-11-23)
+User said the app "feels overwhelming" and asked to make it easier to
+navigate, use and contribute to, with finances and purchases simpler.
+
+### What the audit found (household `f9ccf450-…`, RLS-scoped)
+Counted rows per feature table for the household. **The app has 38 routes and
+~18 nav items; roughly 10 features carry all the use.** Heaviest:
+`essentials=98`, `purchase_options=65`, `purchases=29`, `income_months=24`,
+`project_tasks=18`, `rooms=14`, `routine_items=12`. **Zero rows, never used
+once:** `maintenance_tasks`, `quick_photos`, `drafts`, `goals`,
+`journal_entries`, `health_records`, `medications`, `appointments`,
+`private_notes`, `private_photos`, `savings_accounts`,
+`savings_contributions`, `budgets`, `favorites`, `shares`, `purchase_stars`,
+`useful_links`, `workout_plans`, `nutrition_logs`, `habit_logs`. Note
+`habits=7` but `habit_logs=0` — habits were created and never logged.
+Money was spread over 5 destinations and ~5,000 lines across 34 files.
+
+The user chose: hide unused features rather than delete them; one Money page;
+strip purchases hard.
+
+### 1. Future Purchases stripped back (commit `0b76120`)
+Removed the two stat cards, the Ready-to-buy panel and the per-page activity
+log; cut view modes from four to two (by-room, flat list). Deleted the dead
+`PurchaseCard` and `PurchaseTable` components, the orphaned
+`ready-to-buy.tsx`, the unused `StarInfo` type and six dead imports.
+`purchases-grid.tsx` 700→524 lines, route 15.4→13.5 kB. A stored view pref
+naming a removed mode falls back to the flat list (`effectiveView`), and the
+Settings picker now offers only the two.
+
+### 2. New `/money` page
+One destination replacing Bills/Mortgage/Savings/Analytics in the sidebar
+(and Finance/Bills on MyLife). Shows three figures (monthly bills total,
+saved across pots, mortgage balance), a conditional **Needs paying** card for
+unpaid payments already due, a **Coming up** list of the next 4 bills by due
+date, and link cards through to each detail page. The detail pages are
+unchanged and still live at their old URLs.
+Data check: 6 household bills all with due dates, **0 currently needing
+paying** (so that card is correctly absent), 3 pots, 1 mortgage.
+Careful point: amounts render only inside `<Money>` — never interpolated into
+a summary string, or they'd bypass the global finance-masking toggle.
+
+### 3. Nav cut, plus an `/more` index
+`HOUSE_NAV_ITEMS` 18→12, `LIFE_NAV_ITEMS` 17→14. New `MORE_ITEMS` /
+`MORE_GROUPS` / `ALL_NAV_ITEMS` exports in `src/lib/constants.ts`:
+- `NAV_ITEMS` drives the sidebar and the tab-visibility settings.
+- `MORE_ITEMS` holds working-but-demoted pages, grouped "Money" (the finance
+  detail pages) and "Not used yet" (the zero-data ones). Rendered by
+  `/more` ("Everything else"), which is itself the last sidebar item.
+- `ALL_NAV_ITEMS` = both, and is what search (`search/actions.ts`), the
+  bottom-tab picker and `bottom-nav.tsx` now read, so nothing demoted became
+  unsearchable or unpickable.
+Promoting a page back to the sidebar is a one-line move between the arrays.
+`DEFAULT_BOTTOM_TABS` also changed — it pointed at `/bills`, which is no
+longer a sidebar item, and it offered Habits/Fitness on MyLife despite
+`habit_logs=0`. Now House `[dashboard, money, purchases, projects]` and Life
+`[dashboard, essentials, money, projects]`. These are defaults only; a device
+with saved tabs keeps them.
+
+Verification: `npm run typecheck`, `npm run lint`, default build and
+`NEXT_PUBLIC_APP=life` build all pass. No migration. Not browser-tested.
+
+**Next step:** nothing blocking. Worth a look in the browser at `/money` and
+the shortened sidebar. If any "Not used yet" page is actually wanted, moving
+it from `MORE_ITEMS` back into `NAV_ITEMS` is a one-line change.
+
 ## Session setup — read this first (2026-11-22)
 Three things that cost every previous session time or correctness:
 

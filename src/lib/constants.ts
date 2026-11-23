@@ -25,6 +25,7 @@ import {
   SunMoon,
   ClipboardCheck,
   BookUser,
+  LayoutGrid,
   type LucideIcon,
 } from "lucide-react";
 
@@ -41,60 +42,75 @@ export type NavItem = {
 
 // ─── My House nav ────────────────────────────────────────────────────────────
 
-const HOUSE_NAV_GROUPS = ["Home", "Finances", "Planner", "More"] as const;
+const HOUSE_NAV_GROUPS = ["Home", "Planner", "More"] as const;
 
 const HOUSE_NAV_ITEMS: NavItem[] = [
   // Home
   { title: "Dashboard", short: "Home", href: "/dashboard", icon: LayoutDashboard, description: "Your daily briefing", group: "Home" },
-  // Finances
-  { title: "Bills & Expenses", short: "Bills", href: "/bills", icon: Receipt, description: "Recurring costs & payments", group: "Finances" },
-  { title: "Mortgage", href: "/mortgage", icon: Home, description: "Balance, equity & payoff", group: "Finances" },
-  { title: "Savings Pots", short: "Savings", href: "/savings", icon: PiggyBank, description: "Goals & contributions", group: "Finances" },
-  { title: "Analytics", href: "/analytics", icon: BarChart3, description: "Trends & breakdowns", group: "Finances" },
+  { title: "Money", href: "/money", icon: Wallet, description: "Bills, savings and the mortgage in one place", group: "Home" },
   // Planner
   { title: "Projects & Tasks", short: "Projects", href: "/projects", icon: Hammer, description: "Plan projects and track to-dos", group: "Planner" },
-  { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance", group: "Planner" },
   { title: "Future Purchases", short: "Purchases", href: "/purchases", icon: ShoppingBag, description: "Your home wishlist", group: "Planner" },
   { title: "Room Designer", short: "Rooms", href: "/rooms", icon: Sofa, description: "Design each room before you buy", group: "Planner" },
   { title: "Shopping List", short: "Shop", href: "/shopping", icon: ShoppingCart, description: "Shared shopping list", group: "Planner" },
-  { title: "Maintenance", short: "Upkeep", href: "/maintenance", icon: Wrench, description: "Reminders & servicing", group: "Planner" },
+  { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance", group: "Planner" },
   // More
   { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Ideas & collections", group: "More" },
   { title: "Documents", short: "Docs", href: "/documents", icon: FolderArchive, description: "Warranties, insurance & more", group: "More" },
   { title: "Notes & Links", short: "Notes", href: "/notes", icon: NotebookPen, description: "Formatted notes and useful links", group: "More" },
   { title: "Key Contacts", short: "Contacts", href: "/contacts", icon: BookUser, description: "Tradespeople, neighbours & more", group: "More" },
-  { title: "Photos", href: "/photos", icon: Camera, description: "Quick snaps to label later", group: "More" },
-  { title: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later", group: "More" },
-  { title: "Change log", short: "Log", href: "/activity", icon: History, description: "Who changed what, and when", group: "More" },
+  { title: "Everything else", short: "All", href: "/more", icon: LayoutGrid, description: "Every other page in the app", group: "More" },
+];
+
+/**
+ * Pages that exist and work but aren't in the sidebar — reached from /money
+ * or the "Everything else" index. Kept in one list so they stay searchable
+ * and selectable as bottom tabs, and so promoting one back to the sidebar is
+ * a one-line move.
+ */
+const HOUSE_MORE_ITEMS: NavItem[] = [
+  { title: "Bills & Expenses", short: "Bills", href: "/bills", icon: Receipt, description: "Recurring costs & payments", group: "Money" },
+  { title: "Savings Pots", short: "Savings", href: "/savings", icon: PiggyBank, description: "Goals & contributions", group: "Money" },
+  { title: "Mortgage", href: "/mortgage", icon: Home, description: "Balance, equity & payoff", group: "Money" },
+  { title: "Analytics", href: "/analytics", icon: BarChart3, description: "Trends & breakdowns", group: "Money" },
+  { title: "Maintenance", short: "Upkeep", href: "/maintenance", icon: Wrench, description: "Reminders & servicing", group: "Not used yet" },
+  { title: "Photos", href: "/photos", icon: Camera, description: "Quick snaps to label later", group: "Not used yet" },
+  { title: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later", group: "Not used yet" },
+  { title: "Change log", short: "Log", href: "/activity", icon: History, description: "Who changed what, and when", group: "Not used yet" },
 ];
 
 // ─── MyLife nav ───────────────────────────────────────────────────────────────
 
-const LIFE_NAV_GROUPS = ["Home", "Health", "Finances", "Planner", "More"] as const;
+const LIFE_NAV_GROUPS = ["Home", "Health", "Planner", "More"] as const;
 
 const LIFE_NAV_ITEMS: NavItem[] = [
   // Home
   { title: "Dashboard", short: "Home", href: "/dashboard", icon: LayoutDashboard, description: "Your daily briefing", group: "Home" },
+  { title: "Money", href: "/money", icon: Wallet, description: "Income, bills and savings in one place", group: "Home" },
   // Health
-  { title: "Habits", href: "/habits", icon: Repeat, description: "Build consistent daily habits", group: "Health" },
   { title: "Routine", href: "/routine", icon: SunMoon, description: "Your daily routine, step by step", group: "Health" },
+  { title: "Habits", href: "/habits", icon: Repeat, description: "Build consistent daily habits", group: "Health" },
   { title: "Fitness", href: "/fitness", icon: Dumbbell, description: "Workouts & training log", group: "Health" },
   { title: "Nutrition", href: "/nutrition", icon: Utensils, description: "Meals, macros & protein", group: "Health" },
-  // Finances
-  { title: "Finance", short: "Finance", href: "/finance", icon: Wallet, description: "Income, budgets & cash flow", group: "Finances" },
-  { title: "Bills & Expenses", short: "Bills", href: "/bills", icon: Receipt, description: "Recurring costs & payments", group: "Finances" },
   // Planner
-  { title: "Goals", href: "/goals", icon: Target, description: "Life goals & automatic progress", group: "Planner" },
-  { title: "Projects & Tasks", short: "Tasks", href: "/projects", icon: Hammer, description: "Plan projects and track to-dos", group: "Planner" },
-  { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance", group: "Planner" },
-  { title: "Future Purchases", short: "Purchases", href: "/purchases", icon: ShoppingBag, description: "Your personal wishlist", group: "Planner" },
   { title: "Essentials", href: "/essentials", icon: ListChecks, description: "What you need, what you have", group: "Planner" },
-  { title: "Reviews", href: "/reviews", icon: ClipboardCheck, description: "Weekly & monthly check-ins", group: "Planner" },
+  { title: "Projects & Tasks", short: "Tasks", href: "/projects", icon: Hammer, description: "Plan projects and track to-dos", group: "Planner" },
+  { title: "Future Purchases", short: "Purchases", href: "/purchases", icon: ShoppingBag, description: "Your personal wishlist", group: "Planner" },
+  { title: "Calendar", href: "/calendar", icon: CalendarDays, description: "Key dates at a glance", group: "Planner" },
   // More
   { title: "Inspiration", href: "/inspiration", icon: Lightbulb, description: "Save reels, links & ideas", group: "More" },
   { title: "Notes & Links", short: "Notes", href: "/notes", icon: NotebookPen, description: "Quick notes and useful links", group: "More" },
   { title: "Key Contacts", short: "Contacts", href: "/contacts", icon: BookUser, description: "Important people & services", group: "More" },
-  { title: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later", group: "More" },
+  { title: "Everything else", short: "All", href: "/more", icon: LayoutGrid, description: "Every other page in the app", group: "More" },
+];
+
+const LIFE_MORE_ITEMS: NavItem[] = [
+  { title: "Income & budgets", short: "Finance", href: "/finance", icon: Wallet, description: "Income, budgets & cash flow", group: "Money" },
+  { title: "Bills & Expenses", short: "Bills", href: "/bills", icon: Receipt, description: "Recurring costs & payments", group: "Money" },
+  { title: "Savings Pots", short: "Savings", href: "/savings", icon: PiggyBank, description: "Goals & contributions", group: "Money" },
+  { title: "Reviews", href: "/reviews", icon: ClipboardCheck, description: "Weekly & monthly check-ins", group: "Not used yet" },
+  { title: "Goals", href: "/goals", icon: Target, description: "Life goals & automatic progress", group: "Not used yet" },
+  { title: "Drafts", href: "/drafts", icon: FileText, description: "Half-formed ideas saved for later", group: "Not used yet" },
 ];
 
 // ─── Active nav (switched by NEXT_PUBLIC_APP env var) ────────────────────────
@@ -106,6 +122,15 @@ export const NAV_GROUPS: readonly string[] = _isLife ? LIFE_NAV_GROUPS : HOUSE_N
 
 /** Primary navigation — drives both the desktop sidebar and mobile menu. */
 export const NAV_ITEMS: NavItem[] = _isLife ? LIFE_NAV_ITEMS : HOUSE_NAV_ITEMS;
+
+/** Working pages kept out of the sidebar; listed on /more. */
+export const MORE_ITEMS: NavItem[] = _isLife ? LIFE_MORE_ITEMS : HOUSE_MORE_ITEMS;
+
+/** Order the /more page groups appear in. */
+export const MORE_GROUPS: readonly string[] = ["Money", "Not used yet"];
+
+/** Every reachable page, for search and the bottom-tab picker. */
+export const ALL_NAV_ITEMS: NavItem[] = [...NAV_ITEMS, ...MORE_ITEMS];
 
 /** Tabs that can never be hidden from the sidebar. */
 export const ALWAYS_VISIBLE = ["/dashboard"] as const;
