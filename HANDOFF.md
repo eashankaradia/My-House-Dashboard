@@ -134,6 +134,51 @@ shortened sidebar and the + menu. If any "Not used yet" page is actually
 wanted, moving it from `MORE_ITEMS` back into `NAV_ITEMS` is a one-line
 change; same for restoring a dropped + pill.
 
+## Browser verification — how to actually look at the app (2026-11-23)
+Every batch before this shipped without anyone (human or agent) looking at
+the result in a browser, which is how the Rooms view went out rendering 15
+sections for 16 items. This sets that up.
+
+**What exists now**
+- A dedicated test account: username **`browser-verify`**, internal email
+  `browser-verify@myhouse.local` (the app maps username →
+  `<name>@myhouse.local` via `src/lib/auth-username.ts`, so the username is
+  what matters), auth id `92ce2e4a-5b84-481e-b23b-8300cf75b6e2`. It is a
+  member of the Eashan+Neelam household (`f9ccf450-…`) so it sees real data.
+  Created by SQL insert into `auth.users` + `auth.identities` +
+  `household_members`. The password is NOT in this repo — it lives in the
+  `TEST_LOGIN_PASSWORD` environment variable.
+- `scripts/verify-ui.mjs` + `npm run verify:ui` — logs in through the real
+  form, visits `/dashboard /money /purchases /more /projects /shopping`,
+  writes full-page screenshots to `.ui-screens/` (gitignored) and **exits
+  non-zero on any console error, page error or failed request**. Pass routes
+  as arguments to override: `npm run verify:ui -- /money /more`.
+- `playwright` as a devDependency. Note the image's Chromium (build 1243)
+  is older than the one Playwright 1.65 expects (1255), so the script
+  launches with an explicit `executablePath` of
+  `/opt/pw-browsers/chromium-1243/chrome-linux64/chrome` (override with
+  `CHROMIUM_PATH`). Do not run `playwright install` — it will try to download.
+
+**To run it** you need (a) the `My-House-Dashboard` environment, which allows
+the Supabase host — on `Default` the sign-in request is blocked and the
+script exits reporting a failed sign-in; (b) `TEST_LOGIN_PASSWORD` set; and
+(c) a dev server: `npm run dev &` then `npm run verify:ui`. Set `BASE_URL` to
+point somewhere else.
+
+**Verified this far:** the harness launches Chromium, renders `/login`, fills
+username + password, submits, and on failure screenshots and reports. The
+sign-in itself could not be completed from this session because `Default`
+blocks `vbyqbxvffaqkrltzewjz.supabase.co` — confirmed by `curl` returning
+000 to that host. First run on the right environment should go further.
+
+**Side effects to know about:** the test account adds a third row to
+`household_members`, so "Browser test" appears in member dropdowns (the
+purchase "Who bought it?" picker, the contributions form). It does **not**
+change the bills split — `household-contributions.tsx` computes
+`remainderEach` from contribution rows, not from member count, and there are
+still 2 contribution rows. Delete the account (its `auth.users` row; the
+`household_members` row and identity cascade) to remove it entirely.
+
 ## Session setup — read this first (2026-11-22)
 Three things that cost every previous session time or correctness:
 
