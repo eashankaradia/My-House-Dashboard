@@ -1,29 +1,17 @@
-import { ShoppingBag, Wallet } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { StatCard } from "@/components/shared/stat-card";
-import { Money } from "@/components/shared/money";
 import { PURCHASE_CATEGORIES } from "@/lib/constants";
 import { getHouseholdMap } from "@/lib/household";
 import { ArchivedSection } from "@/components/shared/archived-section";
 import type { Purchase, PurchaseCategoryRow, PurchaseOption, PurchaseWithOptions } from "@/lib/database.types";
 import { PurchaseForm } from "./purchase-form";
 import { PurchasesGrid } from "./purchases-grid";
-import { ReadyToBuy } from "./ready-to-buy";
 import { deletePurchase, restorePurchase } from "./actions";
 import { PriceRefresh } from "./price-refresh";
-import { SectionActivityLog } from "@/components/shared/section-activity-log";
 
 export const metadata = { title: "Future Purchases" };
-
-/** Best-estimate price for an item: chosen option → cheapest option → item price. */
-function effectivePrice(p: PurchaseWithOptions): number {
-  const chosen = p.options.find((o) => o.is_chosen);
-  if (chosen) return Number(chosen.price);
-  if (p.options.length) return Math.min(...p.options.map((o) => Number(o.price)));
-  return Number(p.price);
-}
 
 export default async function PurchasesPage() {
   const supabase = await createClient();
@@ -51,15 +39,12 @@ export default async function PurchasesPage() {
   const categoryRows = (categoryData ?? []) as PurchaseCategoryRow[];
   const categories = Array.from(new Set([...PURCHASE_CATEGORIES, ...categoryRows.map((c) => c.name), ...allPurchases.map((p) => p.category)])).sort();
 
-  const wishlist = purchases.filter((p) => p.status !== "Purchased");
-  const readyToBuy = purchases.filter((p) => p.status === "Ready To Buy");
-  const readyToBuyValue = readyToBuy.reduce((s, p) => s + effectivePrice(p), 0);
   const members = Object.entries(memberMap).map(([id, name]) => ({ id, name }));
 
   return (
     <div className="space-y-6">
       <PriceRefresh />
-      <PageHeader title="Future Purchases" description="A wishlist for everything your home needs." info="Add the thing you want (e.g. a Sofa), then add several Options under it — specific products from different shops with their own prices, links and photos — to compare them side by side. The Rooms view groups the list into a collapsible section per room — just the rooms with something in them, each with a running total; tap any item to open it and change status, edit it, or work through its options. Use the icons on the right to switch to cards, a compact list or a table, and the Filters button for status, room, rating and essentials.">
+      <PageHeader title="Future Purchases" description="A wishlist for everything your home needs." info="Add the thing you want (e.g. a Sofa), then add several Options under it — specific products from different shops with their own prices, links and photos — to compare them side by side. The list groups into a collapsible section per room, each with a running total; tap any item to open it and change status, edit it, or work through its options. The two icons on the right switch between by-room and a flat list, and the Filters button covers status, room, rating and essentials.">
         <PurchaseForm members={members} categories={categories} />
       </PageHeader>
 
@@ -74,14 +59,7 @@ export default async function PurchasesPage() {
       ) : (
         <>
           {purchases.length > 0 ? (
-            <>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <StatCard label="Wishlist items" value={String(wishlist.length)} icon={ShoppingBag} />
-                <StatCard label="Ready to buy" value={<Money value={readyToBuyValue} />} hint={`${readyToBuy.length} item${readyToBuy.length === 1 ? "" : "s"}`} icon={Wallet} />
-              </div>
-              <ReadyToBuy items={readyToBuy} />
-              <PurchasesGrid purchases={purchases} memberMap={memberMap} currentUserId={user?.id} categories={categories} />
-            </>
+            <PurchasesGrid purchases={purchases} memberMap={memberMap} currentUserId={user?.id} categories={categories} />
           ) : null}
           <ArchivedSection
             items={archived.map((p) => ({ id: p.id, label: p.name }))}
@@ -91,7 +69,6 @@ export default async function PurchasesPage() {
           />
         </>
       )}
-      <SectionActivityLog entityTypes={["purchases", "purchase_options", "purchase_stars"]} />
     </div>
   );
 }

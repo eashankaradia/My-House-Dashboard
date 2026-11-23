@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, DoorOpen, Filter, LayoutGrid, Pencil, Plus, Rows3, ShoppingBag, Table2, X } from "lucide-react";
+import { ChevronDown, DoorOpen, Filter, Pencil, Rows3, ShoppingBag, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -12,10 +12,8 @@ import { AddedBy } from "@/components/shared/added-by";
 import { CardTrigger } from "@/components/shared/card-trigger";
 import { CollapsibleSection } from "@/components/shared/collapsible-section";
 import { SearchInput } from "@/components/shared/search-input";
-import { StarRating } from "@/components/shared/star-rating";
 import { useToast } from "@/hooks/use-toast";
 import { useViewPref } from "@/hooks/use-view-prefs";
-import { useIsMobile } from "@/hooks/use-is-mobile";
 import { useRooms } from "@/hooks/use-rooms";
 import { ITEM_SCOPE_LABELS, PURCHASE_SIZES, PURCHASE_STATUSES } from "@/lib/constants";
 import { PRIORITY_ACCENT } from "@/lib/ui";
@@ -24,14 +22,9 @@ import { Money } from "@/components/shared/money";
 import type { MemberMap } from "@/lib/household";
 import type { PurchaseOption, PurchaseWithOptions } from "@/lib/database.types";
 import { PurchaseForm } from "./purchase-form";
-import { OptionForm } from "./option-form";
-import { OptionRow } from "./option-row";
 import { PurchaseDetailDialog } from "./purchase-detail";
 import { StatusSelect } from "./status-select";
 import { deletePurchase } from "./actions";
-
-// Kept for backwards compatibility with the page's import; stars are gone.
-export type StarInfo = { mine: boolean; names: string[] };
 
 const SORTS = {
   rating: "Rating (high → low)",
@@ -74,7 +67,6 @@ export function PurchasesGrid({
 }: {
   purchases: PurchaseWithOptions[];
   memberMap: MemberMap;
-  starInfo?: Record<string, StarInfo>;
   currentUserId?: string;
   categories: string[];
 }) {
@@ -86,9 +78,9 @@ export function PurchasesGrid({
   const [sort, setSort] = React.useState<keyof typeof SORTS>("rating");
   const [view, setView] = useViewPref("purchases");
   const roomList = useRooms();
-  // The table scrolls sideways on phones — fall back to cards there.
-  const isMobile = useIsMobile();
-  const effectiveView = isMobile && view === "table" ? "detailed" : view;
+  // Only two views now; anything else is a stored pref from the old
+  // four-view toggle, so treat it as the flat list.
+  const effectiveView = view === "rooms" ? "rooms" : "compact";
   const isLife = process.env.NEXT_PUBLIC_APP === "life";
   const [onlyMine, setOnlyMine] = React.useState(false);
   const [scopeFilter, setScopeFilter] = React.useState<"all" | "personal" | "household">("all");
@@ -284,25 +276,11 @@ export function PurchasesGrid({
               <DoorOpen className="h-4 w-4" />
             </button>
             <button
-              onClick={() => setView("detailed")}
-              aria-label="Card view"
-              className={cn("rounded-md p-1.5 text-muted-foreground", view === "detailed" && "bg-accent text-foreground")}
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </button>
-            <button
               onClick={() => setView("compact")}
-              aria-label="Compact list"
+              aria-label="Flat list"
               className={cn("rounded-md p-1.5 text-muted-foreground", view === "compact" && "bg-accent text-foreground")}
             >
               <Rows3 className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setView("table")}
-              aria-label="Table view"
-              className={cn("hidden rounded-md p-1.5 text-muted-foreground sm:block", view === "table" && "bg-accent text-foreground")}
-            >
-              <Table2 className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -332,7 +310,7 @@ export function PurchasesGrid({
                 </p>
               ) : null}
             </div>
-          ) : effectiveView === "compact" ? (
+          ) : (
             <Card>
               <CardContent className="divide-y p-0">
                 {filtered.map((purchase) => (
@@ -340,15 +318,6 @@ export function PurchasesGrid({
                 ))}
               </CardContent>
             </Card>
-          ) : effectiveView === "table" ? (
-            <PurchaseTable purchases={filtered} memberMap={memberMap} />
-          ) : (
-            <div className="grid min-w-0 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
-              {filtered.map((purchase, i) => (
-                // Only the top-rated item starts expanded; the rest are pre-collapsed.
-                <PurchaseCard key={purchase.id} purchase={purchase} memberMap={memberMap} defaultOpen={i === 0} categories={categories} />
-              ))}
-            </div>
           )}
 
           <CollapsibleSection title="Purchased" count={purchased.length}>
@@ -364,57 +333,6 @@ export function PurchasesGrid({
   );
 }
 
-function PurchaseTable({
-  purchases,
-  memberMap,
-}: {
-  purchases: PurchaseWithOptions[];
-  memberMap: MemberMap;
-}) {
-  return (
-    <Card>
-      <CardContent className="overflow-x-auto p-0">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-xs text-muted-foreground">
-              <th className="px-3 py-2 font-medium">Item</th>
-              <th className="px-3 py-2 font-medium">Room</th>
-              <th className="px-3 py-2 font-medium">Category</th>
-              <th className="px-3 py-2 font-medium">Rating</th>
-              <th className="px-3 py-2 text-right font-medium">Price</th>
-              <th className="px-3 py-2 font-medium">Status</th>
-              <th className="px-3 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {purchases.map((p) => (
-              <tr key={p.id} className={cn("border-b border-l-4 last:border-b-0", PRIORITY_ACCENT[p.priority])}>
-                <td className="px-3 py-2">
-                  <PurchaseDetailDialog purchase={p} memberMap={memberMap}>
-                    <CardTrigger className="rounded font-medium hover:underline">{p.name}</CardTrigger>
-                  </PurchaseDetailDialog>
-                  {p.options.length ? <span className="ml-1 text-xs text-muted-foreground">({p.options.length})</span> : null}
-                </td>
-                <td className="px-3 py-2 text-muted-foreground">{p.room ?? "—"}</td>
-                <td className="px-3 py-2 text-muted-foreground">{p.category}</td>
-                <td className="px-3 py-2">
-                  <StarRating value={effectiveRating(p)} size="sm" />
-                </td>
-                <td className="px-3 py-2 text-right font-medium"><Money value={effectivePrice(p)} /></td>
-                <td className="px-3 py-2 text-muted-foreground">{p.status}</td>
-                <td className="px-3 py-2 text-right">
-                  <ConfirmDelete itemLabel="item" action={deletePurchase.bind(null, p.id)} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </CardContent>
-    </Card>
-  );
-}
-
-/** One room's items, collapsed behind a "Room · N items · £total" header. */
 function RoomSection({
   room,
   items,
@@ -604,119 +522,3 @@ function CompactRow({
   );
 }
 
-function PurchaseCard({
-  purchase,
-  memberMap,
-  defaultOpen = false,
-  categories = [],
-}: {
-  purchase: PurchaseWithOptions;
-  memberMap: MemberMap;
-  defaultOpen?: boolean;
-  categories?: string[];
-}) {
-  const [open, setOpen] = React.useState(defaultOpen);
-  const options = sortedOptions(purchase);
-  const members = Object.entries(memberMap).map(([id, name]) => ({ id, name }));
-  const prices = options.map((o) => Number(o.price));
-  const min = prices.length ? Math.min(...prices) : 0;
-  const max = prices.length ? Math.max(...prices) : 0;
-  const chosen = options.find((o) => o.is_chosen);
-
-  return (
-    <Card className={cn("flex min-w-0 max-w-full flex-col overflow-hidden border-l-4", PRIORITY_ACCENT[purchase.priority])}>
-      <CardContent className="flex min-w-0 flex-1 flex-col gap-3 p-4">
-        <div className="flex items-start justify-between gap-2">
-          <PurchaseDetailDialog purchase={purchase} memberMap={memberMap} categories={categories}>
-            <CardTrigger className="block min-w-0 flex-1 rounded-md text-left">
-              <span className="block min-w-0 whitespace-normal break-words font-medium leading-snug [overflow-wrap:anywhere] hover:underline">
-                {purchase.name}
-              </span>
-              <p className="min-w-0 break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">
-                {purchase.category}
-                {purchase.room ? ` · ${purchase.room}` : ""}
-              </p>
-            </CardTrigger>
-          </PurchaseDetailDialog>
-        </div>
-
-        <div className="flex items-baseline justify-between gap-2">
-          {options.length === 0 ? (
-            <span className="text-lg font-semibold"><Money value={purchase.price} /></span>
-          ) : chosen ? (
-            <span className="text-lg font-semibold text-primary">
-              <Money value={chosen.price} /> <span className="text-xs font-normal text-muted-foreground">picked</span>
-            </span>
-          ) : (
-            <span className="text-lg font-semibold">
-              {min === max ? <Money value={min} /> : <><Money value={min} /> – <Money value={max} /></>}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-          >
-            {options.length} option{options.length === 1 ? "" : "s"}
-            <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
-          </button>
-        </div>
-
-        {open ? (
-          <>
-            {purchase.notes ? (
-              <p className="line-clamp-3 min-w-0 whitespace-pre-wrap break-words text-sm text-muted-foreground [overflow-wrap:anywhere]">
-                {purchase.notes}
-              </p>
-            ) : null}
-
-            <div className="space-y-2">
-              {options.map((opt, i) => (
-                <OptionRow
-                  key={opt.id}
-                  purchaseId={purchase.id}
-                  purchaseCategory={purchase.category}
-                  option={opt}
-                  isFirst={i === 0}
-                  isLast={i === options.length - 1}
-                  showRank={options.length > 1}
-                  deepLink={false}
-                />
-              ))}
-              <OptionForm
-                purchaseId={purchase.id}
-                purchaseCategory={purchase.category}
-                trigger={
-                  <Button variant="outline" size="icon" className="w-full border-dashed" aria-label="Add option">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                }
-              />
-            </div>
-          </>
-        ) : null}
-
-        <div className="mt-auto flex min-w-0 flex-wrap items-center justify-between gap-2 border-t pt-3">
-          <AddedBy name={memberMap[purchase.user_id]} />
-          <div className="flex items-center gap-2">
-            <div className="w-32">
-              <StatusSelect purchase={purchase} />
-            </div>
-            <PurchaseForm
-              purchase={purchase}
-              members={members}
-              categories={categories}
-              trigger={
-                <button aria-label="Edit item" className="inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
-                  <Pencil className="h-4 w-4" />
-                </button>
-              }
-            />
-            <ConfirmDelete itemLabel="item" action={deletePurchase.bind(null, purchase.id)} />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
